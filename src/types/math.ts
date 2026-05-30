@@ -166,3 +166,31 @@ export interface SessionConfig {
   tables?: number[];       // used for single_table / multi_table
   sessionLength: SessionLength;
 }
+
+// ── Growth comparison (period over period) ─────────────────────────────────────
+
+export type GrowthDirection = 'stronger' | 'weaker' | 'same' | 'new';
+
+export interface FactWindowStats {
+  attempts: number;
+  correct: number;
+  accuracy: number;            // 0–1
+  avgCorrectLatencyMs: number; // 0 when no correct answers
+}
+
+export interface FactGrowth {
+  itemId: string;
+  prompt: string;
+  direction: GrowthDirection;
+  current: FactWindowStats;
+  previous: FactWindowStats | null; // null when fact is new this period
+  accuracyDelta: number;            // current.accuracy − previous.accuracy (0 for new)
+  speedDeltaMs: number;             // previous − current latency (positive = faster now)
+}
+
+export interface GrowthSummary {
+  stronger: FactGrowth[];
+  weaker: FactGrowth[];
+  same: FactGrowth[];
+  newFacts: FactGrowth[];
+}

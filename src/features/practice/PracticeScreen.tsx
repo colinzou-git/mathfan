@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import type { SessionConfig, StudentSettings } from '../../types/math';
+import { db } from '../../db/dexie';
 import { usePracticeSession } from './usePracticeSession';
 import { NumPad } from '../../components/NumPad';
 import { SessionSummary } from '../../components/SessionSummary';
@@ -118,8 +119,12 @@ export function PracticeScreen({
     setShowQuit(false);
     stopSpeech();
     if (autoTimer.current) clearTimeout(autoTimer.current);
+    // Delete the session record if nothing was answered
+    if (state.completedCount === 0 && state.sessionId) {
+      db.sessions.delete(state.sessionId).catch(() => {});
+    }
     setQuitting(true);
-  }, []);
+  }, [state.completedCount, state.sessionId]);
 
   // ── Render: summary (complete or early quit) ──────────────────────────────
 

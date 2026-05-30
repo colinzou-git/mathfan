@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { StudentProfile, SessionConfig, StudentSettings } from './types/math';
-import { studentRepo } from './db/repositories';
+import { studentRepo, sessionRepo } from './db/repositories';
 import { ProfileSetup } from './features/dashboard/ProfileSetup';
 import { StudentDashboard } from './features/dashboard/StudentDashboard';
 import { PracticeScreen } from './features/practice/PracticeScreen';
@@ -35,6 +35,8 @@ export default function App() {
         setProfile(p);
         // Apply saved theme immediately
         applyTheme(p.settings.theme ?? 'indigo');
+        // Clean up any leftover empty sessions from earlier versions / abandoned starts
+        sessionRepo.deleteEmpty(p.id).catch(() => {});
         setScreen('dashboard');
       }
     });

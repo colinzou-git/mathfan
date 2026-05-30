@@ -1,17 +1,14 @@
 import { useEffect, useState, useMemo } from 'react';
-import type { StudentItemState, MasteryLevel } from '../../types/math';
+import type { StudentItemState } from '../../types/math';
 import { itemStateRepo } from '../../db/repositories';
 import { ITEM_MAP, TABLE_MIN, TABLE_MAX, tableFromItemId } from '../curriculum/multiplicationItems';
+import { MASTERY_COLORS } from '../../utils/masteryColors';
 
 interface Props { studentId: string }
 
 type SortKey = 'accuracy' | 'wrong' | 'attempts' | 'avgSpeed' | 'bestSpeed';
 type TypeFilter = 'all' | 'mul' | 'div' | 'unk';
 type StatusFilter = 'all' | 'weak' | 'strong' | 'new';
-
-const MASTERY_COLOR: Record<MasteryLevel, string> = {
-  new: '#9ca3af', learning: '#ef4444', developing: '#f59e0b', strong: '#22c55e', mastered: '#15803d',
-};
 
 export function FactStatsTable({ studentId }: Props) {
   const [states, setStates] = useState<StudentItemState[]>([]);
@@ -164,14 +161,14 @@ export function FactStatsTable({ studentId }: Props) {
                       {s.personalBestMs ? `${(s.personalBestMs / 1000).toFixed(1)}s` : '—'}
                     </td>
                     <td style={st.td}>
-                      <span style={{
-                        fontSize: '11px', fontWeight: '600',
-                        color: MASTERY_COLOR[s.masteryLevel],
-                        background: MASTERY_COLOR[s.masteryLevel] + '20',
-                        borderRadius: '4px', padding: '2px 6px',
-                      }}>
-                        {s.masteryLevel}
-                      </span>
+                      {(() => {
+                        const mc = MASTERY_COLORS[s.masteryLevel];
+                        return (
+                          <span style={{ fontSize: '11px', fontWeight: '700', color: mc.text, background: mc.bg, border: `1px solid ${mc.border}`, borderRadius: '4px', padding: '2px 6px' }}>
+                            {mc.letter} {mc.label}
+                          </span>
+                        );
+                      })()}
                     </td>
                   </tr>
                 );

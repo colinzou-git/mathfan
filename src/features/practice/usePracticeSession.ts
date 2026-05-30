@@ -9,6 +9,7 @@ import {
   ALL_ITEMS, ITEM_MAP,
 } from '../curriculum/multiplicationItems';
 import { itemStateRepo, attemptRepo, sessionRepo } from '../../db/repositories';
+import { db } from '../../db/dexie';
 import { generateId } from '../../utils/id';
 
 // ── Public types ──────────────────────────────────────────────────────────────
@@ -180,15 +181,22 @@ export function usePracticeSession(studentId: string) {
         const avgMs = prev.latencies.length
           ? Math.round(prev.latencies.reduce((s, v) => s + v, 0) / prev.latencies.length)
           : 0;
+        const isEnding = !nextId;
         sessionRepo.get(prev.sessionId).then(s => {
-          if (s) sessionRepo.save({
-            ...s,
-            completedQuestionCount: prev.completedCount,
-            correctCount: prev.correctCount,
-            averageLatencyMs: avgMs,
-            fastestCorrectMs: prev.fastestMs ?? undefined,
-            endedAt: nextId ? undefined : new Date().toISOString(),
-          });
+          if (!s) return;
+          if (isEnding && prev.completedCount === 0) {
+            // Never answered anything — remove the session entirely
+            db.sessions.delete(s.id);
+          } else {
+            sessionRepo.save({
+              ...s,
+              completedQuestionCount: prev.completedCount,
+              correctCount: prev.correctCount,
+              averageLatencyMs: avgMs,
+              fastestCorrectMs: prev.fastestMs ?? undefined,
+              endedAt: isEnding ? new Date().toISOString() : undefined,
+            });
+          }
         });
       }
 

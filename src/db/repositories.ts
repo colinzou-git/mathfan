@@ -83,4 +83,13 @@ export const sessionRepo = {
       .toArray();
     return all.sort((a, b) => b.startedAt.localeCompare(a.startedAt))[0];
   },
+  /** Delete sessions with zero completed questions (left over from abandoned starts). */
+  async deleteEmpty(studentId: string): Promise<number> {
+    const empties = await db.sessions
+      .where('studentId').equals(studentId)
+      .and(s => s.completedQuestionCount === 0)
+      .toArray();
+    await db.sessions.bulkDelete(empties.map(s => s.id));
+    return empties.length;
+  },
 };

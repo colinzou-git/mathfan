@@ -1,5 +1,9 @@
-import type { AttemptLog, PracticeSession, DayStats, PeriodStats, PeriodComparison, PerTableStats } from '../../types/math';
+import type {
+  AttemptLog, PracticeSession, DayStats, PeriodStats, PeriodComparison, PerTableStats,
+  FactWindowStats, FactGrowth, GrowthSummary, GrowthDirection,
+} from '../../types/math';
 import { tableFromItemId } from '../curriculum/multiplicationItems';
+import { ITEM_MAP } from '../curriculum/multiplicationItems';
 
 // ── Date helpers ──────────────────────────────────────────────────────────────
 
@@ -246,4 +250,120 @@ export function factTrend(
   if (delta > 0.1) return 'up';
   if (delta < -0.1) return 'down';
   return 'same';
+}
+
+// ── Growth comparison (period over period) ─────────────────────────────────────
+
+/** Per-fact stats for attempts within a single window. */
+function factWindowStats(attempts: AttemptLog[]): Map<string, FactWindowStats> {
+  const byItem = new Map<string, { attempts: number; correct: number; latencies: number[] }>();
+  for (const a of attempts) {
+    const e = byItem.get(a.itemId) ?? { attempts: 0, correct: 0, latencies: [] };
+    e.attempts++;
+    if (a.isCorrect) { e.correct++; e.latencies.push(a.latencyMs); }
+    byItem.set(a.itemId, e);
+  }
+  const out = new Map<string, FactWindowStats>();
+  for (const [id, e] of byItem) {
+    out.set(id, {
+      attempts: e.attempts,
+      correct: e.correct,
+      accuracy: e.attempts ? e.correct / e.attempts : 0,
+      avgCorrectLatencyMs: e.latencies.length
+        ? Math.round(e.latencies.reduce((s, v) => s + v, 0) / e.latencies.length)
+        : 0,
+    });
+  }
+  return out;
+}
+
+// Thresholds for calling a fact "stronger" or "weaker".
+const ACC_EPSILON = 0.05;      // 5 percentage points
+const SPEED_EPSILON_MS = 400;  // 0.4s
+
+function classifyGrowth(cur: FactWindowStats, prev: FactWindowStats): GrowthDirection {
+  const accDelta = cur.accuracy - prev.accuracy;
+  if (accDelta > ACC_EPSILON) return 'stronger';
+  if (accDelta < -ACC_EPSILON) return 'weaker';
+
+  // Accuracy roughly equal → use speed as tiebreaker (only if both have correct answers)
+  if (cur.avgCorrectLatencyMs > 0 && prev.avgCorrectLatencyMs > 0) {
+    const speedDelta = prev.avgCorrectLatencyMs - cur.avgCorrectLatencyMs; // positive = faster now
+    if (speedDelta > SPEED_EPSILON_MS) return 'stronger';
+    if (speedDelta < -SPEED_EPSILON_MS) return 'weaker';
+  }
+  return 'same';
+}
+
+/**
+ * Compare each fact's performance in the current window vs the previous window.
+ * Facts practiced in the current window but not the previous are "new".
+ * Facts not practiced in the current window are omitted entirely.
+ */
+export function computeFactGrowth(
+  attempts: AttemptLog[],
+  currentStart: Date,
+  currentEnd: Date,
+  previousStart: Date,
+  previousEnd: Date
+): GrowthSummary {
+  const curStats = factWindowStats(filterAttempts(attempts, currentStart, currentEnd));
+  const prevStats = factWindowStats(filterAttempts(attempts, previousStart, previousEnd));
+
+  const summary: GrowthSummary = { stronger: [], weaker: [], same: [], newFacts: [] };
+
+  for (const [itemId, cur] of curStats) {
+    const prompt = ITEM_MAP.get(itemId)?.prompt ?? itemId;
+    const prev = prevStats.get(itemId) ?? null;
+
+    if (!prev) {
+      summary.newFacts.push({
+        itemId, prompt, direction: 'new',
+        current: cur, previous: null, accuracyDelta: 0, speedDeltaMs: 0,
+      });
+      continue;
+    }
+
+    const direction = classifyGrowth(cur, prev);
+    const growth: FactGrowth = {
+      itemId, prompt, direction,
+      current: cur, previous: prev,
+      accuracyDelta: cur.accuracy - prev.accuracy,
+      speedDeltaMs: (prev.avgCorrectLatencyMs && cur.avgCorrectLatencyMs)
+        ? prev.avgCorrectLatencyMs - cur.avgCorrectLatencyMs
+        : 0,
+    };
+    if (direction === 'stronger') summary.stronger.push(growth);
+    else if (direction === 'weaker') summary.weaker.push(growth);
+    else summary.same.push(growth);
+  }
+
+  // Sort: biggest improvements / regressions first
+  summary.stronger.sort((a, b) => b.accuracyDelta - a.accuracyDelta || b.speedDeltaMs - a.speedDeltaMs);
+  summary.weaker.sort((a, b) => a.accuracyDelta - b.accuracyDelta || a.speedDeltaMs - b.speedDeltaMs);
+
+  return summary;
+}
+
+export type GrowthPeriod = 'day' | 'week' | 'month';
+
+/** Returns [currentStart, currentEnd, previousStart, previousEnd] for a comparison period. */
+export function growthWindows(period: GrowthPeriod, now = new Date()): [Date, Date, Date, Date] {
+  if (period === 'day') {
+    const curStart = startOfLocalDay(now);
+    const curEnd = addDays(curStart, 1);
+    const prevStart = addDays(curStart, -1);
+    return [curStart, curEnd, prevStart, curStart];
+  }
+  if (period === 'week') {
+    const curStart = startOfWeek(now);
+    const curEnd = addDays(curStart, 7);
+    const prevStart = addDays(curStart, -7);
+    return [curStart, curEnd, prevStart, curStart];
+  }
+  // month
+  const curStart = startOfMonth(now);
+  const curEnd = startOfMonth(addDays(curStart, 32));
+  const prevStart = startOfMonth(addDays(curStart, -1));
+  return [curStart, curEnd, prevStart, curStart];
 }

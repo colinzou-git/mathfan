@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { DrillHistory } from './DrillHistory';
 import { FactStatsTable } from './FactStatsTable';
+import { GrowthView } from './GrowthView';
 import { MasteryGrid } from '../../components/MasteryGrid';
 import { MiniCalendar, type DateRange } from '../../components/MiniCalendar';
 import { StatsGraph, type DayPoint } from '../../components/StatsGraph';
@@ -14,7 +15,7 @@ interface Props {
 }
 
 type PeriodPreset = 'today' | 'week' | 'month' | 'custom';
-type DetailTab = 'sessions' | 'facts' | 'grid';
+type DetailTab = 'growth' | 'sessions' | 'facts' | 'grid';
 
 function toYMD(d: Date): string { return localDateStr(d.toISOString()); }
 
@@ -44,7 +45,7 @@ export function StatsPage({ studentId, onBack }: Props) {
     return { start: today, end: today };
   });
   const [showCalendar, setShowCalendar] = useState(false);
-  const [detailTab, setDetailTab] = useState<DetailTab>('sessions');
+  const [detailTab, setDetailTab] = useState<DetailTab>('growth');
   const [attempts, setAttempts] = useState<AttemptLog[]>([]);
   const [sessions, setSessions] = useState<PracticeSession[]>([]);
 
@@ -174,18 +175,21 @@ export function StatsPage({ studentId, onBack }: Props) {
 
       {/* Detail tabs */}
       <div style={s.tabs}>
-        {(['sessions', 'facts', 'grid'] as DetailTab[]).map(t => (
+        {(['growth', 'sessions', 'facts', 'grid'] as DetailTab[]).map(t => (
           <button
             key={t}
             style={{ ...s.tab, ...(detailTab === t ? s.tabOn : {}) }}
             onClick={() => setDetailTab(t)}
           >
-            {t === 'sessions' ? '📋 Sessions' : t === 'facts' ? '📊 Facts' : '🔲 Grid'}
+            {t === 'growth' ? '📈 Growth' : t === 'sessions' ? '📋 Sessions' : t === 'facts' ? '📊 Facts' : '🔲 Grid'}
           </button>
         ))}
       </div>
 
       <div style={s.detail}>
+        {detailTab === 'growth' && (
+          <GrowthView studentId={studentId} />
+        )}
         {detailTab === 'sessions' && (
           <DrillHistory studentId={studentId} dateRange={range} />
         )}
@@ -221,8 +225,8 @@ const s: Record<string, React.CSSProperties> = {
   rangeLabel: { fontSize: '12px', color: '#6b7280', margin: '0 0 10px', textAlign: 'center' },
   pills: { display: 'flex', gap: '8px', marginBottom: '12px' },
   graphBox: { background: '#fff', borderRadius: '14px', padding: '12px 8px 8px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', marginBottom: '16px' },
-  tabs: { display: 'flex', gap: '8px', marginBottom: '12px' },
-  tab: { flex: 1, padding: '9px 4px', border: '2px solid #e5e7eb', borderRadius: '10px', background: '#fff', cursor: 'pointer', fontSize: '13px', fontWeight: '500' },
+  tabs: { display: 'flex', gap: '6px', marginBottom: '12px' },
+  tab: { flex: 1, padding: '9px 2px', border: '2px solid #e5e7eb', borderRadius: '10px', background: '#fff', cursor: 'pointer', fontSize: '12px', fontWeight: '500', whiteSpace: 'nowrap' },
   tabOn: { borderColor: 'var(--primary)', background: 'var(--primary-light)', color: 'var(--primary)' },
   detail: { minHeight: '200px' },
 };
