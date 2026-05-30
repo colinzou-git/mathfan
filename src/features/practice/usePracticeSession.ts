@@ -12,6 +12,10 @@ import {
   generateAdditionItems, generateSubtractionItems, generateDivisionItemsRange,
 } from '../curriculum/arithmeticItems';
 import { generateFractionItems } from '../curriculum/fractionItems';
+import { generateWordProblemItems } from '../curriculum/wordProblemItems';
+import { generateRoundingItems } from '../curriculum/roundingItems';
+import { generateNumberTheoryItems } from '../curriculum/numberTheoryItems';
+import { generateDecimalItems } from '../curriculum/decimalItems';
 import { itemStateRepo, attemptRepo, sessionRepo } from '../../db/repositories';
 import { db } from '../../db/dexie';
 import { generateId } from '../../utils/id';
@@ -22,6 +26,12 @@ import type { PracticeItem as PItem } from '../../types/math';
 export interface CorrectResult {
   latencyMs: number;
   isNewPersonalBest: boolean;
+}
+
+/** Snapshot of the previous session of the same mode, for session-over-session comparison. */
+export interface LastSessionSummary {
+  accuracy: number;          // 0–1
+  averageLatencyMs: number;
 }
 
 export interface SessionState {
@@ -40,6 +50,10 @@ export interface SessionState {
   /** Correct-answer latencies for the session (used in SessionSummary). */
   latencies: number[];
   fastestMs: number | null;
+  /** Distinct prompts the student got wrong at least once this session. */
+  missedFacts: string[];
+  /** Prior session of the same mode (captured at start), for comparison. */
+  lastSession: LastSessionSummary | null;
 }
 
 // ── Internal state helpers ────────────────────────────────────────────────────
@@ -56,6 +70,8 @@ const INITIAL: SessionState = {
   sessionId: null,
   latencies: [],
   fastestMs: null,
+  missedFacts: [],
+  lastSession: null,
 };
 
 // ── Hook ──────────────────────────────────────────────────────────────────────
@@ -88,9 +104,21 @@ export function usePracticeSession(studentId: string) {
     statesRef.current = stateMap;
 
     let queue: string[];
-    const { mode, tables, sessionLength, operandMin, operandMax, fractionMode } = config;
+    const { mode, tables, sessionLength, operandMin, operandMax, fractionMode, grade } = config;
+
+    // Capture the most recent prior session of the same mode (before saving the new one)
+    // for the session-over-session comparison on the summary screen.
+    const prior = await sessionRepo.getLastByMode(studentId, mode);
+    const lastSession: LastSessionSummary | null =
+      prior && prior.completedQuestionCount > 0
+        ? {
+            accuracy: prior.correctCount / prior.completedQuestionCount,
+            averageLatencyMs: prior.averageLatencyMs,
+          }
+        : null;
     const lo = operandMin ?? 0;
     const hi = operandMax ?? 20;
+    const g = grade ?? 3;
 
     // Reset & populate the dynamic item registry for generated modes
     dynamicItemsRef.current = new Map();
@@ -111,6 +139,14 @@ export function usePracticeSession(studentId: string) {
       queue = registerDynamic(generateDivisionItemsRange(lo, hi, sessionLength));
     } else if (mode === 'fraction') {
       queue = registerDynamic(generateFractionItems(fractionMode ?? 'equivalent', sessionLength));
+    } else if (mode === 'word_problem') {
+      queue = registerDynamic(generateWordProblemItems(g, sessionLength));
+    } else if (mode === 'rounding') {
+      queue = registerDynamic(generateRoundingItems(g, sessionLength));
+    } else if (mode === 'factors') {
+      queue = registerDynamic(generateNumberTheoryItems(g, sessionLength));
+    } else if (mode === 'decimals') {
+      queue = registerDynamic(generateDecimalItems(g, sessionLength));
     } else {
       const plan = planSession(ALL_ITEMS, stateMap, now, sessionLength);
       queue = [...plan.dueItems, ...plan.weakItems, ...plan.newItems];
@@ -128,7 +164,7 @@ export function usePracticeSession(studentId: string) {
     queueRef.current = queue;
 
     if (queue.length === 0) {
-      setState({ ...INITIAL, phase: 'complete', sessionId, totalPlanned: 0 });
+      setState({ ...INITIAL, phase: 'complete', sessionId, totalPlanned: 0, lastSession });
       return;
     }
 
@@ -139,6 +175,7 @@ export function usePracticeSession(studentId: string) {
       currentItem: first,
       totalPlanned: queue.length + 1,
       sessionId,
+      lastSession,
     });
   }, [studentId]);
 

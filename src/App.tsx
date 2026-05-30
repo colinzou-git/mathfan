@@ -18,22 +18,37 @@ import { applyTheme } from './features/theme/themes';
 
 type Screen =
   | 'loading' | 'setup' | 'dashboard'
-  | 'daily-setup' | 'table-selector' | 'arith-setup' | 'fraction-setup' | 'practice'
+  | 'daily-setup' | 'table-selector' | 'arith-setup' | 'fraction-setup' | 'simple-setup' | 'practice'
   | 'stats' | 'settings';
 
 type ArithMode = 'addition' | 'subtraction' | 'division';
+type SimpleMode = 'word_problem' | 'rounding' | 'factors' | 'decimals';
+
+const SIMPLE_META: Record<SimpleMode, { title: string; description: string }> = {
+  word_problem: { title: 'Word Problems', description: 'Read the story and type the number answer.' },
+  rounding:     { title: 'Rounding',      description: 'Round numbers to the nearest ten, hundred, or thousand.' },
+  factors:      { title: 'Primes & Factors', description: 'Prime or composite? Is one number a factor of another?' },
+  decimals:     { title: 'Decimals',      description: 'Add and subtract decimal numbers.' },
+};
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('loading');
   const [profile, setProfile] = useState<StudentProfile | null>(null);
   const [sessionConfig, setSessionConfig] = useState<SessionConfig | null>(null);
   const [arithMode, setArithMode] = useState<ArithMode>('addition');
+  const [simpleMode, setSimpleMode] = useState<SimpleMode>('word_problem');
 
   const pickOperation = (op: PracticeOp) => {
     if (op === 'multiplication') { setScreen('table-selector'); return; }
     if (op === 'fraction') { setScreen('fraction-setup'); return; }
-    setArithMode(op); // addition | subtraction | division
-    setScreen('arith-setup');
+    if (op === 'addition' || op === 'subtraction' || op === 'division') {
+      setArithMode(op);
+      setScreen('arith-setup');
+      return;
+    }
+    // word | rounding | factors | decimals → generic count-only setup
+    setSimpleMode(op === 'word' ? 'word_problem' : op);
+    setScreen('simple-setup');
   };
 
   useEffect(() => {
@@ -139,6 +154,23 @@ export default function App() {
         mode={arithMode}
         onBack={() => setScreen('dashboard')}
         onStart={cfg => { setSessionConfig(cfg); setScreen('practice'); }}
+      />
+    );
+  }
+
+  if (screen === 'simple-setup') {
+    const meta = SIMPLE_META[simpleMode];
+    return (
+      <SessionSetup
+        title={meta.title}
+        description={meta.description}
+        mode={simpleMode}
+        defaultCount={profile.settings.sessionLength ?? 10}
+        onBack={() => setScreen('dashboard')}
+        onStart={cfg => {
+          setSessionConfig({ ...cfg, grade: profile.gradeLevel });
+          setScreen('practice');
+        }}
       />
     );
   }

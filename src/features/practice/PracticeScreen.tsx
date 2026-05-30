@@ -147,6 +147,8 @@ export function PracticeScreen({
         correctCount={state.correctCount}
         latencies={state.latencies}
         fastestMs={state.fastestMs}
+        missedFacts={state.missedFacts}
+        lastSession={state.lastSession}
         wasQuit={quitting}
         onDone={onDone}
         onPlayAgain={quitting ? undefined : onPlayAgain}

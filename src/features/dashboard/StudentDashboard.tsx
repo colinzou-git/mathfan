@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import type { StudentProfile } from '../../types/math';
-import { itemStateRepo, attemptRepo } from '../../db/repositories';
+import { itemStateRepo, attemptRepo, sessionRepo } from '../../db/repositories';
 import { computeTodayStats, computeStreak } from '../stats/statsEngine';
 
-export type PracticeOp = 'multiplication' | 'division' | 'addition' | 'subtraction' | 'fraction';
+export type PracticeOp =
+  | 'multiplication' | 'division' | 'addition' | 'subtraction' | 'fraction'
+  | 'word' | 'rounding' | 'factors' | 'decimals';
 
 interface Props {
   profile: StudentProfile;
@@ -16,16 +18,21 @@ interface Props {
 interface QuickStats {
   todayQuestions: number;
   todayAccuracy: number;
+  todayMinutes: number;
   streak: number;
   dueCount: number;
 }
 
 const OPERATIONS: { op: PracticeOp; label: string; icon: string }[] = [
-  { op: 'multiplication', label: 'Multiply', icon: '✖️' },
-  { op: 'division',       label: 'Divide',   icon: '➗' },
-  { op: 'addition',       label: 'Add',      icon: '➕' },
-  { op: 'subtraction',    label: 'Subtract', icon: '➖' },
+  { op: 'multiplication', label: 'Multiply',  icon: '✖️' },
+  { op: 'division',       label: 'Divide',    icon: '➗' },
+  { op: 'addition',       label: 'Add',       icon: '➕' },
+  { op: 'subtraction',    label: 'Subtract',  icon: '➖' },
   { op: 'fraction',       label: 'Fractions', icon: '🍕' },
+  { op: 'word',           label: 'Word',      icon: '📖' },
+  { op: 'rounding',       label: 'Rounding',  icon: '🔵' },
+  { op: 'factors',        label: 'Primes',    icon: '🔢' },
+  { op: 'decimals',       label: 'Decimals',  icon: '🔟' },
 ];
 
 export function StudentDashboard({ profile, onStartDailyReview, onPickOperation, onOpenStats, onOpenSettings }: Props) {
@@ -34,16 +41,18 @@ export function StudentDashboard({ profile, onStartDailyReview, onPickOperation,
   useEffect(() => {
     (async () => {
       const now = new Date();
-      const [attempts, states] = await Promise.all([
+      const [attempts, states, sessions] = await Promise.all([
         attemptRepo.getAll(profile.id),
         itemStateRepo.getForStudent(profile.id),
+        sessionRepo.getAll(profile.id),
       ]);
-      const todayStats = computeTodayStats(attempts, [], now);
+      const todayStats = computeTodayStats(attempts, sessions, now);
       const streak = computeStreak(attempts, now);
       const dueCount = states.filter(s => s.nextDueAt && s.nextDueAt <= now.toISOString()).length;
       setQuick({
         todayQuestions: todayStats.questionsAnswered,
         todayAccuracy: todayStats.accuracy,
+        todayMinutes: todayStats.minutesPracticed,
         streak,
         dueCount,
       });
@@ -63,19 +72,22 @@ export function StudentDashboard({ profile, onStartDailyReview, onPickOperation,
 
       {/* Quick stats */}
       {quick && (
-        <div style={s.quickRow}>
-          <Chip label="Today" value={`${quick.todayQuestions} Q`} />
-          <Chip
-            label="Accuracy"
-            value={quick.todayQuestions ? `${Math.round(quick.todayAccuracy * 100)}%` : '—'}
-          />
-          <Chip label="Streak" value={`${quick.streak}d`} color="var(--primary)" />
-          <Chip
-            label="Due"
-            value={String(quick.dueCount)}
-            color={quick.dueCount > 0 ? '#f59e0b' : '#22c55e'}
-          />
-        </div>
+        <>
+          <div style={s.quickRow}>
+            <Chip label="Today" value={`${quick.todayQuestions} Q`} />
+            <Chip
+              label="Accuracy"
+              value={quick.todayQuestions ? `${Math.round(quick.todayAccuracy * 100)}%` : '—'}
+            />
+            <Chip label="Min today" value={`${quick.todayMinutes}`} />
+            <Chip label="Streak" value={`${quick.streak}d`} color="var(--primary)" />
+            <Chip
+              label="Due"
+              value={String(quick.dueCount)}
+              color={quick.dueCount > 0 ? '#f59e0b' : '#22c55e'}
+            />
+          </div>
+        </>
       )}
 
       {/* Primary action */}

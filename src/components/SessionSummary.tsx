@@ -8,6 +8,7 @@ interface Props {
   correctCount: number;
   latencies: number[];
   fastestMs: number | null;
+  missedFacts?: string[];
   lastSession?: LastSession | null;
   wasQuit?: boolean;
   onDone: () => void;
@@ -19,6 +20,7 @@ export function SessionSummary({
   correctCount,
   latencies,
   fastestMs,
+  missedFacts = [],
   lastSession,
   wasQuit,
   onDone,
@@ -57,6 +59,20 @@ export function SessionSummary({
 
         {fastestMs && (
           <p style={s.best}>⚡ Fastest answer: {(fastestMs / 1000).toFixed(1)}s</p>
+        )}
+
+        {missedFacts.length > 0 && (
+          <div style={s.missedBox}>
+            <p style={s.missedTitle}>Practice these next time</p>
+            <div style={s.missedChips}>
+              {missedFacts.slice(0, 12).map(f => (
+                <span key={f} style={s.missedChip}>{f}</span>
+              ))}
+              {missedFacts.length > 12 && (
+                <span style={s.missedMore}>+{missedFacts.length - 12} more</span>
+              )}
+            </div>
+          </div>
         )}
 
         {(vsLastAccuracy !== null || vsLastSpeed !== null) && (
@@ -138,6 +154,28 @@ const s: Record<string, React.CSSProperties> = {
     fontWeight: '600',
     margin: '4px 0 16px',
   },
+  missedBox: {
+    background: '#fef2f2',
+    border: '1px solid #fecaca',
+    borderRadius: '10px',
+    padding: '12px 14px',
+    marginBottom: '16px',
+  },
+  missedTitle: {
+    fontSize: '12px',
+    color: '#b91c1c',
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
+    margin: '0 0 8px',
+  },
+  missedChips: { display: 'flex', flexWrap: 'wrap', gap: '6px' },
+  missedChip: {
+    fontSize: '14px', fontWeight: '600', color: '#991b1b',
+    background: '#fff', border: '1px solid #fecaca', borderRadius: '6px',
+    padding: '3px 8px', fontVariantNumeric: 'tabular-nums',
+  },
+  missedMore: { fontSize: '13px', color: '#b91c1c', alignSelf: 'center' },
   compareBox: {
     background: '#f0fdf4',
     border: '1px solid #bbf7d0',

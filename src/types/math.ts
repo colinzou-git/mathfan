@@ -12,6 +12,11 @@ export type ItemType =
   | 'fraction_equivalent'
   | 'fraction_compare'
   | 'word_problem'
+  | 'rounding'
+  | 'prime_composite'
+  | 'factor_check'
+  | 'decimal_add'
+  | 'decimal_sub'
   | 'fraction_number_line'
   | 'decimal_place_value'
   | 'geometry_vocabulary'
@@ -25,8 +30,11 @@ export type SessionMode =
   | 'subtraction'
   | 'division'
   | 'fraction'
-  | 'audio'
   | 'word_problem'
+  | 'rounding'
+  | 'factors'
+  | 'decimals'
+  | 'audio'
   | 'challenge';
 
 /** How the student enters an answer for an item. */
@@ -183,6 +191,7 @@ export interface SessionConfig {
   operandMin?: number;        // addition / subtraction / division
   operandMax?: number;        // addition / subtraction / division
   fractionMode?: FractionMode; // fraction
+  grade?: GradeLevel;         // word_problem / rounding / factors / decimals
 }
 
 // ── Growth comparison (period over period) ─────────────────────────────────────

@@ -17,7 +17,12 @@ function modeLabel(s: PracticeSession): string {
   if (s.mode === 'daily_review') return 'Daily Review';
   if (s.mode === 'single_table' && s.tables?.length) return `${s.tables[0]}× Table`;
   if (s.mode === 'multi_table' && s.tables?.length) return `Mixed: ${s.tables.join('×, ')}×`;
-  return s.mode;
+  const labels: Record<string, string> = {
+    addition: 'Addition', subtraction: 'Subtraction', division: 'Division',
+    fraction: 'Fractions', word_problem: 'Word Problems', rounding: 'Rounding',
+    factors: 'Primes & Factors', decimals: 'Decimals',
+  };
+  return labels[s.mode] ?? s.mode;
 }
 
 function dateLabel(iso: string): string {

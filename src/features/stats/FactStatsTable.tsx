@@ -8,16 +8,20 @@ import { MASTERY_COLORS } from '../../utils/masteryColors';
 interface Props { studentId: string }
 
 type SortKey = 'accuracy' | 'wrong' | 'attempts' | 'avgSpeed' | 'bestSpeed';
-type TypeFilter = 'all' | 'mul' | 'div' | 'add' | 'sub' | 'frac';
+type TypeFilter = 'all' | 'mul' | 'div' | 'add' | 'sub' | 'frac' | 'word' | 'round' | 'factors' | 'dec';
 type StatusFilter = 'all' | 'weak' | 'strong' | 'new';
 
 const OPERATION_TABS: { key: TypeFilter; label: string; icon: string }[] = [
-  { key: 'all',  label: 'All',      icon: '∑' },
-  { key: 'mul',  label: 'Multiply', icon: '✖️' },
-  { key: 'div',  label: 'Divide',   icon: '➗' },
-  { key: 'add',  label: 'Add',      icon: '➕' },
-  { key: 'sub',  label: 'Subtract', icon: '➖' },
-  { key: 'frac', label: 'Fractions', icon: '🍕' },
+  { key: 'all',     label: 'All',       icon: '∑' },
+  { key: 'mul',     label: 'Multiply',  icon: '✖️' },
+  { key: 'div',     label: 'Divide',    icon: '➗' },
+  { key: 'add',     label: 'Add',       icon: '➕' },
+  { key: 'sub',     label: 'Subtract',  icon: '➖' },
+  { key: 'frac',    label: 'Fractions', icon: '🍕' },
+  { key: 'word',    label: 'Word',      icon: '📖' },
+  { key: 'round',   label: 'Rounding',  icon: '🔵' },
+  { key: 'factors', label: 'Primes',    icon: '🔢' },
+  { key: 'dec',     label: 'Decimals',  icon: '🔟' },
 ];
 
 /** Bucket an itemId's describe-group into a TypeFilter (unknown-factor counts as multiply). */
@@ -28,6 +32,10 @@ function bucketOf(itemId: string): Exclude<TypeFilter, 'all'> | 'other' {
   if (g === 'add') return 'add';
   if (g === 'sub') return 'sub';
   if (g === 'frac') return 'frac';
+  if (g === 'word') return 'word';
+  if (g === 'round') return 'round';
+  if (g === 'factors') return 'factors';
+  if (g === 'dec') return 'dec';
   return 'other';
 }
 
