@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import type { SessionConfig, FractionMode } from '../types/math';
 
 interface Props {
@@ -16,6 +16,9 @@ const MODES: { key: FractionMode; title: string; example: string; desc: string }
 export function FractionSetup({ onStart, onBack }: Props) {
   const [fractionMode, setFractionMode] = useState<FractionMode>('equivalent');
   const [count, setCount] = useState(10);
+  const countRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => { countRef.current?.select(); }, []);
 
   const clampCount = (n: number) => Math.max(COUNT_MIN, Math.min(COUNT_MAX, n));
 
@@ -56,6 +59,7 @@ export function FractionSetup({ onStart, onBack }: Props) {
         <div style={s.countRow}>
           <button style={s.adjBtn} tabIndex={-1} onClick={() => setCount(c => clampCount(c - 5))}>−5</button>
           <input
+            ref={countRef}
             type="number" min={COUNT_MIN} max={COUNT_MAX} value={count}
             onChange={e => setCount(clampCount(parseInt(e.target.value) || COUNT_MIN))}
             style={s.countInput}

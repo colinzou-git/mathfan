@@ -11,6 +11,26 @@ type SortKey = 'accuracy' | 'wrong' | 'attempts' | 'avgSpeed' | 'bestSpeed';
 type TypeFilter = 'all' | 'mul' | 'div' | 'add' | 'sub' | 'frac';
 type StatusFilter = 'all' | 'weak' | 'strong' | 'new';
 
+const OPERATION_TABS: { key: TypeFilter; label: string; icon: string }[] = [
+  { key: 'all',  label: 'All',      icon: '∑' },
+  { key: 'mul',  label: 'Multiply', icon: '✖️' },
+  { key: 'div',  label: 'Divide',   icon: '➗' },
+  { key: 'add',  label: 'Add',      icon: '➕' },
+  { key: 'sub',  label: 'Subtract', icon: '➖' },
+  { key: 'frac', label: 'Fractions', icon: '🍕' },
+];
+
+/** Bucket an itemId's describe-group into a TypeFilter (unknown-factor counts as multiply). */
+function bucketOf(itemId: string): Exclude<TypeFilter, 'all'> | 'other' {
+  const g = describeItem(itemId).group;
+  if (g === 'mul' || g === 'unk') return 'mul';
+  if (g === 'div') return 'div';
+  if (g === 'add') return 'add';
+  if (g === 'sub') return 'sub';
+  if (g === 'frac') return 'frac';
+  return 'other';
+}
+
 export function FactStatsTable({ studentId }: Props) {
   const [states, setStates] = useState<StudentItemState[]>([]);
   const [sort, setSort] = useState<SortKey>('accuracy');
@@ -25,18 +45,19 @@ export function FactStatsTable({ studentId }: Props) {
     );
   }, [studentId]);
 
+  // Count of practiced facts per operation, for the tab badges
+  const groupCounts = useMemo(() => {
+    const c: Record<string, number> = { all: states.length };
+    for (const s of states) {
+      const b = bucketOf(s.itemId);
+      c[b] = (c[b] ?? 0) + 1;
+    }
+    return c;
+  }, [states]);
+
   const rows = useMemo(() => {
     let filtered = states.filter(s => {
-      const desc = describeItem(s.itemId);
-
-      if (typeFilter !== 'all') {
-        // 'unk' counts as 'mul' group bucket; map filter to describe groups
-        if (typeFilter === 'mul' && desc.group !== 'mul' && desc.group !== 'unk') return false;
-        if (typeFilter === 'div' && desc.group !== 'div') return false;
-        if (typeFilter === 'add' && desc.group !== 'add') return false;
-        if (typeFilter === 'sub' && desc.group !== 'sub') return false;
-        if (typeFilter === 'frac' && desc.group !== 'frac') return false;
-      }
+      if (typeFilter !== 'all' && bucketOf(s.itemId) !== typeFilter) return false;
 
       if (statusFilter === 'weak' && s.masteryLevel !== 'learning' && s.masteryLevel !== 'developing') return false;
       if (statusFilter === 'strong' && s.masteryLevel !== 'strong' && s.masteryLevel !== 'mastered') return false;
@@ -73,6 +94,25 @@ export function FactStatsTable({ studentId }: Props) {
     return filtered;
   }, [states, sort, sortAsc, typeFilter, statusFilter, tableFilter]);
 
+  // Summary for the selected operation (ignores status/table filters)
+  const summary = useMemo(() => {
+    const opStates = typeFilter === 'all'
+      ? states
+      : states.filter(s => bucketOf(s.itemId) === typeFilter);
+    const attempts = opStates.reduce((sum, s) => sum + s.attemptCount, 0);
+    const correct = opStates.reduce((sum, s) => sum + s.correctCount, 0);
+    const speeds = opStates.map(s => s.medianLatencyMs).filter(Boolean);
+    const avgMs = speeds.length ? speeds.reduce((a, b) => a + b, 0) / speeds.length : 0;
+    const mastered = opStates.filter(s => s.masteryLevel === 'mastered' || s.masteryLevel === 'strong').length;
+    return {
+      facts: opStates.length,
+      attempts,
+      accuracy: attempts ? Math.round(correct / attempts * 100) : 0,
+      avgMs,
+      mastered,
+    };
+  }, [states, typeFilter]);
+
   const toggleSort = (key: SortKey) => {
     if (sort === key) setSortAsc(a => !a);
     else { setSort(key); setSortAsc(true); }
@@ -91,15 +131,39 @@ export function FactStatsTable({ studentId }: Props) {
 
   return (
     <div>
-      {/* Filters */}
-      <div style={st.filterBar}>
-        <div style={st.filterGroup}>
-          {(['all', 'mul', 'div', 'add', 'sub', 'frac'] as TypeFilter[]).map(f => (
-            <button key={f} style={{ ...st.chip, ...(typeFilter === f ? st.chipOn : {}) }} onClick={() => setTypeFilter(f)}>
-              {f === 'all' ? 'All' : f === 'mul' ? '×' : f === 'div' ? '÷' : f === 'add' ? '+' : f === 'sub' ? '−' : '½'}
+      {/* Operation tabs */}
+      <div style={st.opTabs}>
+        {OPERATION_TABS.map(t => {
+          const count = groupCounts[t.key] ?? 0;
+          const active = typeFilter === t.key;
+          return (
+            <button
+              key={t.key}
+              style={{ ...st.opTab, ...(active ? st.opTabOn : {}) }}
+              onClick={() => { setTypeFilter(t.key); setTableFilter('all'); }}
+            >
+              <span style={st.opTabIcon}>{t.icon}</span>
+              <span style={st.opTabLabel}>{t.label}</span>
+              <span style={{ ...st.opTabCount, ...(active ? { color: 'var(--primary)' } : {}) }}>{count}</span>
             </button>
-          ))}
+          );
+        })}
+      </div>
+
+      {/* Per-operation summary */}
+      {summary.facts > 0 && (
+        <div style={st.summary}>
+          <SummaryStat label="Facts" value={String(summary.facts)} />
+          <SummaryStat label="Answered" value={String(summary.attempts)} />
+          <SummaryStat label="Accuracy" value={`${summary.accuracy}%`}
+            color={summary.accuracy >= 90 ? '#15803d' : summary.accuracy >= 70 ? '#b45309' : '#b91c1c'} />
+          <SummaryStat label="Avg speed" value={summary.avgMs ? `${(summary.avgMs / 1000).toFixed(1)}s` : '—'} />
+          <SummaryStat label="Strong+" value={String(summary.mastered)} color="#15803d" />
         </div>
+      )}
+
+      {/* Secondary filters */}
+      <div style={st.filterBar}>
         <div style={st.filterGroup}>
           {(['all', 'weak', 'strong'] as StatusFilter[]).map(f => (
             <button key={f} style={{ ...st.chip, ...(statusFilter === f ? st.chipOn : {}) }} onClick={() => setStatusFilter(f)}>
@@ -107,14 +171,16 @@ export function FactStatsTable({ studentId }: Props) {
             </button>
           ))}
         </div>
-        <select
-          value={tableFilter}
-          onChange={e => setTableFilter(e.target.value === 'all' ? 'all' : parseInt(e.target.value))}
-          style={st.select}
-        >
-          <option value="all">All tables</option>
-          {tables.map(t => <option key={t} value={t}>{t}× table</option>)}
-        </select>
+        {(typeFilter === 'mul' || typeFilter === 'div') && (
+          <select
+            value={tableFilter}
+            onChange={e => setTableFilter(e.target.value === 'all' ? 'all' : parseInt(e.target.value))}
+            style={st.select}
+          >
+            <option value="all">All tables</option>
+            {tables.map(t => <option key={t} value={t}>{t}× table</option>)}
+          </select>
+        )}
       </div>
 
       <p style={{ color: '#6b7280', fontSize: '13px', margin: '8px 0 10px' }}>
@@ -186,7 +252,31 @@ export function FactStatsTable({ studentId }: Props) {
   );
 }
 
+function SummaryStat({ label, value, color = '#111827' }: { label: string; value: string; color?: string }) {
+  return (
+    <div style={st.summaryStat}>
+      <div style={{ fontSize: '16px', fontWeight: 'bold', color }}>{value}</div>
+      <div style={{ fontSize: '10px', color: '#9ca3af' }}>{label}</div>
+    </div>
+  );
+}
+
 const st: Record<string, React.CSSProperties> = {
+  opTabs: { display: 'flex', gap: '4px', overflowX: 'auto', paddingBottom: '4px', marginBottom: '10px' },
+  opTab: {
+    flex: '1 0 auto', minWidth: '58px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px',
+    padding: '8px 6px', border: '2px solid #e5e7eb', borderRadius: '10px', background: '#fff',
+    cursor: 'pointer', touchAction: 'manipulation',
+  },
+  opTabOn: { borderColor: 'var(--primary)', background: 'var(--primary-light)' },
+  opTabIcon: { fontSize: '18px', lineHeight: 1 },
+  opTabLabel: { fontSize: '11px', fontWeight: '600', color: '#374151' },
+  opTabCount: { fontSize: '11px', fontWeight: '700', color: '#9ca3af' },
+  summary: {
+    display: 'flex', gap: '6px', background: '#f9fafb', borderRadius: '10px',
+    padding: '10px 6px', marginBottom: '10px',
+  },
+  summaryStat: { flex: 1, textAlign: 'center' },
   filterBar: { display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '4px' },
   filterGroup: { display: 'flex', gap: '4px' },
   chip: { padding: '5px 10px', border: '1.5px solid #e5e7eb', borderRadius: '20px', background: '#fff', cursor: 'pointer', fontSize: '13px', fontWeight: '500' },

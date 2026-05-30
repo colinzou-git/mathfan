@@ -23,17 +23,17 @@ This section covers the dedicated multiplication drill mode: table selection, se
 
 | ID | Priority | Status | Description |
 |---|---|---|---|
-| MF-001 | P0 | In Progress | **Multiplication practice section.** The app has a dedicated Multiplication mode where students drill multiplication facts. It is distinct from the adaptive daily review and can be entered on demand from the home screen. |
-| MF-002 | P0 | Not Started | **Times table selector — single table.** Before a session starts, the student can pick one multiplier (2 through 13) to focus on. Selecting "7" drills 7×2, 7×3, 7×4 … 7×13 in that session. |
-| MF-003 | P0 | Not Started | **Times table selector — multiple tables.** The student can select two or more multipliers (e.g. 7 and 8) and practice them interleaved in one mixed session. Any combination of tables 2–13 is valid. |
-| MF-004 | P0 | Not Started | **Table range 2–13.** The multiplication table covers 2×2 through 13×13. Facts involving 0 or 1 are excluded from timed practice as they do not require memorization. |
-| MF-005 | P0 | Not Started | **Session length control.** Before starting any session, the student (or parent) chooses how many questions to answer: **10, 20, or 25**. Default is 20. The choice is remembered for the next session. |
-| MF-006 | P1 | Not Started | **Fact ordering within a single-table drill.** Single-table sessions present facts in random order (not sequential 2, 3, 4 …) to prevent pattern-matching without true recall. |
-| MF-007 | P1 | Not Started | **Question format variety.** Within a multiplication session, questions are presented in mixed formats: `7 × 8 = ?` (standard), `? × 8 = 56` (unknown factor), `56 ÷ 7 = ?` (inverse). Default mix: 70% standard, 20% unknown factor, 10% inverse. |
-| MF-008 | P1 | Not Started | **Per-fact result feedback.** After each answer, the app shows immediately: correct or wrong, the correct answer, and the student's response time in seconds. |
-| MF-009 | P1 | Not Started | **Session summary screen.** At the end of every session (multiplication or daily review), the app shows: total questions, correct count, accuracy %, average response time, fastest answer, and the list of facts that were missed. |
-| MF-010 | P2 | Not Started | **Highlight weak facts in table selector.** In the table selector UI, tables the student has historically struggled with are visually marked (e.g. a warning dot), so the student can intentionally target weak spots. |
-| MF-011 | P2 | Not Started | **"Surprise me" mode.** A single button that auto-selects 2–3 tables the student most needs to practice based on mastery data, and starts the session immediately. |
+| MF-001 | P0 | Done | **Multiplication practice section.** Home screen has a 5-operation picker; "Multiply" opens the table selector. Code: `StudentDashboard.tsx` (OPERATIONS), `TableSelector.tsx`. |
+| MF-002 | P0 | Done | **Times table selector — single table.** Pick one multiplier 2–13; `mode: 'single_table'`. Code: `TableSelector.tsx`, `generateSingleTableItems`. |
+| MF-003 | P0 | Done | **Times table selector — multiple tables.** Select 2+ tables → `mode: 'multi_table'`, interleaved. Code: `generateMultipleTablesItems`. |
+| MF-004 | P0 | Done | **Table range 2–13.** `TABLE_MIN=2`, `TABLE_MAX=13`; 0/1 excluded. Code: `multiplicationItems.ts`. |
+| MF-005 | P0 | Done (changed) | **Session length control.** Superseded by a **free-form count (1–200, default 10)** with ±/preset controls, not the original 10/20/25. The default persists via `settings.sessionLength`. Code: `TableSelector.tsx`, `SessionSetup.tsx`. |
+| MF-006 | P1 | Done | **Random fact ordering.** `planTableSession` shuffles items. Code: `scheduler.ts`. |
+| MF-007 | P1 | Not Started | **Question format variety within a table drill.** A single/multi-table drill currently presents only standard `a × b` items. Unknown-factor and inverse-division items exist but are only injected into the **adaptive daily review** (`ALL_ITEMS`), not table drills. No 70/20/10 mix is implemented. |
+| MF-008 | P1 | Done | **Per-fact result feedback.** Immediate correct/wrong, the answer, and response time in seconds. Code: `PracticeScreen.tsx` feedback block. |
+| MF-009 | P1 | Partial | **Session summary screen.** Shows total, correct, accuracy %, avg speed, and fastest answer (`SessionSummary.tsx`). **Missing:** the list of specific facts that were missed. |
+| MF-010 | P2 | Not Started | **Highlight weak facts in table selector.** No weak-fact marking in `TableSelector.tsx`. |
+| MF-011 | P2 | Not Started | **"Surprise me" mode.** Not implemented. |
 
 ---
 
@@ -41,9 +41,9 @@ This section covers the dedicated multiplication drill mode: table selection, se
 
 | ID | Priority | Status | Description |
 |---|---|---|---|
-| MF-020 | P0 | In Progress | **Adaptive session planner.** Each daily session automatically selects questions: 60% due for review, 20% weak/error-prone items, 20% new or rarely seen items. Session length is set by MF-005. |
-| MF-021 | P0 | In Progress | **Spaced review scheduler.** After each answer, the app computes the next review date using correctness and response speed (again / hard / good / easy → stability days). Wrong answers are retried within the same session. |
-| MF-022 | P0 | In Progress | **Mastery model per fact.** Each fact tracks: attempt count, correct count, median latency, stability days, mastery level (new / learning / developing / strong / mastered). |
+| MF-020 | P0 | Done | **Adaptive session planner.** 60% due / 20% weak / 20% new split. Code: `planSession` in `scheduler.ts`. |
+| MF-021 | P0 | Done | **Spaced review scheduler.** `applyReview` maps again/hard/good/easy → stability days and next-due date; wrong answers re-queued in-session. Code: `scheduler.ts`, `usePracticeSession.ts`. |
+| MF-022 | P0 | Done | **Mastery model per fact.** Tracks attempt/correct counts, median latency, stability days, personal best, mastery level. Code: `StudentItemState`, `updateMasteryLevel`. |
 
 ---
 
@@ -51,8 +51,8 @@ This section covers the dedicated multiplication drill mode: table selection, se
 
 | ID | Priority | Status | Description |
 |---|---|---|---|
-| MF-030 | P1 | In Progress | **13×13 mastery grid.** A visual grid showing every multiplication fact (2×2 through 13×13) color-coded by mastery level: green = mastered, light green = strong, yellow = developing, red = learning, gray = new. |
-| MF-031 | P1 | In Progress | **Cell detail on tap.** Tapping a cell shows: the fact, correct rate %, median speed, personal best speed, last seen date, next review date. |
+| MF-030 | P1 | Done (changed) | **13×13 mastery grid.** Color-coded grid with a **color-blind-safe palette + letter labels** (blue/M = mastered, green/S = strong, yellow/D = developing, orange/L = learning, gray = new) — superseding the original green/red scheme. Code: `MasteryGrid.tsx`, `masteryColors.ts`. |
+| MF-031 | P1 | Partial | **Cell detail on tap.** Shows fact, accuracy %, attempts, avg speed, personal best speed. **Missing:** last-seen date and next-review date in the cell detail. Code: `MasteryGrid.tsx`. |
 
 ---
 
@@ -60,10 +60,10 @@ This section covers the dedicated multiplication drill mode: table selection, se
 
 | ID | Priority | Status | Description |
 |---|---|---|---|
-| MF-040 | P1 | In Progress | **Audio question reading.** The app speaks each problem aloud using the browser Web Speech API (e.g. "Seven times eight"). |
-| MF-041 | P1 | In Progress | **Audio answer feedback.** After answering, the app speaks the result (e.g. "Correct. Seven times eight is fifty-six."). |
-| MF-042 | P1 | Not Started | **Repeat button.** A speaker icon on the question card re-reads the current problem on demand. |
-| MF-043 | P1 | In Progress | **Audio on/off toggle.** Audio can be disabled from settings. The setting persists per student profile. |
+| MF-040 | P1 | Done | **Audio question reading.** `speakProblem` via Web Speech API; ×→"times", ÷→"divided by". Code: `speech.ts`, `PracticeScreen.tsx`. |
+| MF-041 | P1 | Done | **Audio answer feedback.** `speakFeedback` speaks the result on correct. Code: `speech.ts`. |
+| MF-042 | P1 | Done | **Repeat button.** 🔊 button (title "Repeat") on the question card re-reads the prompt. Code: `PracticeScreen.tsx`. |
+| MF-043 | P1 | Done | **Audio on/off toggle.** `settings.audioEnabled` toggled in Settings + the in-drill settings overlay; persists per profile. Code: `SettingsPage.tsx`, `SettingsOverlay.tsx`. |
 
 ---
 
@@ -71,10 +71,10 @@ This section covers the dedicated multiplication drill mode: table selection, se
 
 | ID | Priority | Status | Description |
 |---|---|---|---|
-| MF-050 | P0 | Done | **Create student profile.** A student can enter their name and select grade level (3, 4, or 5). Profile is stored locally. |
-| MF-051 | P0 | In Progress | **Multiple profiles.** The app supports more than one student profile on the same device. A profile picker is shown at startup when more than one profile exists. |
-| MF-052 | P1 | Not Started | **Edit profile.** Student name and grade can be edited after creation. |
-| MF-053 | P2 | Not Started | **Export / import progress.** The student can export their full practice history as a JSON file and import it on another device. |
+| MF-050 | P0 | Done | **Create student profile.** Name + grade (3/4/5), stored in IndexedDB. Code: `ProfileSetup.tsx`. |
+| MF-051 | P0 | Partial | **Multiple profiles.** The DB and `studentRepo` support multiple profiles, and "Switch / Add Profile" exists — but it opens **ProfileSetup (create-new)**, and the app always loads `students[0]` at startup. **Missing:** a real picker to choose among existing profiles. Code: `App.tsx` (`all[0]`), `SettingsPage.tsx`. |
+| MF-052 | P1 | Done | **Edit profile.** Name (inline, Enter to save) and grade are editable post-creation. Code: `SettingsPage.tsx` Profile section. |
+| MF-053 | P2 | Not Started | **Export / import progress (JSON file).** Not implemented as a file. (Note: Google Drive sync, §16, covers cross-device continuity instead.) |
 
 ---
 
@@ -82,9 +82,9 @@ This section covers the dedicated multiplication drill mode: table selection, se
 
 | ID | Priority | Status | Description |
 |---|---|---|---|
-| MF-060 | P1 | In Progress | **Weekly summary.** Parent view shows: days practiced this week, total questions, overall accuracy, and which facts improved or still need work. |
-| MF-061 | P2 | Not Started | **Accuracy trend chart.** Line chart of accuracy over the past 30 days. |
-| MF-062 | P2 | Not Started | **Suggested focus.** App recommends 3–5 specific facts for the parent to review with the child based on mastery data. |
+| MF-060 | P1 | Partial | **Weekly summary.** The Stats page Week/Month views show days active, total questions, and accuracy for the period (`StatsPage.tsx`), but there is **no parent-specific view**. A `StatsPanel.tsx` weekly-summary component exists but is **dead code (never imported)**. |
+| MF-061 | P2 | Partial | **Accuracy trend chart.** `StatsGraph.tsx` overlays an accuracy line on the daily bars for the selected period; not a dedicated fixed 30-day accuracy chart. |
+| MF-062 | P2 | Not Started | **Suggested focus.** No parent recommendation feature. (The Growth tab surfaces weak facts but is student-facing.) |
 
 ---
 
@@ -92,12 +92,12 @@ This section covers the dedicated multiplication drill mode: table selection, se
 
 | ID | Priority | Status | Description |
 |---|---|---|---|
-| MF-070 | P0 | In Progress | **PWA — installable on iPad.** The app can be added to the iPad home screen and opened as a standalone app without a browser chrome. |
-| MF-071 | P0 | In Progress | **Offline-capable.** After first load, the full app works without a network connection. |
-| MF-072 | P0 | In Progress | **Local-first storage.** All student data (profiles, attempts, mastery states, sessions) is stored in IndexedDB on-device. No backend required for MVP. |
-| MF-073 | P0 | Done | **Unit tests for core logic.** Scheduler, answer checker, and question generator all have automated tests that pass before each release. |
-| MF-074 | P0 | Not Started | **Mobile-friendly layout.** All UI is usable with thumbs on an iPad screen. Tap targets are at least 44×44 pt. No horizontal scrolling on any screen. |
-| MF-075 | P1 | Not Started | **Child-safe design.** No public leaderboard, no ads, no open chat, no links to external sites. All comparison is against the student's own past performance only. |
+| MF-070 | P0 | Done (config) | **PWA — installable on iPad.** `vite-plugin-pwa` with `display: standalone`, manifest, icons; service worker generated at build. Installability itself is **device-verified only** (untested on a real iPad in this repo). Code: `vite.config.ts`. |
+| MF-071 | P0 | Done (config) | **Offline-capable.** Workbox precaches the app shell (`globPatterns`, `navigateFallback`). Real offline behavior is device-verified only. Code: `vite.config.ts`. |
+| MF-072 | P0 | Done | **Local-first storage.** Profiles, attempts, item states, sessions in IndexedDB via Dexie. No backend required. Code: `dexie.ts`, `repositories.ts`. |
+| MF-073 | P0 | Done | **Unit tests for core logic.** 121 tests across scheduler, answer checker, generators, stats, growth, fractions, describeItem. Code: `src/tests/`. |
+| MF-074 | P1 | Partial | **Mobile-friendly layout.** Layouts are responsive with large tap targets and `touchAction: manipulation`; however some wide tables/tab strips use `overflowX: auto` (intentional horizontal scroll), and nothing is device-verified on iPad. |
+| MF-075 | P1 | Done | **Child-safe design.** No leaderboard, ads, or chat; all comparison is self-referential. One external integration exists — optional Google sign-in/Drive sync (§16) — which is parent-initiated and off by default. |
 
 ---
 
@@ -107,13 +107,13 @@ The app tracks speed at three levels: individual fact, per-table session, and ov
 
 | ID | Priority | Status | Description |
 |---|---|---|---|
-| MF-080 | P0 | In Progress | **Record response time for every attempt.** Every attempt log entry stores the elapsed time from question display to answer submission, in milliseconds. This is the raw source for all speed statistics. |
-| MF-081 | P0 | Not Started | **Personal best per individual fact.** For each fact (e.g. 7×8), store the student's all-time fastest correct response time. Display it in the cell detail (MF-031) and on the feedback screen after answering correctly. |
-| MF-082 | P1 | Not Started | **Personal best per times table.** For each table (e.g. "7 times table"), store the best average response time achieved across any single session that practiced that table. A "best session" is the session where the student's average correct-answer speed was fastest. |
-| MF-083 | P1 | Not Started | **Personal best per session type.** Separate personal bests are tracked for: single-table drill, multi-table mixed session, and adaptive daily review. Shown on the session summary screen. |
-| MF-084 | P1 | Not Started | **Average speed per fact.** Display rolling median response time per fact (last 5 correct attempts). Used to classify each fact as fast / normal / slow and to color-code the mastery grid. |
-| MF-085 | P1 | Not Started | **Speed classification thresholds.** Each correct response is classified: Fast (≤1.5 s), Normal (1.5–4 s), Slow (>4 s). Thresholds are the same for all students in MVP; configurable per grade later. These thresholds directly feed the again/hard/good/easy rating used by the scheduler. |
-| MF-086 | P2 | Not Started | **"New personal best" moment.** When a student beats their personal best for a fact or a session, the app shows a brief celebration (e.g. a star burst or "New record!") without interrupting the session flow. |
+| MF-080 | P0 | Done | **Record response time for every attempt.** `latencyMs` stored on every `AttemptLog`. Code: `usePracticeSession.ts`. |
+| MF-081 | P0 | Done | **Personal best per individual fact.** `personalBestMs` updated on correct answers; shown on the feedback screen ("⚡ New personal best!") and in grid cell detail. Code: `scheduler.ts` (`applyReview`), `MasteryGrid.tsx`. |
+| MF-082 | P1 | Not Started | **Personal best per times table (best session avg speed).** Not stored/shown. (`computePerTableStats` exists but is unused.) |
+| MF-083 | P1 | Not Started | **Personal best per session type.** Not tracked. |
+| MF-084 | P1 | Done (changed) | **Average speed per fact.** `medianLatencyMs` maintained as a 0.7/0.3 exponential moving average (not literally "last 5"), used to classify speed and color the facts table. Code: `scheduler.ts`. |
+| MF-085 | P1 | Done | **Speed classification thresholds.** Fast ≤1500 ms, Normal ≤4000 ms, Slow >4000, timeout ≥10000 → feeds again/hard/good/easy. Code: `answerChecker.ts`. |
+| MF-086 | P2 | Done | **"New personal best" moment.** "⚡ New personal best!" shown inline on the feedback step when a fact's best is beaten. Code: `PracticeScreen.tsx`. |
 
 ---
 
@@ -123,14 +123,14 @@ The student (and parent) can look back at practice history across three time win
 
 | ID | Priority | Status | Description |
 |---|---|---|---|
-| MF-090 | P0 | Not Started | **Today's stats bar.** Always visible on the home/dashboard screen: problems answered today, accuracy today, minutes practiced today. Updates in real time as sessions complete. |
-| MF-091 | P1 | Not Started | **Day view.** A detailed view of a single day showing: each session (time started, mode, questions, accuracy, average speed), total questions for the day, and accuracy for the day. The student can tap any past day to see its detail. |
-| MF-092 | P1 | Not Started | **Week view.** A 7-day bar chart (or calendar strip) showing questions answered per day for the current week. Tapping a day bar opens that day's detail (MF-091). Shows totals: questions this week, accuracy this week, days practiced this week. |
-| MF-093 | P1 | Not Started | **Month view.** A calendar-style or bar chart view for the current month showing daily question counts and accuracy. Shows totals: questions this month, accuracy this month, days practiced this month. |
-| MF-094 | P1 | Not Started | **Period comparison — questions.** On the week view, show "this week vs last week" question count. On the month view, show "this month vs last month." Use a simple up/down arrow with a number (e.g. "+34 from last week"). |
-| MF-095 | P1 | Not Started | **Period comparison — accuracy.** Same as MF-094 but for accuracy %. Show whether accuracy improved or declined week-over-week and month-over-month. |
-| MF-096 | P1 | Not Started | **Per-table history panel.** From the table selector or mastery grid, the student can drill into any individual times table (e.g. "7×") and see: total practice sessions, best session speed, accuracy over time, and a sparkline of average speed per session (most recent 10 sessions). |
-| MF-097 | P2 | Not Started | **Yesterday's stats.** On the home screen, show yesterday's question count and accuracy as a quick reference point for today's session. |
+| MF-090 | P0 | Partial | **Today's stats bar.** Dashboard shows today's questions and accuracy (plus streak and due count). **Missing:** minutes practiced today. Code: `StudentDashboard.tsx`, `computeTodayStats`. |
+| MF-091 | P1 | Done | **Day view.** Stats "Sessions" tab lists each session (time, mode, questions, accuracy, avg speed, duration) and expands to per-question detail; the mini-calendar lets you select any single day to filter. Code: `DrillHistory.tsx`, `MiniCalendar.tsx`. |
+| MF-092 | P1 | Done | **Week view.** "This Week" preset + daily bar chart + summary pills (questions, accuracy, days active). Code: `StatsPage.tsx`, `StatsGraph.tsx`. |
+| MF-093 | P1 | Done | **Month view.** "This Month" preset + chart + summary pills. Code: `StatsPage.tsx`. |
+| MF-094 | P1 | Not Started | **Period comparison — questions (this vs last).** The live `StatsPage` shows period totals but **not** a "vs last week/month" delta. (The dead `StatsPanel.tsx` had this; it is not wired.) |
+| MF-095 | P1 | Not Started | **Period comparison — accuracy (this vs last).** Same gap as MF-094. |
+| MF-096 | P1 | Not Started | **Per-table history panel.** `computePerTableStats` exists but no UI consumes it. |
+| MF-097 | P2 | Not Started | **Yesterday's stats on home.** Not shown. |
 
 ---
 
@@ -140,15 +140,15 @@ The app's goal is to make the student feel good about their own improvement. All
 
 | ID | Priority | Status | Description |
 |---|---|---|---|
-| MF-100 | P0 | Not Started | **Practice streak.** Display the number of consecutive days the student has practiced. Shown prominently on the dashboard. Losing a streak does not cause shame — it resets quietly and a new streak begins. |
-| MF-101 | P1 | Not Started | **Fact improvement indicator.** In the mastery grid and fact detail view, show whether each fact is getting faster compared to the student's performance 7 days ago. Use a simple arrow: ↑ faster, → same, ↓ slower. |
-| MF-102 | P1 | Not Started | **Per-table improvement indicator.** In the table selector, show each table's average speed trend over the past 7 days (↑ faster / → same / ↓ slower). Students can see at a glance which tables they are improving. |
-| MF-103 | P1 | Not Started | **Session-over-session improvement.** On the session summary screen, compare this session's average speed and accuracy to the student's last session of the same type (e.g. last 7-times-table drill). Show delta: "3 seconds faster on average" or "5% more accurate than last time." |
-| MF-104 | P1 | Not Started | **Growth chart — speed over time.** A line chart showing the student's average correct-answer speed (across all facts) for each day practiced over the past 30 days. Downward slope = getting faster = good. |
-| MF-105 | P1 | Not Started | **Growth chart — accuracy over time.** A line chart showing overall accuracy (%) per day for the past 30 days. Upward slope = improving. Shown alongside the speed chart (MF-104). |
-| MF-106 | P1 | Not Started | **Milestone badges.** The student earns simple visual badges for meaningful milestones: first session completed, 7-day streak, first fact mastered, all facts in a table mastered, accuracy above 90% in a session, beat a personal best. Badges are collected locally and visible on the profile screen. |
-| MF-107 | P2 | Not Started | **"Best week" highlight.** On the month view, highlight the week in which the student answered the most questions or achieved the highest accuracy. Framed positively: "Your best week was May 12–18." |
-| MF-108 | P2 | Not Started | **Encouraging message after session.** After completing a session, show a short, positive, non-repetitive message tailored to the result: accuracy improved, streak extended, personal best, or just a general encouragement. Never shows negative or shame language. |
+| MF-100 | P0 | Done | **Practice streak.** Consecutive-day streak shown on the dashboard; resets quietly. Code: `computeStreak`, `StudentDashboard.tsx`. |
+| MF-101 | P1 | Partial | **Fact improvement indicator.** Delivered as the **Growth tab** (facts grouped stronger / needs-attention / new for today vs yesterday, week vs last week, month vs last month) rather than ↑/→/↓ arrows inside the grid. Code: `GrowthView.tsx`, `computeFactGrowth`. (`factTrend` arrow helper exists but is unused.) |
+| MF-102 | P1 | Not Started | **Per-table improvement indicator in the selector.** No trend shown in `TableSelector.tsx`. |
+| MF-103 | P1 | Not Started | **Session-over-session improvement.** `SessionSummary.tsx` contains the comparison logic (vs-last accuracy/speed deltas), but `PracticeScreen` never passes the `lastSession` prop, so it never renders. Effectively dormant. |
+| MF-104 | P1 | Not Started | **Growth chart — speed over time.** The stats chart plots questions (bars) + accuracy (line); there is no average-speed-over-time line. |
+| MF-105 | P1 | Partial | **Growth chart — accuracy over time.** `StatsGraph` overlays an accuracy line over the selected period (today/week/month/custom), satisfying the spirit but not a fixed 30-day window. |
+| MF-106 | P1 | Not Started | **Milestone badges.** No badge system. |
+| MF-107 | P2 | Not Started | **"Best week" highlight.** Not implemented. |
+| MF-108 | P2 | Partial | **Encouraging message after session.** Summary shows a positive tier emoji (🌟/👍/💪) and a gentle "nice work" line on early quit, but not the tailored, varied per-result messages described. Code: `SessionSummary.tsx`. |
 
 ---
 
@@ -230,16 +230,142 @@ Not Started; promote to a numbered section when scheduled.
 
 ---
 
+## Section 15 — Settings Page
+
+A full-screen Settings page (⚙️ on the dashboard) — shipped but previously
+undocumented.
+
+| ID | Priority | Status | Description |
+|---|---|---|---|
+| MF-160 | P1 | Done | **Settings page.** Sections for Profile, Practice, Appearance, and Google Sync. Code: `SettingsPage.tsx`. |
+| MF-161 | P1 | Done | **Sound + auto-advance toggles** (also available mid-drill via the overlay). Code: `SettingsPage.tsx`, `SettingsOverlay.tsx`. |
+| MF-162 | P1 | Done | **Default questions-per-session control** (1–200, ±5). Persisted to `settings.sessionLength`. |
+| MF-163 | P2 | Done | **Edit name and grade** from settings (see MF-052). |
+
+---
+
+## Section 16 — Google Sign-in & Cloud Sync
+
+Cross-device continuity via Google + Drive. Shipped; requires
+`VITE_GOOGLE_CLIENT_ID` to be configured (gated).
+
+| ID | Priority | Status | Description |
+|---|---|---|---|
+| MF-170 | P1 | Done (gated) | **Google sign-in (GIS).** Token-client preloaded; popup on tap; silent refresh for returning users; grant flag persisted, token kept in memory only. Disabled with a clear notice when no client ID is configured. Code: `googleAuth.ts`, `SyncWidget.tsx`, `SettingsPage.tsx`. |
+| MF-171 | P1 | Done (gated) | **Drive snapshot sync.** Full encrypted-free JSON snapshot of students/attempts/itemStates/sessions to Drive `appDataFolder`; pull-then-push merge on sign-in; push after each session. Code: `snapshot.ts`, `driveSync.ts`, `useSync.ts`. |
+| MF-172 | P1 | Done | **Snapshot merge logic.** Item states keep the record with more attempts; attempts/sessions unioned by id; students upserted. Code: `snapshot.ts` (`mergeSnapshot`). |
+| MF-173 | P2 | Done | **Sync status display.** Settings shows account, last-sync time, Drive file size, Drive modified time, and local attempt count; manual "Sync now". Code: `SettingsPage.tsx`, `getDriveFileInfo`. |
+| MF-174 | P2 | Not Started | **At-rest encryption of the Drive snapshot.** The starter-kit AES-GCM store was not ported; the snapshot is plaintext JSON in the private appData folder. |
+
+---
+
+## Section 17 — Keyboard-First Drill UX
+
+The drill is designed for full keyboard operation (no mouse switching).
+Shipped; previously undocumented.
+
+| ID | Priority | Status | Description |
+|---|---|---|---|
+| MF-180 | P0 | Done | **Always-focused answer input.** The numeric input auto-focuses on every new question and after each retry. Code: `PracticeScreen.tsx`. |
+| MF-181 | P0 | Done | **Enter submits / advances.** Enter checks the answer; on a correct answer Enter (or Space) goes to the next question. |
+| MF-182 | P1 | Done | **Auto-advance option.** When enabled, a correct answer advances automatically after a short delay. Code: `settings.autoAdvance`. |
+| MF-183 | P0 | Done | **Wrong-answer retry.** On a wrong answer the field clears, an inline red "Incorrect — try again" shows, and the same question stays; the item is also re-queued. |
+| MF-184 | P1 | Done | **Quit mid-session.** `Q` or ✕ opens a confirm dialog; partial answers are saved and a summary is shown. Zero-question sessions are deleted. Code: `PracticeScreen.tsx`, `usePracticeSession.ts`. |
+| MF-185 | P1 | Done | **Choice input for comparisons.** Fraction-compare accepts `<` `=` `>` via buttons or matching keys. Code: `PracticeScreen.tsx`, `answerChecker.ts`. |
+| MF-186 | P1 | Done | **On-screen numeric keypad** for touch-only use on iPad. Code: `NumPad.tsx`. |
+| MF-187 | P2 | Done | **Auto-focused setup screens.** Count inputs on the table/arithmetic/fraction setup screens auto-select on open. Code: `TableSelector.tsx`, `ArithmeticSetup.tsx`, `FractionSetup.tsx`. |
+
+---
+
+## Section 18 — Appearance / Themes
+
+| ID | Priority | Status | Description |
+|---|---|---|---|
+| MF-190 | P2 | Done | **Color themes.** Seven themes (Indigo, Dark Blue, Sky Blue, High Contrast, Sunrise, Forest, Amber) applied via CSS variables; persisted per profile and re-applied on load. Code: `themes.ts`, `SettingsPage.tsx`, `App.tsx`. |
+
+---
+
+## Section 19 — Stats Navigation & Accessibility (shipped extras)
+
+| ID | Priority | Status | Description |
+|---|---|---|---|
+| MF-200 | P1 | Done | **Mini-calendar + custom date range.** Pick a single day or a range; days with activity are dotted. Code: `MiniCalendar.tsx`, `StatsPage.tsx`. |
+| MF-201 | P1 | Done | **Per-operation tabs in the Facts view.** All / Multiply / Divide / Add / Subtract / Fractions tabs with counts and a per-operation summary (facts, answered, accuracy, avg speed, strong+). Code: `FactStatsTable.tsx`. |
+| MF-202 | P1 | Done | **Color-blind-safe mastery palette + letters.** Shared palette (M/S/D/L) used by the grid and the facts table. Code: `masteryColors.ts`. |
+| MF-203 | P1 | Done | **Growth tab.** Day/week/month comparison of which facts got stronger/weaker/new. Code: `GrowthView.tsx`. |
+| MF-204 | P2 | Done | **Sortable/filterable facts table** across all operations (sort by tries, accuracy, wrong, avg/best speed; filter by status). Code: `FactStatsTable.tsx`. |
+| MF-205 | P2 | Done | **Empty-session cleanup.** Zero-question sessions are removed on quit/complete and on startup. Code: `usePracticeSession.ts`, `repositories.ts` (`deleteEmpty`). |
+
+---
+
+## Section 20 — CI/CD & Release
+
+| ID | Priority | Status | Description |
+|---|---|---|---|
+| MF-210 | P0 | Done | **CI on every push/PR.** GitHub Actions runs typecheck → 121 tests → build. Code: `.github/workflows/ci.yml`. |
+| MF-211 | P0 | Done | **Auto-deploy to GitHub Pages on main.** Build (with `VITE_GOOGLE_CLIENT_ID` secret + `VITE_BASE_PATH`) → upload → deploy. Live at `colinzou-git.github.io/mathfan/`. Code: `.github/workflows/deploy.yml`. |
+| MF-212 | P1 | Done | **Configurable base path** for project-site vs custom-domain deploys. Code: `vite.config.ts`. |
+
+---
+
 ## Appendix — Status counts (auto-update manually when editing)
 
 | Status | Count |
 |---|---|
-| Done | 11 |
-| In Progress | 11 |
-| Not Started | 67 |
+| Done | 56 |
+| Partial | 11 |
+| Not Started | 39 |
 | Deferred | 0 |
-| **Total** | **89** |
+| **Total** | **106** |
 
-> Note: many Section 1–10 items shown as "In Progress" are in fact shipped
-> (drill engine, stats, growth, themes, sync). A full status reconciliation pass
-> (`/specsync`) is due to mark them Done against the current code.
+> "Done (changed)" and "Done (gated/config)" are counted as Done above. Partial =
+> implemented but with a stated gap.
+
+---
+
+## Audit log
+
+**2026-05-30 — /specsync reconciliation (code-verified).**
+Reconciled docs/PRD.md against the source. Summary of changes:
+
+- **Promoted to Done** (were "In Progress"/"Not Started" but verified working in
+  code): the whole multiplication drill flow (MF-001–006, 008), adaptive
+  scheduler + mastery model (MF-020–022), mastery grid (MF-030), audio incl.
+  repeat button (MF-040–043), edit profile (MF-052), local storage + tests +
+  PWA config (MF-070–073), speed tracking incl. personal bests and the
+  "new best" moment (MF-080, 081, 084, 085, 086), day/week/month views
+  (MF-091–093), and streak (MF-100).
+- **Marked Partial** with the specific gap: session summary missing the
+  missed-facts list (MF-009); grid cell detail missing last-seen/next-review
+  (MF-031); multiple-profile *picker* missing — app always loads the first
+  profile (MF-051); parent-specific view missing, `StatsPanel.tsx` is dead code
+  (MF-060); today bar missing minutes (MF-090); accuracy chart not a fixed
+  30-day window (MF-061, 105); fact-improvement delivered via Growth tab not
+  grid arrows (MF-101); post-session message not yet tailored/varied (MF-108);
+  mobile layout not device-verified, some intentional horizontal scroll (MF-074).
+- **Kept/!confirmed Not Started:** in-drill format mixing (MF-007), surprise-me
+  (MF-011), JSON export/import (MF-053), suggested focus (MF-062), per-table
+  best/session-type bests (MF-082, 083), period vs-last deltas (MF-094, 095),
+  per-table history panel (MF-096), yesterday stats (MF-097), per-table trend
+  (MF-102), session-over-session compare — code present but unwired (MF-103),
+  speed-over-time chart (MF-104), badges (MF-106), best-week (MF-107).
+- **Changed description to match code:** session length is now free-form 1–200
+  default 10, not 10/20/25 (MF-005); grid palette is color-blind-safe blue/green/
+  yellow/orange with letters, not green/red (MF-030); avg-speed is a 0.7/0.3 EMA,
+  not literal last-5 (MF-084).
+- **Added shipped-but-undocumented features** as new sections: Settings page
+  (§15), Google sign-in & Drive sync (§16), keyboard-first drill UX (§17),
+  themes (§18), stats navigation & accessibility extras (§19), CI/CD (§20).
+
+**Items I was unsure about (please confirm):**
+1. **MF-103** — the session-over-session comparison UI is fully coded in
+   `SessionSummary.tsx` but `PracticeScreen` never passes `lastSession`, so it
+   never renders. I marked it **Not Started**; it could be "Partial (built, not
+   wired)". Want me to wire it up (it's a small change)?
+2. **MF-060/061** — I treated the Stats week/month views as *not* satisfying the
+   "parent dashboard" intent (no parent framing; `StatsPanel.tsx` is dead code).
+   If you consider the student Stats page sufficient for parents, these become
+   Done.
+3. **MF-074 / MF-070 / MF-071** — marked Done(config)/Partial because nothing is
+   verified on a real iPad. If you've confirmed install + offline on a device, I
+   can promote them to fully Done.
