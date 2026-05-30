@@ -18,6 +18,7 @@ import { generateNumberTheoryItems } from '../curriculum/numberTheoryItems';
 import { generateDecimalItems } from '../curriculum/decimalItems';
 import { itemStateRepo, attemptRepo, sessionRepo } from '../../db/repositories';
 import { db } from '../../db/dexie';
+import { appNow } from '../time/clock';
 import { generateId } from '../../utils/id';
 import type { PracticeItem as PItem } from '../../types/math';
 
@@ -96,7 +97,7 @@ export function usePracticeSession(studentId: string) {
 
   const startSession = useCallback(async (config: SessionConfig) => {
     configRef.current = config;
-    const now = new Date();
+    const now = appNow();
     sessionStartRef.current = Date.now();
 
     const allStates = await itemStateRepo.getForStudent(studentId);
@@ -191,7 +192,7 @@ export function usePracticeSession(studentId: string) {
 
       // Fire-and-forget DB writes (can't await inside setState)
       const existing = statesRef.current.get(item.id) ?? createInitialState(studentId, item);
-      const updated = applyReview(existing, result.reviewGrade, latencyMs, rawInput, new Date());
+      const updated = applyReview(existing, result.reviewGrade, latencyMs, rawInput, appNow());
       statesRef.current.set(item.id, updated);
       itemStateRepo.save(updated);
 
@@ -202,7 +203,7 @@ export function usePracticeSession(studentId: string) {
         studentAnswer: result.studentAnswer,
         isCorrect: result.isCorrect, latencyMs,
         reviewGrade: result.reviewGrade,
-        createdAt: new Date().toISOString(),
+        createdAt: appNow().toISOString(),
       });
 
       if (!result.isCorrect) {
@@ -259,7 +260,7 @@ export function usePracticeSession(studentId: string) {
               correctCount: prev.correctCount,
               averageLatencyMs: avgMs,
               fastestCorrectMs: prev.fastestMs ?? undefined,
-              endedAt: isEnding ? new Date().toISOString() : undefined,
+              endedAt: isEnding ? appNow().toISOString() : undefined,
             });
           }
         });

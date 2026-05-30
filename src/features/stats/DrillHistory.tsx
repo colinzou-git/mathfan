@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import type { PracticeSession, AttemptLog } from '../../types/math';
 import type { DateRange } from '../../components/MiniCalendar';
 import { sessionRepo, attemptRepo } from '../../db/repositories';
+import { appNow } from '../time/clock';
 
 interface Props {
   studentId: string;
@@ -27,7 +28,7 @@ function modeLabel(s: PracticeSession): string {
 
 function dateLabel(iso: string): string {
   const d = new Date(iso);
-  const today = new Date();
+  const today = appNow();
   const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
   const dStr = d.toDateString();
   if (dStr === today.toDateString()) return `Today ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;

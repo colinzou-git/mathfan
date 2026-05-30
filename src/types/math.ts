@@ -108,8 +108,16 @@ export interface StudentItemState {
   medianLatencyMs: number;
   personalBestMs?: number;
   ease: number;
+  /** FSRS stability S (days). 0 = never successfully reviewed. */
   stabilityDays: number;
+  /** Item intrinsic difficulty (0–1), copied from the PracticeItem. */
   difficulty: number;
+  /** FSRS per-card difficulty D (1–10). 0 = uninitialised. */
+  fsrsDifficulty?: number;
+  /** Total scheduled reviews (FSRS reps). */
+  reps?: number;
+  /** Times the card lapsed (answered "again" when it was due). */
+  lapses?: number;
   masteryLevel: MasteryLevel;
   lastSeenAt?: string;
   nextDueAt?: string;

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import type { StudentProfile } from '../../types/math';
 import { itemStateRepo, attemptRepo, sessionRepo } from '../../db/repositories';
 import { computeTodayStats, computeStreak } from '../stats/statsEngine';
+import { appNow } from '../time/clock';
 
 export type PracticeOp =
   | 'multiplication' | 'division' | 'addition' | 'subtraction' | 'fraction'
@@ -40,7 +41,7 @@ export function StudentDashboard({ profile, onStartDailyReview, onPickOperation,
 
   useEffect(() => {
     (async () => {
-      const now = new Date();
+      const now = appNow();
       const [attempts, states, sessions] = await Promise.all([
         attemptRepo.getAll(profile.id),
         itemStateRepo.getForStudent(profile.id),

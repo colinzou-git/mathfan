@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import type { AttemptLog, FactGrowth, GrowthSummary } from '../../types/math';
 import { attemptRepo } from '../../db/repositories';
 import { computeFactGrowth, growthWindows, type GrowthPeriod } from './statsEngine';
+import { appNow } from '../time/clock';
 
 interface Props { studentId: string }
 
@@ -20,7 +21,7 @@ export function GrowthView({ studentId }: Props) {
   }, [studentId]);
 
   const summary: GrowthSummary = useMemo(() => {
-    const [cs, ce, ps, pe] = growthWindows(period);
+    const [cs, ce, ps, pe] = growthWindows(period, appNow());
     return computeFactGrowth(attempts, cs, ce, ps, pe);
   }, [attempts, period]);
 

@@ -7,6 +7,7 @@ import { MiniCalendar, type DateRange } from '../../components/MiniCalendar';
 import { StatsGraph, type DayPoint } from '../../components/StatsGraph';
 import { computeDayStats, addDays, startOfLocalDay, startOfWeek, startOfMonth, localDateStr } from '../stats/statsEngine';
 import { attemptRepo, sessionRepo } from '../../db/repositories';
+import { appNow } from '../time/clock';
 import type { AttemptLog, PracticeSession } from '../../types/math';
 
 interface Props {
@@ -20,7 +21,7 @@ type DetailTab = 'growth' | 'sessions' | 'facts' | 'grid';
 function toYMD(d: Date): string { return localDateStr(d.toISOString()); }
 
 function buildRange(preset: PeriodPreset, customRange?: DateRange): DateRange {
-  const now = new Date();
+  const now = appNow();
   const today = toYMD(now);
   if (preset === 'today') return { start: today, end: today };
   if (preset === 'week') {
@@ -41,7 +42,7 @@ function daysBetween(start: string, end: string): number {
 export function StatsPage({ studentId, onBack }: Props) {
   const [preset, setPreset] = useState<PeriodPreset>('week');
   const [customRange, setCustomRange] = useState<DateRange>(() => {
-    const today = toYMD(new Date());
+    const today = toYMD(appNow());
     return { start: today, end: today };
   });
   const [showCalendar, setShowCalendar] = useState(false);

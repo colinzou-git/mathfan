@@ -1,13 +1,69 @@
 import type { StudentItemState, PracticeItem, ReviewGrade, MasteryLevel } from '../../types/math';
+import { MS_PER_DAY } from '../time/clock';
 
-const INITIAL_STABILITY = 1;
+// ── FSRS-4.5 ────────────────────────────────────────────────────────────────
+// A faithful, compact implementation of the Free Spaced Repetition Scheduler
+// (v4.5) with its published default weights. Stability grows on success (more
+// for Easy, less for Hard), resets low on a lapse, difficulty drifts toward a
+// baseline, and the next interval is derived from stability for a target
+// retention — reviewing late (low retrievability) earns a bigger stability gain.
 
-export function nextIntervalDays(currentStabilityDays: number, grade: ReviewGrade): number {
-  if (grade === 'again') return 0;
-  if (grade === 'hard') return Math.max(1, currentStabilityDays * 0.8);
-  if (grade === 'good') return Math.max(2, currentStabilityDays * 1.8);
-  if (grade === 'easy') return Math.max(4, currentStabilityDays * 2.8);
-  return 1;
+/** Grade → numeric rating used by FSRS: again=1, hard=2, good=3, easy=4. */
+const RATING: Record<ReviewGrade, number> = { again: 1, hard: 2, good: 3, easy: 4 };
+
+/** FSRS-4.5 default weights (w0..w16). */
+export const FSRS_W = [
+  0.4872, 1.4003, 3.7145, 13.8206, 5.1618, 1.2298, 0.8975, 0.0310,
+  1.6474, 0.1367, 1.0461, 2.1072, 0.0793, 0.3246, 1.5870, 0.2272, 2.8755,
+];
+
+/** Target retention for scheduling the next review. */
+export const TARGET_RETENTION = 0.9;
+const MIN_STABILITY = 0.1;
+
+const clampD = (d: number) => Math.min(10, Math.max(1, d));
+const clampS = (s: number) => Math.max(MIN_STABILITY, s);
+
+/** Retrievability after `t` days at stability `s` (FSRS-4.5). */
+export function fsrsRetrievability(t: number, s: number): number {
+  if (s <= 0) return 0;
+  return Math.pow(1 + Math.max(0, t) / (9 * s), -1);
+}
+
+/** Interval (days) to reach `retention` from stability `s`. At 0.9 this ≈ s. */
+export function fsrsInterval(s: number, retention = TARGET_RETENTION): number {
+  return 9 * s * (1 / retention - 1);
+}
+
+function initStability(grade: ReviewGrade): number {
+  return clampS(FSRS_W[RATING[grade] - 1]);
+}
+function initDifficulty(grade: ReviewGrade): number {
+  return clampD(FSRS_W[4] - FSRS_W[5] * (RATING[grade] - 3));
+}
+function nextDifficulty(d: number, grade: ReviewGrade): number {
+  const nd = d - FSRS_W[6] * (RATING[grade] - 3);
+  // Mean-reversion toward the "Good" baseline difficulty (w4).
+  return clampD(FSRS_W[7] * FSRS_W[4] + (1 - FSRS_W[7]) * nd);
+}
+function recallStability(d: number, s: number, r: number, grade: ReviewGrade): number {
+  const hard = grade === 'hard' ? FSRS_W[15] : 1;
+  const easy = grade === 'easy' ? FSRS_W[16] : 1;
+  const inc =
+    Math.exp(FSRS_W[8]) *
+    (11 - d) *
+    Math.pow(s, -FSRS_W[9]) *
+    (Math.exp(FSRS_W[10] * (1 - r)) - 1) *
+    hard * easy;
+  return clampS(s * (1 + inc));
+}
+function lapseStability(d: number, s: number, r: number): number {
+  return clampS(
+    FSRS_W[11] *
+    Math.pow(d, -FSRS_W[12]) *
+    (Math.pow(s + 1, FSRS_W[13]) - 1) *
+    Math.exp(FSRS_W[14] * (1 - r)),
+  );
 }
 
 export function updateMasteryLevel(state: StudentItemState): MasteryLevel {
@@ -25,20 +81,36 @@ export function applyReview(
   grade: ReviewGrade,
   latencyMs: number,
   answer: string,
-  now: Date
+  now: Date,
 ): StudentItemState {
   const isCorrect = grade !== 'again';
-  const newCorrectCount = state.correctCount + (isCorrect ? 1 : 0);
   const newAttemptCount = state.attemptCount + 1;
+  const newCorrectCount = state.correctCount + (isCorrect ? 1 : 0);
+  const reps = state.reps ?? 0;
 
-  const newStabilityDays = isCorrect
-    ? nextIntervalDays(state.stabilityDays || INITIAL_STABILITY, grade)
-    : 0;
+  let newS: number;
+  let newD: number;
 
-  const intervalMs = newStabilityDays * 24 * 60 * 60 * 1000;
-  const nextDue = new Date(now.getTime() + intervalMs);
+  if (reps === 0 || state.stabilityDays <= 0 || !state.fsrsDifficulty) {
+    // First scheduled review of this card.
+    newD = initDifficulty(grade);
+    newS = initStability(grade);
+  } else {
+    const d = state.fsrsDifficulty;
+    const lastMs = state.lastSeenAt ? new Date(state.lastSeenAt).getTime() : now.getTime();
+    const elapsedDays = Math.max(0, (now.getTime() - lastMs) / MS_PER_DAY);
+    const r = fsrsRetrievability(elapsedDays, state.stabilityDays);
+    newD = nextDifficulty(d, grade);
+    newS = isCorrect
+      ? recallStability(d, state.stabilityDays, r, grade)
+      : lapseStability(d, state.stabilityDays, r);
+  }
 
-  // Update personal best only on correct answers
+  // "again" → review again in this same session (due now). Otherwise schedule
+  // from stability for the target retention. Intervals are in app-time days.
+  const intervalDays = grade === 'again' ? 0 : fsrsInterval(newS);
+  const nextDue = new Date(now.getTime() + intervalDays * MS_PER_DAY);
+
   const newPersonalBest = isCorrect
     ? (state.personalBestMs === undefined ? latencyMs : Math.min(state.personalBestMs, latencyMs))
     : state.personalBestMs;
@@ -52,7 +124,10 @@ export function applyReview(
     lastLatencyMs: latencyMs,
     medianLatencyMs: rollingMedian(state.medianLatencyMs, latencyMs),
     personalBestMs: newPersonalBest,
-    stabilityDays: newStabilityDays,
+    stabilityDays: newS,
+    fsrsDifficulty: newD,
+    reps: reps + 1,
+    lapses: (state.lapses ?? 0) + (grade === 'again' ? 1 : 0),
     lastSeenAt: now.toISOString(),
     nextDueAt: grade === 'again' ? now.toISOString() : nextDue.toISOString(),
   };
@@ -62,7 +137,7 @@ export function applyReview(
 
 export function createInitialState(
   studentId: string,
-  item: PracticeItem
+  item: PracticeItem,
 ): StudentItemState {
   return {
     studentId,
@@ -74,7 +149,10 @@ export function createInitialState(
     lastLatencyMs: 0,
     medianLatencyMs: 0,
     ease: 2.5,
-    stabilityDays: INITIAL_STABILITY,
+    stabilityDays: 0,
+    fsrsDifficulty: 0,
+    reps: 0,
+    lapses: 0,
     difficulty: item.difficulty,
     masteryLevel: 'new',
     mistakePatterns: [],

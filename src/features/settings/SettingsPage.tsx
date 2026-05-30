@@ -5,6 +5,7 @@ import { useSync } from '../sync/useSync';
 import { getDriveFileInfo } from '../sync/driveSync';
 import { attemptRepo } from '../../db/repositories';
 import { studentRepo } from '../../db/repositories';
+import { isDebugSpeed, enableDebugSpeed, disableDebugSpeed } from '../time/clock';
 
 interface Props {
   profile: StudentProfile;
@@ -48,6 +49,12 @@ export function SettingsPage({ profile, onUpdateProfile, onBack, onSwitchStudent
   const [totalQuestions, setTotalQuestions] = useState<number | null>(null);
   const [editName, setEditName] = useState(profile.displayName);
   const [nameDirty, setNameDirty] = useState(false);
+  const [debugSpeed, setDebugSpeed] = useState(isDebugSpeed());
+
+  const toggleDebugSpeed = (on: boolean) => {
+    if (on) enableDebugSpeed(); else disableDebugSpeed();
+    setDebugSpeed(on);
+  };
 
   useEffect(() => {
     attemptRepo.getAll(profile.id).then(a => setTotalQuestions(a.length));
@@ -249,6 +256,21 @@ export function SettingsPage({ profile, onUpdateProfile, onBack, onSwitchStudent
               <p style={{ color: '#ef4444', fontSize: '13px', marginTop: '8px' }}>{syncError}</p>
             )}
           </div>
+        )}
+      </Section>
+
+      {/* ── Testing ─────────────────────────────────────────────────── */}
+      <Section title="Testing (advanced)">
+        <ToggleRow
+          label="Fast time (debug)"
+          desc="Speeds the app clock so 1 day passes in ~20 seconds — lets you watch spaced-review (FSRS) come due, streaks build, and charts move without waiting. Turn off for normal use."
+          checked={debugSpeed}
+          onChange={toggleDebugSpeed}
+        />
+        {debugSpeed && (
+          <p style={{ fontSize: 12, color: '#b45309', margin: '8px 0 0' }}>
+            ⚡ Fast time is ON — review dates and stats are running ~4320× real time.
+          </p>
         )}
       </Section>
     </div>
