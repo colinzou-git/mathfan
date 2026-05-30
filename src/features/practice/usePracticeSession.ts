@@ -8,9 +8,14 @@ import {
   generateSingleTableItems, generateMultipleTablesItems,
   ALL_ITEMS, ITEM_MAP,
 } from '../curriculum/multiplicationItems';
+import {
+  generateAdditionItems, generateSubtractionItems, generateDivisionItemsRange,
+} from '../curriculum/arithmeticItems';
+import { generateFractionItems } from '../curriculum/fractionItems';
 import { itemStateRepo, attemptRepo, sessionRepo } from '../../db/repositories';
 import { db } from '../../db/dexie';
 import { generateId } from '../../utils/id';
+import type { PracticeItem as PItem } from '../../types/math';
 
 // ── Public types ──────────────────────────────────────────────────────────────
 
@@ -64,6 +69,12 @@ export function usePracticeSession(studentId: string) {
   const configRef = useRef<SessionConfig | null>(null);
   const sessionStartRef = useRef<number>(0);
   const questionStartRef = useRef<number>(Date.now());
+  // Holds dynamically generated items (arithmetic/fractions) not in the static ITEM_MAP
+  const dynamicItemsRef = useRef<Map<string, PItem>>(new Map());
+
+  const resolveItem = useCallback((id: string): PItem => {
+    return dynamicItemsRef.current.get(id) ?? getStaticItem(id);
+  }, []);
 
   // ── startSession ──────────────────────────────────────────────────────────
 
@@ -77,12 +88,29 @@ export function usePracticeSession(studentId: string) {
     statesRef.current = stateMap;
 
     let queue: string[];
-    const { mode, tables, sessionLength } = config;
+    const { mode, tables, sessionLength, operandMin, operandMax, fractionMode } = config;
+    const lo = operandMin ?? 0;
+    const hi = operandMax ?? 20;
+
+    // Reset & populate the dynamic item registry for generated modes
+    dynamicItemsRef.current = new Map();
+    const registerDynamic = (items: PItem[]): string[] => {
+      for (const it of items) dynamicItemsRef.current.set(it.id, it);
+      return items.map(it => it.id);
+    };
 
     if (mode === 'single_table' && tables?.length) {
       queue = planTableSession(generateSingleTableItems(tables[0]), sessionLength);
     } else if (mode === 'multi_table' && tables?.length) {
       queue = planTableSession(generateMultipleTablesItems(tables), sessionLength);
+    } else if (mode === 'addition') {
+      queue = registerDynamic(generateAdditionItems(lo, hi, sessionLength));
+    } else if (mode === 'subtraction') {
+      queue = registerDynamic(generateSubtractionItems(lo, hi, sessionLength));
+    } else if (mode === 'division') {
+      queue = registerDynamic(generateDivisionItemsRange(lo, hi, sessionLength));
+    } else if (mode === 'fraction') {
+      queue = registerDynamic(generateFractionItems(fractionMode ?? 'equivalent', sessionLength));
     } else {
       const plan = planSession(ALL_ITEMS, stateMap, now, sessionLength);
       queue = [...plan.dueItems, ...plan.weakItems, ...plan.newItems];
@@ -104,7 +132,7 @@ export function usePracticeSession(studentId: string) {
       return;
     }
 
-    const first = getItem(queueRef.current.shift()!);
+    const first = resolveItem(queueRef.current.shift()!);
     questionStartRef.current = Date.now();
     setState({
       ...INITIAL, phase: 'active',
@@ -208,7 +236,7 @@ export function usePracticeSession(studentId: string) {
       return {
         ...prev,
         phase: 'active',
-        currentItem: getItem(nextId),
+        currentItem: resolveItem(nextId),
         retryKey: 0,
         errorText: null,
         correctResult: null,
@@ -227,7 +255,7 @@ export function usePracticeSession(studentId: string) {
   return { state, startSession, submitAnswer, nextQuestion, resetSession };
 }
 
-function getItem(id: string): PracticeItem {
+function getStaticItem(id: string): PracticeItem {
   const item = ITEM_MAP.get(id);
   if (!item) throw new Error(`Item not found: ${id}`);
   return item;

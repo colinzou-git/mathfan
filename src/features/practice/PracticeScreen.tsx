@@ -104,16 +104,28 @@ export function PracticeScreen({
         return;
       }
 
-      if (state.phase === 'active' && e.key === 'Enter') {
-        e.preventDefault();
-        if (input.trim()) { submitAnswer(input); setInput(''); }
+      if (state.phase === 'active') {
+        const item = state.currentItem;
+        if (item?.answerInput === 'choice') {
+          // Fraction-compare: accept < = > directly
+          if (e.key === '<' || e.key === '=' || e.key === '>') {
+            e.preventDefault();
+            submitAnswer(e.key);
+            setInput('');
+          }
+          return;
+        }
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          if (input.trim()) { submitAnswer(input); setInput(''); }
+        }
       }
     };
 
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.phase, input, showSettings, showQuit]);
+  }, [state.phase, state.currentItem, input, showSettings, showQuit]);
 
   const confirmQuit = useCallback(() => {
     setShowQuit(false);
@@ -155,8 +167,16 @@ export function PracticeScreen({
 
   const isCorrect = state.phase === 'correct';
   const hasError = !!state.errorText;
+  const isChoice = state.currentItem?.answerInput === 'choice';
+  const choices = state.currentItem?.choices ?? [];
   const progress = state.totalPlanned
     ? Math.round((state.completedCount / state.totalPlanned) * 100) : 0;
+
+  const submitChoice = (choice: string) => {
+    if (isCorrect) return;
+    submitAnswer(choice);
+    setInput('');
+  };
 
   return (
     <div style={st.container}>
@@ -232,22 +252,29 @@ export function PracticeScreen({
 
         <div style={st.prompt}>{state.currentItem?.prompt}</div>
 
-        <input
-          ref={inputRef}
-          type="number"
-          inputMode="numeric"
-          value={isCorrect ? String(state.currentItem?.answer ?? '') : input}
-          onChange={e => { if (!isCorrect) setInput(e.target.value.slice(0, 5)); }}
-          readOnly={isCorrect}
-          placeholder="?"
-          autoComplete="off"
-          aria-label="Your answer"
-          style={{
-            ...st.answerInput,
-            color: isCorrect ? '#22c55e' : hasError ? '#ef4444' : '#4f46e5',
-            borderBottomColor: isCorrect ? '#22c55e' : hasError ? '#ef4444' : '#4f46e5',
-          }}
-        />
+        {/* Answer display */}
+        {isChoice ? (
+          <div style={st.choiceDisplay}>
+            {isCorrect ? String(state.currentItem?.answer ?? '') : (input || '?')}
+          </div>
+        ) : (
+          <input
+            ref={inputRef}
+            type="number"
+            inputMode="numeric"
+            value={isCorrect ? String(state.currentItem?.answer ?? '') : input}
+            onChange={e => { if (!isCorrect) setInput(e.target.value.slice(0, 5)); }}
+            readOnly={isCorrect}
+            placeholder="?"
+            autoComplete="off"
+            aria-label="Your answer"
+            style={{
+              ...st.answerInput,
+              color: isCorrect ? '#22c55e' : hasError ? '#ef4444' : '#4f46e5',
+              borderBottomColor: isCorrect ? '#22c55e' : hasError ? '#ef4444' : '#4f46e5',
+            }}
+          />
+        )}
 
         {hasError && !isCorrect && <p style={st.errorText}>{state.errorText}</p>}
 
@@ -259,10 +286,27 @@ export function PracticeScreen({
         )}
 
         {!hasError && !isCorrect && input === '' && (
-          <p style={st.hintText}>Type your answer · Enter to check · Q to quit</p>
+          <p style={st.hintText}>
+            {isChoice ? 'Choose ‹ = › · keys < = > · Q to quit' : 'Type your answer · Enter to check · Q to quit'}
+          </p>
         )}
 
-        {!isCorrect && (
+        {/* Input controls */}
+        {!isCorrect && isChoice && (
+          <div style={st.choiceRow}>
+            {choices.map(c => (
+              <button
+                key={String(c)}
+                style={st.choiceBtn}
+                onClick={() => submitChoice(String(c))}
+              >
+                {String(c)}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {!isCorrect && !isChoice && (
           <div style={{ marginTop: '16px' }}>
             <NumPad
               value={input}
@@ -324,6 +368,13 @@ const st: Record<string, React.CSSProperties> = {
     background: 'transparent', border: 'none', borderBottom: '3px solid #4f46e5',
     outline: 'none', fontVariantNumeric: 'tabular-nums', transition: 'color 0.15s, border-color 0.15s',
     MozAppearance: 'textfield' as never,
+  },
+  choiceDisplay: { fontSize: '44px', fontWeight: 'bold', color: '#4f46e5', minHeight: '52px', fontVariantNumeric: 'tabular-nums' },
+  choiceRow: { display: 'flex', gap: '12px', justifyContent: 'center', marginTop: '16px' },
+  choiceBtn: {
+    flex: 1, maxWidth: '90px', padding: '20px 0', fontSize: '32px', fontWeight: 'bold',
+    background: '#fff', border: '2px solid var(--primary)', borderRadius: '14px',
+    color: 'var(--primary)', cursor: 'pointer', touchAction: 'manipulation',
   },
   errorText: { color: '#ef4444', fontSize: '15px', fontWeight: '600', margin: '10px 0 0' },
   correctText: { color: '#16a34a', fontSize: '15px', fontWeight: '600', margin: '10px 0 0' },

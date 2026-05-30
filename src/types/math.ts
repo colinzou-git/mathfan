@@ -7,6 +7,10 @@ export type ItemType =
   | 'multiplication_fact'
   | 'division_fact'
   | 'unknown_factor'
+  | 'addition_fact'
+  | 'subtraction_fact'
+  | 'fraction_equivalent'
+  | 'fraction_compare'
   | 'word_problem'
   | 'fraction_number_line'
   | 'decimal_place_value'
@@ -17,9 +21,18 @@ export type SessionMode =
   | 'daily_review'
   | 'single_table'
   | 'multi_table'
+  | 'addition'
+  | 'subtraction'
+  | 'division'
+  | 'fraction'
   | 'audio'
   | 'word_problem'
   | 'challenge';
+
+/** How the student enters an answer for an item. */
+export type AnswerInput = 'numeric' | 'choice';
+
+export type FractionMode = 'equivalent' | 'compare';
 
 export interface StudentProfile {
   id: string;
@@ -65,6 +78,8 @@ export interface PracticeItem {
   prompt: string;
   answer: string | number;
   choices?: Array<string | number>;
+  /** How the answer is entered. Defaults to 'numeric' when omitted. */
+  answerInput?: AnswerInput;
   explanation?: string;
   visualModelType?: 'array' | 'number_line' | 'area_model' | 'place_value' | 'none';
   tags: string[];
@@ -163,8 +178,11 @@ export interface PerTableStats {
 
 export interface SessionConfig {
   mode: SessionMode;
-  tables?: number[];       // used for single_table / multi_table
+  tables?: number[];          // single_table / multi_table
   sessionLength: SessionLength;
+  operandMin?: number;        // addition / subtraction / division
+  operandMax?: number;        // addition / subtraction / division
+  fractionMode?: FractionMode; // fraction
 }
 
 // ── Growth comparison (period over period) ─────────────────────────────────────

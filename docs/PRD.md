@@ -3,7 +3,7 @@
 **App:** MathFan  
 **Target users:** Grade 3–5 students (primary), parents (secondary)  
 **Primary device:** iPad (PWA)  
-**Last updated:** 2026-05-29
+**Last updated:** 2026-05-30
 
 ---
 
@@ -152,12 +152,94 @@ The app's goal is to make the student feel good about their own improvement. All
 
 ---
 
+## Section 11 — Addition & Subtraction Practice
+
+Dedicated mental-math fluency modes (guide §5.1 Tier 1). Operand ranges are
+chosen by the student/parent before each drill.
+
+| ID | Priority | Status | Description |
+|---|---|---|---|
+| MF-110 | P0 | Done | **Addition mode.** A standalone Add drill. Each question is `a + b = ?`; the student types the sum. |
+| MF-111 | P0 | Done | **Subtraction mode.** A standalone Subtract drill. Each question is `a − b = ?`. Generated problems never have a negative answer (the larger operand is always the minuend). |
+| MF-112 | P0 | Done | **Custom operand range.** Before an add/subtract drill, the student/parent sets the smallest and largest operand (0–10000). Quick presets: to 10, to 20, to 100, 10–1000. |
+| MF-113 | P0 | Done | **Question count per drill.** Add/subtract drills use the same free-form count control as every other mode (1–200, default 10). |
+| MF-114 | P1 | Done | **Add/subtract attempts feed the same engine.** Every attempt is logged, scheduled, and counted in stats, growth, and the facts table exactly like multiplication. |
+| MF-115 | P2 | Not Started | **Add/subtract within-N timed challenge.** An optional beat-the-clock variant (e.g. "how many sums within 20 in 60 seconds"). |
+| MF-116 | P2 | Not Started | **Missing-addend problems.** `7 + ? = 12` style, mirroring the unknown-factor format in multiplication. |
+
+---
+
+## Section 12 — Division Practice (standalone)
+
+A dedicated division mode separate from the inverse-of-multiplication option
+(guide §4.1, §5.1).
+
+| ID | Priority | Status | Description |
+|---|---|---|---|
+| MF-120 | P0 | Done | **Division mode.** A standalone Divide drill. Each question is `dividend ÷ divisor = ?` with a whole-number quotient (no remainders in this mode). |
+| MF-121 | P0 | Done | **Custom divisor/quotient range.** The student sets the range (min 2, avoiding ÷1 and ÷0); dividends are produced as divisor × quotient so every problem divides evenly. Presets: 2–5, 2–10, 2–12, 5–20. |
+| MF-122 | P1 | Done | **Shared engine.** Division attempts log, schedule, and appear in stats/growth/facts like all other items. |
+| MF-123 | P2 | Not Started | **Division with remainders.** A separate mode that accepts a quotient-and-remainder answer (e.g. `17 ÷ 5 = 3 r 2`). |
+| MF-124 | P2 | Not Started | **Long-division step-by-step.** Interactive multi-digit long division (guide §5.2). |
+
+---
+
+## Section 13 — Fractions
+
+Basic fraction reasoning (guide §4.2, §5.2). Uses a mixed input model: a numeric
+blank for equivalence and a `‹ = ›` choice for comparison.
+
+| ID | Priority | Status | Description |
+|---|---|---|---|
+| MF-130 | P1 | Done | **Equivalent fractions.** `2/3 = ?/6` — the student types the missing numerator. Problems start from a reduced fraction scaled by 2–6. |
+| MF-131 | P1 | Done | **Compare fractions.** `2/3 ▢ 3/4` — the student picks `<`, `=`, or `>` (tap a button or press the matching key). |
+| MF-132 | P1 | Done | **Choice-style answer input.** The drill engine, answer checker, and keyboard handler support non-numeric (choice) answers so comparison questions work end to end. |
+| MF-133 | P2 | Not Started | **Fractions on a number line.** Drag a point to the correct location (guide §5.2). |
+| MF-134 | P2 | Not Started | **Simplify a fraction.** Reduce `6/8` to lowest terms. |
+| MF-135 | P2 | Not Started | **Add/subtract fractions — like denominators** (Grade 4, guide §4.2). |
+| MF-136 | P2 | Not Started | **Add/subtract fractions — unlike denominators** (Grade 5, guide §4.3). |
+| MF-137 | P2 | Not Started | **Fraction of a quantity.** `3/4 of 20 = ?` (guide §7.9). |
+| MF-138 | P2 | Not Started | **Fraction × whole number / fraction × fraction** (guide §4.2–4.3). |
+
+---
+
+## Section 14 — Future Curriculum (Grade 3–5 roadmap, not yet built)
+
+Captured from the implementation guide §4, §5, §11 so nothing is lost. All
+Not Started; promote to a numbered section when scheduled.
+
+| ID | Priority | Status | Description |
+|---|---|---|---|
+| MF-140 | P2 | Not Started | **Decimals — place value to thousandths** (guide §4.3). |
+| MF-141 | P2 | Not Started | **Decimals — compare, round, add/subtract/multiply/divide to hundredths.** |
+| MF-142 | P2 | Not Started | **Decimal ↔ fraction ↔ percent conversions** (e.g. `0.25 = 1/4 = 25%`, guide §5.1). |
+| MF-143 | P2 | Not Started | **Rounding** to nearest 10 and 100 (Grade 3, guide §4.1). |
+| MF-144 | P2 | Not Started | **Factors, multiples, prime/composite** (Grade 4, guide §4.2). |
+| MF-145 | P2 | Not Started | **Word-problem schema trainer** — equal groups, compare, array/area, missing factor, multi-step (guide §7.9). |
+| MF-146 | P2 | Not Started | **Multi-digit multiplication** (area model → standard algorithm, guide §4.2–4.3). |
+| MF-147 | P2 | Not Started | **Geometry vocabulary** — acute/obtuse, parallel/perpendicular, symmetry (guide §5.1–5.2). |
+| MF-148 | P2 | Not Started | **Area / perimeter / volume** formulas and grid practice (guide §4.1–4.3). |
+| MF-149 | P2 | Not Started | **Measurement conversion** — time, length, weight, capacity (guide §4.2). |
+| MF-150 | P2 | Not Started | **Coordinate plane** plotting and patterns (Grade 5, guide §4.3). |
+| MF-151 | P2 | Not Started | **Order of operations / numerical expressions** with parentheses (Grade 5). |
+| MF-152 | P2 | Not Started | **Competition path** — Math Kangaroo / Noetic / AMC 8 foundation puzzles (guide §21). |
+| MF-153 | P1 | Not Started | **Visual models** — multiplication arrays, equal-group division, area model (guide §7.6). |
+| MF-154 | P1 | Not Started | **Strategy coach & "one new trick per day"** (guide §7.7–7.8). |
+| MF-155 | P1 | Not Started | **Smart mistake diagnosis** — infer confusions (e.g. 8×9=63 → confused with 7×9) and schedule contrast practice (guide §7.3, §8.6). |
+| MF-156 | P2 | Not Started | **Explain-your-thinking mode** — tag the strategy used (guide §7.10). |
+
+---
+
 ## Appendix — Status counts (auto-update manually when editing)
 
 | Status | Count |
 |---|---|
-| Done | 2 |
+| Done | 11 |
 | In Progress | 11 |
-| Not Started | 35 |
+| Not Started | 67 |
 | Deferred | 0 |
-| **Total** | **48** |
+| **Total** | **89** |
+
+> Note: many Section 1–10 items shown as "In Progress" are in fact shipped
+> (drill engine, stats, growth, themes, sync). A full status reconciliation pass
+> (`/specsync`) is due to mark them Done against the current code.

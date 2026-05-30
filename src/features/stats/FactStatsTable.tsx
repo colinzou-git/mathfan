@@ -1,13 +1,14 @@
 import { useEffect, useState, useMemo } from 'react';
 import type { StudentItemState } from '../../types/math';
 import { itemStateRepo } from '../../db/repositories';
-import { ITEM_MAP, TABLE_MIN, TABLE_MAX, tableFromItemId } from '../curriculum/multiplicationItems';
+import { TABLE_MIN, TABLE_MAX, tableFromItemId } from '../curriculum/multiplicationItems';
+import { describeItem } from '../curriculum/describeItem';
 import { MASTERY_COLORS } from '../../utils/masteryColors';
 
 interface Props { studentId: string }
 
 type SortKey = 'accuracy' | 'wrong' | 'attempts' | 'avgSpeed' | 'bestSpeed';
-type TypeFilter = 'all' | 'mul' | 'div' | 'unk';
+type TypeFilter = 'all' | 'mul' | 'div' | 'add' | 'sub' | 'frac';
 type StatusFilter = 'all' | 'weak' | 'strong' | 'new';
 
 export function FactStatsTable({ studentId }: Props) {
@@ -26,12 +27,16 @@ export function FactStatsTable({ studentId }: Props) {
 
   const rows = useMemo(() => {
     let filtered = states.filter(s => {
-      const item = ITEM_MAP.get(s.itemId);
-      if (!item) return false;
+      const desc = describeItem(s.itemId);
 
-      if (typeFilter === 'mul' && item.itemType !== 'multiplication_fact') return false;
-      if (typeFilter === 'div' && item.itemType !== 'division_fact') return false;
-      if (typeFilter === 'unk' && item.itemType !== 'unknown_factor') return false;
+      if (typeFilter !== 'all') {
+        // 'unk' counts as 'mul' group bucket; map filter to describe groups
+        if (typeFilter === 'mul' && desc.group !== 'mul' && desc.group !== 'unk') return false;
+        if (typeFilter === 'div' && desc.group !== 'div') return false;
+        if (typeFilter === 'add' && desc.group !== 'add') return false;
+        if (typeFilter === 'sub' && desc.group !== 'sub') return false;
+        if (typeFilter === 'frac' && desc.group !== 'frac') return false;
+      }
 
       if (statusFilter === 'weak' && s.masteryLevel !== 'learning' && s.masteryLevel !== 'developing') return false;
       if (statusFilter === 'strong' && s.masteryLevel !== 'strong' && s.masteryLevel !== 'mastered') return false;
@@ -89,9 +94,9 @@ export function FactStatsTable({ studentId }: Props) {
       {/* Filters */}
       <div style={st.filterBar}>
         <div style={st.filterGroup}>
-          {(['all', 'mul', 'div', 'unk'] as TypeFilter[]).map(f => (
+          {(['all', 'mul', 'div', 'add', 'sub', 'frac'] as TypeFilter[]).map(f => (
             <button key={f} style={{ ...st.chip, ...(typeFilter === f ? st.chipOn : {}) }} onClick={() => setTypeFilter(f)}>
-              {f === 'all' ? 'All types' : f === 'mul' ? '×' : f === 'div' ? '÷' : '×?'}
+              {f === 'all' ? 'All' : f === 'mul' ? '×' : f === 'div' ? '÷' : f === 'add' ? '+' : f === 'sub' ? '−' : '½'}
             </button>
           ))}
         </div>
@@ -136,7 +141,7 @@ export function FactStatsTable({ studentId }: Props) {
             </thead>
             <tbody>
               {rows.map(s => {
-                const item = ITEM_MAP.get(s.itemId)!;
+                const desc = describeItem(s.itemId);
                 const acc = Math.round(s.correctCount / s.attemptCount * 100);
                 const wrong = s.attemptCount - s.correctCount;
                 return (
@@ -145,7 +150,7 @@ export function FactStatsTable({ studentId }: Props) {
                     background: wrong > 2 ? '#fff5f5' : s.masteryLevel === 'mastered' ? '#f0fdf4' : '#fff',
                   }}>
                     <td style={{ ...st.td, fontWeight: '600', fontVariantNumeric: 'tabular-nums' }}>
-                      {item.prompt}
+                      {desc.prompt}
                     </td>
                     <td style={st.tdNum}>{s.attemptCount}</td>
                     <td style={{ ...st.tdNum, color: acc >= 90 ? '#22c55e' : acc >= 70 ? '#f59e0b' : '#ef4444', fontWeight: '600' }}>

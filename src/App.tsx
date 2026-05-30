@@ -2,10 +2,12 @@ import { useEffect, useState } from 'react';
 import type { StudentProfile, SessionConfig, StudentSettings } from './types/math';
 import { studentRepo, sessionRepo } from './db/repositories';
 import { ProfileSetup } from './features/dashboard/ProfileSetup';
-import { StudentDashboard } from './features/dashboard/StudentDashboard';
+import { StudentDashboard, type PracticeOp } from './features/dashboard/StudentDashboard';
 import { PracticeScreen } from './features/practice/PracticeScreen';
 import { TableSelector } from './components/TableSelector';
 import { SessionSetup } from './components/SessionSetup';
+import { ArithmeticSetup } from './components/ArithmeticSetup';
+import { FractionSetup } from './components/FractionSetup';
 import { StatsPage } from './features/stats/StatsPage';
 import { SettingsPage } from './features/settings/SettingsPage';
 import { preloadVoices } from './features/audio/speech';
@@ -16,13 +18,23 @@ import { applyTheme } from './features/theme/themes';
 
 type Screen =
   | 'loading' | 'setup' | 'dashboard'
-  | 'daily-setup' | 'table-selector' | 'practice'
+  | 'daily-setup' | 'table-selector' | 'arith-setup' | 'fraction-setup' | 'practice'
   | 'stats' | 'settings';
+
+type ArithMode = 'addition' | 'subtraction' | 'division';
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('loading');
   const [profile, setProfile] = useState<StudentProfile | null>(null);
   const [sessionConfig, setSessionConfig] = useState<SessionConfig | null>(null);
+  const [arithMode, setArithMode] = useState<ArithMode>('addition');
+
+  const pickOperation = (op: PracticeOp) => {
+    if (op === 'multiplication') { setScreen('table-selector'); return; }
+    if (op === 'fraction') { setScreen('fraction-setup'); return; }
+    setArithMode(op); // addition | subtraction | division
+    setScreen('arith-setup');
+  };
 
   useEffect(() => {
     preloadVoices();
@@ -121,6 +133,25 @@ export default function App() {
     );
   }
 
+  if (screen === 'arith-setup') {
+    return (
+      <ArithmeticSetup
+        mode={arithMode}
+        onBack={() => setScreen('dashboard')}
+        onStart={cfg => { setSessionConfig(cfg); setScreen('practice'); }}
+      />
+    );
+  }
+
+  if (screen === 'fraction-setup') {
+    return (
+      <FractionSetup
+        onBack={() => setScreen('dashboard')}
+        onStart={cfg => { setSessionConfig(cfg); setScreen('practice'); }}
+      />
+    );
+  }
+
   if (screen === 'practice' && sessionConfig) {
     return (
       <PracticeScreen
@@ -141,7 +172,7 @@ export default function App() {
     <StudentDashboard
       profile={profile}
       onStartDailyReview={() => setScreen('daily-setup')}
-      onStartTableDrill={() => setScreen('table-selector')}
+      onPickOperation={pickOperation}
       onOpenStats={() => setScreen('stats')}
       onOpenSettings={() => setScreen('settings')}
     />

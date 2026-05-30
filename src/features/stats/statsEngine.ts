@@ -3,7 +3,7 @@ import type {
   FactWindowStats, FactGrowth, GrowthSummary, GrowthDirection,
 } from '../../types/math';
 import { tableFromItemId } from '../curriculum/multiplicationItems';
-import { ITEM_MAP } from '../curriculum/multiplicationItems';
+import { itemPrompt } from '../curriculum/describeItem';
 
 // ── Date helpers ──────────────────────────────────────────────────────────────
 
@@ -313,7 +313,7 @@ export function computeFactGrowth(
   const summary: GrowthSummary = { stronger: [], weaker: [], same: [], newFacts: [] };
 
   for (const [itemId, cur] of curStats) {
-    const prompt = ITEM_MAP.get(itemId)?.prompt ?? itemId;
+    const prompt = itemPrompt(itemId);
     const prev = prevStats.get(itemId) ?? null;
 
     if (!prev) {

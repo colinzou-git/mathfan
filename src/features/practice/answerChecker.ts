@@ -18,11 +18,21 @@ export function checkAnswer(
   latencyMs: number
 ): CheckResult {
   const normalizedInput = rawInput.trim().replace(/\s+/g, '');
-  const studentAnswer = parseFloat(normalizedInput);
   const correctAnswer = item.answer;
-  const isCorrect =
-    !isNaN(studentAnswer) &&
-    Math.abs(studentAnswer - Number(correctAnswer)) < 0.001;
+
+  let isCorrect: boolean;
+  let studentAnswer: string | number;
+
+  if (item.answerInput === 'choice' || typeof correctAnswer === 'string') {
+    // String/choice comparison (e.g. fraction compare: '<', '=', '>')
+    studentAnswer = normalizedInput;
+    isCorrect = normalizedInput === String(correctAnswer).trim();
+  } else {
+    // Numeric comparison
+    const parsed = parseFloat(normalizedInput);
+    studentAnswer = parsed;
+    isCorrect = !isNaN(parsed) && Math.abs(parsed - Number(correctAnswer)) < 0.001;
+  }
 
   const grade = classifyResponse(isCorrect, latencyMs);
 

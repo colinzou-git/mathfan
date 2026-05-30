@@ -34,6 +34,33 @@ describe('checkAnswer', () => {
   });
 });
 
+const choiceItem: PracticeItem = {
+  id: 'FCMP_1_3_1_2',
+  skillId: 'SKILL_FRACTIONS',
+  itemType: 'fraction_compare',
+  prompt: '1/3 ▢ 1/2',
+  answer: '<',
+  answerInput: 'choice',
+  choices: ['<', '=', '>'],
+  tags: ['fractions'],
+  difficulty: 0.5,
+};
+
+describe('checkAnswer — choice/string answers', () => {
+  it('matching choice → correct', () => {
+    expect(checkAnswer(choiceItem, '<', 900).isCorrect).toBe(true);
+  });
+  it('wrong choice → incorrect', () => {
+    expect(checkAnswer(choiceItem, '>', 900).isCorrect).toBe(false);
+  });
+  it('whitespace around choice still matches', () => {
+    expect(checkAnswer(choiceItem, ' < ', 900).isCorrect).toBe(true);
+  });
+  it('numeric input against a string answer → incorrect', () => {
+    expect(checkAnswer(choiceItem, '5', 900).isCorrect).toBe(false);
+  });
+});
+
 describe('classifyResponse', () => {
   it('wrong → again', () => expect(classifyResponse(false, 1000)).toBe('again'));
   it('correct fast → easy', () => expect(classifyResponse(true, 1000)).toBe('easy'));

@@ -3,10 +3,12 @@ import type { StudentProfile } from '../../types/math';
 import { itemStateRepo, attemptRepo } from '../../db/repositories';
 import { computeTodayStats, computeStreak } from '../stats/statsEngine';
 
+export type PracticeOp = 'multiplication' | 'division' | 'addition' | 'subtraction' | 'fraction';
+
 interface Props {
   profile: StudentProfile;
   onStartDailyReview: () => void;
-  onStartTableDrill: () => void;
+  onPickOperation: (op: PracticeOp) => void;
   onOpenStats: () => void;
   onOpenSettings: () => void;
 }
@@ -18,7 +20,15 @@ interface QuickStats {
   dueCount: number;
 }
 
-export function StudentDashboard({ profile, onStartDailyReview, onStartTableDrill, onOpenStats, onOpenSettings }: Props) {
+const OPERATIONS: { op: PracticeOp; label: string; icon: string }[] = [
+  { op: 'multiplication', label: 'Multiply', icon: '✖️' },
+  { op: 'division',       label: 'Divide',   icon: '➗' },
+  { op: 'addition',       label: 'Add',      icon: '➕' },
+  { op: 'subtraction',    label: 'Subtract', icon: '➖' },
+  { op: 'fraction',       label: 'Fractions', icon: '🍕' },
+];
+
+export function StudentDashboard({ profile, onStartDailyReview, onPickOperation, onOpenStats, onOpenSettings }: Props) {
   const [quick, setQuick] = useState<QuickStats | null>(null);
 
   useEffect(() => {
@@ -68,7 +78,7 @@ export function StudentDashboard({ profile, onStartDailyReview, onStartTableDril
         </div>
       )}
 
-      {/* Primary actions */}
+      {/* Primary action */}
       <button style={s.primaryBtn} onClick={onStartDailyReview}>
         Daily Review
       </button>
@@ -76,9 +86,16 @@ export function StudentDashboard({ profile, onStartDailyReview, onStartTableDril
         <p style={s.hint}>{quick.dueCount} fact{quick.dueCount > 1 ? 's' : ''} due for review today.</p>
       )}
 
-      <button style={s.secondaryBtn} onClick={onStartTableDrill}>
-        Times Table Drill
-      </button>
+      {/* Operation picker */}
+      <p style={s.sectionLabel}>Practice an operation</p>
+      <div style={s.opGrid}>
+        {OPERATIONS.map(({ op, label, icon }) => (
+          <button key={op} style={s.opBtn} onClick={() => onPickOperation(op)}>
+            <span style={s.opIcon}>{icon}</span>
+            <span style={s.opLabel}>{label}</span>
+          </button>
+        ))}
+      </div>
 
       <button style={s.statsBtn} onClick={onOpenStats}>
         📊 Stats &amp; History
@@ -104,7 +121,11 @@ const s: Record<string, React.CSSProperties> = {
   settingsBtn: { background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', padding: '4px', borderRadius: '8px' },
   quickRow: { display: 'flex', gap: '8px', marginBottom: '20px' },
   primaryBtn: { width: '100%', padding: '18px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: '14px', fontSize: '20px', fontWeight: 'bold', cursor: 'pointer', marginBottom: '8px', boxShadow: '0 4px 14px rgba(0,0,0,0.15)' },
-  secondaryBtn: { width: '100%', padding: '16px', background: '#fff', color: 'var(--primary)', border: '2px solid var(--primary)', borderRadius: '14px', fontSize: '18px', fontWeight: 'bold', cursor: 'pointer', marginTop: '4px', marginBottom: '8px' },
-  statsBtn: { width: '100%', padding: '13px', background: '#f9fafb', color: '#374151', border: '1.5px solid #e5e7eb', borderRadius: '12px', fontSize: '16px', fontWeight: '600', cursor: 'pointer', marginTop: '4px' },
+  statsBtn: { width: '100%', padding: '13px', background: '#f9fafb', color: '#374151', border: '1.5px solid #e5e7eb', borderRadius: '12px', fontSize: '16px', fontWeight: '600', cursor: 'pointer', marginTop: '8px' },
   hint: { textAlign: 'center', color: '#6b7280', fontSize: '13px', margin: '0 0 8px' },
+  sectionLabel: { fontSize: '13px', fontWeight: '700', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '18px 0 10px' },
+  opGrid: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' },
+  opBtn: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', padding: '16px 0', background: '#fff', border: '2px solid #e5e7eb', borderRadius: '14px', cursor: 'pointer', touchAction: 'manipulation' },
+  opIcon: { fontSize: '26px', lineHeight: 1 },
+  opLabel: { fontSize: '13px', fontWeight: '600', color: '#374151' },
 };
