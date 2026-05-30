@@ -31,7 +31,7 @@ This section covers the dedicated multiplication drill mode: table selection, se
 | MF-006 | P1 | Done | **Random fact ordering.** `planTableSession` shuffles items. Code: `scheduler.ts`. |
 | MF-007 | P1 | Not Started | **Question format variety within a table drill.** A single/multi-table drill currently presents only standard `a × b` items. Unknown-factor and inverse-division items exist but are only injected into the **adaptive daily review** (`ALL_ITEMS`), not table drills. No 70/20/10 mix is implemented. |
 | MF-008 | P1 | Done | **Per-fact result feedback.** Immediate correct/wrong, the answer, and response time in seconds. Code: `PracticeScreen.tsx` feedback block. |
-| MF-009 | P1 | Partial | **Session summary screen.** Shows total, correct, accuracy %, avg speed, and fastest answer (`SessionSummary.tsx`). **Missing:** the list of specific facts that were missed. |
+| MF-009 | P1 | Done | **Session summary screen.** Shows total, correct, accuracy %, avg speed, fastest answer, **and the missed-facts list** ("Practice these next time"). Code: `SessionSummary.tsx`, `usePracticeSession.ts` (`missedFacts`). |
 | MF-010 | P2 | Not Started | **Highlight weak facts in table selector.** No weak-fact marking in `TableSelector.tsx`. |
 | MF-011 | P2 | Not Started | **"Surprise me" mode.** Not implemented. |
 
@@ -42,7 +42,7 @@ This section covers the dedicated multiplication drill mode: table selection, se
 | ID | Priority | Status | Description |
 |---|---|---|---|
 | MF-020 | P0 | Done | **Adaptive session planner.** 60% due / 20% weak / 20% new split. Code: `planSession` in `scheduler.ts`. |
-| MF-021 | P0 | Done | **Spaced review scheduler.** `applyReview` maps again/hard/good/easy → stability days and next-due date; wrong answers re-queued in-session. Code: `scheduler.ts`, `usePracticeSession.ts`. |
+| MF-021 | P0 | Done | **Spaced review scheduler — FSRS-4.5.** Real FSRS with default weights: per-card stability S + difficulty D + retrievability R; recall-gain scales with (11−D)/low-R/Hard-Easy modifiers; lapses shrink S; next interval = `fsrsInterval(S)` at 0.9 retention. Wrong answers re-queue in-session. See §23. Code: `scheduler.ts`. |
 | MF-022 | P0 | Done | **Mastery model per fact.** Tracks attempt/correct counts, median latency, stability days, personal best, mastery level. Code: `StudentItemState`, `updateMasteryLevel`. |
 
 ---
@@ -123,7 +123,7 @@ The student (and parent) can look back at practice history across three time win
 
 | ID | Priority | Status | Description |
 |---|---|---|---|
-| MF-090 | P0 | Partial | **Today's stats bar.** Dashboard shows today's questions and accuracy (plus streak and due count). **Missing:** minutes practiced today. Code: `StudentDashboard.tsx`, `computeTodayStats`. |
+| MF-090 | P0 | Done | **Today's stats bar.** Dashboard shows today's questions, accuracy, minutes practiced, streak, and due count. Code: `StudentDashboard.tsx`, `computeTodayStats`. |
 | MF-091 | P1 | Done | **Day view.** Stats "Sessions" tab lists each session (time, mode, questions, accuracy, avg speed, duration) and expands to per-question detail; the mini-calendar lets you select any single day to filter. Code: `DrillHistory.tsx`, `MiniCalendar.tsx`. |
 | MF-092 | P1 | Done | **Week view.** "This Week" preset + daily bar chart + summary pills (questions, accuracy, days active). Code: `StatsPage.tsx`, `StatsGraph.tsx`. |
 | MF-093 | P1 | Done | **Month view.** "This Month" preset + chart + summary pills. Code: `StatsPage.tsx`. |
@@ -143,7 +143,7 @@ The app's goal is to make the student feel good about their own improvement. All
 | MF-100 | P0 | Done | **Practice streak.** Consecutive-day streak shown on the dashboard; resets quietly. Code: `computeStreak`, `StudentDashboard.tsx`. |
 | MF-101 | P1 | Partial | **Fact improvement indicator.** Delivered as the **Growth tab** (facts grouped stronger / needs-attention / new for today vs yesterday, week vs last week, month vs last month) rather than ↑/→/↓ arrows inside the grid. Code: `GrowthView.tsx`, `computeFactGrowth`. (`factTrend` arrow helper exists but is unused.) |
 | MF-102 | P1 | Not Started | **Per-table improvement indicator in the selector.** No trend shown in `TableSelector.tsx`. |
-| MF-103 | P1 | Not Started | **Session-over-session improvement.** `SessionSummary.tsx` contains the comparison logic (vs-last accuracy/speed deltas), but `PracticeScreen` never passes the `lastSession` prop, so it never renders. Effectively dormant. |
+| MF-103 | P1 | Done | **Session-over-session improvement.** Summary compares this session's accuracy and speed to the most recent prior session of the same mode (captured at start via `getLastByMode`). Code: `usePracticeSession.ts`, `SessionSummary.tsx`. |
 | MF-104 | P1 | Not Started | **Growth chart — speed over time.** The stats chart plots questions (bars) + accuracy (line); there is no average-speed-over-time line. |
 | MF-105 | P1 | Partial | **Growth chart — accuracy over time.** `StatsGraph` overlays an accuracy line over the selected period (today/week/month/custom), satisfying the spirit but not a fixed 30-day window. |
 | MF-106 | P1 | Not Started | **Milestone badges.** No badge system. |
@@ -211,11 +211,11 @@ Not Started; promote to a numbered section when scheduled.
 | ID | Priority | Status | Description |
 |---|---|---|---|
 | MF-140 | P2 | Not Started | **Decimals — place value to thousandths** (guide §4.3). |
-| MF-141 | P2 | Not Started | **Decimals — compare, round, add/subtract/multiply/divide to hundredths.** |
+| MF-141 | P2 | Partial | **Decimals — add/subtract** to tenths (G3–4) / hundredths (G5), non-negative, grade-scaled. NumPad has a decimal key. **Missing:** compare, round, multiply, divide. Code: `decimalItems.ts`. |
 | MF-142 | P2 | Not Started | **Decimal ↔ fraction ↔ percent conversions** (e.g. `0.25 = 1/4 = 25%`, guide §5.1). |
-| MF-143 | P2 | Not Started | **Rounding** to nearest 10 and 100 (Grade 3, guide §4.1). |
-| MF-144 | P2 | Not Started | **Factors, multiples, prime/composite** (Grade 4, guide §4.2). |
-| MF-145 | P2 | Not Started | **Word-problem schema trainer** — equal groups, compare, array/area, missing factor, multi-step (guide §7.9). |
+| MF-143 | P2 | Done | **Rounding** to nearest 10/100/1000, grade-scaled; already-round numbers skipped. Code: `roundingItems.ts`. |
+| MF-144 | P2 | Partial | **Prime/composite + factor check** (choice input), grade-scaled. **Missing:** list factors, multiples, GCF/LCM. Code: `numberTheoryItems.ts`. |
+| MF-145 | P2 | Done | **Word-problem schema trainer** — equal groups, array, compare, sharing/division; grade-scaled, numeric answers. Code: `wordProblemItems.ts`. |
 | MF-146 | P2 | Not Started | **Multi-digit multiplication** (area model → standard algorithm, guide §4.2–4.3). |
 | MF-147 | P2 | Not Started | **Geometry vocabulary** — acute/obtuse, parallel/perpendicular, symmetry (guide §5.1–5.2). |
 | MF-148 | P2 | Not Started | **Area / perimeter / volume** formulas and grid practice (guide §4.1–4.3). |
@@ -308,6 +308,41 @@ Shipped; previously undocumented.
 
 ---
 
+## Section 21 — AI Tutor (Socratic)
+
+| ID | Priority | Status | Description |
+|---|---|---|---|
+| MF-220 | P1 | Done (gated) | **AI tutor chat.** 💡 button / "H" key in any drill opens a chat scoped to the current problem. Works for every question type. Code: `ai/TutorChat.tsx`, `PracticeScreen.tsx`. |
+| MF-221 | P0 | Done | **Never reveals the answer.** System prompt forbids stating the final answer; gives one hint/question at a time, praises reasoning, suggests strategies, lets the child say the answer. Code: `ai/gemini.ts` (`systemInstruction`). |
+| MF-222 | P1 | Done | **Bring-your-own Gemini key.** Settings → AI Tutor (key, model, Test, Remove). Key + model in localStorage **only** — never in the profile or Drive snapshot. Code: `ai/aiConfig.ts`, `SettingsPage.tsx`. |
+| MF-223 | P1 | Done | **Graceful degradation.** Friendly no-key / offline / bad-key / rate-limit messages; "Open Settings" when unconfigured. Code: `ai/gemini.ts` (`explainAiError`). |
+| MF-224 | P2 | Not Started | **Sign-in-gated AI proxy** for a published build (avoids embedding a key). |
+| MF-225 | P2 | Not Started | **Other AI providers** — only Gemini implemented; not yet UI-pluggable. |
+
+---
+
+## Section 22 — Responsive & Professional UI
+
+| ID | Priority | Status | Description |
+|---|---|---|---|
+| MF-230 | P0 | Done | **iPhone portrait + iPad landscape.** Drill is single-column on phone portrait, two-column (question / keypad) on tablet landscape (≥820px). Code: `index.css` (`.drill-card`), `PracticeScreen.tsx`. |
+| MF-231 | P1 | Done | **Safe-area insets** for notch / home indicator. Code: `index.css`. |
+| MF-232 | P1 | Done | **Design tokens + component polish.** CSS variables (surface/border/muted), themed; NumPad + tutor restyled. Code: `index.css`, `NumPad.tsx`. |
+| MF-233 | P2 | Partial | **Full multi-page landscape redesign.** Drill is responsive; dashboard/stats/settings work in both orientations but stay centered single-column. |
+
+---
+
+## Section 23 — FSRS Scheduler & Testing Clock
+
+| ID | Priority | Status | Description |
+|---|---|---|---|
+| MF-240 | P0 | Done | **FSRS-4.5 scheduler.** Replaced the prior SM-2-style heuristic with real FSRS: stability S, difficulty D (1–10), retrievability R, default weights; recall vs lapse stability formulas; `fsrsInterval(S)` at 0.9 target retention. New `StudentItemState` fields: `fsrsDifficulty`, `reps`, `lapses`. Code: `scheduler.ts`. |
+| MF-241 | P1 | Done | **App clock.** Single source of "now" for scheduling/timestamps/stats (`features/time/clock.ts`); answer latency still uses the real wall clock. |
+| MF-242 | P1 | Done | **Fast-time debug mode (1 day ≈ 20s).** Settings → Testing toggle accelerates the app clock ~4320× so due dates, streaks, and charts can be exercised in seconds — for manual or automated testing. Monotonic across toggles; persisted. Code: `clock.ts`, `SettingsPage.tsx`. |
+| MF-243 | P2 | Done | **Deterministic time in tests.** Scheduler/stats take an explicit `now`, so automated tests control time directly. Tests: `clock.test.ts`, `scheduler.test.ts`. |
+
+---
+
 ## Appendix — Status counts (auto-update manually when editing)
 
 | Status | Count |
@@ -369,3 +404,18 @@ Reconciled docs/PRD.md against the source. Summary of changes:
 3. **MF-074 / MF-070 / MF-071** — marked Done(config)/Partial because nothing is
    verified on a real iPad. If you've confirmed install + offline on a device, I
    can promote them to fully Done.
+
+**2026-05-30 — FSRS, fast-clock, AI tutor, responsive, expanded curriculum.**
+- Scheduler reviewed and replaced with real **FSRS-4.5** (was an SM-2-style
+  heuristic with an unused `ease` field); §23 / MF-240.
+- Added an **app clock** with a **fast-time debug mode** (1 day ≈ 20s) so
+  spaced-review, streaks, and charts are testable in seconds; MF-241–243.
+- Added a **Socratic AI tutor** (Gemini, bring-your-own key, never reveals the
+  answer); §21.
+- **Responsive drill** (iPad landscape two-column / iPhone portrait), safe
+  areas, design tokens, decimal NumPad key; §22.
+- Shipped four more grade 3–5 operations: word problems (MF-145), rounding
+  (MF-143), primes/factors (MF-144, partial), decimals add/sub (MF-141, partial).
+- Wired the three prior audit gaps: missed-facts list (MF-009), minutes-today
+  (MF-090), session-over-session compare (MF-103).
+- 153 tests passing. Live at colinzou-git.github.io/mathfan/.
