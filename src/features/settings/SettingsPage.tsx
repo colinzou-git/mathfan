@@ -6,6 +6,8 @@ import { getDriveFileInfo } from '../sync/driveSync';
 import { attemptRepo } from '../../db/repositories';
 import { studentRepo } from '../../db/repositories';
 import { isDebugSpeed, enableDebugSpeed, disableDebugSpeed } from '../time/clock';
+import { getAiConfig, setAiKey, setAiModel, clearAiKey, DEFAULT_MODEL } from '../ai/aiConfig';
+import { askTutor, explainAiError } from '../ai/gemini';
 
 interface Props {
   profile: StudentProfile;
@@ -55,6 +57,27 @@ export function SettingsPage({ profile, onUpdateProfile, onBack, onSwitchStudent
     if (on) enableDebugSpeed(); else disableDebugSpeed();
     setDebugSpeed(on);
   };
+
+  // AI tutor config (localStorage-backed, never synced)
+  const [aiKey, setAiKeyInput] = useState(() => getAiConfig().apiKey);
+  const [aiModel, setAiModelInput] = useState(() => getAiConfig().model);
+  const [aiTest, setAiTest] = useState<{ state: 'idle' | 'testing' | 'ok' | 'err'; msg?: string }>({ state: 'idle' });
+
+  const saveAi = () => { setAiKey(aiKey); setAiModel(aiModel || DEFAULT_MODEL); setAiTest({ state: 'idle' }); };
+  const testAi = async () => {
+    setAiKey(aiKey); setAiModel(aiModel || DEFAULT_MODEL);
+    setAiTest({ state: 'testing' });
+    try {
+      await askTutor(
+        [{ role: 'user', text: 'Say hello in one short sentence.' }],
+        { prompt: '2 + 2', answer: 4, itemType: 'addition_fact' },
+      );
+      setAiTest({ state: 'ok', msg: 'Connected! The tutor is ready.' });
+    } catch (err) {
+      setAiTest({ state: 'err', msg: explainAiError(err) });
+    }
+  };
+  const removeAi = () => { clearAiKey(); setAiKeyInput(''); setAiTest({ state: 'idle' }); };
 
   useEffect(() => {
     attemptRepo.getAll(profile.id).then(a => setTotalQuestions(a.length));
@@ -257,6 +280,43 @@ export function SettingsPage({ profile, onUpdateProfile, onBack, onSwitchStudent
             )}
           </div>
         )}
+      </Section>
+
+      {/* ── AI Tutor ────────────────────────────────────────────────── */}
+      <Section title="AI Tutor">
+        <p style={{ ...s.rowDesc, marginBottom: '10px' }}>
+          The tutor gives hints and asks guiding questions — it never gives the
+          answer. Add a free Google Gemini key to turn it on (get one at{' '}
+          <span style={{ color: 'var(--primary)', fontWeight: 600 }}>aistudio.google.com/apikey</span>).
+          The key is stored on this device only — never synced.
+        </p>
+        <label style={s.row}><span style={s.rowLabel}>Gemini API key</span></label>
+        <input
+          type="password"
+          value={aiKey}
+          onChange={e => setAiKeyInput(e.target.value)}
+          placeholder="Paste your API key"
+          autoComplete="off"
+          style={{ ...s.textInput, width: '100%' }}
+        />
+        <label style={{ ...s.row, marginTop: 8 }}>
+          <span style={s.rowLabel}>Model</span>
+          <input
+            value={aiModel}
+            onChange={e => setAiModelInput(e.target.value)}
+            placeholder={DEFAULT_MODEL}
+            style={{ ...s.textInput, width: 200 }}
+          />
+        </label>
+        <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
+          <button style={s.saveBtn} onClick={saveAi}>Save</button>
+          <button style={{ ...s.saveBtn, background: '#0ea5e9' }} onClick={testAi} disabled={aiTest.state === 'testing' || !aiKey}>
+            {aiTest.state === 'testing' ? 'Testing…' : 'Test'}
+          </button>
+          {getAiConfig().apiKey && <button style={s.outBtn} onClick={removeAi}>Remove key</button>}
+        </div>
+        {aiTest.state === 'ok' && <p style={{ color: '#15803d', fontSize: 13, marginTop: 8 }}>✓ {aiTest.msg}</p>}
+        {aiTest.state === 'err' && <p style={{ color: '#b91c1c', fontSize: 13, marginTop: 8 }}>{aiTest.msg}</p>}
       </Section>
 
       {/* ── Testing ─────────────────────────────────────────────────── */}

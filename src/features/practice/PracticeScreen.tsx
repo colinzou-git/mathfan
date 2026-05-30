@@ -5,6 +5,7 @@ import { usePracticeSession } from './usePracticeSession';
 import { NumPad } from '../../components/NumPad';
 import { SessionSummary } from '../../components/SessionSummary';
 import { SettingsOverlay } from '../../components/SettingsOverlay';
+import { TutorChat } from '../ai/TutorChat';
 import { speakProblem, speakFeedback, stopSpeech } from '../audio/speech';
 
 const AUTO_ADVANCE_MS = 700;
@@ -15,15 +16,17 @@ interface Props {
   settings: StudentSettings;
   onUpdateSettings: (s: StudentSettings) => void;
   onDone: () => void;
+  onOpenSettings?: () => void;
   onPlayAgain?: () => void;
 }
 
 export function PracticeScreen({
-  studentId, config, settings, onUpdateSettings, onDone, onPlayAgain,
+  studentId, config, settings, onUpdateSettings, onDone, onOpenSettings, onPlayAgain,
 }: Props) {
   const { state, startSession, submitAnswer, nextQuestion } = usePracticeSession(studentId);
   const [input, setInput] = useState('');
   const [showSettings, setShowSettings] = useState(false);
+  const [showTutor, setShowTutor] = useState(false);
   const [showQuit, setShowQuit] = useState(false);
   const [quitting, setQuitting] = useState(false); // show summary with partial data
   const inputRef = useRef<HTMLInputElement>(null);
@@ -71,13 +74,16 @@ export function PracticeScreen({
 
   // Re-focus after any overlay closes
   useEffect(() => {
-    if (!showSettings && !showQuit) focusInput();
-  }, [showSettings, showQuit, focusInput]);
+    if (!showSettings && !showQuit && !showTutor) focusInput();
+  }, [showSettings, showQuit, showTutor, focusInput]);
 
   // ── Global keyboard handler ───────────────────────────────────────────────
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      // Tutor chat owns the keyboard while open
+      if (showTutor) return;
+
       // Quit confirmation is open
       if (showQuit) {
         if (e.key === 'Escape') { setShowQuit(false); return; }
@@ -95,6 +101,12 @@ export function PracticeScreen({
         return;
       }
 
+      if ((e.key === 'h' || e.key === 'H') && state.phase === 'active') {
+        e.preventDefault();
+        setShowTutor(true);
+        return;
+      }
+
       if (state.phase === 'correct') {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
@@ -107,10 +119,21 @@ export function PracticeScreen({
       if (state.phase === 'active') {
         const item = state.currentItem;
         if (item?.answerInput === 'choice') {
-          // Fraction-compare: accept < = > directly
+          const opts = (item.choices ?? []).map(String);
+          // Symbol choices: accept < = > directly
           if (e.key === '<' || e.key === '=' || e.key === '>') {
+            if (opts.includes(e.key)) {
+              e.preventDefault();
+              submitAnswer(e.key);
+              setInput('');
+            }
+            return;
+          }
+          // Word choices: match a unique first letter (p/c, y/n, …)
+          const matches = opts.filter(o => o[0].toLowerCase() === e.key.toLowerCase());
+          if (matches.length === 1) {
             e.preventDefault();
-            submitAnswer(e.key);
+            submitAnswer(matches[0]);
             setInput('');
           }
           return;
@@ -125,7 +148,7 @@ export function PracticeScreen({
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.phase, state.currentItem, input, showSettings, showQuit]);
+  }, [state.phase, state.currentItem, input, showSettings, showQuit, showTutor]);
 
   const confirmQuit = useCallback(() => {
     setShowQuit(false);
@@ -171,6 +194,8 @@ export function PracticeScreen({
   const hasError = !!state.errorText;
   const isChoice = state.currentItem?.answerInput === 'choice';
   const choices = state.currentItem?.choices ?? [];
+  const allowDecimal = state.currentItem?.itemType === 'decimal_add'
+    || state.currentItem?.itemType === 'decimal_sub';
   const progress = state.totalPlanned
     ? Math.round((state.completedCount / state.totalPlanned) * 100) : 0;
 
@@ -181,13 +206,26 @@ export function PracticeScreen({
   };
 
   return (
-    <div style={st.container}>
+    <div className="drill-container" style={st.container}>
       {/* Settings overlay */}
       {showSettings && (
         <SettingsOverlay
           settings={settings}
           onChange={onUpdateSettings}
           onClose={() => setShowSettings(false)}
+        />
+      )}
+
+      {/* AI tutor */}
+      {showTutor && state.currentItem && (
+        <TutorChat
+          context={{
+            prompt: state.currentItem.prompt,
+            answer: state.currentItem.answer,
+            itemType: state.currentItem.itemType,
+          }}
+          onClose={() => setShowTutor(false)}
+          onOpenSettings={() => { setShowTutor(false); onOpenSettings?.(); }}
         />
       )}
 
@@ -226,6 +264,12 @@ export function PracticeScreen({
           </span>
         </div>
         <button
+          style={{ ...st.iconBtn, ...st.hintBtn }}
+          onClick={() => setShowTutor(true)}
+          title="Ask the tutor for a hint (H)"
+          tabIndex={-1}
+        >💡</button>
+        <button
           style={st.iconBtn}
           onClick={() => setShowSettings(true)}
           title="Settings (Esc)"
@@ -239,12 +283,15 @@ export function PracticeScreen({
         >✕</button>
       </div>
 
-      {/* Question card */}
-      <div style={{
-        ...st.card,
-        borderColor: isCorrect ? '#22c55e' : hasError ? '#ef4444' : 'transparent',
-        borderWidth: 3, borderStyle: 'solid',
-      }}>
+      {/* Question card — single column on phone portrait, two on tablet landscape */}
+      <div
+        className="drill-card"
+        style={{
+          ...st.card,
+          borderColor: isCorrect ? '#22c55e' : hasError ? '#ef4444' : 'transparent',
+          borderWidth: 3, borderStyle: 'solid',
+        }}
+      >
         {settings.audioEnabled && state.currentItem && (
           <button style={st.audioBtn} tabIndex={-1}
             onClick={() => speakProblem(state.currentItem!.prompt)}
@@ -252,85 +299,97 @@ export function PracticeScreen({
           </button>
         )}
 
-        <div style={st.prompt}>{state.currentItem?.prompt}</div>
+        {/* Question zone */}
+        <div className="drill-q">
+          <div style={st.prompt}>{state.currentItem?.prompt}</div>
 
-        {/* Answer display */}
-        {isChoice ? (
-          <div style={st.choiceDisplay}>
-            {isCorrect ? String(state.currentItem?.answer ?? '') : (input || '?')}
-          </div>
-        ) : (
-          <input
-            ref={inputRef}
-            type="number"
-            inputMode="numeric"
-            value={isCorrect ? String(state.currentItem?.answer ?? '') : input}
-            onChange={e => { if (!isCorrect) setInput(e.target.value.slice(0, 5)); }}
-            readOnly={isCorrect}
-            placeholder="?"
-            autoComplete="off"
-            aria-label="Your answer"
-            style={{
-              ...st.answerInput,
-              color: isCorrect ? '#22c55e' : hasError ? '#ef4444' : '#4f46e5',
-              borderBottomColor: isCorrect ? '#22c55e' : hasError ? '#ef4444' : '#4f46e5',
-            }}
-          />
-        )}
+          {isChoice ? (
+            <div style={st.choiceDisplay}>
+              {isCorrect ? String(state.currentItem?.answer ?? '') : (input || '?')}
+            </div>
+          ) : (
+            <input
+              ref={inputRef}
+              type="number"
+              inputMode={allowDecimal ? 'decimal' : 'numeric'}
+              value={isCorrect ? String(state.currentItem?.answer ?? '') : input}
+              onChange={e => { if (!isCorrect) setInput(e.target.value.slice(0, 6)); }}
+              readOnly={isCorrect}
+              placeholder="?"
+              autoComplete="off"
+              aria-label="Your answer"
+              style={{
+                ...st.answerInput,
+                color: isCorrect ? '#22c55e' : hasError ? '#ef4444' : '#4f46e5',
+                borderBottomColor: isCorrect ? '#22c55e' : hasError ? '#ef4444' : '#4f46e5',
+              }}
+            />
+          )}
 
-        {hasError && !isCorrect && <p style={st.errorText}>{state.errorText}</p>}
+          {hasError && !isCorrect && <p style={st.errorText}>{state.errorText}</p>}
 
-        {isCorrect && (
-          <p style={st.correctText}>
-            {state.correctResult?.isNewPersonalBest ? '⚡ New personal best!' : '✓ Correct!'}
-            {!settings.autoAdvance && <span style={st.subText}> · Enter to continue</span>}
-          </p>
-        )}
+          {isCorrect && (
+            <p style={st.correctText}>
+              {state.correctResult?.isNewPersonalBest ? '⚡ New personal best!' : '✓ Correct!'}
+              {!settings.autoAdvance && <span style={st.subText}> · Enter to continue</span>}
+            </p>
+          )}
 
-        {!hasError && !isCorrect && input === '' && (
-          <p style={st.hintText}>
-            {isChoice ? 'Choose ‹ = › · keys < = > · Q to quit' : 'Type your answer · Enter to check · Q to quit'}
-          </p>
-        )}
+          {!hasError && !isCorrect && input === '' && (
+            <p style={st.hintText}>
+              {isChoice
+                ? (choices.every(c => String(c).length === 1)
+                    ? 'Tap a choice · keys < = > · H for a hint'
+                    : 'Tap a choice · press its first letter · H for a hint')
+                : 'Type your answer · Enter to check · H for a hint'}
+            </p>
+          )}
+        </div>
 
-        {/* Input controls */}
-        {!isCorrect && isChoice && (
-          <div style={st.choiceRow}>
-            {choices.map(c => (
-              <button
-                key={String(c)}
-                style={st.choiceBtn}
-                onClick={() => submitChoice(String(c))}
-              >
-                {String(c)}
-              </button>
-            ))}
-          </div>
-        )}
+        {/* Input zone */}
+        <div className="drill-k">
+          {!isCorrect && isChoice && (
+            <div style={st.choiceRow}>
+              {choices.map(c => {
+                const label = String(c);
+                const isSymbol = label.length === 1;
+                return (
+                  <button
+                    key={label}
+                    style={{ ...st.choiceBtn, fontSize: isSymbol ? '32px' : '18px', maxWidth: isSymbol ? '90px' : 'none' }}
+                    onClick={() => submitChoice(label)}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
-        {!isCorrect && !isChoice && (
-          <div style={{ marginTop: '16px' }}>
+          {!isCorrect && !isChoice && (
             <NumPad
               value={input}
               onChange={setInput}
+              allowDecimal={allowDecimal}
               onSubmit={() => {
                 if (input.trim()) { submitAnswer(input); setInput(''); }
               }}
             />
-          </div>
-        )}
+          )}
 
-        {isCorrect && !settings.autoAdvance && (
-          <button style={st.nextBtn} onClick={nextQuestion}>
-            Next → <span style={st.kbTag}>Enter</span>
-          </button>
-        )}
+          {isCorrect && !settings.autoAdvance && (
+            <button style={st.nextBtn} onClick={nextQuestion}>
+              Next → <span style={st.kbTag}>Enter</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Keyboard hint strip */}
       <div style={st.kbRow}>
         <KbChip k="0–9" label="type" />
         <KbChip k="↵" label="check/next" />
+        <KbChip k="H" label="hint" />
         <KbChip k="Q" label="quit" />
         <KbChip k="Esc" label="settings" />
       </div>
@@ -356,6 +415,7 @@ const st: Record<string, React.CSSProperties> = {
   progressFill: { height: '100%', background: '#4f46e5', borderRadius: '3px', transition: 'width 0.3s' },
   progressText: { fontSize: '12px', color: '#9ca3af' },
   iconBtn: { background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', padding: '4px', borderRadius: '8px', lineHeight: 1 },
+  hintBtn: { background: 'var(--primary-light)', borderRadius: '10px' },
   quitIconBtn: { color: '#9ca3af', fontSize: '16px', fontWeight: 'bold' },
   card: {
     position: 'relative', background: '#fff', borderRadius: '20px',

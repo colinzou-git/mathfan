@@ -192,6 +192,7 @@ export default function App() {
         settings={profile.settings}
         onUpdateSettings={updateSettings}
         onDone={handleSessionDone}
+        onOpenSettings={() => setScreen('settings')}
         onPlayAgain={() => {
           setScreen('loading');
           setTimeout(() => setScreen('practice'), 40);
