@@ -1,0 +1,339 @@
+import { useEffect, useRef, useState, useCallback } from 'react';
+import type { SessionConfig, StudentSettings } from '../../types/math';
+import { usePracticeSession } from './usePracticeSession';
+import { NumPad } from '../../components/NumPad';
+import { SessionSummary } from '../../components/SessionSummary';
+import { SettingsOverlay } from '../../components/SettingsOverlay';
+import { speakProblem, speakFeedback, stopSpeech } from '../audio/speech';
+
+const AUTO_ADVANCE_MS = 700;
+
+interface Props {
+  studentId: string;
+  config: SessionConfig;
+  settings: StudentSettings;
+  onUpdateSettings: (s: StudentSettings) => void;
+  onDone: () => void;
+  onPlayAgain?: () => void;
+}
+
+export function PracticeScreen({
+  studentId, config, settings, onUpdateSettings, onDone, onPlayAgain,
+}: Props) {
+  const { state, startSession, submitAnswer, nextQuestion } = usePracticeSession(studentId);
+  const [input, setInput] = useState('');
+  const [showSettings, setShowSettings] = useState(false);
+  const [showQuit, setShowQuit] = useState(false);
+  const [quitting, setQuitting] = useState(false); // show summary with partial data
+  const inputRef = useRef<HTMLInputElement>(null);
+  const autoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // ── Start ─────────────────────────────────────────────────────────────────
+
+  useEffect(() => {
+    startSession(config);
+    return () => {
+      stopSpeech();
+      if (autoTimer.current) clearTimeout(autoTimer.current);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ── Focus helpers ─────────────────────────────────────────────────────────
+
+  const focusInput = useCallback(() => {
+    requestAnimationFrame(() => inputRef.current?.focus());
+  }, []);
+
+  // New question or retry → clear input + focus
+  useEffect(() => {
+    if (state.phase === 'active') {
+      setInput('');
+      focusInput();
+      if (settings.audioEnabled && state.currentItem) speakProblem(state.currentItem.prompt);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.phase, state.currentItem?.id, state.retryKey]);
+
+  // Correct phase → focus for Enter-to-advance; optionally auto-advance
+  useEffect(() => {
+    if (state.phase === 'correct') {
+      focusInput();
+      if (settings.audioEnabled && state.currentItem) speakFeedback(true, state.currentItem.answer);
+      if (settings.autoAdvance) {
+        autoTimer.current = setTimeout(() => nextQuestion(), AUTO_ADVANCE_MS);
+      }
+      return () => { if (autoTimer.current) clearTimeout(autoTimer.current); };
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.phase]);
+
+  // Re-focus after any overlay closes
+  useEffect(() => {
+    if (!showSettings && !showQuit) focusInput();
+  }, [showSettings, showQuit, focusInput]);
+
+  // ── Global keyboard handler ───────────────────────────────────────────────
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      // Quit confirmation is open
+      if (showQuit) {
+        if (e.key === 'Escape') { setShowQuit(false); return; }
+        if (e.key === 'Enter') { confirmQuit(); return; }
+        return;
+      }
+
+      if (showSettings) return;
+
+      if (e.key === 'Escape') { setShowSettings(true); return; }
+
+      if (e.key === 'q' || e.key === 'Q') {
+        e.preventDefault();
+        setShowQuit(true);
+        return;
+      }
+
+      if (state.phase === 'correct') {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          if (autoTimer.current) clearTimeout(autoTimer.current);
+          nextQuestion();
+        }
+        return;
+      }
+
+      if (state.phase === 'active' && e.key === 'Enter') {
+        e.preventDefault();
+        if (input.trim()) { submitAnswer(input); setInput(''); }
+      }
+    };
+
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.phase, input, showSettings, showQuit]);
+
+  const confirmQuit = useCallback(() => {
+    setShowQuit(false);
+    stopSpeech();
+    if (autoTimer.current) clearTimeout(autoTimer.current);
+    setQuitting(true);
+  }, []);
+
+  // ── Render: summary (complete or early quit) ──────────────────────────────
+
+  if (state.phase === 'complete' || quitting) {
+    return (
+      <SessionSummary
+        completedCount={state.completedCount}
+        correctCount={state.correctCount}
+        latencies={state.latencies}
+        fastestMs={state.fastestMs}
+        wasQuit={quitting}
+        onDone={onDone}
+        onPlayAgain={quitting ? undefined : onPlayAgain}
+      />
+    );
+  }
+
+  if (state.phase === 'idle') {
+    return (
+      <div style={st.center}>
+        <div style={{ fontSize: '48px' }}>🧮</div>
+        <p style={{ color: '#6b7280' }}>Preparing…</p>
+      </div>
+    );
+  }
+
+  // ── Render: active drill ──────────────────────────────────────────────────
+
+  const isCorrect = state.phase === 'correct';
+  const hasError = !!state.errorText;
+  const progress = state.totalPlanned
+    ? Math.round((state.completedCount / state.totalPlanned) * 100) : 0;
+
+  return (
+    <div style={st.container}>
+      {/* Settings overlay */}
+      {showSettings && (
+        <SettingsOverlay
+          settings={settings}
+          onChange={onUpdateSettings}
+          onClose={() => setShowSettings(false)}
+        />
+      )}
+
+      {/* Quit confirmation overlay */}
+      {showQuit && (
+        <div style={st.backdrop} onClick={() => setShowQuit(false)}>
+          <div style={st.quitPanel} onClick={e => e.stopPropagation()}>
+            <h3 style={st.quitTitle}>Quit this session?</h3>
+            <p style={st.quitBody}>
+              {state.completedCount} of {state.totalPlanned} questions done
+              · {state.correctCount} correct
+            </p>
+            <p style={st.quitBody2}>
+              Your answers so far are saved. You can start a new session any time.
+            </p>
+            <div style={st.quitBtns}>
+              <button style={st.keepBtn} onClick={() => setShowQuit(false)}>
+                Keep Going <span style={st.kbTag}>Esc</span>
+              </button>
+              <button style={st.quitBtn} onClick={confirmQuit}>
+                Quit <span style={st.kbTag}>Enter</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Top bar: progress + settings + quit */}
+      <div style={st.topBar}>
+        <div style={st.progressWrap}>
+          <div style={st.progressBar}>
+            <div style={{ ...st.progressFill, width: `${progress}%` }} />
+          </div>
+          <span style={st.progressText}>
+            {state.completedCount}/{state.totalPlanned} · {state.correctCount} ✓
+          </span>
+        </div>
+        <button
+          style={st.iconBtn}
+          onClick={() => setShowSettings(true)}
+          title="Settings (Esc)"
+          tabIndex={-1}
+        >⚙️</button>
+        <button
+          style={{ ...st.iconBtn, ...st.quitIconBtn }}
+          onClick={() => setShowQuit(true)}
+          title="Quit session (Q)"
+          tabIndex={-1}
+        >✕</button>
+      </div>
+
+      {/* Question card */}
+      <div style={{
+        ...st.card,
+        borderColor: isCorrect ? '#22c55e' : hasError ? '#ef4444' : 'transparent',
+        borderWidth: 3, borderStyle: 'solid',
+      }}>
+        {settings.audioEnabled && state.currentItem && (
+          <button style={st.audioBtn} tabIndex={-1}
+            onClick={() => speakProblem(state.currentItem!.prompt)}
+            title="Repeat">🔊
+          </button>
+        )}
+
+        <div style={st.prompt}>{state.currentItem?.prompt}</div>
+
+        <input
+          ref={inputRef}
+          type="number"
+          inputMode="numeric"
+          value={isCorrect ? String(state.currentItem?.answer ?? '') : input}
+          onChange={e => { if (!isCorrect) setInput(e.target.value.slice(0, 5)); }}
+          readOnly={isCorrect}
+          placeholder="?"
+          autoComplete="off"
+          aria-label="Your answer"
+          style={{
+            ...st.answerInput,
+            color: isCorrect ? '#22c55e' : hasError ? '#ef4444' : '#4f46e5',
+            borderBottomColor: isCorrect ? '#22c55e' : hasError ? '#ef4444' : '#4f46e5',
+          }}
+        />
+
+        {hasError && !isCorrect && <p style={st.errorText}>{state.errorText}</p>}
+
+        {isCorrect && (
+          <p style={st.correctText}>
+            {state.correctResult?.isNewPersonalBest ? '⚡ New personal best!' : '✓ Correct!'}
+            {!settings.autoAdvance && <span style={st.subText}> · Enter to continue</span>}
+          </p>
+        )}
+
+        {!hasError && !isCorrect && input === '' && (
+          <p style={st.hintText}>Type your answer · Enter to check · Q to quit</p>
+        )}
+
+        {!isCorrect && (
+          <div style={{ marginTop: '16px' }}>
+            <NumPad
+              value={input}
+              onChange={setInput}
+              onSubmit={() => {
+                if (input.trim()) { submitAnswer(input); setInput(''); }
+              }}
+            />
+          </div>
+        )}
+
+        {isCorrect && !settings.autoAdvance && (
+          <button style={st.nextBtn} onClick={nextQuestion}>
+            Next → <span style={st.kbTag}>Enter</span>
+          </button>
+        )}
+      </div>
+
+      {/* Keyboard hint strip */}
+      <div style={st.kbRow}>
+        <KbChip k="0–9" label="type" />
+        <KbChip k="↵" label="check/next" />
+        <KbChip k="Q" label="quit" />
+        <KbChip k="Esc" label="settings" />
+      </div>
+    </div>
+  );
+}
+
+function KbChip({ k, label }: { k: string; label: string }) {
+  return (
+    <span style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '12px', color: '#9ca3af' }}>
+      <kbd style={{ background: '#f3f4f6', border: '1px solid #e5e7eb', borderRadius: '4px', padding: '1px 5px', fontFamily: 'monospace', fontSize: '11px' }}>{k}</kbd>
+      {label}
+    </span>
+  );
+}
+
+const st: Record<string, React.CSSProperties> = {
+  container: { maxWidth: '480px', margin: '0 auto', padding: '12px 16px', fontFamily: 'system-ui, sans-serif' },
+  center: { display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: '60vh', gap: '12px' },
+  topBar: { display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px' },
+  progressWrap: { flex: 1 },
+  progressBar: { height: '6px', background: '#e5e7eb', borderRadius: '3px', overflow: 'hidden', marginBottom: '4px' },
+  progressFill: { height: '100%', background: '#4f46e5', borderRadius: '3px', transition: 'width 0.3s' },
+  progressText: { fontSize: '12px', color: '#9ca3af' },
+  iconBtn: { background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', padding: '4px', borderRadius: '8px', lineHeight: 1 },
+  quitIconBtn: { color: '#9ca3af', fontSize: '16px', fontWeight: 'bold' },
+  card: {
+    position: 'relative', background: '#fff', borderRadius: '20px',
+    padding: '28px 20px 20px', boxShadow: '0 4px 20px rgba(0,0,0,0.07)',
+    textAlign: 'center', transition: 'border-color 0.15s',
+  },
+  audioBtn: { position: 'absolute', top: '12px', right: '12px', background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', opacity: 0.6 },
+  prompt: { fontSize: '52px', fontWeight: 'bold', color: '#1f2937', marginBottom: '16px', fontVariantNumeric: 'tabular-nums', letterSpacing: '-1px' },
+  answerInput: {
+    display: 'block', width: '140px', margin: '0 auto',
+    fontSize: '44px', fontWeight: 'bold', textAlign: 'center',
+    background: 'transparent', border: 'none', borderBottom: '3px solid #4f46e5',
+    outline: 'none', fontVariantNumeric: 'tabular-nums', transition: 'color 0.15s, border-color 0.15s',
+    MozAppearance: 'textfield' as never,
+  },
+  errorText: { color: '#ef4444', fontSize: '15px', fontWeight: '600', margin: '10px 0 0' },
+  correctText: { color: '#16a34a', fontSize: '15px', fontWeight: '600', margin: '10px 0 0' },
+  subText: { color: '#9ca3af', fontWeight: 'normal' },
+  hintText: { color: '#d1d5db', fontSize: '13px', margin: '8px 0 0' },
+  nextBtn: { display: 'block', width: '100%', marginTop: '16px', padding: '14px', background: '#4f46e5', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '17px', fontWeight: 'bold', cursor: 'pointer' },
+  kbRow: { display: 'flex', justifyContent: 'center', gap: '16px', marginTop: '14px', flexWrap: 'wrap' },
+  kbTag: { fontSize: '11px', background: 'rgba(255,255,255,0.25)', borderRadius: '4px', padding: '1px 4px', fontFamily: 'monospace' },
+  // Quit overlay
+  backdrop: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999, padding: '20px' },
+  quitPanel: { background: '#fff', borderRadius: '20px', padding: '28px 24px', maxWidth: '360px', width: '100%', boxShadow: '0 8px 32px rgba(0,0,0,0.15)' },
+  quitTitle: { fontSize: '20px', fontWeight: 'bold', margin: '0 0 12px', textAlign: 'center' },
+  quitBody: { textAlign: 'center', fontSize: '16px', color: '#374151', margin: '0 0 8px', fontWeight: '500' },
+  quitBody2: { textAlign: 'center', fontSize: '13px', color: '#9ca3af', margin: '0 0 24px' },
+  quitBtns: { display: 'flex', gap: '10px' },
+  keepBtn: { flex: 1, padding: '14px', background: '#f3f4f6', border: 'none', borderRadius: '12px', fontSize: '15px', fontWeight: '600', cursor: 'pointer', color: '#374151' },
+  quitBtn: { flex: 1, padding: '14px', background: '#ef4444', border: 'none', borderRadius: '12px', fontSize: '15px', fontWeight: '600', cursor: 'pointer', color: '#fff' },
+};
