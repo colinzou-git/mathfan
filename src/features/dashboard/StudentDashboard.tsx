@@ -10,6 +10,7 @@ export type PracticeOp =
 
 interface Props {
   profile: StudentProfile;
+  lastSyncedAt?: string | null;
   onStartDailyReview: () => void;
   onPickOperation: (op: PracticeOp) => void;
   onOpenStats: () => void;
@@ -36,7 +37,7 @@ const OPERATIONS: { op: PracticeOp; label: string; icon: string }[] = [
   { op: 'decimals',       label: 'Decimals',  icon: '🔟' },
 ];
 
-export function StudentDashboard({ profile, onStartDailyReview, onPickOperation, onOpenStats, onOpenSettings }: Props) {
+export function StudentDashboard({ profile, lastSyncedAt, onStartDailyReview, onPickOperation, onOpenStats, onOpenSettings }: Props) {
   const [quick, setQuick] = useState<QuickStats | null>(null);
 
   useEffect(() => {
@@ -58,7 +59,7 @@ export function StudentDashboard({ profile, onStartDailyReview, onPickOperation,
         dueCount,
       });
     })();
-  }, [profile.id]);
+  }, [profile.id, lastSyncedAt]);
 
   return (
     <div style={s.container}>

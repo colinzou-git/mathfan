@@ -67,8 +67,8 @@ const SCHEMAS: Schema[] = ['eg', 'ar', 'cmp', 'dv'];
 export function generateWordProblemItems(
   grade: GradeLevel, count: number, rangeMin?: number, rangeMax?: number,
 ): PracticeItem[] {
-  const max = Math.max(2, Math.floor(rangeMax ?? factorMax(grade)));
-  const min = Math.max(2, Math.min(max, Math.floor(rangeMin ?? (grade === 3 ? 2 : 3))));
+  const max = Math.max(0, Math.floor(rangeMax ?? factorMax(grade)));
+  const min = Math.max(0, Math.min(max, Math.floor(rangeMin ?? (grade === 3 ? 2 : 3))));
   const items: PracticeItem[] = [];
   const seen = new Set<string>();
   let guard = 0;
@@ -77,6 +77,7 @@ export function generateWordProblemItems(
     const schema = pick(SCHEMAS);
     const a = randInt(min, max);
     const b = randInt(min, max);
+    if (schema === 'dv' && a < 1) continue; // can't divide into 0 groups
     const item = makeWordProblem(schema, a, b);
     if (seen.has(item.id)) continue;
     seen.add(item.id);

@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import type { StudentProfile, StudentSettings, GradeLevel, SessionLength, ThemeName } from '../../types/math';
 import { THEMES, applyTheme } from '../theme/themes';
-import { useSync } from '../sync/useSync';
 import { getDriveFileInfo } from '../sync/driveSync';
+import type { SyncStatus } from '../sync/driveSync';
+import type { AuthState } from '../auth/googleAuth';
 import { attemptRepo } from '../../db/repositories';
 import { studentRepo } from '../../db/repositories';
 import { isDebugSpeed, enableDebugSpeed, disableDebugSpeed } from '../time/clock';
@@ -14,6 +15,13 @@ interface Props {
   onUpdateProfile: (p: StudentProfile) => void;
   onBack: () => void;
   onSwitchStudent: () => void;
+  auth: AuthState;
+  syncStatus: SyncStatus;
+  lastSyncedAt: string | null;
+  syncError: string | null;
+  onSignIn: () => void;
+  onSignOut: () => void;
+  onManualSync: () => void;
 }
 
 /** Known Gemini models with a free tier. Each has its own daily quota. */
@@ -47,9 +55,8 @@ function ToggleRow({ label, desc, checked, onChange }: {
   );
 }
 
-export function SettingsPage({ profile, onUpdateProfile, onBack, onSwitchStudent }: Props) {
+export function SettingsPage({ profile, onUpdateProfile, onBack, onSwitchStudent, auth, syncStatus, lastSyncedAt, syncError, onSignIn, onSignOut, onManualSync }: Props) {
   const settings = profile.settings;
-  const { auth, syncStatus, lastSyncedAt, syncError, handleSignIn, handleSignOut, manualSync } = useSync();
   const [driveInfo, setDriveInfo] = useState<{ sizeBytes: number | null; modifiedAt: string | null } | null>(null);
   const [totalQuestions, setTotalQuestions] = useState<number | null>(null);
   const [editName, setEditName] = useState(profile.displayName);
@@ -89,7 +96,7 @@ export function SettingsPage({ profile, onUpdateProfile, onBack, onSwitchStudent
     if (auth.signedIn) {
       getDriveFileInfo().then(setDriveInfo);
     }
-  }, [profile.id, auth.signedIn]);
+  }, [profile.id, auth.signedIn, lastSyncedAt]);
 
   const save = (patch: Partial<StudentSettings>) => {
     const updated = { ...profile, settings: { ...settings, ...patch } };
@@ -257,12 +264,12 @@ export function SettingsPage({ profile, onUpdateProfile, onBack, onSwitchStudent
             <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
               <button
                 style={{ ...s.syncBtn, opacity: syncStatus === 'syncing' ? 0.5 : 1 }}
-                onClick={manualSync}
+                onClick={onManualSync}
                 disabled={syncStatus === 'syncing'}
               >
                 {syncStatus === 'syncing' ? '⏳ Syncing…' : '↻ Sync Now'}
               </button>
-              <button style={s.outBtn} onClick={handleSignOut}>Sign Out</button>
+              <button style={s.outBtn} onClick={onSignOut}>Sign Out</button>
             </div>
             {syncStatus === 'error' && syncError && (
               <p style={{ color: '#ef4444', fontSize: '13px', marginTop: '8px' }}>{syncError}</p>
@@ -275,7 +282,7 @@ export function SettingsPage({ profile, onUpdateProfile, onBack, onSwitchStudent
             </p>
             <button
               style={{ ...s.syncBtn, opacity: syncStatus === 'syncing' ? 0.5 : 1 }}
-              onClick={handleSignIn}
+              onClick={onSignIn}
               disabled={syncStatus === 'syncing'}
             >
               {syncStatus === 'syncing' ? '⏳ Signing in…' : '🔑 Sign in with Google'}

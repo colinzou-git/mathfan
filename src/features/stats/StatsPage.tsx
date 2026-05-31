@@ -12,6 +12,7 @@ import type { AttemptLog, PracticeSession } from '../../types/math';
 
 interface Props {
   studentId: string;
+  lastSyncedAt?: string | null;
   onBack: () => void;
 }
 
@@ -39,7 +40,7 @@ function daysBetween(start: string, end: string): number {
   return Math.round((new Date(end + 'T12:00:00').getTime() - new Date(start + 'T12:00:00').getTime()) / 86400000) + 1;
 }
 
-export function StatsPage({ studentId, onBack }: Props) {
+export function StatsPage({ studentId, lastSyncedAt, onBack }: Props) {
   const [preset, setPreset] = useState<PeriodPreset>('week');
   const [customRange, setCustomRange] = useState<DateRange>(() => {
     const today = toYMD(appNow());
@@ -55,7 +56,7 @@ export function StatsPage({ studentId, onBack }: Props) {
       attemptRepo.getAll(studentId),
       sessionRepo.getAll(studentId),
     ]).then(([a, s]) => { setAttempts(a); setSessions(s); });
-  }, [studentId]);
+  }, [studentId, lastSyncedAt]);
 
   const range = buildRange(preset, customRange);
 

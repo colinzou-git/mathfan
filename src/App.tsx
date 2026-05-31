@@ -10,7 +10,7 @@ import { specFor } from './components/opSpecs';
 import { StatsPage } from './features/stats/StatsPage';
 import { SettingsPage } from './features/settings/SettingsPage';
 import { preloadVoices } from './features/audio/speech';
-import { initAuth } from './features/sync/useSync';
+import { useSync, initAuth } from './features/sync/useSync';
 import { pushLocal } from './features/sync/driveSync';
 import { currentState as authState } from './features/auth/googleAuth';
 import { applyTheme } from './features/theme/themes';
@@ -25,6 +25,7 @@ export default function App() {
   const [profile, setProfile] = useState<StudentProfile | null>(null);
   const [sessionConfig, setSessionConfig] = useState<SessionConfig | null>(null);
   const [selectedOp, setSelectedOp] = useState<PracticeOp>('multiplication');
+  const { auth, syncStatus, lastSyncedAt, syncError, handleSignIn, handleSignOut, manualSync } = useSync();
 
   const pickOperation = (op: PracticeOp) => {
     setSelectedOp(op);
@@ -93,6 +94,13 @@ export default function App() {
         onUpdateProfile={updateProfile}
         onBack={() => setScreen('dashboard')}
         onSwitchStudent={() => setScreen('setup')}
+        auth={auth}
+        syncStatus={syncStatus}
+        lastSyncedAt={lastSyncedAt}
+        syncError={syncError}
+        onSignIn={handleSignIn}
+        onSignOut={handleSignOut}
+        onManualSync={manualSync}
       />
     );
   }
@@ -101,6 +109,7 @@ export default function App() {
     return (
       <StatsPage
         studentId={profile.id}
+        lastSyncedAt={lastSyncedAt}
         onBack={() => setScreen('dashboard')}
       />
     );
@@ -150,6 +159,7 @@ export default function App() {
   return (
     <StudentDashboard
       profile={profile}
+      lastSyncedAt={lastSyncedAt}
       onStartDailyReview={() => setScreen('daily-setup')}
       onPickOperation={pickOperation}
       onOpenStats={() => setScreen('stats')}

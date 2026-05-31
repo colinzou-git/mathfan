@@ -39,7 +39,7 @@ export function makeFractionEquivalentItem(n: number, d: number, mult: number): 
 function fracRanges(numMin?: number, numMax?: number, denMin?: number, denMax?: number) {
   const dLo = Math.max(2, Math.floor(denMin ?? 2));
   const dHi = Math.max(dLo, Math.floor(denMax ?? 9));
-  const nLo = Math.max(1, Math.floor(numMin ?? 1));
+  const nLo = Math.max(0, Math.floor(numMin ?? 0));
   const nHi = Math.max(nLo, Math.floor(numMax ?? 8));
   return { nLo, nHi, dLo, dHi };
 }
@@ -55,7 +55,7 @@ export function generateFractionEquivalentItems(
     guard++;
     const d = randInt(dLo, dHi);
     const n = randInt(nLo, Math.min(nHi, d - 1)); // proper fraction
-    if (n < 1 || n >= d) continue;
+    if (n < 0 || n >= d) continue;
     if (gcd(n, d) !== 1) continue; // start from a reduced fraction
     const mult = randInt(2, 6);
     const item = makeFractionEquivalentItem(n, d, mult);

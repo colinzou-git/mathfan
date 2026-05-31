@@ -74,8 +74,8 @@ export function specFor(op: PracticeOp, grade: GradeLevel): RangeSetupSpec {
         title: 'Division', icon: '➗',
         description: 'Whole-number division (no remainders). Choose the dividend and divisor ranges.',
         ranges: [
-          { caption: 'Dividend (big number)', defLo: 10, defHi: 100, min: 2, max: 100000 },
-          { caption: 'Divisor',               defLo: 2,  defHi: 12,  min: 2, max: 1000 },
+          { caption: 'Dividend (big number)', defLo: 10, defHi: 100, min: 0, max: 100000 },
+          { caption: 'Divisor',               defLo: 2,  defHi: 12,  min: 1, max: 1000 },
         ],
         example: v => `Dividend ${v[0].lo}–${v[0].hi} ÷ divisor ${v[1].lo}–${v[1].hi}`,
         buildConfig: (v, _s, count) => ({
@@ -132,7 +132,7 @@ export function specFor(op: PracticeOp, grade: GradeLevel): RangeSetupSpec {
           { value: 'compare',    label: 'Compare',    example: '2/3 ▢ 3/4', desc: 'Choose ‹, =, or ›.' },
         ],
         ranges: [
-          { caption: 'Numerator (top)',     defLo: 1, defHi: 8,  min: 1, max: 50 },
+          { caption: 'Numerator (top)',     defLo: 1, defHi: 8,  min: 0, max: 50 },
           { caption: 'Denominator (bottom)', defLo: 2, defHi: 12, min: 2, max: 50 },
         ],
         example: (v, s) => s === 'compare'
@@ -152,7 +152,7 @@ export function specFor(op: PracticeOp, grade: GradeLevel): RangeSetupSpec {
         title: 'Word Problems', icon: '📖',
         description: 'Read the story and type the number answer. Pick the size of the numbers used.',
         ranges: [
-          { caption: 'Numbers in the story', defLo: 2, defHi: gradeFactorMax(grade), min: 2, max: 100 },
+          { caption: 'Numbers in the story', defLo: 2, defHi: gradeFactorMax(grade), min: 0, max: 100 },
         ],
         example: v => `Numbers from ${v[0].lo} to ${v[0].hi}`,
         buildConfig: (v, _s, count) => ({

@@ -146,7 +146,7 @@ export function generateDivisionItemsRange(
   dividendMin?: number, dividendMax?: number,
 ): PracticeItem[] {
   const [dvLoRaw, dvHi] = clampRange(divisorMin, divisorMax);
-  const dvLo = Math.max(2, dvLoRaw); // avoid ÷1 and ÷0
+  const dvLo = Math.max(1, dvLoRaw); // avoid ÷0
   const hasDividend = dividendMin !== undefined && dividendMax !== undefined;
   const [ddLo, ddHi] = hasDividend ? clampRange(dividendMin!, dividendMax!) : [0, 0];
 
@@ -159,7 +159,7 @@ export function generateDivisionItemsRange(
     let dividend: number;
     if (hasDividend) {
       // Quotients whose product with `divisor` stays inside the dividend range.
-      const qLo = Math.max(1, Math.ceil(ddLo / divisor));
+      const qLo = Math.max(0, Math.ceil(ddLo / divisor));
       const qHi = Math.floor(ddHi / divisor);
       if (qHi < qLo) continue; // no whole multiple of this divisor fits the range
       dividend = divisor * randInt(qLo, qHi);
