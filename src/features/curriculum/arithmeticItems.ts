@@ -9,8 +9,8 @@ function randInt(min: number, max: number): number {
 }
 
 function clampRange(min: number, max: number): [number, number] {
-  let lo = Math.max(0, Math.floor(min));
-  let hi = Math.max(lo, Math.floor(max));
+  const lo = Math.max(0, Math.floor(min));
+  const hi = Math.max(lo, Math.floor(max));
   return [lo, hi];
 }
 

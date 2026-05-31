@@ -17,13 +17,15 @@ export function RangeSetup({ spec, defaultCount = 10, onStart, onBack }: Props) 
   );
   const [subMode, setSubMode] = useState(spec.subModes?.[0]?.value ?? '');
   const [count, setCount] = useState(defaultCount);
+  const [prevSpec, setPrevSpec] = useState(spec);
   const countRef = useRef<HTMLInputElement>(null);
 
-  // Reset when the operation changes (spec identity changes).
-  useEffect(() => {
+  // Reset form fields when the operation changes (spec identity changes).
+  if (prevSpec !== spec) {
+    setPrevSpec(spec);
     setVals(spec.ranges.map(r => ({ lo: r.defLo, hi: r.defHi })));
     setSubMode(spec.subModes?.[0]?.value ?? '');
-  }, [spec]);
+  }
 
   useEffect(() => { countRef.current?.select(); }, []);
 

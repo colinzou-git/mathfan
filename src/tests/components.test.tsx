@@ -23,11 +23,16 @@ describe('TutorChat', () => {
 });
 
 describe('SessionSummary', () => {
-  it('renders stats and a missed-facts list', () => {
+  it('shows first-try accuracy (not completion %) and a missed-facts list', () => {
     render(
       <SessionSummary
         completedCount={10}
-        correctCount={8}
+        correctCount={10}
+        firstTryCount={7}
+        correctedCount={2}
+        repeatedCount={1}
+        slowFirstTryCount={1}
+        attemptCount={14}
         latencies={[1200, 1500]}
         fastestMs={1200}
         missedFacts={['7 × 8', '6 × 9']}
@@ -35,7 +40,8 @@ describe('SessionSummary', () => {
       />
     );
     expect(screen.getByText(/Session Complete/i)).toBeInTheDocument();
-    expect(screen.getByText('80%')).toBeInTheDocument();
+    // 7 of 10 solved on the first try → 70%, even though all 10 were eventually correct.
+    expect(screen.getByText('70%')).toBeInTheDocument();
     expect(screen.getByText(/Practice these next time/i)).toBeInTheDocument();
     expect(screen.getByText('7 × 8')).toBeInTheDocument();
   });

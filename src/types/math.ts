@@ -150,6 +150,12 @@ export interface PracticeSession {
   plannedQuestionCount: number;
   completedQuestionCount: number;
   correctCount: number;
+  // First-try fluency metrics (optional; absent on sessions saved before this feature).
+  firstTryCount?: number;
+  correctedCount?: number;
+  repeatedCount?: number;
+  slowFirstTryCount?: number;
+  attemptCount?: number;
   averageLatencyMs: number;
   fastestCorrectMs?: number;
 }

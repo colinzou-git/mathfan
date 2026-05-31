@@ -3,6 +3,7 @@ import type {
   PracticeItem, StudentItemState, SessionConfig,
 } from '../../types/math';
 import { checkAnswer } from './answerChecker';
+import { classifyAttempts } from './metrics';
 import { applyReview, createInitialState, planSession, planTableSession } from '../scheduler/scheduler';
 import {
   generateSingleTableItems, generateMultipleTablesItems, generateMultiplicationRangeItems,
@@ -31,7 +32,7 @@ export interface CorrectResult {
 
 /** Snapshot of the previous session of the same mode, for session-over-session comparison. */
 export interface LastSessionSummary {
-  accuracy: number;          // 0–1
+  firstTryAccuracy: number | null; // 0–1; null when the prior session predates first-try tracking
   averageLatencyMs: number;
 }
 
@@ -46,6 +47,16 @@ export interface SessionState {
   correctResult: CorrectResult | null;
   completedCount: number;
   correctCount: number;
+  /** Solved on the first attempt. */
+  firstTryCount: number;
+  /** Solved in exactly 2 attempts (one miss, then right). */
+  correctedCount: number;
+  /** Solved in 3+ attempts. */
+  repeatedCount: number;
+  /** First-try solves that were correct but slow (graded 'hard'). */
+  slowFirstTryCount: number;
+  /** Total answer submissions (right and wrong). */
+  attemptCount: number;
   totalPlanned: number;
   sessionId: string | null;
   /** Correct-answer latencies for the session (used in SessionSummary). */
@@ -67,6 +78,11 @@ const INITIAL: SessionState = {
   correctResult: null,
   completedCount: 0,
   correctCount: 0,
+  firstTryCount: 0,
+  correctedCount: 0,
+  repeatedCount: 0,
+  slowFirstTryCount: 0,
+  attemptCount: 0,
   totalPlanned: 0,
   sessionId: null,
   latencies: [],
@@ -85,7 +101,10 @@ export function usePracticeSession(studentId: string) {
   const statesRef = useRef<Map<string, StudentItemState>>(new Map());
   const configRef = useRef<SessionConfig | null>(null);
   const sessionStartRef = useRef<number>(0);
-  const questionStartRef = useRef<number>(Date.now());
+  const questionStartRef = useRef<number>(0);
+  // Attempts at the *current* presentation — reset whenever a new item is shown, so retries
+  // accumulate but re-queued facts (table drills) start fresh.
+  const currentAttemptsRef = useRef<number>(0);
   // Holds dynamically generated items (arithmetic/fractions) not in the static ITEM_MAP
   const dynamicItemsRef = useRef<Map<string, PItem>>(new Map());
 
@@ -116,7 +135,9 @@ export function usePracticeSession(studentId: string) {
     const lastSession: LastSessionSummary | null =
       prior && prior.completedQuestionCount > 0
         ? {
-            accuracy: prior.correctCount / prior.completedQuestionCount,
+            firstTryAccuracy: prior.firstTryCount != null
+              ? prior.firstTryCount / prior.completedQuestionCount
+              : null,
             averageLatencyMs: prior.averageLatencyMs,
           }
         : null;
@@ -181,6 +202,7 @@ export function usePracticeSession(studentId: string) {
 
     const first = resolveItem(queueRef.current.shift()!);
     questionStartRef.current = Date.now();
+    currentAttemptsRef.current = 0;
     setState({
       ...INITIAL, phase: 'active',
       currentItem: first,
@@ -199,6 +221,7 @@ export function usePracticeSession(studentId: string) {
       const item = prev.currentItem;
       const latencyMs = Date.now() - questionStartRef.current;
       const result = checkAnswer(item, rawInput, latencyMs);
+      const attemptNo = (currentAttemptsRef.current += 1);
 
       // Fire-and-forget DB writes (can't await inside setState)
       const existing = statesRef.current.get(item.id) ?? createInitialState(studentId, item);
@@ -217,15 +240,22 @@ export function usePracticeSession(studentId: string) {
       });
 
       if (!result.isCorrect) {
-        // Wrong: stay on same question, clear input via retryKey
+        // Wrong: stay on same question, clear input via retryKey, and remember the fact.
+        const missedFacts = prev.missedFacts.includes(item.prompt)
+          ? prev.missedFacts
+          : [...prev.missedFacts, item.prompt];
         return {
           ...prev,
           retryKey: prev.retryKey + 1,
           errorText: 'Incorrect — try again',
+          attemptCount: prev.attemptCount + 1,
+          missedFacts,
         };
       }
 
-      // Correct
+      // Correct — classify how this presentation was solved.
+      const outcome = classifyAttempts(attemptNo);
+      const isSlowFirstTry = outcome === 'first-try' && result.reviewGrade === 'hard';
       const isNewPB =
         existing.personalBestMs === undefined || latencyMs < existing.personalBestMs;
       const newLatencies = [...prev.latencies, latencyMs];
@@ -240,6 +270,11 @@ export function usePracticeSession(studentId: string) {
         correctResult: { latencyMs, isNewPersonalBest: isNewPB },
         correctCount: prev.correctCount + 1,
         completedCount: prev.completedCount + 1,
+        attemptCount: prev.attemptCount + 1,
+        firstTryCount: prev.firstTryCount + (outcome === 'first-try' ? 1 : 0),
+        correctedCount: prev.correctedCount + (outcome === 'corrected' ? 1 : 0),
+        repeatedCount: prev.repeatedCount + (outcome === 'repeated' ? 1 : 0),
+        slowFirstTryCount: prev.slowFirstTryCount + (isSlowFirstTry ? 1 : 0),
         latencies: newLatencies,
         fastestMs: newFastest,
       };
@@ -268,6 +303,11 @@ export function usePracticeSession(studentId: string) {
               ...s,
               completedQuestionCount: prev.completedCount,
               correctCount: prev.correctCount,
+              firstTryCount: prev.firstTryCount,
+              correctedCount: prev.correctedCount,
+              repeatedCount: prev.repeatedCount,
+              slowFirstTryCount: prev.slowFirstTryCount,
+              attemptCount: prev.attemptCount,
               averageLatencyMs: avgMs,
               fastestCorrectMs: prev.fastestMs ?? undefined,
               endedAt: isEnding ? appNow().toISOString() : undefined,
@@ -281,6 +321,7 @@ export function usePracticeSession(studentId: string) {
       }
 
       questionStartRef.current = Date.now();
+      currentAttemptsRef.current = 0;
       return {
         ...prev,
         phase: 'active',

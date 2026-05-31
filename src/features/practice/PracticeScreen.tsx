@@ -49,10 +49,19 @@ export function PracticeScreen({
     requestAnimationFrame(() => inputRef.current?.focus());
   }, []);
 
-  // New question or retry → clear input + focus
+  // New question or retry → clear input (update during render, not in effect)
+  const [lastItemKey, setLastItemKey] = useState<string | null>(null);
+  const currentItemKey = state.phase === 'active'
+    ? `${state.currentItem?.id ?? ''}-${state.retryKey ?? 0}`
+    : null;
+  if (state.phase === 'active' && currentItemKey !== lastItemKey) {
+    setLastItemKey(currentItemKey);
+    setInput('');
+  }
+
+  // New question or retry → focus + speak
   useEffect(() => {
     if (state.phase === 'active') {
-      setInput('');
       focusInput();
       if (settings.audioEnabled && state.currentItem) speakProblem(state.currentItem.prompt);
     }
@@ -76,6 +85,19 @@ export function PracticeScreen({
   useEffect(() => {
     if (!showSettings && !showQuit && !showTutor) focusInput();
   }, [showSettings, showQuit, showTutor, focusInput]);
+
+  // ── Quit action (declared before the keyboard effect that calls it) ─────────
+
+  const confirmQuit = useCallback(() => {
+    setShowQuit(false);
+    stopSpeech();
+    if (autoTimer.current) clearTimeout(autoTimer.current);
+    // Delete the session record if nothing was answered
+    if (state.completedCount === 0 && state.sessionId) {
+      db.sessions.delete(state.sessionId).catch(() => {});
+    }
+    setQuitting(true);
+  }, [state.completedCount, state.sessionId]);
 
   // ── Global keyboard handler ───────────────────────────────────────────────
 
@@ -150,17 +172,6 @@ export function PracticeScreen({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.phase, state.currentItem, input, showSettings, showQuit, showTutor]);
 
-  const confirmQuit = useCallback(() => {
-    setShowQuit(false);
-    stopSpeech();
-    if (autoTimer.current) clearTimeout(autoTimer.current);
-    // Delete the session record if nothing was answered
-    if (state.completedCount === 0 && state.sessionId) {
-      db.sessions.delete(state.sessionId).catch(() => {});
-    }
-    setQuitting(true);
-  }, [state.completedCount, state.sessionId]);
-
   // ── Render: summary (complete or early quit) ──────────────────────────────
 
   if (state.phase === 'complete' || quitting) {
@@ -168,6 +179,11 @@ export function PracticeScreen({
       <SessionSummary
         completedCount={state.completedCount}
         correctCount={state.correctCount}
+        firstTryCount={state.firstTryCount}
+        correctedCount={state.correctedCount}
+        repeatedCount={state.repeatedCount}
+        slowFirstTryCount={state.slowFirstTryCount}
+        attemptCount={state.attemptCount}
         latencies={state.latencies}
         fastestMs={state.fastestMs}
         missedFacts={state.missedFacts}

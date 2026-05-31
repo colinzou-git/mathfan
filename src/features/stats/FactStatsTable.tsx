@@ -64,7 +64,7 @@ export function FactStatsTable({ studentId }: Props) {
   }, [states]);
 
   const rows = useMemo(() => {
-    let filtered = states.filter(s => {
+    const filtered = states.filter(s => {
       if (typeFilter !== 'all' && bucketOf(s.itemId) !== typeFilter) return false;
 
       if (statusFilter === 'weak' && s.masteryLevel !== 'learning' && s.masteryLevel !== 'developing') return false;
@@ -125,15 +125,6 @@ export function FactStatsTable({ studentId }: Props) {
     if (sort === key) setSortAsc(a => !a);
     else { setSort(key); setSortAsc(true); }
   };
-
-  const SortBtn = ({ k, label }: { k: SortKey; label: string }) => (
-    <button
-      style={{ ...st.thBtn, color: sort === k ? 'var(--primary)' : '#6b7280' }}
-      onClick={() => toggleSort(k)}
-    >
-      {label}{sort === k ? (sortAsc ? ' ↑' : ' ↓') : ''}
-    </button>
-  );
 
   const tables = Array.from({ length: TABLE_MAX - TABLE_MIN + 1 }, (_, i) => i + TABLE_MIN);
 
@@ -205,11 +196,11 @@ export function FactStatsTable({ studentId }: Props) {
             <thead>
               <tr style={st.thead}>
                 <th style={st.th}>Fact</th>
-                <th style={st.th}><SortBtn k="attempts" label="Tries" /></th>
-                <th style={st.th}><SortBtn k="accuracy" label="Acc%" /></th>
-                <th style={st.th}><SortBtn k="wrong" label="Wrong" /></th>
-                <th style={st.th}><SortBtn k="avgSpeed" label="Avg" /></th>
-                <th style={st.th}><SortBtn k="bestSpeed" label="Best" /></th>
+                <th style={st.th}><SortBtn k="attempts" label="Tries" sort={sort} sortAsc={sortAsc} toggleSort={toggleSort} /></th>
+                <th style={st.th}><SortBtn k="accuracy" label="Acc%" sort={sort} sortAsc={sortAsc} toggleSort={toggleSort} /></th>
+                <th style={st.th}><SortBtn k="wrong" label="Wrong" sort={sort} sortAsc={sortAsc} toggleSort={toggleSort} /></th>
+                <th style={st.th}><SortBtn k="avgSpeed" label="Avg" sort={sort} sortAsc={sortAsc} toggleSort={toggleSort} /></th>
+                <th style={st.th}><SortBtn k="bestSpeed" label="Best" sort={sort} sortAsc={sortAsc} toggleSort={toggleSort} /></th>
                 <th style={st.th}>Level</th>
               </tr>
             </thead>
@@ -257,6 +248,19 @@ export function FactStatsTable({ studentId }: Props) {
         </div>
       )}
     </div>
+  );
+}
+
+function SortBtn({ k, label, sort, sortAsc, toggleSort }: {
+  k: SortKey; label: string; sort: SortKey; sortAsc: boolean; toggleSort: (k: SortKey) => void;
+}) {
+  return (
+    <button
+      style={{ ...st.thBtn, color: sort === k ? 'var(--primary)' : '#6b7280' }}
+      onClick={() => toggleSort(k)}
+    >
+      {label}{sort === k ? (sortAsc ? ' ↑' : ' ↓') : ''}
+    </button>
   );
 }
 

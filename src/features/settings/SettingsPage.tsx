@@ -154,7 +154,7 @@ export function SettingsPage({ profile, onUpdateProfile, onBack, onSwitchStudent
     if (syncStatus === 'error') return syncError ? `Error: ${syncError.slice(0, 60)}` : 'Sync failed';
     if (lastSyncedAt) {
       const d = new Date(lastSyncedAt);
-      const mins = Math.floor((Date.now() - d.getTime()) / 60000);
+      const mins = Math.floor((Date.now() - d.getTime()) / 60000); // eslint-disable-line react-hooks/purity
       if (mins < 1) return `Synced just now (${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})`;
       if (mins < 60) return `Synced ${mins}m ago (${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})`;
       return `Synced ${d.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`;

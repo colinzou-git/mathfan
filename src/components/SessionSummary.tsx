@@ -1,11 +1,16 @@
 interface LastSession {
-  accuracy: number;
+  firstTryAccuracy: number | null; // 0–1
   averageLatencyMs: number;
 }
 
 interface Props {
   completedCount: number;
   correctCount: number;
+  firstTryCount?: number;
+  correctedCount?: number;
+  repeatedCount?: number;
+  slowFirstTryCount?: number;
+  attemptCount?: number;
   latencies: number[];
   fastestMs: number | null;
   missedFacts?: string[];
@@ -17,7 +22,11 @@ interface Props {
 
 export function SessionSummary({
   completedCount,
-  correctCount,
+  firstTryCount = 0,
+  correctedCount = 0,
+  repeatedCount = 0,
+  slowFirstTryCount = 0,
+  attemptCount,
   latencies,
   fastestMs,
   missedFacts = [],
@@ -26,14 +35,17 @@ export function SessionSummary({
   onDone,
   onPlayAgain,
 }: Props) {
-  const accuracy = completedCount ? Math.round((correctCount / completedCount) * 100) : 0;
+  const firstTryPct = completedCount ? Math.round((firstTryCount / completedCount) * 100) : 0;
+  const learningMoments = correctedCount + repeatedCount;
   const avgMs = latencies.length
     ? Math.round(latencies.reduce((s, v) => s + v, 0) / latencies.length)
     : 0;
+  const retries = attemptCount !== undefined ? attemptCount - completedCount : null;
 
-  const vsLastAccuracy = lastSession
-    ? Math.round((accuracy - lastSession.accuracy * 100))
+  const lastFirstTryPct = lastSession && lastSession.firstTryAccuracy !== null
+    ? Math.round(lastSession.firstTryAccuracy * 100)
     : null;
+  const vsLastAccuracy = lastFirstTryPct !== null ? firstTryPct - lastFirstTryPct : null;
   const vsLastSpeed = lastSession && avgMs && lastSession.averageLatencyMs
     ? Math.round((lastSession.averageLatencyMs - avgMs) / 1000 * 10) / 10
     : null;
@@ -42,24 +54,47 @@ export function SessionSummary({
     <div style={s.container}>
       <div style={s.card}>
         <div style={{ fontSize: '52px', textAlign: 'center' }}>
-          {accuracy >= 90 ? '🌟' : accuracy >= 70 ? '👍' : '💪'}
+          {firstTryPct >= 90 ? '🌟' : firstTryPct >= 70 ? '👍' : '💪'}
         </div>
         <h2 style={s.title}>{wasQuit ? 'Session Ended' : 'Session Complete!'}</h2>
         {wasQuit && <p style={{ textAlign: 'center', color: '#9ca3af', fontSize: '13px', margin: '-8px 0 12px' }}>You stopped early — nice work on what you did!</p>}
 
+        <p style={s.headline}>
+          You solved {completedCount} {completedCount === 1 ? 'problem' : 'problems'}.
+        </p>
+
+        {/* Kid-friendly, non-shaming framing */}
+        <div style={s.buckets}>
+          <div style={s.bucket}>
+            <div style={s.bucketValue}>⚡ {firstTryCount}</div>
+            <div style={s.bucketLabel}>{firstTryCount === 1 ? 'instant win' : 'instant wins'}</div>
+          </div>
+          <div style={s.bucket}>
+            <div style={s.bucketValue}>🌱 {learningMoments}</div>
+            <div style={s.bucketLabel}>{learningMoments === 1 ? 'learning moment' : 'learning moments'}</div>
+          </div>
+        </div>
+
         <div style={s.statsGrid}>
-          <StatBox label="Questions" value={String(completedCount)} />
-          <StatBox label="Correct" value={String(correctCount)} color="#22c55e" />
-          <StatBox label="Accuracy" value={`${accuracy}%`} color={accuracy >= 80 ? '#22c55e' : '#f59e0b'} />
-          <StatBox
-            label="Avg Speed"
-            value={avgMs ? `${(avgMs / 1000).toFixed(1)}s` : '—'}
-          />
+          <StatBox label="First-try" value={`${firstTryPct}%`} color={firstTryPct >= 80 ? '#22c55e' : '#f59e0b'} />
+          <StatBox label="Avg Speed" value={avgMs ? `${(avgMs / 1000).toFixed(1)}s` : '—'} />
         </div>
 
         {fastestMs && (
           <p style={s.best}>⚡ Fastest answer: {(fastestMs / 1000).toFixed(1)}s</p>
         )}
+
+        {/* Honest breakdown for grown-ups */}
+        <details style={s.grownup}>
+          <summary style={s.grownupSummary}>For grown-ups</summary>
+          <ul style={s.grownupList}>
+            <li>First-try accuracy: {firstTryPct}% ({firstTryCount}/{completedCount})</li>
+            <li>Corrected after feedback: {correctedCount}</li>
+            {repeatedCount > 0 && <li>Needed several tries: {repeatedCount}</li>}
+            {slowFirstTryCount > 0 && <li>Right but slow (build fluency): {slowFirstTryCount}</li>}
+            {retries !== null && retries > 0 && <li>Total re-tries: {retries}</li>}
+          </ul>
+        </details>
 
         {missedFacts.length > 0 && (
           <div style={s.missedBox}>
@@ -80,7 +115,7 @@ export function SessionSummary({
             <p style={s.compareTitle}>vs. last session</p>
             {vsLastAccuracy !== null && (
               <p style={s.compareLine}>
-                Accuracy: {vsLastAccuracy > 0 ? '+' : ''}{vsLastAccuracy}%{' '}
+                First-try accuracy: {vsLastAccuracy > 0 ? '+' : ''}{vsLastAccuracy}%{' '}
                 {vsLastAccuracy > 0 ? '↑' : vsLastAccuracy < 0 ? '↓' : '→'}
               </p>
             )}
@@ -139,21 +174,47 @@ const s: Record<string, React.CSSProperties> = {
     fontSize: '22px',
     fontWeight: 'bold',
     textAlign: 'center',
-    margin: '8px 0 20px',
+    margin: '8px 0 16px',
   },
+  headline: {
+    textAlign: 'center',
+    fontSize: '18px',
+    fontWeight: 600,
+    color: '#1f2937',
+    margin: '0 0 16px',
+  },
+  buckets: {
+    display: 'flex',
+    justifyContent: 'center',
+    gap: '28px',
+    marginBottom: '18px',
+  },
+  bucket: { textAlign: 'center' },
+  bucketValue: { fontSize: '26px', fontWeight: 'bold', color: '#4f46e5' },
+  bucketLabel: { fontSize: '13px', color: '#6b7280' },
   statsGrid: {
     display: 'grid',
     gridTemplateColumns: '1fr 1fr',
     gap: '10px',
-    marginBottom: '16px',
+    marginBottom: '12px',
   },
   best: {
     textAlign: 'center',
     fontSize: '14px',
     color: '#f59e0b',
     fontWeight: '600',
-    margin: '4px 0 16px',
+    margin: '4px 0 12px',
   },
+  grownup: {
+    background: '#f9fafb',
+    borderRadius: '10px',
+    padding: '10px 14px',
+    marginBottom: '16px',
+    fontSize: '13px',
+    color: '#6b7280',
+  },
+  grownupSummary: { cursor: 'pointer', fontWeight: 600, color: '#4b5563' },
+  grownupList: { margin: '8px 0 0', paddingLeft: '18px' },
   missedBox: {
     background: '#fef2f2',
     border: '1px solid #fecaca',
