@@ -48,7 +48,7 @@ jobs:
           VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
           # Adjust if the repo is at username.github.io (use /) or
           # username.github.io/mathfan (use /mathfan/).
-          VITE_BASE_PATH: ${{ vars.VITE_BASE_PATH || '/mathfan/' }}
+          VITE_BASE_PATH: ${{ vars.VITE_BASE_PATH || '/' }}
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
