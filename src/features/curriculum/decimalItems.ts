@@ -56,18 +56,27 @@ function decimalParams(grade: GradeLevel): { step: number; maxH: number } {
   return { step: 5, maxH: 2000 };                     // 0.05 .. 20.00
 }
 
-export function generateDecimalItems(grade: GradeLevel, count: number): PracticeItem[] {
+/**
+ * `rangeMin`/`rangeMax` are decimal *values* (e.g. 0 and 20). The step (tenths
+ * vs hundredths) still follows the grade; the range just caps the magnitude.
+ */
+export function generateDecimalItems(
+  grade: GradeLevel, count: number, rangeMin?: number, rangeMax?: number,
+): PracticeItem[] {
   const { step, maxH } = decimalParams(grade);
+  const hiH = rangeMax !== undefined ? Math.max(step, Math.round(rangeMax * 100)) : maxH;
+  const loH = rangeMin !== undefined ? Math.max(0, Math.round(rangeMin * 100)) : 0;
+  const loStep = Math.max(1, Math.ceil(loH / step));
+  const hiStep = Math.max(loStep, Math.floor(hiH / step));
   const items: PracticeItem[] = [];
   const seen = new Set<string>();
   let guard = 0;
-  const steps = Math.floor(maxH / step);
   while (items.length < count && guard < count * 40) {
     guard++;
-    const aH = randInt(1, steps) * step;
-    const bH = randInt(1, steps) * step;
+    const aH = randInt(loStep, hiStep) * step;
+    const bH = randInt(loStep, hiStep) * step;
     const item = Math.random() < 0.5 ? makeDecimalAddItem(aH, bH) : makeDecimalSubItem(aH, bH);
-    if (seen.has(item.id)) continue;
+    if (seen.has(item.id) && items.length < count) continue;
     seen.add(item.id);
     items.push(item);
   }

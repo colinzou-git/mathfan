@@ -42,9 +42,16 @@ function rangeFor(grade: GradeLevel): [number, number] {
   return [101, 99999];
 }
 
-export function generateRoundingItems(grade: GradeLevel, count: number): PracticeItem[] {
-  const places = placesFor(grade);
-  const [lo, hi] = rangeFor(grade);
+export function generateRoundingItems(
+  grade: GradeLevel, count: number, rangeMin?: number, rangeMax?: number,
+): PracticeItem[] {
+  const [defLo, defHi] = rangeFor(grade);
+  const hi = Math.max(11, Math.floor(rangeMax ?? defHi));
+  const lo = Math.max(11, Math.min(hi, Math.floor(rangeMin ?? defLo)));
+  // Only round to places at or below the largest number, else answers are all 0.
+  const allPlaces = placesFor(grade);
+  const places = allPlaces.filter(p => p <= hi);
+  if (places.length === 0) places.push(allPlaces[0]);
   const items: PracticeItem[] = [];
   const seen = new Set<string>();
   let guard = 0;
@@ -55,7 +62,7 @@ export function generateRoundingItems(grade: GradeLevel, count: number): Practic
     // Avoid trivial already-round numbers
     if (n % place === 0) continue;
     const item = makeRoundingItem(n, place);
-    if (seen.has(item.id)) continue;
+    if (seen.has(item.id) && items.length < count) continue;
     seen.add(item.id);
     items.push(item);
   }

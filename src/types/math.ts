@@ -26,6 +26,7 @@ export type SessionMode =
   | 'daily_review'
   | 'single_table'
   | 'multi_table'
+  | 'multiplication'
   | 'addition'
   | 'subtraction'
   | 'division'
@@ -194,10 +195,22 @@ export interface PerTableStats {
 
 export interface SessionConfig {
   mode: SessionMode;
-  tables?: number[];          // single_table / multi_table
+  tables?: number[];          // single_table / multi_table (legacy sessions)
   sessionLength: SessionLength;
-  operandMin?: number;        // addition / subtraction / division
-  operandMax?: number;        // addition / subtraction / division
+  /**
+   * First operand range. Meaning depends on mode:
+   * multiplication → first multiplier · division → dividend · addition/subtraction
+   * → first number · fraction → numerator · word/rounding/factors/decimals → value.
+   */
+  operandMin?: number;
+  operandMax?: number;
+  /**
+   * Second operand range (modes with two independent operands):
+   * multiplication → second multiplier · division → divisor · addition/subtraction
+   * → second number · fraction → denominator.
+   */
+  operand2Min?: number;
+  operand2Max?: number;
   fractionMode?: FractionMode; // fraction
   grade?: GradeLevel;         // word_problem / rounding / factors / decimals
 }

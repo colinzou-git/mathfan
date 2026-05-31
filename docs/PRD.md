@@ -19,15 +19,16 @@
 
 ## Section 1 — Multiplication Practice
 
-This section covers the dedicated multiplication drill mode: table selection, session configuration, and in-session experience.
+This section covers the dedicated multiplication drill mode: factor-range selection, session configuration, and in-session experience.
 
 | ID | Priority | Status | Description |
 |---|---|---|---|
-| MF-001 | P0 | Done | **Multiplication practice section.** Home screen has a 5-operation picker; "Multiply" opens the table selector. Code: `StudentDashboard.tsx` (OPERATIONS), `TableSelector.tsx`. |
-| MF-002 | P0 | Done | **Times table selector — single table.** Pick one multiplier 2–13; `mode: 'single_table'`. Code: `TableSelector.tsx`, `generateSingleTableItems`. |
-| MF-003 | P0 | Done | **Times table selector — multiple tables.** Select 2+ tables → `mode: 'multi_table'`, interleaved. Code: `generateMultipleTablesItems`. |
-| MF-004 | P0 | Done | **Table range 2–13.** `TABLE_MIN=2`, `TABLE_MAX=13`; 0/1 excluded. Code: `multiplicationItems.ts`. |
-| MF-005 | P0 | Done (changed) | **Session length control.** Superseded by a **free-form count (1–200, default 10)** with ±/preset controls, not the original 10/20/25. The default persists via `settings.sessionLength`. Code: `TableSelector.tsx`, `SessionSetup.tsx`. |
+| MF-001 | P0 | Done | **Multiplication practice section.** Home screen has a 9-operation picker; "Multiply" opens the range setup. Code: `StudentDashboard.tsx` (OPERATIONS), `RangeSetup.tsx`, `opSpecs.ts`. |
+| MF-002 | P0 | Done (changed) | **Factor-range selection (replaces table chips).** The 2×–13× table chips were replaced by a **number-range picker for each factor** (first × second), `mode: 'multiplication'`. Items keep the `MUL_axb` id scheme so stats/describeItem stay compatible. Code: `RangeSetup.tsx`, `generateMultiplicationRangeItems`. |
+| MF-003 | P0 | Done (changed) | **Legacy single/multi-table modes.** `single_table`/`multi_table` + `generateSingleTableItems`/`generateMultipleTablesItems` remain for old saved sessions and the adaptive catalogue, but are no longer produced by the UI (superseded by MF-002). |
+| MF-004 | P0 | Done | **Default factor range 2–13.** Range picker defaults to 2–12 per factor (clamp 0–1000); adaptive catalogue still spans `TABLE_MIN=2`…`TABLE_MAX=13`. Code: `opSpecs.ts`, `multiplicationItems.ts`. |
+| MF-005 | P0 | Done (changed) | **Session length control.** Free-form count (1–200, default 10) with ±/preset controls. The default persists via `settings.sessionLength`. Code: `RangeSetup.tsx`, `SessionSetup.tsx`. |
+| MF-012 | P1 | Done | **Per-operand number-range selection (all operations).** Every operation now opens a unified range setup: multiplication & division & addition & subtraction pick **two** ranges (e.g. dividend + divisor, numerator + denominator); word problems, rounding, primes/factors, decimals pick **one** range. Code: `RangeSetup.tsx`, `opSpecs.ts`, generators in `curriculum/`, `usePracticeSession.ts`. |
 | MF-006 | P1 | Done | **Random fact ordering.** `planTableSession` shuffles items. Code: `scheduler.ts`. |
 | MF-007 | P1 | Not Started | **Question format variety within a table drill.** A single/multi-table drill currently presents only standard `a × b` items. Unknown-factor and inverse-division items exist but are only injected into the **adaptive daily review** (`ALL_ITEMS`), not table drills. No 70/20/10 mix is implemented. |
 | MF-008 | P1 | Done | **Per-fact result feedback.** Immediate correct/wrong, the answer, and response time in seconds. Code: `PracticeScreen.tsx` feedback block. |
@@ -95,7 +96,7 @@ This section covers the dedicated multiplication drill mode: table selection, se
 | MF-070 | P0 | Done (config) | **PWA — installable on iPad.** `vite-plugin-pwa` with `display: standalone`, manifest, icons; service worker generated at build. Installability itself is **device-verified only** (untested on a real iPad in this repo). Code: `vite.config.ts`. |
 | MF-071 | P0 | Done (config) | **Offline-capable.** Workbox precaches the app shell (`globPatterns`, `navigateFallback`). Real offline behavior is device-verified only. Code: `vite.config.ts`. |
 | MF-072 | P0 | Done | **Local-first storage.** Profiles, attempts, item states, sessions in IndexedDB via Dexie. No backend required. Code: `dexie.ts`, `repositories.ts`. |
-| MF-073 | P0 | Done | **Unit tests for core logic.** 121 tests across scheduler, answer checker, generators, stats, growth, fractions, describeItem. Code: `src/tests/`. |
+| MF-073 | P0 | Done | **Unit tests for core logic.** 163 tests across scheduler, answer checker, generators (incl. range selection), stats, growth, fractions, describeItem, AI config/errors. Code: `src/tests/`. |
 | MF-074 | P1 | Partial | **Mobile-friendly layout.** Layouts are responsive with large tap targets and `touchAction: manipulation`; however some wide tables/tab strips use `overflowX: auto` (intentional horizontal scroll), and nothing is device-verified on iPad. |
 | MF-075 | P1 | Done | **Child-safe design.** No leaderboard, ads, or chat; all comparison is self-referential. One external integration exists — optional Google sign-in/Drive sync (§16) — which is parent-initiated and off by default. |
 
@@ -315,7 +316,8 @@ Shipped; previously undocumented.
 | MF-220 | P1 | Done (gated) | **AI tutor chat.** 💡 button / "H" key in any drill opens a chat scoped to the current problem. Works for every question type. Code: `ai/TutorChat.tsx`, `PracticeScreen.tsx`. |
 | MF-221 | P0 | Done | **Never reveals the answer.** System prompt forbids stating the final answer; gives one hint/question at a time, praises reasoning, suggests strategies, lets the child say the answer. Code: `ai/gemini.ts` (`systemInstruction`). |
 | MF-222 | P1 | Done | **Bring-your-own Gemini key.** Settings → AI Tutor (key, model, Test, Remove). Key + model in localStorage **only** — never in the profile or Drive snapshot. Code: `ai/aiConfig.ts`, `SettingsPage.tsx`. |
-| MF-223 | P1 | Done | **Graceful degradation.** Friendly no-key / offline / bad-key / rate-limit messages; "Open Settings" when unconfigured. Code: `ai/gemini.ts` (`explainAiError`). |
+| MF-223 | P1 | Done | **Graceful degradation.** Friendly no-key / offline / bad-key / bad-model / rate-limit messages; "Open Settings" when unconfigured. Code: `ai/gemini.ts` (`explainAiError`). |
+| MF-226 | P1 | Done | **Surface the provider's real error in Test.** On a failed request the raw Gemini `error.message` (quota / disabled API / referrer block / model not found) is captured on `AiError.detail` and shown under the kid-friendly summary in Settings → Test, so a grown-up can actually diagnose. Model quick-pick chips (`gemini-2.0-flash` / `2.5-flash` / `2.5-flash-lite`) let you switch when one model's free quota is exhausted. Code: `ai/gemini.ts` (`aiErrorDetail`), `SettingsPage.tsx`. |
 | MF-224 | P2 | Not Started | **Sign-in-gated AI proxy** for a published build (avoids embedding a key). |
 | MF-225 | P2 | Not Started | **Other AI providers** — only Gemini implemented; not yet UI-pluggable. |
 
@@ -419,3 +421,19 @@ Reconciled docs/PRD.md against the source. Summary of changes:
 - Wired the three prior audit gaps: missed-facts list (MF-009), minutes-today
   (MF-090), session-over-session compare (MF-103).
 - 153 tests passing. Live at colinzou-git.github.io/mathfan/.
+
+**2026-05-30 — Per-operand number ranges + AI error diagnosis.**
+- **Unified range setup** (`RangeSetup.tsx` + declarative `opSpecs.ts`) replaces
+  the separate table/arithmetic/fraction setups. Every operation now lets the
+  student choose number ranges: multiplication (two factor ranges, replacing the
+  2×–13× chips), division (dividend + divisor ranges), addition/subtraction (two
+  addend ranges), fractions (numerator + denominator ranges), and word/rounding/
+  primes/decimals (one value range). Generators gained optional range params
+  (back-compatible); `usePracticeSession` threads `operand2*`. New `multiplication`
+  SessionMode; `single_table`/`multi_table` kept for legacy sessions. MF-002/003/004/012.
+- Deleted the now-unused `TableSelector.tsx`, `ArithmeticSetup.tsx`, `FractionSetup.tsx`.
+- **AI Test now shows the provider's real error** (`AiError.detail`/`aiErrorDetail`)
+  instead of masking every failure as "rate-limit", plus model quick-pick chips.
+  Root cause of the user's "taking a break" message: a genuine 429 was shown
+  without Google's reason (per-model free-tier quota). MF-226.
+- 163 tests passing.

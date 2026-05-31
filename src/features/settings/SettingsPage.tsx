@@ -1,20 +1,31 @@
 import { useState, useEffect } from 'react';
 import type { StudentProfile, StudentSettings, GradeLevel, SessionLength, ThemeName } from '../../types/math';
 import { THEMES, applyTheme } from '../theme/themes';
-import { useSync } from '../sync/useSync';
 import { getDriveFileInfo } from '../sync/driveSync';
+import type { SyncStatus } from '../sync/driveSync';
+import type { AuthState } from '../auth/googleAuth';
 import { attemptRepo } from '../../db/repositories';
 import { studentRepo } from '../../db/repositories';
 import { isDebugSpeed, enableDebugSpeed, disableDebugSpeed } from '../time/clock';
 import { getAiConfig, setAiKey, setAiModel, clearAiKey, DEFAULT_MODEL } from '../ai/aiConfig';
-import { askTutor, explainAiError } from '../ai/gemini';
+import { askTutor, explainAiError, aiErrorDetail } from '../ai/gemini';
 
 interface Props {
   profile: StudentProfile;
   onUpdateProfile: (p: StudentProfile) => void;
   onBack: () => void;
   onSwitchStudent: () => void;
+  auth: AuthState;
+  syncStatus: SyncStatus;
+  lastSyncedAt: string | null;
+  syncError: string | null;
+  onSignIn: () => void;
+  onSignOut: () => void;
+  onManualSync: () => void;
 }
+
+/** Known Gemini models with a free tier. Each has its own daily quota. */
+const AI_MODELS = ['gemini-2.0-flash', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'];
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -44,9 +55,8 @@ function ToggleRow({ label, desc, checked, onChange }: {
   );
 }
 
-export function SettingsPage({ profile, onUpdateProfile, onBack, onSwitchStudent }: Props) {
+export function SettingsPage({ profile, onUpdateProfile, onBack, onSwitchStudent, auth, syncStatus, lastSyncedAt, syncError, onSignIn, onSignOut, onManualSync }: Props) {
   const settings = profile.settings;
-  const { auth, syncStatus, lastSyncedAt, syncError, handleSignIn, handleSignOut, manualSync } = useSync();
   const [driveInfo, setDriveInfo] = useState<{ sizeBytes: number | null; modifiedAt: string | null } | null>(null);
   const [totalQuestions, setTotalQuestions] = useState<number | null>(null);
   const [editName, setEditName] = useState(profile.displayName);
@@ -61,7 +71,7 @@ export function SettingsPage({ profile, onUpdateProfile, onBack, onSwitchStudent
   // AI tutor config (localStorage-backed, never synced)
   const [aiKey, setAiKeyInput] = useState(() => getAiConfig().apiKey);
   const [aiModel, setAiModelInput] = useState(() => getAiConfig().model);
-  const [aiTest, setAiTest] = useState<{ state: 'idle' | 'testing' | 'ok' | 'err'; msg?: string }>({ state: 'idle' });
+  const [aiTest, setAiTest] = useState<{ state: 'idle' | 'testing' | 'ok' | 'err'; msg?: string; detail?: string }>({ state: 'idle' });
 
   const saveAi = () => { setAiKey(aiKey); setAiModel(aiModel || DEFAULT_MODEL); setAiTest({ state: 'idle' }); };
   const testAi = async () => {
@@ -74,7 +84,9 @@ export function SettingsPage({ profile, onUpdateProfile, onBack, onSwitchStudent
       );
       setAiTest({ state: 'ok', msg: 'Connected! The tutor is ready.' });
     } catch (err) {
-      setAiTest({ state: 'err', msg: explainAiError(err) });
+      // Show the kid-friendly summary AND the provider's raw reason, so a
+      // grown-up can actually fix it (wrong model, quota, disabled API, …).
+      setAiTest({ state: 'err', msg: explainAiError(err), detail: aiErrorDetail(err) });
     }
   };
   const removeAi = () => { clearAiKey(); setAiKeyInput(''); setAiTest({ state: 'idle' }); };
@@ -84,7 +96,7 @@ export function SettingsPage({ profile, onUpdateProfile, onBack, onSwitchStudent
     if (auth.signedIn) {
       getDriveFileInfo().then(setDriveInfo);
     }
-  }, [profile.id, auth.signedIn]);
+  }, [profile.id, auth.signedIn, lastSyncedAt]);
 
   const save = (patch: Partial<StudentSettings>) => {
     const updated = { ...profile, settings: { ...settings, ...patch } };
@@ -252,12 +264,12 @@ export function SettingsPage({ profile, onUpdateProfile, onBack, onSwitchStudent
             <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
               <button
                 style={{ ...s.syncBtn, opacity: syncStatus === 'syncing' ? 0.5 : 1 }}
-                onClick={manualSync}
+                onClick={onManualSync}
                 disabled={syncStatus === 'syncing'}
               >
                 {syncStatus === 'syncing' ? '⏳ Syncing…' : '↻ Sync Now'}
               </button>
-              <button style={s.outBtn} onClick={handleSignOut}>Sign Out</button>
+              <button style={s.outBtn} onClick={onSignOut}>Sign Out</button>
             </div>
             {syncStatus === 'error' && syncError && (
               <p style={{ color: '#ef4444', fontSize: '13px', marginTop: '8px' }}>{syncError}</p>
@@ -270,7 +282,7 @@ export function SettingsPage({ profile, onUpdateProfile, onBack, onSwitchStudent
             </p>
             <button
               style={{ ...s.syncBtn, opacity: syncStatus === 'syncing' ? 0.5 : 1 }}
-              onClick={handleSignIn}
+              onClick={onSignIn}
               disabled={syncStatus === 'syncing'}
             >
               {syncStatus === 'syncing' ? '⏳ Signing in…' : '🔑 Sign in with Google'}
@@ -308,6 +320,20 @@ export function SettingsPage({ profile, onUpdateProfile, onBack, onSwitchStudent
             style={{ ...s.textInput, width: 200 }}
           />
         </label>
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 6 }}>
+          {AI_MODELS.map(m => (
+            <button
+              key={m}
+              onClick={() => setAiModelInput(m)}
+              style={{ ...s.preset, ...(aiModel === m ? s.presetOn : {}) }}
+            >
+              {m}
+            </button>
+          ))}
+        </div>
+        <p style={{ ...s.rowDesc, marginTop: 4 }}>
+          Free keys have a per-model daily limit — if one model says it's busy, try another.
+        </p>
         <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
           <button style={s.saveBtn} onClick={saveAi}>Save</button>
           <button style={{ ...s.saveBtn, background: '#0ea5e9' }} onClick={testAi} disabled={aiTest.state === 'testing' || !aiKey}>
@@ -316,7 +342,16 @@ export function SettingsPage({ profile, onUpdateProfile, onBack, onSwitchStudent
           {getAiConfig().apiKey && <button style={s.outBtn} onClick={removeAi}>Remove key</button>}
         </div>
         {aiTest.state === 'ok' && <p style={{ color: '#15803d', fontSize: 13, marginTop: 8 }}>✓ {aiTest.msg}</p>}
-        {aiTest.state === 'err' && <p style={{ color: '#b91c1c', fontSize: 13, marginTop: 8 }}>{aiTest.msg}</p>}
+        {aiTest.state === 'err' && (
+          <div style={{ marginTop: 8 }}>
+            <p style={{ color: '#b91c1c', fontSize: 13, margin: 0 }}>{aiTest.msg}</p>
+            {aiTest.detail && (
+              <p style={{ color: '#9ca3af', fontSize: 12, margin: '4px 0 0', fontFamily: 'ui-monospace, monospace', wordBreak: 'break-word' }}>
+                Details: {aiTest.detail}
+              </p>
+            )}
+          </div>
+        )}
       </Section>
 
       {/* ── Testing ─────────────────────────────────────────────────── */}
@@ -372,4 +407,6 @@ const s: Record<string, React.CSSProperties> = {
   syncBtn: { flex: 1, padding: '10px 16px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: '10px', fontSize: '14px', fontWeight: '600', cursor: 'pointer' },
   outBtn: { padding: '10px 16px', background: '#f3f4f6', color: '#374151', border: 'none', borderRadius: '10px', fontSize: '14px', fontWeight: '600', cursor: 'pointer' },
   warnBox: { background: '#fffbeb', border: '1px solid #fcd34d', borderRadius: '8px', padding: '12px' },
+  preset: { padding: '5px 10px', border: '1.5px solid #e5e7eb', borderRadius: '16px', background: '#fff', fontSize: '12px', cursor: 'pointer', fontWeight: '500', fontFamily: 'ui-monospace, monospace' },
+  presetOn: { borderColor: 'var(--primary)', background: 'var(--primary-light)', color: 'var(--primary)' },
 };
