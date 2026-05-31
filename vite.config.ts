@@ -1,13 +1,20 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+import { readFileSync } from 'node:fs'
 
 // VITE_BASE_PATH: set to /mathfan/ when deploying to GitHub Pages project site,
 // leave unset (defaults to /) for custom domain or local dev.
 const base = process.env.VITE_BASE_PATH ?? '/'
+const pkg: { version: string } = JSON.parse(readFileSync('./package.json', 'utf8'))
 
 export default defineConfig({
   base,
+  define: {
+    __APP_VERSION__: JSON.stringify(pkg.version),
+    __GIT_SHA__: JSON.stringify(process.env.VITE_GIT_SHA ?? 'dev'),
+    __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
+  },
   plugins: [
     react(),
     VitePWA({

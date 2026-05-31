@@ -62,6 +62,31 @@ export function SettingsPage({ profile, onUpdateProfile, onBack, onSwitchStudent
   const [editName, setEditName] = useState(profile.displayName);
   const [nameDirty, setNameDirty] = useState(false);
   const [debugSpeed, setDebugSpeed] = useState(isDebugSpeed());
+  const [updateState, setUpdateState] = useState<'idle' | 'checking' | 'available' | 'none' | 'error'>('idle');
+
+  const checkForUpdates = async () => {
+    if (!('serviceWorker' in navigator)) { setUpdateState('error'); return; }
+    setUpdateState('checking');
+    try {
+      const reg = await navigator.serviceWorker.getRegistration();
+      if (!reg) { setUpdateState('none'); return; }
+      if (reg.waiting) { setUpdateState('available'); return; }
+      await reg.update();
+      await new Promise(r => setTimeout(r, 1500));
+      const fresh = await navigator.serviceWorker.getRegistration();
+      setUpdateState(fresh?.waiting ? 'available' : 'none');
+    } catch {
+      setUpdateState('error');
+    }
+  };
+
+  const applyUpdate = async () => {
+    const reg = await navigator.serviceWorker.getRegistration();
+    if (reg?.waiting) {
+      reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+      navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload());
+    }
+  };
 
   const toggleDebugSpeed = (on: boolean) => {
     if (on) enableDebugSpeed(); else disableDebugSpeed();
@@ -111,6 +136,12 @@ export function SettingsPage({ profile, onUpdateProfile, onBack, onSwitchStudent
     onUpdateProfile(updated);
     setNameDirty(false);
   };
+
+  function fmtBuildTime(iso: string): string {
+    const d = new Date(iso);
+    const p = (n: number) => String(n).padStart(2, '0');
+    return `${d.getUTCFullYear()}-${p(d.getUTCMonth() + 1)}-${p(d.getUTCDate())} ${p(d.getUTCHours())}:${p(d.getUTCMinutes())} UTC`;
+  }
 
   function fmt(bytes: number): string {
     if (bytes < 1024) return `${bytes} B`;
@@ -367,6 +398,36 @@ export function SettingsPage({ profile, onUpdateProfile, onBack, onSwitchStudent
             ⚡ Fast time is ON — review dates and stats are running ~4320× real time.
           </p>
         )}
+      </Section>
+
+      {/* ── About ───────────────────────────────────────────────────── */}
+      <Section title="About">
+        <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: '13px', lineHeight: 1.9, color: '#374151' }}>
+          <div>MathFan v{__APP_VERSION__}</div>
+          <div style={{ color: '#9ca3af' }}>Build: {__GIT_SHA__.slice(0, 7)}</div>
+          <div style={{ color: '#9ca3af' }}>Built: {fmtBuildTime(__BUILD_TIME__)}</div>
+        </div>
+        <div style={{ marginTop: '12px' }}>
+          <button
+            style={{
+              ...s.syncBtn,
+              opacity: updateState === 'checking' ? 0.5 : 1,
+              background: updateState === 'available' ? '#16a34a' : undefined,
+            }}
+            onClick={updateState === 'available' ? applyUpdate : checkForUpdates}
+            disabled={updateState === 'checking'}
+          >
+            {updateState === 'checking' ? 'Checking…' :
+             updateState === 'available' ? 'Update available — tap to install' :
+             updateState === 'none' ? 'Up to date ✓' :
+             'Check for Updates'}
+          </button>
+          {updateState === 'error' && (
+            <p style={{ color: '#9ca3af', fontSize: '12px', marginTop: '6px', margin: '6px 0 0' }}>
+              Service worker not available in this environment.
+            </p>
+          )}
+        </div>
       </Section>
     </div>
   );

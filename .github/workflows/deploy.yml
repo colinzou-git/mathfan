@@ -49,6 +49,8 @@ jobs:
           # Adjust if the repo is at username.github.io (use /) or
           # username.github.io/mathfan (use /mathfan/).
           VITE_BASE_PATH: ${{ vars.VITE_BASE_PATH || '/' }}
+          # Baked into the bundle so Settings can show the exact deployed commit.
+          VITE_GIT_SHA: ${{ github.sha }}
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
