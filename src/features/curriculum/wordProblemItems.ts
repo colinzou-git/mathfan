@@ -64,9 +64,11 @@ function makeWordProblem(schema: Schema, a: number, b: number): PracticeItem {
 
 const SCHEMAS: Schema[] = ['eg', 'ar', 'cmp', 'dv'];
 
-export function generateWordProblemItems(grade: GradeLevel, count: number): PracticeItem[] {
-  const max = factorMax(grade);
-  const min = grade === 3 ? 2 : 3;
+export function generateWordProblemItems(
+  grade: GradeLevel, count: number, rangeMin?: number, rangeMax?: number,
+): PracticeItem[] {
+  const max = Math.max(2, Math.floor(rangeMax ?? factorMax(grade)));
+  const min = Math.max(2, Math.min(max, Math.floor(rangeMin ?? (grade === 3 ? 2 : 3))));
   const items: PracticeItem[] = [];
   const seen = new Set<string>();
   let guard = 0;

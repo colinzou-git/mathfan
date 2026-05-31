@@ -45,18 +45,25 @@ export function makeAdditionItem(a: number, b: number): PracticeItem {
   };
 }
 
-/** Generate `count` addition items with operands in [min, max], deduped where possible. */
-export function generateAdditionItems(min: number, max: number, count: number): PracticeItem[] {
+/**
+ * Generate `count` addition items. The first addend is drawn from [min, max];
+ * the second from [min2, max2] when given, otherwise from the same [min, max].
+ */
+export function generateAdditionItems(
+  min: number, max: number, count: number, min2?: number, max2?: number,
+): PracticeItem[] {
   const [lo, hi] = clampRange(min, max);
+  const [lo2, hi2] = clampRange(min2 ?? min, max2 ?? max);
+  const distinct = (hi - lo + 1) * (hi2 - lo2 + 1);
   const items: PracticeItem[] = [];
   const seen = new Set<string>();
   let guard = 0;
   while (items.length < count && guard < count * 30) {
     guard++;
     const a = randInt(lo, hi);
-    const b = randInt(lo, hi);
+    const b = randInt(lo2, hi2);
     const id = addId(a, b);
-    if (seen.has(id) && items.length < (hi - lo + 1) ** 2) continue;
+    if (seen.has(id) && items.length < distinct) continue;
     seen.add(id);
     items.push(makeAdditionItem(a, b));
   }
@@ -83,17 +90,25 @@ export function makeSubtractionItem(a: number, b: number): PracticeItem {
   };
 }
 
-export function generateSubtractionItems(min: number, max: number, count: number): PracticeItem[] {
+/**
+ * Generate `count` subtraction items (answers never negative). Operands are
+ * drawn from [min, max] and [min2, max2]; the item always shows larger − smaller.
+ */
+export function generateSubtractionItems(
+  min: number, max: number, count: number, min2?: number, max2?: number,
+): PracticeItem[] {
   const [lo, hi] = clampRange(min, max);
+  const [lo2, hi2] = clampRange(min2 ?? min, max2 ?? max);
+  const distinct = (hi - lo + 1) * (hi2 - lo2 + 1);
   const items: PracticeItem[] = [];
   const seen = new Set<string>();
   let guard = 0;
   while (items.length < count && guard < count * 30) {
     guard++;
     const a = randInt(lo, hi);
-    const b = randInt(lo, hi);
+    const b = randInt(lo2, hi2);
     const item = makeSubtractionItem(a, b);
-    if (seen.has(item.id) && items.length < (hi - lo + 1) ** 2) continue;
+    if (seen.has(item.id) && items.length < distinct) continue;
     seen.add(item.id);
     items.push(item);
   }
@@ -119,21 +134,40 @@ export function makeDivisionItem(dividend: number, divisor: number): PracticeIte
 
 /**
  * Generate `count` division items with a whole-number answer.
- * Divisor and quotient are drawn from [max(2,min), max] so the dividend stays in a sane range.
+ *
+ * The divisor is drawn from [max(2,divisorMin), divisorMax]. When a dividend
+ * range is given, the quotient is chosen so the dividend lands inside
+ * [dividendMin, dividendMax] (and stays divisible). Without a dividend range,
+ * the divisor and quotient are both drawn from the divisor range — preserving
+ * the original "pick two small factors" behaviour.
  */
-export function generateDivisionItemsRange(min: number, max: number, count: number): PracticeItem[] {
-  const [loRaw, hi] = clampRange(min, max);
-  const lo = Math.max(2, loRaw); // avoid ÷1 and ÷0
+export function generateDivisionItemsRange(
+  divisorMin: number, divisorMax: number, count: number,
+  dividendMin?: number, dividendMax?: number,
+): PracticeItem[] {
+  const [dvLoRaw, dvHi] = clampRange(divisorMin, divisorMax);
+  const dvLo = Math.max(2, dvLoRaw); // avoid ÷1 and ÷0
+  const hasDividend = dividendMin !== undefined && dividendMax !== undefined;
+  const [ddLo, ddHi] = hasDividend ? clampRange(dividendMin!, dividendMax!) : [0, 0];
+
   const items: PracticeItem[] = [];
   const seen = new Set<string>();
   let guard = 0;
-  while (items.length < count && guard < count * 30) {
+  while (items.length < count && guard < count * 40) {
     guard++;
-    const divisor = randInt(lo, Math.max(lo, hi));
-    const quotient = randInt(lo, Math.max(lo, hi));
-    const dividend = divisor * quotient;
+    const divisor = randInt(dvLo, Math.max(dvLo, dvHi));
+    let dividend: number;
+    if (hasDividend) {
+      // Quotients whose product with `divisor` stays inside the dividend range.
+      const qLo = Math.max(1, Math.ceil(ddLo / divisor));
+      const qHi = Math.floor(ddHi / divisor);
+      if (qHi < qLo) continue; // no whole multiple of this divisor fits the range
+      dividend = divisor * randInt(qLo, qHi);
+    } else {
+      dividend = divisor * randInt(dvLo, Math.max(dvLo, dvHi));
+    }
     const item = makeDivisionItem(dividend, divisor);
-    if (seen.has(item.id) && items.length < (hi - lo + 1) ** 2) continue;
+    if (seen.has(item.id) && items.length < count) continue;
     seen.add(item.id);
     items.push(item);
   }

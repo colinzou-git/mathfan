@@ -52,8 +52,11 @@ function maxN(grade: GradeLevel): number {
   return 100;
 }
 
-export function generateNumberTheoryItems(grade: GradeLevel, count: number): PracticeItem[] {
-  const hi = maxN(grade);
+export function generateNumberTheoryItems(
+  grade: GradeLevel, count: number, rangeMin?: number, rangeMax?: number,
+): PracticeItem[] {
+  const hi = Math.max(3, Math.floor(rangeMax ?? maxN(grade)));
+  const lo = Math.max(2, Math.min(hi, Math.floor(rangeMin ?? 2)));
   const items: PracticeItem[] = [];
   const seen = new Set<string>();
   let guard = 0;
@@ -61,16 +64,16 @@ export function generateNumberTheoryItems(grade: GradeLevel, count: number): Pra
     guard++;
     // ~60% prime/composite, ~40% factor-of
     if (Math.random() < 0.6) {
-      const n = randInt(2, hi);
+      const n = randInt(lo, hi);
       const item = makePrimeItem(n);
-      if (seen.has(item.id)) continue;
+      if (seen.has(item.id) && items.length < count) continue;
       seen.add(item.id);
       items.push(item);
     } else {
-      const x = randInt(2, 12);
-      const y = randInt(x, hi);
+      const x = randInt(2, Math.max(2, Math.min(12, hi)));
+      const y = randInt(Math.max(x, lo), hi);
       const item = makeFactorItem(x, y);
-      if (seen.has(item.id)) continue;
+      if (seen.has(item.id) && items.length < count) continue;
       seen.add(item.id);
       items.push(item);
     }

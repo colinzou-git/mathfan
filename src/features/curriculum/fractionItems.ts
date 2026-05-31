@@ -35,18 +35,31 @@ export function makeFractionEquivalentItem(n: number, d: number, mult: number): 
   };
 }
 
-export function generateFractionEquivalentItems(count: number): PracticeItem[] {
+/** Numerator/denominator ranges with sane fraction defaults. */
+function fracRanges(numMin?: number, numMax?: number, denMin?: number, denMax?: number) {
+  const dLo = Math.max(2, Math.floor(denMin ?? 2));
+  const dHi = Math.max(dLo, Math.floor(denMax ?? 9));
+  const nLo = Math.max(1, Math.floor(numMin ?? 1));
+  const nHi = Math.max(nLo, Math.floor(numMax ?? 8));
+  return { nLo, nHi, dLo, dHi };
+}
+
+export function generateFractionEquivalentItems(
+  count: number, numMin?: number, numMax?: number, denMin?: number, denMax?: number,
+): PracticeItem[] {
+  const { nLo, nHi, dLo, dHi } = fracRanges(numMin, numMax, denMin, denMax);
   const items: PracticeItem[] = [];
   const seen = new Set<string>();
   let guard = 0;
-  while (items.length < count && guard < count * 40) {
+  while (items.length < count && guard < count * 60) {
     guard++;
-    const d = randInt(2, 9);
-    const n = randInt(1, d - 1);
+    const d = randInt(dLo, dHi);
+    const n = randInt(nLo, Math.min(nHi, d - 1)); // proper fraction
+    if (n < 1 || n >= d) continue;
     if (gcd(n, d) !== 1) continue; // start from a reduced fraction
     const mult = randInt(2, 6);
     const item = makeFractionEquivalentItem(n, d, mult);
-    if (seen.has(item.id)) continue;
+    if (seen.has(item.id) && items.length < count) continue;
     seen.add(item.id);
     items.push(item);
   }
@@ -72,26 +85,32 @@ export function makeFractionCompareItem(n1: number, d1: number, n2: number, d2: 
   };
 }
 
-export function generateFractionCompareItems(count: number): PracticeItem[] {
+export function generateFractionCompareItems(
+  count: number, numMin?: number, numMax?: number, denMin?: number, denMax?: number,
+): PracticeItem[] {
+  const { nLo, nHi, dLo, dHi } = fracRanges(numMin, numMax, denMin, denMax);
   const items: PracticeItem[] = [];
   const seen = new Set<string>();
   let guard = 0;
-  while (items.length < count && guard < count * 40) {
+  while (items.length < count && guard < count * 60) {
     guard++;
-    const d1 = randInt(2, 9);
-    const n1 = randInt(1, d1);
-    const d2 = randInt(2, 9);
-    const n2 = randInt(1, d2);
+    const d1 = randInt(dLo, dHi);
+    const n1 = randInt(nLo, Math.min(nHi, d1)); // allow n = d (whole)
+    const d2 = randInt(dLo, dHi);
+    const n2 = randInt(nLo, Math.min(nHi, d2));
     const item = makeFractionCompareItem(n1, d1, n2, d2);
-    if (seen.has(item.id)) continue;
+    if (seen.has(item.id) && items.length < count) continue;
     seen.add(item.id);
     items.push(item);
   }
   return items;
 }
 
-export function generateFractionItems(mode: 'equivalent' | 'compare', count: number): PracticeItem[] {
+export function generateFractionItems(
+  mode: 'equivalent' | 'compare', count: number,
+  numMin?: number, numMax?: number, denMin?: number, denMax?: number,
+): PracticeItem[] {
   return mode === 'equivalent'
-    ? generateFractionEquivalentItems(count)
-    : generateFractionCompareItems(count);
+    ? generateFractionEquivalentItems(count, numMin, numMax, denMin, denMax)
+    : generateFractionCompareItems(count, numMin, numMax, denMin, denMax);
 }

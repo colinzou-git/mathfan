@@ -4,10 +4,9 @@ import { studentRepo, sessionRepo } from './db/repositories';
 import { ProfileSetup } from './features/dashboard/ProfileSetup';
 import { StudentDashboard, type PracticeOp } from './features/dashboard/StudentDashboard';
 import { PracticeScreen } from './features/practice/PracticeScreen';
-import { TableSelector } from './components/TableSelector';
 import { SessionSetup } from './components/SessionSetup';
-import { ArithmeticSetup } from './components/ArithmeticSetup';
-import { FractionSetup } from './components/FractionSetup';
+import { RangeSetup } from './components/RangeSetup';
+import { specFor } from './components/opSpecs';
 import { StatsPage } from './features/stats/StatsPage';
 import { SettingsPage } from './features/settings/SettingsPage';
 import { preloadVoices } from './features/audio/speech';
@@ -18,37 +17,18 @@ import { applyTheme } from './features/theme/themes';
 
 type Screen =
   | 'loading' | 'setup' | 'dashboard'
-  | 'daily-setup' | 'table-selector' | 'arith-setup' | 'fraction-setup' | 'simple-setup' | 'practice'
+  | 'daily-setup' | 'range-setup' | 'practice'
   | 'stats' | 'settings';
-
-type ArithMode = 'addition' | 'subtraction' | 'division';
-type SimpleMode = 'word_problem' | 'rounding' | 'factors' | 'decimals';
-
-const SIMPLE_META: Record<SimpleMode, { title: string; description: string }> = {
-  word_problem: { title: 'Word Problems', description: 'Read the story and type the number answer.' },
-  rounding:     { title: 'Rounding',      description: 'Round numbers to the nearest ten, hundred, or thousand.' },
-  factors:      { title: 'Primes & Factors', description: 'Prime or composite? Is one number a factor of another?' },
-  decimals:     { title: 'Decimals',      description: 'Add and subtract decimal numbers.' },
-};
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('loading');
   const [profile, setProfile] = useState<StudentProfile | null>(null);
   const [sessionConfig, setSessionConfig] = useState<SessionConfig | null>(null);
-  const [arithMode, setArithMode] = useState<ArithMode>('addition');
-  const [simpleMode, setSimpleMode] = useState<SimpleMode>('word_problem');
+  const [selectedOp, setSelectedOp] = useState<PracticeOp>('multiplication');
 
   const pickOperation = (op: PracticeOp) => {
-    if (op === 'multiplication') { setScreen('table-selector'); return; }
-    if (op === 'fraction') { setScreen('fraction-setup'); return; }
-    if (op === 'addition' || op === 'subtraction' || op === 'division') {
-      setArithMode(op);
-      setScreen('arith-setup');
-      return;
-    }
-    // word | rounding | factors | decimals → generic count-only setup
-    setSimpleMode(op === 'word' ? 'word_problem' : op);
-    setScreen('simple-setup');
+    setSelectedOp(op);
+    setScreen('range-setup');
   };
 
   useEffect(() => {
@@ -139,45 +119,11 @@ export default function App() {
     );
   }
 
-  if (screen === 'table-selector') {
+  if (screen === 'range-setup') {
     return (
-      <TableSelector
-        onBack={() => setScreen('dashboard')}
-        onStart={cfg => { setSessionConfig(cfg); setScreen('practice'); }}
-      />
-    );
-  }
-
-  if (screen === 'arith-setup') {
-    return (
-      <ArithmeticSetup
-        mode={arithMode}
-        onBack={() => setScreen('dashboard')}
-        onStart={cfg => { setSessionConfig(cfg); setScreen('practice'); }}
-      />
-    );
-  }
-
-  if (screen === 'simple-setup') {
-    const meta = SIMPLE_META[simpleMode];
-    return (
-      <SessionSetup
-        title={meta.title}
-        description={meta.description}
-        mode={simpleMode}
+      <RangeSetup
+        spec={specFor(selectedOp, profile.gradeLevel)}
         defaultCount={profile.settings.sessionLength ?? 10}
-        onBack={() => setScreen('dashboard')}
-        onStart={cfg => {
-          setSessionConfig({ ...cfg, grade: profile.gradeLevel });
-          setScreen('practice');
-        }}
-      />
-    );
-  }
-
-  if (screen === 'fraction-setup') {
-    return (
-      <FractionSetup
         onBack={() => setScreen('dashboard')}
         onStart={cfg => { setSessionConfig(cfg); setScreen('practice'); }}
       />

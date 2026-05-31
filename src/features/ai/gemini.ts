@@ -39,7 +39,21 @@ function systemInstruction(ctx: ProblemContext): string {
   ].filter(Boolean).join('\n');
 }
 
-export class AiError extends Error {}
+/**
+ * `message` carries the short machine code (e.g. 'rate-limit') so existing
+ * mapping keeps working; `detail` carries the raw provider message so the
+ * grown-up-facing Test screen can show what actually went wrong.
+ */
+export class AiError extends Error {
+  detail?: string;
+  status?: number;
+  constructor(code: string, detail?: string, status?: number) {
+    super(code);
+    this.name = 'AiError';
+    this.detail = detail;
+    this.status = status;
+  }
+}
 
 /** Send the conversation to Gemini and return the tutor's next message. */
 export async function askTutor(
@@ -68,9 +82,18 @@ export async function askTutor(
   }
 
   if (!res.ok) {
-    if (res.status === 400 || res.status === 403) throw new AiError('bad-key');
-    if (res.status === 429) throw new AiError('rate-limit');
-    throw new AiError('server');
+    // Surface the provider's real reason — masking every failure as the same
+    // friendly message is what hid this bug. The status alone is ambiguous:
+    // 400 can be a bad key OR a bad model name; 403 can be a disabled API,
+    // a referrer-restricted key, or no access to the model; 429 can be the
+    // free-tier quota for THIS model being exhausted even when the key works.
+    const detail = await readErrorDetail(res);
+    const code =
+      res.status === 429 ? 'rate-limit'
+      : res.status === 404 ? 'bad-model'
+      : res.status === 400 || res.status === 403 ? 'bad-key'
+      : 'server';
+    throw new AiError(code, detail, res.status);
   }
 
   const data = await res.json();
@@ -80,6 +103,17 @@ export async function askTutor(
   return text;
 }
 
+/** Read `error.message` from a non-OK Gemini response without throwing. */
+async function readErrorDetail(res: Response): Promise<string | undefined> {
+  try {
+    const data = await res.json();
+    const msg = data?.error?.message;
+    return typeof msg === 'string' && msg.trim() ? msg.trim() : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 export function explainAiError(err: unknown): string {
   const code = err instanceof AiError ? err.message : 'server';
   switch (code) {
@@ -87,8 +121,14 @@ export function explainAiError(err: unknown): string {
     case 'offline':
     case 'network': return 'The tutor needs an internet connection. Try again when you are online.';
     case 'bad-key': return "That AI key didn't work. A grown-up can check it in Settings → AI Tutor.";
+    case 'bad-model': return "That model name wasn't found. A grown-up can pick another model in Settings.";
     case 'rate-limit': return 'The tutor is taking a quick break (too many questions). Try again in a minute.';
     case 'empty': return "Hmm, the tutor didn't reply. Try asking again.";
     default: return 'The tutor had a problem. Please try again.';
   }
+}
+
+/** Raw provider detail (e.g. "API key not valid", "Quota exceeded for ..."). */
+export function aiErrorDetail(err: unknown): string | undefined {
+  return err instanceof AiError ? err.detail : undefined;
 }

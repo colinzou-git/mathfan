@@ -99,6 +99,53 @@ export function generateUnknownFactorItems(
   return items;
 }
 
+// ── Range-based generator (factor ranges chosen by the student) ───────────────
+
+function randInt(min: number, max: number): number {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function makeMultiplicationItem(a: number, b: number): PracticeItem {
+  return {
+    id: mulId(a, b),
+    skillId: SKILL_MUL,
+    itemType: 'multiplication_fact',
+    prompt: `${a} × ${b}`,
+    answer: a * b,
+    answerInput: 'numeric',
+    tags: ['multiplication', `table_${a}`, `table_${b}`],
+    difficulty: difficultyFor(a, b),
+    factA: a,
+    factB: b,
+  };
+}
+
+/**
+ * Generate `count` multiplication items with the first factor drawn from
+ * [aMin, aMax] and the second from [bMin, bMax]. Deduped while the range
+ * product is larger than `count`, then allowed to repeat so the count is met.
+ */
+export function generateMultiplicationRangeItems(
+  aMin: number, aMax: number, bMin: number, bMax: number, count: number,
+): PracticeItem[] {
+  const aLo = Math.max(0, Math.floor(aMin)), aHi = Math.max(aLo, Math.floor(aMax));
+  const bLo = Math.max(0, Math.floor(bMin)), bHi = Math.max(bLo, Math.floor(bMax));
+  const distinct = (aHi - aLo + 1) * (bHi - bLo + 1);
+  const items: PracticeItem[] = [];
+  const seen = new Set<string>();
+  let guard = 0;
+  while (items.length < count && guard < count * 40) {
+    guard++;
+    const a = randInt(aLo, aHi);
+    const b = randInt(bLo, bHi);
+    const item = makeMultiplicationItem(a, b);
+    if (seen.has(item.id) && items.length < distinct) continue;
+    seen.add(item.id);
+    items.push(item);
+  }
+  return items;
+}
+
 // ── Table-specific helpers ────────────────────────────────────────────────────
 
 /** Items for a single table drill (e.g. table=7 → 7×2…7×13, multiplication only). */

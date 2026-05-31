@@ -5,7 +5,7 @@ import type {
 import { checkAnswer } from './answerChecker';
 import { applyReview, createInitialState, planSession, planTableSession } from '../scheduler/scheduler';
 import {
-  generateSingleTableItems, generateMultipleTablesItems,
+  generateSingleTableItems, generateMultipleTablesItems, generateMultiplicationRangeItems,
   ALL_ITEMS, ITEM_MAP,
 } from '../curriculum/multiplicationItems';
 import {
@@ -105,7 +105,10 @@ export function usePracticeSession(studentId: string) {
     statesRef.current = stateMap;
 
     let queue: string[];
-    const { mode, tables, sessionLength, operandMin, operandMax, fractionMode, grade } = config;
+    const {
+      mode, tables, sessionLength,
+      operandMin, operandMax, operand2Min, operand2Max, fractionMode, grade,
+    } = config;
 
     // Capture the most recent prior session of the same mode (before saving the new one)
     // for the session-over-session comparison on the summary screen.
@@ -119,6 +122,8 @@ export function usePracticeSession(studentId: string) {
         : null;
     const lo = operandMin ?? 0;
     const hi = operandMax ?? 20;
+    const lo2 = operand2Min ?? lo;
+    const hi2 = operand2Max ?? hi;
     const g = grade ?? 3;
 
     // Reset & populate the dynamic item registry for generated modes
@@ -128,26 +133,31 @@ export function usePracticeSession(studentId: string) {
       return items.map(it => it.id);
     };
 
-    if (mode === 'single_table' && tables?.length) {
+    if (mode === 'multiplication') {
+      // First factor from [lo,hi], second from [lo2,hi2].
+      queue = registerDynamic(generateMultiplicationRangeItems(lo, hi, lo2, hi2, sessionLength));
+    } else if (mode === 'single_table' && tables?.length) {
       queue = planTableSession(generateSingleTableItems(tables[0]), sessionLength);
     } else if (mode === 'multi_table' && tables?.length) {
       queue = planTableSession(generateMultipleTablesItems(tables), sessionLength);
     } else if (mode === 'addition') {
-      queue = registerDynamic(generateAdditionItems(lo, hi, sessionLength));
+      queue = registerDynamic(generateAdditionItems(lo, hi, sessionLength, lo2, hi2));
     } else if (mode === 'subtraction') {
-      queue = registerDynamic(generateSubtractionItems(lo, hi, sessionLength));
+      queue = registerDynamic(generateSubtractionItems(lo, hi, sessionLength, lo2, hi2));
     } else if (mode === 'division') {
-      queue = registerDynamic(generateDivisionItemsRange(lo, hi, sessionLength));
+      // operand range = dividend, operand2 range = divisor.
+      queue = registerDynamic(generateDivisionItemsRange(lo2, hi2, sessionLength, lo, hi));
     } else if (mode === 'fraction') {
-      queue = registerDynamic(generateFractionItems(fractionMode ?? 'equivalent', sessionLength));
+      // operand range = numerator, operand2 range = denominator.
+      queue = registerDynamic(generateFractionItems(fractionMode ?? 'equivalent', sessionLength, lo, hi, lo2, hi2));
     } else if (mode === 'word_problem') {
-      queue = registerDynamic(generateWordProblemItems(g, sessionLength));
+      queue = registerDynamic(generateWordProblemItems(g, sessionLength, operandMin, operandMax));
     } else if (mode === 'rounding') {
-      queue = registerDynamic(generateRoundingItems(g, sessionLength));
+      queue = registerDynamic(generateRoundingItems(g, sessionLength, operandMin, operandMax));
     } else if (mode === 'factors') {
-      queue = registerDynamic(generateNumberTheoryItems(g, sessionLength));
+      queue = registerDynamic(generateNumberTheoryItems(g, sessionLength, operandMin, operandMax));
     } else if (mode === 'decimals') {
-      queue = registerDynamic(generateDecimalItems(g, sessionLength));
+      queue = registerDynamic(generateDecimalItems(g, sessionLength, operandMin, operandMax));
     } else {
       const plan = planSession(ALL_ITEMS, stateMap, now, sessionLength);
       queue = [...plan.dueItems, ...plan.weakItems, ...plan.newItems];
