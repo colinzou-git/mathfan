@@ -32,6 +32,31 @@ describe('checkAnswer', () => {
     const r = checkAnswer(item, '', 1200);
     expect(r.isCorrect).toBe(false);
   });
+
+  // parseFloat silently truncates trailing non-numeric chars — strict validation must reject these
+  it('trailing letters "72abc" → isCorrect false', () => {
+    expect(checkAnswer(item, '72abc', 1200).isCorrect).toBe(false);
+  });
+
+  it('double decimal "1.2.3" → isCorrect false', () => {
+    const decItem: PracticeItem = { ...item, itemType: 'decimal_add', answer: 1.2 };
+    expect(checkAnswer(decItem, '1.2.3', 1200).isCorrect).toBe(false);
+  });
+
+  it('decimal input rejected for integer answer', () => {
+    // 7.2 is not a valid answer for an integer-answer item even if close
+    expect(checkAnswer(item, '7.2', 1200).isCorrect).toBe(false);
+  });
+
+  it('decimal input accepted when answer is a decimal', () => {
+    const decItem: PracticeItem = { ...item, itemType: 'decimal_add', answer: 4.6 };
+    expect(checkAnswer(decItem, '4.6', 1200).isCorrect).toBe(true);
+  });
+
+  it('leading-dot decimal ".5" accepted when answer is decimal', () => {
+    const decItem: PracticeItem = { ...item, itemType: 'decimal_add', answer: 0.5 };
+    expect(checkAnswer(decItem, '.5', 1200).isCorrect).toBe(true);
+  });
 });
 
 const choiceItem: PracticeItem = {

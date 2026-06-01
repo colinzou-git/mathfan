@@ -184,6 +184,7 @@ export function PracticeScreen({
         repeatedCount={state.repeatedCount}
         slowFirstTryCount={state.slowFirstTryCount}
         attemptCount={state.attemptCount}
+        plannedCount={state.totalPlanned}
         latencies={state.latencies}
         fastestMs={state.fastestMs}
         missedFacts={state.missedFacts}

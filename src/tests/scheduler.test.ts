@@ -136,6 +136,20 @@ describe('planSession', () => {
     expect(plan.newItems.length).toBeGreaterThan(0);
   });
 
+  it('backfills to reach totalQuestions when pools are small (regression: n=3 gave 1 question)', () => {
+    // With n=3: dueCount=round(1.8)=2, weakCount=round(0.6)=1, newCount=0.
+    // If only 1 due item exists and nothing is weak, the queue was 1 item before the fix.
+    const states = new Map<string, StudentItemState>();
+    states.set(pool[0].id, {
+      ...createInitialState('s1', pool[0]),
+      attemptCount: 3, correctCount: 2, masteryLevel: 'developing',
+      nextDueAt: new Date('2026-05-01T10:00:00Z').toISOString(),
+    });
+    const plan = planSession(pool, states, now, 3);
+    const total = plan.dueItems.length + plan.weakItems.length + plan.newItems.length;
+    expect(total).toBe(3);
+  });
+
   it('due items are included', () => {
     const states = new Map<string, StudentItemState>();
     states.set(pool[0].id, {

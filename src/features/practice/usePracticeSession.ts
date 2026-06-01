@@ -9,6 +9,7 @@ import {
   generateSingleTableItems, generateMultipleTablesItems, generateMultiplicationRangeItems,
   ALL_ITEMS, ITEM_MAP,
 } from '../curriculum/multiplicationItems';
+import { makeItemFromId } from '../curriculum/makeItemFromId';
 import {
   generateAdditionItems, generateSubtractionItems, generateDivisionItemsRange,
 } from '../curriculum/arithmeticItems';
@@ -125,7 +126,7 @@ export function usePracticeSession(studentId: string) {
 
     let queue: string[];
     const {
-      mode, tables, sessionLength,
+      mode, tables, sessionLength, specificItemIds,
       operandMin, operandMax, operand2Min, operand2Max, fractionMode, grade,
     } = config;
 
@@ -154,7 +155,26 @@ export function usePracticeSession(studentId: string) {
       return items.map(it => it.id);
     };
 
-    if (mode === 'multiplication') {
+    if (specificItemIds?.length) {
+      // Focused review: practice exactly the listed items, repeated to fill sessionLength.
+      // Reconstruct and register any item not already in the static ITEM_MAP.
+      const validIds: string[] = [];
+      for (const id of specificItemIds) {
+        if (!ITEM_MAP.has(id) && !dynamicItemsRef.current.has(id)) {
+          const item = makeItemFromId(id);
+          if (item) dynamicItemsRef.current.set(item.id, item);
+        }
+        if (ITEM_MAP.has(id) || dynamicItemsRef.current.has(id)) validIds.push(id);
+      }
+      const shuffled = [...validIds].sort(() => Math.random() - 0.5);
+      queue = [];
+      while (queue.length < sessionLength && shuffled.length > 0) {
+        for (const id of shuffled) {
+          if (queue.length >= sessionLength) break;
+          queue.push(id);
+        }
+      }
+    } else if (mode === 'multiplication') {
       // First factor from [lo,hi], second from [lo2,hi2].
       queue = registerDynamic(generateMultiplicationRangeItems(lo, hi, lo2, hi2, sessionLength));
     } else if (mode === 'single_table' && tables?.length) {

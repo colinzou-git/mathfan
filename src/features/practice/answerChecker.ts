@@ -4,6 +4,12 @@ const FAST_MS = 1500;
 const NORMAL_MS = 4000;
 const TIMEOUT_MS = 10000;
 
+// Strict patterns — reject trailing/embedded junk that parseFloat silently ignores.
+// integerPattern: whole numbers only (positive or negative).
+// decimalPattern: integers or a single decimal point with digits on at least one side.
+const integerPattern = /^-?\d+$/;
+const decimalPattern = /^-?(?:\d+|\d*\.\d+)$/;
+
 export interface CheckResult {
   isCorrect: boolean;
   reviewGrade: ReviewGrade;
@@ -28,10 +34,17 @@ export function checkAnswer(
     studentAnswer = normalizedInput;
     isCorrect = normalizedInput === String(correctAnswer).trim();
   } else {
-    // Numeric comparison
-    const parsed = parseFloat(normalizedInput);
-    studentAnswer = parsed;
-    isCorrect = !isNaN(parsed) && Math.abs(parsed - Number(correctAnswer)) < 0.001;
+    // Numeric comparison — validate format before parsing to reject "12abc", "1.2.3", etc.
+    const expected = Number(correctAnswer);
+    const pattern = Number.isInteger(expected) ? integerPattern : decimalPattern;
+    if (!pattern.test(normalizedInput)) {
+      studentAnswer = normalizedInput;
+      isCorrect = false;
+    } else {
+      const parsed = parseFloat(normalizedInput);
+      studentAnswer = parsed;
+      isCorrect = Math.abs(parsed - expected) < 0.001;
+    }
   }
 
   const grade = classifyResponse(isCorrect, latencyMs);

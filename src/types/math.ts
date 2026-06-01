@@ -202,6 +202,8 @@ export interface PerTableStats {
 export interface SessionConfig {
   mode: SessionMode;
   tables?: number[];          // single_table / multi_table (legacy sessions)
+  /** When set, practice exactly these item IDs (repeated to fill sessionLength) instead of generating from tables/ranges. */
+  specificItemIds?: string[];
   sessionLength: SessionLength;
   /**
    * First operand range. Meaning depends on mode:

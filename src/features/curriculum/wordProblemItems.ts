@@ -19,13 +19,13 @@ export function wordId(schema: string, a: number, b: number): string {
   return `WORD_${schema}_${a}_${b}`;
 }
 
-type Schema = 'eg' | 'ar' | 'cmp' | 'dv';
+export type Schema = 'eg' | 'ar' | 'cmp' | 'dv';
 
 const NOUNS = ['apples', 'stickers', 'marbles', 'crayons', 'cookies', 'pencils', 'shells', 'cards'];
 const CONTAINERS = ['bags', 'boxes', 'baskets', 'jars', 'shelves', 'bins'];
 const NAMES = ['Sam', 'Mia', 'Leo', 'Ava', 'Max', 'Zoe', 'Ben', 'Lily'];
 
-function makeWordProblem(schema: Schema, a: number, b: number): PracticeItem {
+export function makeWordProblem(schema: Schema, a: number, b: number): PracticeItem {
   let prompt: string;
   let answer: number;
 

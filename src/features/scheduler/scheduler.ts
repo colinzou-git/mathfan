@@ -193,9 +193,9 @@ export function planSession(
     }
   }
 
-  const dueCount = Math.round(totalQuestions * 0.6);
+  const dueCount  = Math.round(totalQuestions * 0.6);
   const weakCount = Math.round(totalQuestions * 0.2);
-  const newCount = totalQuestions - dueCount - weakCount;
+  const newCount  = Math.max(0, totalQuestions - dueCount - weakCount);
 
   due.sort((a, b) => {
     const sa = states.get(a.id)?.nextDueAt ?? '';
@@ -211,10 +211,37 @@ export function planSession(
   });
   unseen.sort((a, b) => a.difficulty - b.difficulty);
 
+  const selectedDue  = due.slice(0, dueCount);
+  const selectedWeak = weak.slice(0, weakCount);
+  const selectedNew  = unseen.slice(0, newCount);
+
+  const dueIds  = selectedDue.map(i => i.id);
+  const weakIds = selectedWeak.map(i => i.id);
+  const newIds  = selectedNew.map(i => i.id);
+
+  const allocated = dueIds.length + weakIds.length + newIds.length;
+
+  // Backfill: pools may be smaller than their quota, or rounding can produce
+  // newCount=0 for small totalQuestions (e.g. n=3 → dueCount=2, weakCount=1,
+  // newCount=0), leaving the queue shorter than requested.
+  const backfill: string[] = [];
+  if (allocated < totalQuestions) {
+    const usedSet = new Set([...dueIds, ...weakIds, ...newIds]);
+    const overflow = [
+      ...due.slice(selectedDue.length),
+      ...weak.slice(selectedWeak.length),
+      ...unseen.slice(selectedNew.length),
+    ];
+    for (const item of overflow) {
+      if (backfill.length >= totalQuestions - allocated) break;
+      if (!usedSet.has(item.id)) backfill.push(item.id);
+    }
+  }
+
   return {
-    dueItems: due.slice(0, dueCount).map(i => i.id),
-    weakItems: weak.slice(0, weakCount).map(i => i.id),
-    newItems: unseen.slice(0, newCount).map(i => i.id),
+    dueItems: dueIds,
+    weakItems: weakIds,
+    newItems: [...newIds, ...backfill],
   };
 }
 

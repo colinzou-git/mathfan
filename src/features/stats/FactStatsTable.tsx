@@ -1,15 +1,19 @@
 import { useEffect, useState, useMemo } from 'react';
-import type { StudentItemState } from '../../types/math';
+import type { StudentItemState, MasteryLevel, SessionConfig } from '../../types/math';
 import { itemStateRepo } from '../../db/repositories';
 import { TABLE_MIN, TABLE_MAX, tableFromItemId } from '../curriculum/multiplicationItems';
 import { describeItem } from '../curriculum/describeItem';
 import { MASTERY_COLORS } from '../../utils/masteryColors';
 
-interface Props { studentId: string }
+interface Props {
+  studentId: string;
+  onStartPractice?: (config: SessionConfig) => void;
+}
 
 type SortKey = 'accuracy' | 'wrong' | 'attempts' | 'avgSpeed' | 'bestSpeed';
 type TypeFilter = 'all' | 'mul' | 'div' | 'add' | 'sub' | 'frac' | 'word' | 'round' | 'factors' | 'dec';
-type StatusFilter = 'all' | 'weak' | 'strong' | 'new';
+
+const ALL_MASTERY_LEVELS: MasteryLevel[] = ['new', 'learning', 'developing', 'strong', 'mastered'];
 
 const OPERATION_TABS: { key: TypeFilter; label: string; icon: string }[] = [
   { key: 'all',     label: 'All',       icon: '∑' },
@@ -39,13 +43,16 @@ function bucketOf(itemId: string): Exclude<TypeFilter, 'all'> | 'other' {
   return 'other';
 }
 
-export function FactStatsTable({ studentId }: Props) {
+export function FactStatsTable({ studentId, onStartPractice }: Props) {
   const [states, setStates] = useState<StudentItemState[]>([]);
   const [sort, setSort] = useState<SortKey>('accuracy');
   const [sortAsc, setSortAsc] = useState(true);
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  // Empty set = no filter (show all levels). Non-empty = show only selected levels.
+  const [statusFilter, setStatusFilter] = useState<Set<MasteryLevel>>(new Set());
   const [tableFilter, setTableFilter] = useState<number | 'all'>('all');
+  const [practiceRounds, setPracticeRounds] = useState(3);
+  const [showPracticeSetup, setShowPracticeSetup] = useState(false);
 
   useEffect(() => {
     itemStateRepo.getForStudent(studentId).then(s =>
@@ -63,19 +70,22 @@ export function FactStatsTable({ studentId }: Props) {
     return c;
   }, [states]);
 
+  const toggleStatus = (level: MasteryLevel) => {
+    setStatusFilter(prev => {
+      const next = new Set(prev);
+      if (next.has(level)) next.delete(level); else next.add(level);
+      return next;
+    });
+  };
+
   const rows = useMemo(() => {
     const filtered = states.filter(s => {
       if (typeFilter !== 'all' && bucketOf(s.itemId) !== typeFilter) return false;
-
-      if (statusFilter === 'weak' && s.masteryLevel !== 'learning' && s.masteryLevel !== 'developing') return false;
-      if (statusFilter === 'strong' && s.masteryLevel !== 'strong' && s.masteryLevel !== 'mastered') return false;
-      if (statusFilter === 'new' && s.masteryLevel !== 'new') return false;
-
+      if (statusFilter.size > 0 && !statusFilter.has(s.masteryLevel)) return false;
       if (tableFilter !== 'all') {
         const t = tableFromItemId(s.itemId);
         if (t !== tableFilter) return false;
       }
-
       return true;
     });
 
@@ -126,6 +136,13 @@ export function FactStatsTable({ studentId }: Props) {
     else { setSort(key); setSortAsc(true); }
   };
 
+  const startPractice = () => {
+    if (!onStartPractice || rows.length === 0) return;
+    const specificItemIds = rows.map(r => r.itemId);
+    const sessionLength = Math.min(specificItemIds.length * practiceRounds, 100);
+    onStartPractice({ mode: 'multi_table', specificItemIds, sessionLength });
+  };
+
   const tables = Array.from({ length: TABLE_MAX - TABLE_MIN + 1 }, (_, i) => i + TABLE_MIN);
 
   return (
@@ -161,16 +178,38 @@ export function FactStatsTable({ studentId }: Props) {
         </div>
       )}
 
-      {/* Secondary filters */}
+      {/* Status filter — multi-select mastery levels */}
       <div style={st.filterBar}>
-        <div style={st.filterGroup}>
-          {(['all', 'weak', 'strong'] as StatusFilter[]).map(f => (
-            <button key={f} style={{ ...st.chip, ...(statusFilter === f ? st.chipOn : {}) }} onClick={() => setStatusFilter(f)}>
-              {f === 'all' ? 'All status' : f === 'weak' ? 'Weak' : 'Strong'}
+        <button
+          style={{ ...st.chip, ...(statusFilter.size === 0 ? st.chipOn : {}) }}
+          onClick={() => setStatusFilter(new Set())}
+        >
+          All
+        </button>
+        {ALL_MASTERY_LEVELS.map(level => {
+          const mc = MASTERY_COLORS[level];
+          const active = statusFilter.has(level);
+          return (
+            <button
+              key={level}
+              onClick={() => toggleStatus(level)}
+              style={{
+                ...st.chip,
+                background: active ? mc.bg : '#fff',
+                color: active ? mc.text : '#374151',
+                borderColor: active ? mc.border : '#e5e7eb',
+                fontWeight: active ? '700' : '500',
+              }}
+            >
+              {mc.label}
             </button>
-          ))}
-        </div>
-        {(typeFilter === 'mul' || typeFilter === 'div') && (
+          );
+        })}
+      </div>
+
+      {/* Table filter for mul/div */}
+      {(typeFilter === 'mul' || typeFilter === 'div') && (
+        <div style={{ marginBottom: '6px' }}>
           <select
             value={tableFilter}
             onChange={e => setTableFilter(e.target.value === 'all' ? 'all' : parseInt(e.target.value))}
@@ -179,12 +218,40 @@ export function FactStatsTable({ studentId }: Props) {
             <option value="all">All tables</option>
             {tables.map(t => <option key={t} value={t}>{t}× table</option>)}
           </select>
+        </div>
+      )}
+
+      {/* Count + Practice button */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: '8px 0 10px', flexWrap: 'wrap' }}>
+        <p style={{ color: '#6b7280', fontSize: '13px', margin: 0, flex: '1 1 auto' }}>
+          {rows.length} fact{rows.length !== 1 ? 's' : ''} shown
+        </p>
+        {onStartPractice && rows.length > 0 && (
+          showPracticeSetup ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '13px', color: '#374151' }}>Rounds:</span>
+              <input
+                type="number" min={1} max={10} value={practiceRounds}
+                onChange={e => {
+                  const n = parseInt(e.target.value, 10);
+                  if (!isNaN(n)) setPracticeRounds(Math.max(1, Math.min(10, n)));
+                }}
+                style={{ width: '48px', padding: '4px 6px', fontSize: '14px', textAlign: 'center', border: '1.5px solid #d1d5db', borderRadius: '6px' }}
+              />
+              <button onClick={startPractice} style={st.practiceBtn}>
+                Start →
+              </button>
+              <button onClick={() => setShowPracticeSetup(false)} style={st.cancelBtn}>
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <button onClick={() => setShowPracticeSetup(true)} style={st.practiceBtn}>
+              Practice {rows.length} facts
+            </button>
+          )
         )}
       </div>
-
-      <p style={{ color: '#6b7280', fontSize: '13px', margin: '8px 0 10px' }}>
-        {rows.length} fact{rows.length !== 1 ? 's' : ''} shown
-      </p>
 
       {rows.length === 0 ? (
         <p style={{ color: '#9ca3af', textAlign: 'center', padding: '24px' }}>
@@ -289,11 +356,12 @@ const st: Record<string, React.CSSProperties> = {
     padding: '10px 6px', marginBottom: '10px',
   },
   summaryStat: { flex: 1, textAlign: 'center' },
-  filterBar: { display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '4px' },
-  filterGroup: { display: 'flex', gap: '4px' },
-  chip: { padding: '5px 10px', border: '1.5px solid #e5e7eb', borderRadius: '20px', background: '#fff', cursor: 'pointer', fontSize: '13px', fontWeight: '500' },
+  filterBar: { display: 'flex', gap: '4px', flexWrap: 'wrap', marginBottom: '6px' },
+  chip: { padding: '4px 10px', border: '1.5px solid #e5e7eb', borderRadius: '20px', background: '#fff', cursor: 'pointer', fontSize: '12px', fontWeight: '500' },
   chipOn: { borderColor: 'var(--primary)', background: 'var(--primary-light)', color: 'var(--primary)' },
   select: { padding: '5px 10px', border: '1.5px solid #e5e7eb', borderRadius: '8px', background: '#fff', fontSize: '13px', cursor: 'pointer' },
+  practiceBtn: { background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: '8px', padding: '6px 12px', fontSize: '13px', fontWeight: '600', cursor: 'pointer' },
+  cancelBtn: { background: 'none', border: '1.5px solid #e5e7eb', borderRadius: '8px', padding: '6px 10px', fontSize: '13px', color: '#6b7280', cursor: 'pointer' },
   table: { width: '100%', borderCollapse: 'collapse', fontSize: '13px' },
   thead: { background: '#f9fafb' },
   th: { padding: '8px 10px', textAlign: 'left', fontWeight: '600', color: '#6b7280', borderBottom: '1px solid #e5e7eb', whiteSpace: 'nowrap' },

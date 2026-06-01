@@ -3,6 +3,7 @@ import type { PracticeSession, AttemptLog } from '../../types/math';
 import type { DateRange } from '../../components/MiniCalendar';
 import { sessionRepo, attemptRepo } from '../../db/repositories';
 import { appNow } from '../time/clock';
+import { derivePracticeMetrics } from '../practice/metrics';
 
 interface Props {
   studentId: string;
@@ -89,8 +90,13 @@ export function DrillHistory({ studentId, dateRange }: Props) {
       </p>
 
       {pageRows.map(({ session: s, attempts }) => {
+        // firstTryCount is absent on sessions saved before that feature; fall back to
+        // correctCount/completedQuestionCount only for those legacy rows.
         const accuracy = s.completedQuestionCount
-          ? Math.round(s.correctCount / s.completedQuestionCount * 100) : 0;
+          ? s.firstTryCount != null
+            ? Math.round(s.firstTryCount / s.completedQuestionCount * 100)
+            : Math.round(s.correctCount / s.completedQuestionCount * 100)
+          : 0;
         const isOpen = expanded === s.id;
 
         return (
@@ -101,7 +107,10 @@ export function DrillHistory({ studentId, dateRange }: Props) {
                 <span style={st.dateText}>{dateLabel(s.startedAt)}</span>
               </div>
               <div style={st.rowRight}>
-                <Pill value={`${s.completedQuestionCount}Q`} />
+                <Pill value={s.completedQuestionCount < s.plannedQuestionCount
+                  ? `${s.completedQuestionCount}/${s.plannedQuestionCount}Q`
+                  : `${s.completedQuestionCount}Q`}
+                />
                 <Pill
                   value={`${accuracy}%`}
                   color={accuracy >= 90 ? '#22c55e' : accuracy >= 70 ? '#f59e0b' : '#ef4444'}
@@ -115,7 +124,7 @@ export function DrillHistory({ studentId, dateRange }: Props) {
             </button>
 
             {isOpen && attempts && (
-              <AttemptDetail attempts={attempts} />
+              <AttemptDetail attempts={attempts} session={s} />
             )}
           </div>
         );
@@ -132,8 +141,14 @@ export function DrillHistory({ studentId, dateRange }: Props) {
   );
 }
 
-function AttemptDetail({ attempts }: { attempts: AttemptLog[] }) {
-  // Group by item, count correct vs wrong
+function AttemptDetail({ attempts, session }: { attempts: AttemptLog[], session: PracticeSession }) {
+  const m = derivePracticeMetrics(attempts);
+  const firstTryPct = m.completedItemCount ? Math.round(m.firstTryAccuracy * 100) : 0;
+  const attemptAccPct = m.attemptCount ? Math.round(m.completedItemCount / m.attemptCount * 100) : 0;
+  const eventualPct = session.plannedQuestionCount
+    ? Math.round(m.completedItemCount / session.plannedQuestionCount * 100) : 100;
+
+  // Group by item for per-fact breakdown
   const byItem = new Map<string, { prompt: string; correct: number; wrong: number; latencies: number[] }>();
   for (const a of attempts) {
     const existing = byItem.get(a.itemId) ?? { prompt: a.promptShown, correct: 0, wrong: 0, latencies: [] };
@@ -147,8 +162,21 @@ function AttemptDetail({ attempts }: { attempts: AttemptLog[] }) {
     return accA - accB; // worst first
   });
 
+  const showAttemptAcc = attemptAccPct !== firstTryPct;
+  const showEventual = eventualPct < 100;
+
   return (
     <div style={st.detail}>
+      <div style={st.metricsRow}>
+        <MetricChip label="First-try" value={`${firstTryPct}%`}
+          color={firstTryPct >= 90 ? '#15803d' : firstTryPct >= 70 ? '#b45309' : '#b91c1c'} />
+        {showAttemptAcc && (
+          <MetricChip label="Attempt acc." value={`${attemptAccPct}%`} color="#6b7280" />
+        )}
+        {showEventual && (
+          <MetricChip label="Completed" value={`${m.completedItemCount}/${session.plannedQuestionCount}`} color="#6b7280" />
+        )}
+      </div>
       <div style={st.detailHeader}>
         <span>Fact</span><span>✓</span><span>✗</span><span>Avg</span>
       </div>
@@ -173,6 +201,15 @@ function AttemptDetail({ attempts }: { attempts: AttemptLog[] }) {
   );
 }
 
+function MetricChip({ label, value, color }: { label: string; value: string; color: string }) {
+  return (
+    <div style={{ textAlign: 'center', minWidth: '72px' }}>
+      <div style={{ fontSize: '15px', fontWeight: '700', color }}>{value}</div>
+      <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '1px' }}>{label}</div>
+    </div>
+  );
+}
+
 function Pill({ value, color = '#6b7280' }: { value: string; color?: string }) {
   return (
     <span style={{ fontSize: '12px', fontWeight: '600', color, background: '#f3f4f6', borderRadius: '6px', padding: '2px 7px' }}>
@@ -189,6 +226,7 @@ const st: Record<string, React.CSSProperties> = {
   dateText: { fontSize: '12px', color: '#9ca3af' },
   rowRight: { display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' },
   detail: { borderTop: '1px solid #f3f4f6', padding: '8px 14px 12px' },
+  metricsRow: { display: 'flex', gap: '16px', padding: '6px 4px 10px', borderBottom: '1px solid #f3f4f6', marginBottom: '8px' },
   detailHeader: { display: 'grid', gridTemplateColumns: '1fr 40px 40px 60px', fontSize: '11px', color: '#9ca3af', fontWeight: '600', textTransform: 'uppercase', padding: '4px 0 6px', letterSpacing: '0.05em' },
   detailRow: { display: 'grid', gridTemplateColumns: '1fr 40px 40px 60px', fontSize: '13px', padding: '5px 6px', borderRadius: '6px' },
   pager: { display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '16px', marginTop: '12px' },

@@ -15,6 +15,7 @@ interface Props {
   onPickOperation: (op: PracticeOp) => void;
   onOpenStats: () => void;
   onOpenSettings: () => void;
+  onStartQuiz: () => void;
 }
 
 interface QuickStats {
@@ -37,7 +38,7 @@ const OPERATIONS: { op: PracticeOp; label: string; icon: string }[] = [
   { op: 'decimals',       label: 'Decimals',  icon: '🔟' },
 ];
 
-export function StudentDashboard({ profile, lastSyncedAt, onStartDailyReview, onPickOperation, onOpenStats, onOpenSettings }: Props) {
+export function StudentDashboard({ profile, lastSyncedAt, onStartDailyReview, onPickOperation, onOpenStats, onOpenSettings, onStartQuiz }: Props) {
   const [quick, setQuick] = useState<QuickStats | null>(null);
 
   useEffect(() => {
@@ -100,6 +101,11 @@ export function StudentDashboard({ profile, lastSyncedAt, onStartDailyReview, on
         <p style={s.hint}>{quick.dueCount} fact{quick.dueCount > 1 ? 's' : ''} due for review today.</p>
       )}
 
+      {/* Multiplication quiz */}
+      <button style={s.quizBtn} onClick={onStartQuiz}>
+        ✏️ Multiplication Quiz
+      </button>
+
       {/* Operation picker */}
       <p style={s.sectionLabel}>Practice an operation</p>
       <div style={s.opGrid}>
@@ -136,6 +142,7 @@ const s: Record<string, React.CSSProperties> = {
   quickRow: { display: 'flex', gap: '8px', marginBottom: '20px' },
   primaryBtn: { width: '100%', padding: '18px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: '14px', fontSize: '20px', fontWeight: 'bold', cursor: 'pointer', marginBottom: '8px', boxShadow: '0 4px 14px rgba(0,0,0,0.15)' },
   statsBtn: { width: '100%', padding: '13px', background: '#f9fafb', color: '#374151', border: '1.5px solid #e5e7eb', borderRadius: '12px', fontSize: '16px', fontWeight: '600', cursor: 'pointer', marginTop: '8px' },
+  quizBtn: { width: '100%', padding: '14px', background: '#f0fdf4', color: '#15803d', border: '1.5px solid #86efac', borderRadius: '12px', fontSize: '16px', fontWeight: '600', cursor: 'pointer', marginTop: '8px' },
   hint: { textAlign: 'center', color: '#6b7280', fontSize: '13px', margin: '0 0 8px' },
   sectionLabel: { fontSize: '13px', fontWeight: '700', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '18px 0 10px' },
   opGrid: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' },

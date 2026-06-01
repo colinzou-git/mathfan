@@ -105,7 +105,7 @@ function randInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-function makeMultiplicationItem(a: number, b: number): PracticeItem {
+export function makeMultiplicationItem(a: number, b: number): PracticeItem {
   return {
     id: mulId(a, b),
     skillId: SKILL_MUL,

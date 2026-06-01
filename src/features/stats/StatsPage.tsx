@@ -3,21 +3,23 @@ import { DrillHistory } from './DrillHistory';
 import { FactStatsTable } from './FactStatsTable';
 import { GrowthView } from './GrowthView';
 import { MasteryGrid } from '../../components/MasteryGrid';
+import { QuizStatsView } from './QuizStatsView';
 import { MiniCalendar, type DateRange } from '../../components/MiniCalendar';
 import { StatsGraph, type DayPoint } from '../../components/StatsGraph';
 import { computeDayStats, addDays, startOfLocalDay, startOfWeek, startOfMonth, localDateStr } from '../stats/statsEngine';
 import { attemptRepo, sessionRepo } from '../../db/repositories';
 import { appNow } from '../time/clock';
-import type { AttemptLog, PracticeSession } from '../../types/math';
+import type { AttemptLog, PracticeSession, SessionConfig } from '../../types/math';
 
 interface Props {
   studentId: string;
   lastSyncedAt?: string | null;
   onBack: () => void;
+  onStartPractice?: (config: SessionConfig) => void;
 }
 
 type PeriodPreset = 'today' | 'week' | 'month' | 'custom';
-type DetailTab = 'growth' | 'sessions' | 'facts' | 'grid';
+type DetailTab = 'growth' | 'sessions' | 'facts' | 'grid' | 'quiz';
 
 function toYMD(d: Date): string { return localDateStr(d.toISOString()); }
 
@@ -40,7 +42,7 @@ function daysBetween(start: string, end: string): number {
   return Math.round((new Date(end + 'T12:00:00').getTime() - new Date(start + 'T12:00:00').getTime()) / 86400000) + 1;
 }
 
-export function StatsPage({ studentId, lastSyncedAt, onBack }: Props) {
+export function StatsPage({ studentId, lastSyncedAt, onBack, onStartPractice }: Props) {
   const [preset, setPreset] = useState<PeriodPreset>('week');
   const [customRange, setCustomRange] = useState<DateRange>(() => {
     const today = toYMD(appNow());
@@ -177,13 +179,17 @@ export function StatsPage({ studentId, lastSyncedAt, onBack }: Props) {
 
       {/* Detail tabs */}
       <div style={s.tabs}>
-        {(['growth', 'sessions', 'facts', 'grid'] as DetailTab[]).map(t => (
+        {(['growth', 'sessions', 'facts', 'grid', 'quiz'] as DetailTab[]).map(t => (
           <button
             key={t}
             style={{ ...s.tab, ...(detailTab === t ? s.tabOn : {}) }}
             onClick={() => setDetailTab(t)}
           >
-            {t === 'growth' ? '📈 Growth' : t === 'sessions' ? '📋 Sessions' : t === 'facts' ? '📊 Facts' : '🔲 Grid'}
+            {t === 'growth' ? '📈 Growth'
+              : t === 'sessions' ? '📋 Sessions'
+              : t === 'facts' ? '📊 Facts'
+              : t === 'grid' ? '🔲 Grid'
+              : '🧮 Quiz'}
           </button>
         ))}
       </div>
@@ -196,10 +202,13 @@ export function StatsPage({ studentId, lastSyncedAt, onBack }: Props) {
           <DrillHistory studentId={studentId} dateRange={range} />
         )}
         {detailTab === 'facts' && (
-          <FactStatsTable studentId={studentId} />
+          <FactStatsTable studentId={studentId} onStartPractice={onStartPractice} />
         )}
         {detailTab === 'grid' && (
           <MasteryGrid studentId={studentId} />
+        )}
+        {detailTab === 'quiz' && (
+          <QuizStatsView studentId={studentId} dateRange={range} />
         )}
       </div>
     </div>

@@ -9,6 +9,7 @@ import { RangeSetup } from './components/RangeSetup';
 import { specFor } from './components/opSpecs';
 import { StatsPage } from './features/stats/StatsPage';
 import { SettingsPage } from './features/settings/SettingsPage';
+import { MultiplicationQuizPage } from './features/multiplication/MultiplicationQuizPage';
 import { preloadVoices } from './features/audio/speech';
 import { useSync, initAuth } from './features/sync/useSync';
 import { pushLocal } from './features/sync/driveSync';
@@ -18,7 +19,7 @@ import { applyTheme } from './features/theme/themes';
 type Screen =
   | 'loading' | 'setup' | 'dashboard'
   | 'daily-setup' | 'range-setup' | 'practice'
-  | 'stats' | 'settings';
+  | 'stats' | 'settings' | 'quiz';
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('loading');
@@ -111,6 +112,17 @@ export default function App() {
         studentId={profile.id}
         lastSyncedAt={lastSyncedAt}
         onBack={() => setScreen('dashboard')}
+        onStartPractice={cfg => { setSessionConfig(cfg); setScreen('practice'); }}
+      />
+    );
+  }
+
+  if (screen === 'quiz') {
+    return (
+      <MultiplicationQuizPage
+        studentId={profile.id}
+        onDone={handleSessionDone}
+        onStartPractice={cfg => { setSessionConfig(cfg); setScreen('practice'); }}
       />
     );
   }
@@ -164,6 +176,7 @@ export default function App() {
       onPickOperation={pickOperation}
       onOpenStats={() => setScreen('stats')}
       onOpenSettings={() => setScreen('settings')}
+      onStartQuiz={() => setScreen('quiz')}
     />
   );
 }

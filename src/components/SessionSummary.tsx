@@ -11,6 +11,7 @@ interface Props {
   repeatedCount?: number;
   slowFirstTryCount?: number;
   attemptCount?: number;
+  plannedCount?: number;
   latencies: number[];
   fastestMs: number | null;
   missedFacts?: string[];
@@ -27,6 +28,7 @@ export function SessionSummary({
   repeatedCount = 0,
   slowFirstTryCount = 0,
   attemptCount,
+  plannedCount,
   latencies,
   fastestMs,
   missedFacts = [],
@@ -41,6 +43,9 @@ export function SessionSummary({
     ? Math.round(latencies.reduce((s, v) => s + v, 0) / latencies.length)
     : 0;
   const retries = attemptCount !== undefined ? attemptCount - completedCount : null;
+  const attemptAccPct = attemptCount ? Math.round((completedCount / attemptCount) * 100) : null;
+  const showAttemptAcc = attemptAccPct !== null && attemptAccPct !== firstTryPct;
+  const eventualPct = plannedCount ? Math.round((completedCount / plannedCount) * 100) : null;
 
   const lastFirstTryPct = lastSession && lastSession.firstTryAccuracy !== null
     ? Math.round(lastSession.firstTryAccuracy * 100)
@@ -89,6 +94,10 @@ export function SessionSummary({
           <summary style={s.grownupSummary}>For grown-ups</summary>
           <ul style={s.grownupList}>
             <li>First-try accuracy: {firstTryPct}% ({firstTryCount}/{completedCount})</li>
+            {showAttemptAcc && <li>Attempt accuracy: {attemptAccPct}% (correct submissions / all submissions)</li>}
+            {eventualPct !== null && eventualPct < 100 && (
+              <li>Completed: {completedCount}/{plannedCount} ({eventualPct}%)</li>
+            )}
             <li>Corrected after feedback: {correctedCount}</li>
             {repeatedCount > 0 && <li>Needed several tries: {repeatedCount}</li>}
             {slowFirstTryCount > 0 && <li>Right but slow (build fluency): {slowFirstTryCount}</li>}

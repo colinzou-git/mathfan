@@ -5,12 +5,15 @@ import type {
   AttemptLog,
   PracticeSession,
 } from '../types/math';
+import type { MultiplicationFactStats, QuizSession } from '../features/multiplication/types';
 
 export class MathFanDB extends Dexie {
   students!: Table<StudentProfile>;
   itemStates!: Table<StudentItemState>;
   attempts!: Table<AttemptLog>;
   sessions!: Table<PracticeSession>;
+  multFactStats!: Table<MultiplicationFactStats>;
+  quizSessions!: Table<QuizSession>;
 
   constructor() {
     super('mathfan');
@@ -23,6 +26,11 @@ export class MathFanDB extends Dexie {
     // Version 2: add compound index for efficient date-range stats queries
     this.version(2).stores({
       attempts: 'id, studentId, itemId, sessionId, createdAt, [studentId+createdAt]',
+    });
+    // Version 3: multiplication quiz system
+    this.version(3).stores({
+      multFactStats: '[studentId+key], studentId',
+      quizSessions: 'id, studentId, startedAt',
     });
   }
 }
