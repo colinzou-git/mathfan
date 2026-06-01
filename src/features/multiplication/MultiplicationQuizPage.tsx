@@ -14,6 +14,7 @@ import { selectQuizQuestions } from './quizQuestionSelector';
 import { generateRecommendations } from './practiceRecommendation';
 import { db } from '../../db/dexie';
 import { generateId } from '../../utils/id';
+import { recordAnswerEvent } from '../learning/learningEvents';
 
 interface Props {
   studentId: string;
@@ -424,6 +425,23 @@ export function MultiplicationQuizPage({ studentId, onDone, onStartPractice }: P
     setStatsMap(newMap);
 
     db.multFactStats.put(updated).catch(console.warn);
+    recordAnswerEvent({
+      id: generateId(),
+      studentId,
+      sessionId: sessionId.current,
+      itemId: `MUL_${q.factKey}`,
+      mode: 'quiz',
+      promptShown: `${q.left} × ${q.right} = ?`,
+      correctAnswer: q.answer,
+      studentAnswer,
+      isCorrect,
+      isRetry: false,
+      hintUsed: false,
+      latencyMs: responseTimeMs,
+      factStatusBefore: prevState,
+      factStatusAfter: updated.masteryState,
+      createdAt: answeredAt,
+    }).catch(console.warn);
 
     if (isCorrect) {
       setPhase('feedback');

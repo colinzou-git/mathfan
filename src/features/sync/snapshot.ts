@@ -1,5 +1,6 @@
 import type { StudentProfile, StudentItemState, AttemptLog, PracticeSession } from '../../types/math';
 import type { MultiplicationFactStats, QuizSession } from '../multiplication/types';
+import type { MathAnswerEvent } from '../learning/learningEvents';
 import { db } from '../../db/dexie';
 
 export interface AppSnapshot {
@@ -13,18 +14,21 @@ export interface AppSnapshot {
   // Added in quiz feature — absent in older snapshots; treat missing as []
   multFactStats?: MultiplicationFactStats[];
   quizSessions?: QuizSession[];
+  // Added with canonical event log — absent in older snapshots; treat missing as []
+  mathAnswerEvents?: MathAnswerEvent[];
 }
 
 // ── Build ─────────────────────────────────────────────────────────────────────
 
 export async function buildSnapshot(): Promise<AppSnapshot> {
-  const [students, itemStates, attempts, sessions, multFactStats, quizSessions] = await Promise.all([
+  const [students, itemStates, attempts, sessions, multFactStats, quizSessions, mathAnswerEvents] = await Promise.all([
     db.students.toArray(),
     db.itemStates.toArray(),
     db.attempts.toArray(),
     db.sessions.toArray(),
     db.multFactStats.toArray(),
     db.quizSessions.toArray(),
+    db.mathAnswerEvents.toArray(),
   ]);
   return {
     appId: 'mathfan',
@@ -36,6 +40,7 @@ export async function buildSnapshot(): Promise<AppSnapshot> {
     sessions,
     multFactStats,
     quizSessions,
+    mathAnswerEvents,
   };
 }
 
@@ -52,7 +57,7 @@ export async function buildSnapshot(): Promise<AppSnapshot> {
 export async function mergeSnapshot(remote: AppSnapshot): Promise<void> {
   await db.transaction(
     'rw',
-    [db.students, db.itemStates, db.attempts, db.sessions, db.multFactStats, db.quizSessions],
+    [db.students, db.itemStates, db.attempts, db.sessions, db.multFactStats, db.quizSessions, db.mathAnswerEvents],
     async () => {
 
       // Students: upsert all remote students (don't delete local-only ones)
@@ -85,6 +90,11 @@ export async function mergeSnapshot(remote: AppSnapshot): Promise<void> {
       // QuizSessions: union by ID
       if (remote.quizSessions?.length) {
         await db.quizSessions.bulkPut(remote.quizSessions);
+      }
+
+      // MathAnswerEvents: union by ID
+      if (remote.mathAnswerEvents?.length) {
+        await db.mathAnswerEvents.bulkPut(remote.mathAnswerEvents);
       }
     }
   );

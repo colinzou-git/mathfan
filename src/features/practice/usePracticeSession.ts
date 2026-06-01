@@ -22,6 +22,7 @@ import { itemStateRepo, attemptRepo, sessionRepo } from '../../db/repositories';
 import { db } from '../../db/dexie';
 import { appNow } from '../time/clock';
 import { generateId } from '../../utils/id';
+import { recordAnswerEvent } from '../learning/learningEvents';
 import type { PracticeItem as PItem } from '../../types/math';
 
 // ── Public types ──────────────────────────────────────────────────────────────
@@ -258,6 +259,24 @@ export function usePracticeSession(studentId: string) {
         reviewGrade: result.reviewGrade,
         createdAt: appNow().toISOString(),
       });
+      recordAnswerEvent({
+        id: generateId(),
+        studentId,
+        sessionId: prev.sessionId!,
+        itemId: item.id,
+        mode: 'practice',
+        promptShown: item.prompt,
+        correctAnswer: item.answer,
+        studentAnswer: result.studentAnswer,
+        isCorrect: result.isCorrect,
+        isRetry: attemptNo > 1,
+        hintUsed: false,
+        latencyMs,
+        reviewGrade: result.reviewGrade,
+        factStatusBefore: existing.masteryLevel,
+        factStatusAfter: updated.masteryLevel,
+        createdAt: appNow().toISOString(),
+      }).catch(console.warn);
 
       if (!result.isCorrect) {
         // Wrong: stay on same question, clear input via retryKey, and remember the fact.

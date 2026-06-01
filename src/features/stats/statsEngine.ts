@@ -2,8 +2,33 @@ import type {
   AttemptLog, PracticeSession, DayStats, PeriodStats, PeriodComparison, PerTableStats,
   FactWindowStats, FactGrowth, GrowthSummary, GrowthDirection,
 } from '../../types/math';
+import type { MathAnswerEvent } from '../learning/learningEvents';
 import { tableFromItemId } from '../curriculum/multiplicationItems';
 import { itemPrompt } from '../curriculum/describeItem';
+
+// ── MathAnswerEvent adapters ──────────────────────────────────────────────────
+
+/** Convert a MathAnswerEvent to an AttemptLog for use with the existing statsEngine functions. */
+export function eventToAttemptLog(event: MathAnswerEvent): AttemptLog {
+  return {
+    id: event.id,
+    studentId: event.studentId,
+    itemId: event.itemId,
+    skillId: '',  // not tracked in events; not used by any statsEngine function
+    sessionId: event.sessionId,
+    promptShown: event.promptShown,
+    correctAnswer: event.correctAnswer,
+    studentAnswer: event.studentAnswer ?? '',
+    isCorrect: event.isCorrect,
+    latencyMs: event.latencyMs,
+    reviewGrade: event.reviewGrade ?? 'good',
+    createdAt: event.createdAt,
+  };
+}
+
+export function eventsToAttemptLogs(events: MathAnswerEvent[]): AttemptLog[] {
+  return events.map(eventToAttemptLog);
+}
 
 // ── Date helpers ──────────────────────────────────────────────────────────────
 

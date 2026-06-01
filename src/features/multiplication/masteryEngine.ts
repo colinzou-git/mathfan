@@ -1,4 +1,6 @@
-import type { MultiplicationFactStats, MasteryState } from './types';
+import type { MultiplicationFactStats, MasteryState, MultiplicationFactKey } from './types';
+import type { MathAnswerEvent } from '../learning/learningEvents';
+import { createInitialFactStats, parseFactKey } from './multiplicationFacts';
 
 // Response time thresholds (ms) — easy to adjust
 export const FAST_MS = 3000;
@@ -87,4 +89,27 @@ export function applyAnswerToStats(
   };
 
   return { updated, prevState, prevScore };
+}
+
+/**
+ * Recompute MultiplicationFactStats from a stream of MathAnswerEvents.
+ * Only non-retry first attempts are counted, matching the quiz mastery scoring model.
+ * Pass only events relevant to the desired studentId and factKey.
+ */
+export function deriveMasteryFromEvents(
+  studentId: string,
+  factKey: MultiplicationFactKey,
+  events: MathAnswerEvent[],
+): MultiplicationFactStats {
+  const { left, right } = parseFactKey(factKey);
+  let stats = createInitialFactStats(studentId, left, right);
+
+  const factEvents = events
+    .filter(e => e.itemId === `MUL_${factKey}` && !e.isRetry)
+    .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+
+  for (const event of factEvents) {
+    stats = applyAnswerToStats(stats, event.isCorrect, event.latencyMs, event.createdAt).updated;
+  }
+  return stats;
 }

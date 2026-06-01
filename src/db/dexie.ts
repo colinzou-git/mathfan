@@ -6,6 +6,7 @@ import type {
   PracticeSession,
 } from '../types/math';
 import type { MultiplicationFactStats, QuizSession } from '../features/multiplication/types';
+import type { MathAnswerEvent } from '../features/learning/learningEvents';
 
 export class MathFanDB extends Dexie {
   students!: Table<StudentProfile>;
@@ -14,6 +15,7 @@ export class MathFanDB extends Dexie {
   sessions!: Table<PracticeSession>;
   multFactStats!: Table<MultiplicationFactStats>;
   quizSessions!: Table<QuizSession>;
+  mathAnswerEvents!: Table<MathAnswerEvent>;
 
   constructor() {
     super('mathfan');
@@ -31,6 +33,10 @@ export class MathFanDB extends Dexie {
     this.version(3).stores({
       multFactStats: '[studentId+key], studentId',
       quizSessions: 'id, studentId, startedAt',
+    });
+    // Version 4: canonical answer event log
+    this.version(4).stores({
+      mathAnswerEvents: 'id, studentId, sessionId, mode, createdAt, [studentId+createdAt]',
     });
   }
 }

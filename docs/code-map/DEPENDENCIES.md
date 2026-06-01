@@ -85,6 +85,14 @@
 | src/features/curriculum/describeItem.ts | ../../types/math |
 | src/features/curriculum/describeItem.ts | ./multiplicationItems |
 | src/features/curriculum/fractionItems.ts | ../../types/math |
+| src/features/curriculum/makeItemFromId.ts | ../../types/math |
+| src/features/curriculum/makeItemFromId.ts | ./arithmeticItems |
+| src/features/curriculum/makeItemFromId.ts | ./decimalItems |
+| src/features/curriculum/makeItemFromId.ts | ./fractionItems |
+| src/features/curriculum/makeItemFromId.ts | ./multiplicationItems |
+| src/features/curriculum/makeItemFromId.ts | ./numberTheoryItems |
+| src/features/curriculum/makeItemFromId.ts | ./roundingItems |
+| src/features/curriculum/makeItemFromId.ts | ./wordProblemItems |
 | src/features/curriculum/multiplicationItems.ts | ../../types/math |
 | src/features/curriculum/numberTheoryItems.ts | ../../types/math |
 | src/features/curriculum/roundingItems.ts | ../../types/math |
@@ -131,6 +139,7 @@
 | src/features/practice/usePracticeSession.ts | ../curriculum/arithmeticItems |
 | src/features/practice/usePracticeSession.ts | ../curriculum/decimalItems |
 | src/features/practice/usePracticeSession.ts | ../curriculum/fractionItems |
+| src/features/practice/usePracticeSession.ts | ../curriculum/makeItemFromId |
 | src/features/practice/usePracticeSession.ts | ../curriculum/multiplicationItems |
 | src/features/practice/usePracticeSession.ts | ../curriculum/numberTheoryItems |
 | src/features/practice/usePracticeSession.ts | ../curriculum/roundingItems |

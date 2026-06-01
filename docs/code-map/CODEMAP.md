@@ -1,6 +1,6 @@
 # Code Map Overview
 
-Generated: 2026-06-01 08:28:55 UTC
+Generated: 2026-06-01 17:11:39 UTC
 
 Repo root: `C:\Users\colin\Documents\mathFan`  
 Output folder: `C:\Users\colin\Documents\mathFan\docs\code-map`
@@ -14,9 +14,9 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 - Package name: `mathfan`
 - Version: `1.2.0`
 - Module type: `module`
-- Scanned files: **95**
-- Scanned lines: **14,967**
-- Scanned bytes: **560,123**
+- Scanned files: **96**
+- Scanned lines: **15,109**
+- Scanned bytes: **565,962**
 
 ## NPM scripts
 
@@ -62,7 +62,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 
 | File | Lines | Likely purpose | Key symbols |
 | --- | --- | --- | --- |
-| src/App.tsx | 182 | Top-level React app shell: routes/screens, global state, and feature wiring. | App, handleSessionDone, pickOperation, updateProfile, updateSettings |
+| src/App.tsx | 183 | Top-level React app shell: routes/screens, global state, and feature wiring. | App, handleSessionDone, pickOperation, updateProfile, updateSettings |
 | src/features/sync/SyncWidget.tsx | 156 | Cloud sync/auth/data transfer logic. | GoogleIcon, SyncWidget, friendlyError, GoogleIcon, initials, SyncWidget, timeSince |
 | vite.config.ts | 45 | Vite build/PWA configuration. |  |
 | package.json | 43 | Project package metadata, scripts, dependencies, and dev tooling. |  |
@@ -73,8 +73,8 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 | src/features/multiplication/MultiplicationQuizPage.tsx | 757 | Local persistence/database layer. | FactChip, SetupScreen, StatBox, SummaryScreen, MultiplicationQuizPage, FactChip, MultiplicationQuizPage, recommendedPracticeConfig |
 | src/features/practice/PracticeScreen.tsx | 475 | Local persistence/database layer. | KbChip, PracticeScreen, KbChip, onKey, PracticeScreen, submitChoice |
 | src/features/settings/SettingsPage.tsx | 474 | Student/app settings UI or persistence. | Section, SyncRow, ToggleRow, SettingsPage, applyUpdate, checkForUpdates, fmt, fmtBuildTime |
-| src/features/stats/FactStatsTable.tsx | 305 | Progress/statistics screens or calculations. | SortBtn, SummaryStat, FactStatsTable, bucketOf, FactStatsTable, SortBtn, SummaryStat, toggleSort |
-| src/features/stats/StatsPage.tsx | 243 | Progress/statistics screens or calculations. | SummaryPill, StatsPage, buildRange, daysBetween, StatsPage, SummaryPill, toYMD |
+| src/features/stats/FactStatsTable.tsx | 373 | Progress/statistics screens or calculations. | SortBtn, SummaryStat, FactStatsTable, bucketOf, FactStatsTable, SortBtn, startPractice, SummaryStat |
+| src/features/stats/StatsPage.tsx | 244 | Progress/statistics screens or calculations. | SummaryPill, StatsPage, buildRange, daysBetween, StatsPage, SummaryPill, toYMD |
 | src/features/stats/DrillHistory.tsx | 235 | Progress/statistics screens or calculations. | AttemptDetail, MetricChip, Pill, DrillHistory, AttemptDetail, dateLabel, DrillHistory, durationLabel |
 | src/features/stats/GrowthView.tsx | 178 | Progress/statistics screens or calculations. | Counter, FactChip, GrowthGroup, GrowthView, chipTitle, Counter, FactChip, GrowthGroup |
 | src/features/dashboard/StudentDashboard.tsx | 153 | Dashboard/profile setup/student navigation feature. | Chip, PracticeOp, StudentDashboard, Chip, StudentDashboard |
@@ -135,6 +135,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   │   ├── decimalItems.ts
 │   │   │   ├── describeItem.ts
 │   │   │   ├── fractionItems.ts
+│   │   │   ├── makeItemFromId.ts
 │   │   │   ├── multiplicationItems.ts
 │   │   │   ├── numberTheoryItems.ts
 │   │   │   ├── roundingItems.ts
@@ -285,7 +286,7 @@ Purpose: Top-level React app shell: routes/screens, global state, and feature wi
   58: 
   59:   const updateSettings = async (settings: StudentSettings) => {
   60:     if (!profile) return;
-... (121 more lines)
+... (122 more lines)
 ```
 
 ### `src/features/sync/SyncWidget.tsx`
@@ -887,64 +888,64 @@ Purpose: Progress/statistics screens or calculations.
 
 ```text
    1: import { useEffect, useState, useMemo } from 'react';
-   2: import type { StudentItemState } from '../../types/math';
+   2: import type { StudentItemState, MasteryLevel, SessionConfig } from '../../types/math';
    3: import { itemStateRepo } from '../../db/repositories';
    4: import { TABLE_MIN, TABLE_MAX, tableFromItemId } from '../curriculum/multiplicationItems';
    5: import { describeItem } from '../curriculum/describeItem';
    6: import { MASTERY_COLORS } from '../../utils/masteryColors';
    7: 
-   8: interface Props { studentId: string }
-   9: 
-  10: type SortKey = 'accuracy' | 'wrong' | 'attempts' | 'avgSpeed' | 'bestSpeed';
-  11: type TypeFilter = 'all' | 'mul' | 'div' | 'add' | 'sub' | 'frac' | 'word' | 'round' | 'factors' | 'dec';
-  12: type StatusFilter = 'all' | 'weak' | 'strong' | 'new';
-  13: 
-  14: const OPERATION_TABS: { key: TypeFilter; label: string; icon: string }[] = [
-  15:   { key: 'all',     label: 'All',       icon: '∑' },
-  16:   { key: 'mul',     label: 'Multiply',  icon: '✖️' },
-  17:   { key: 'div',     label: 'Divide',    icon: '➗' },
-  18:   { key: 'add',     label: 'Add',       icon: '➕' },
-  19:   { key: 'sub',     label: 'Subtract',  icon: '➖' },
-  20:   { key: 'frac',    label: 'Fractions', icon: '🍕' },
-  21:   { key: 'word',    label: 'Word',      icon: '📖' },
-  22:   { key: 'round',   label: 'Rounding',  icon: '🔵' },
-  23:   { key: 'factors', label: 'Primes',    icon: '🔢' },
-  24:   { key: 'dec',     label: 'Decimals',  icon: '🔟' },
-  25: ];
-  26: 
-  27: /** Bucket an itemId's describe-group into a TypeFilter (unknown-factor counts as multiply). */
-  28: function bucketOf(itemId: string): Exclude<TypeFilter, 'all'> | 'other' {
-  29:   const g = describeItem(itemId).group;
-  30:   if (g === 'mul' || g === 'unk') return 'mul';
-  31:   if (g === 'div') return 'div';
-  32:   if (g === 'add') return 'add';
-  33:   if (g === 'sub') return 'sub';
-  34:   if (g === 'frac') return 'frac';
-  35:   if (g === 'word') return 'word';
-  36:   if (g === 'round') return 'round';
-  37:   if (g === 'factors') return 'factors';
-  38:   if (g === 'dec') return 'dec';
-  39:   return 'other';
-  40: }
-  41: 
-  42: export function FactStatsTable({ studentId }: Props) {
-  43:   const [states, setStates] = useState<StudentItemState[]>([]);
-  44:   const [sort, setSort] = useState<SortKey>('accuracy');
-  45:   const [sortAsc, setSortAsc] = useState(true);
-  46:   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
-  47:   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
-  48:   const [tableFilter, setTableFilter] = useState<number | 'all'>('all');
-  49: 
-  50:   useEffect(() => {
-  51:     itemStateRepo.getForStudent(studentId).then(s =>
-  52:       setStates(s.filter(st => st.attemptCount > 0))
-  53:     );
-  54:   }, [studentId]);
-  55: 
-  56:   // Count of practiced facts per operation, for the tab badges
-  57:   const groupCounts = useMemo(() => {
-  58:     const c: Record<string, number> = { all: states.length };
-  59:     for (const s of states) {
-  60:       const b = bucketOf(s.itemId);
-... (244 more lines)
+   8: interface Props {
+   9:   studentId: string;
+  10:   onStartPractice?: (config: SessionConfig) => void;
+  11: }
+  12: 
+  13: type SortKey = 'accuracy' | 'wrong' | 'attempts' | 'avgSpeed' | 'bestSpeed';
+  14: type TypeFilter = 'all' | 'mul' | 'div' | 'add' | 'sub' | 'frac' | 'word' | 'round' | 'factors' | 'dec';
+  15: 
+  16: const ALL_MASTERY_LEVELS: MasteryLevel[] = ['new', 'learning', 'developing', 'strong', 'mastered'];
+  17: 
+  18: const OPERATION_TABS: { key: TypeFilter; label: string; icon: string }[] = [
+  19:   { key: 'all',     label: 'All',       icon: '∑' },
+  20:   { key: 'mul',     label: 'Multiply',  icon: '✖️' },
+  21:   { key: 'div',     label: 'Divide',    icon: '➗' },
+  22:   { key: 'add',     label: 'Add',       icon: '➕' },
+  23:   { key: 'sub',     label: 'Subtract',  icon: '➖' },
+  24:   { key: 'frac',    label: 'Fractions', icon: '🍕' },
+  25:   { key: 'word',    label: 'Word',      icon: '📖' },
+  26:   { key: 'round',   label: 'Rounding',  icon: '🔵' },
+  27:   { key: 'factors', label: 'Primes',    icon: '🔢' },
+  28:   { key: 'dec',     label: 'Decimals',  icon: '🔟' },
+  29: ];
+  30: 
+  31: /** Bucket an itemId's describe-group into a TypeFilter (unknown-factor counts as multiply). */
+  32: function bucketOf(itemId: string): Exclude<TypeFilter, 'all'> | 'other' {
+  33:   const g = describeItem(itemId).group;
+  34:   if (g === 'mul' || g === 'unk') return 'mul';
+  35:   if (g === 'div') return 'div';
+  36:   if (g === 'add') return 'add';
+  37:   if (g === 'sub') return 'sub';
+  38:   if (g === 'frac') return 'frac';
+  39:   if (g === 'word') return 'word';
+  40:   if (g === 'round') return 'round';
+  41:   if (g === 'factors') return 'factors';
+  42:   if (g === 'dec') return 'dec';
+  43:   return 'other';
+  44: }
+  45: 
+  46: export function FactStatsTable({ studentId, onStartPractice }: Props) {
+  47:   const [states, setStates] = useState<StudentItemState[]>([]);
+  48:   const [sort, setSort] = useState<SortKey>('accuracy');
+  49:   const [sortAsc, setSortAsc] = useState(true);
+  50:   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
+  51:   // Empty set = no filter (show all levels). Non-empty = show only selected levels.
+  52:   const [statusFilter, setStatusFilter] = useState<Set<MasteryLevel>>(new Set());
+  53:   const [tableFilter, setTableFilter] = useState<number | 'all'>('all');
+  54:   const [practiceRounds, setPracticeRounds] = useState(3);
+  55:   const [showPracticeSetup, setShowPracticeSetup] = useState(false);
+  56: 
+  57:   useEffect(() => {
+  58:     itemStateRepo.getForStudent(studentId).then(s =>
+  59:       setStates(s.filter(st => st.attemptCount > 0))
+  60:     );
+... (312 more lines)
 ```
