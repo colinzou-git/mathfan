@@ -58,7 +58,9 @@ window.google = {
 };
 """
 
-USERINFO_JSON = '{"email":"colin.zou@gmail.com","sub":"123","name":"Colin"}'
+TEST_EMAIL = "test@example.com"
+TEST_NAME = "Test User"
+USERINFO_JSON = f'{{"email":"{TEST_EMAIL}","sub":"123","name":"{TEST_NAME}"}}'
 
 
 def dismiss_gate(page):
@@ -102,7 +104,7 @@ def main() -> int:
             failures.append("fresh sign-in did not produce a token")
         if not state1.get("hasGrant"):
             failures.append("fresh sign-in did not record a grant")
-        if state1.get("email") != "colin.zou@gmail.com":
+        if state1.get("email") != TEST_EMAIL:
             failures.append(f"profile email not loaded: {state1.get('email')}")
         if prompts1 != ["consent"]:
             failures.append(f"fresh sign-in should use one interactive consent, got {prompts1}")
