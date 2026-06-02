@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import type { AttemptLog, FactGrowth, GrowthSummary } from '../../types/math';
-import { attemptRepo } from '../../db/repositories';
-import { computeFactGrowth, growthWindows, type GrowthPeriod } from './statsEngine';
+import { mathAnswerEventRepo } from '../../db/repositories';
+import { computeFactGrowth, growthWindows, eventsToAttemptLogs, type GrowthPeriod } from './statsEngine';
 import { appNow } from '../time/clock';
 
 interface Props { studentId: string }
@@ -17,7 +17,8 @@ export function GrowthView({ studentId }: Props) {
   const [period, setPeriod] = useState<GrowthPeriod>('day');
 
   useEffect(() => {
-    attemptRepo.getAll(studentId).then(setAttempts);
+    // mathAnswerEvents is the source of truth; adapt to AttemptLog for statsEngine.
+    mathAnswerEventRepo.getAll(studentId).then(evts => setAttempts(eventsToAttemptLogs(evts)));
   }, [studentId]);
 
   const summary: GrowthSummary = useMemo(() => {

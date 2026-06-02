@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { StudentProfile, SessionConfig, StudentSettings } from './types/math';
-import { studentRepo, sessionRepo } from './db/repositories';
+import { studentRepo, sessionRepo, mathAnswerEventRepo } from './db/repositories';
 import { ProfileSetup } from './features/dashboard/ProfileSetup';
 import { StudentDashboard, type PracticeOp } from './features/dashboard/StudentDashboard';
 import { PracticeScreen } from './features/practice/PracticeScreen';
@@ -10,6 +10,8 @@ import { specFor } from './components/opSpecs';
 import { StatsPage } from './features/stats/StatsPage';
 import { SettingsPage } from './features/settings/SettingsPage';
 import { MultiplicationQuizPage } from './features/multiplication/MultiplicationQuizPage';
+import { TodayAchievementDetail } from './features/stats/TodayAchievementDetail';
+import type { AchievementFilter, TodayAchievementData } from './features/stats/todayAchievement';
 import { preloadVoices } from './features/audio/speech';
 import { useSync, initAuth } from './features/sync/useSync';
 import { pushLocal } from './features/sync/driveSync';
@@ -19,14 +21,38 @@ import { applyTheme } from './features/theme/themes';
 type Screen =
   | 'loading' | 'setup' | 'dashboard'
   | 'daily-setup' | 'range-setup' | 'practice'
-  | 'stats' | 'settings' | 'quiz';
+  | 'stats' | 'settings' | 'quiz' | 'today-detail';
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('loading');
   const [profile, setProfile] = useState<StudentProfile | null>(null);
   const [sessionConfig, setSessionConfig] = useState<SessionConfig | null>(null);
   const [selectedOp, setSelectedOp] = useState<PracticeOp>('multiplication');
+  const [achievementFilter, setAchievementFilter] = useState<AchievementFilter>('total');
+  const [achievementData, setAchievementData] = useState<TodayAchievementData | null>(null);
   const { auth, syncStatus, lastSyncedAt, syncError, handleSignIn, handleSignOut, manualSync } = useSync();
+
+  // After a successful sync, refresh the profile from DB.
+  // This handles the case where Drive data was merged back onto a fresh install:
+  // the local empty student and the Drive student have different IDs, so we pick
+  // the student with the most events (i.e. the restored Drive profile).
+  const syncRefreshGuard = useRef(true);
+  useEffect(() => {
+    if (syncRefreshGuard.current) { syncRefreshGuard.current = false; return; }
+    if (!lastSyncedAt) return;
+    studentRepo.getAll().then(async all => {
+      if (all.length === 0) return;
+      let best = all[0];
+      if (all.length > 1) {
+        const counts = await Promise.all(all.map(s => mathAnswerEventRepo.getAll(s.id).then(ev => ev.length)));
+        best = all[counts.indexOf(Math.max(...counts))];
+      }
+      setProfile(best);
+      applyTheme(best.settings.theme ?? 'indigo');
+      setScreen(s => (s === 'setup' || s === 'loading') ? 'dashboard' : s);
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lastSyncedAt]);
 
   const pickOperation = (op: PracticeOp) => {
     setSelectedOp(op);
@@ -106,6 +132,16 @@ export default function App() {
     );
   }
 
+  if (screen === 'today-detail' && achievementData) {
+    return (
+      <TodayAchievementDetail
+        filter={achievementFilter}
+        data={achievementData}
+        onBack={() => setScreen('dashboard')}
+      />
+    );
+  }
+
   if (screen === 'stats') {
     return (
       <StatsPage
@@ -121,6 +157,7 @@ export default function App() {
     return (
       <MultiplicationQuizPage
         studentId={profile.id}
+        settings={profile.settings}
         onDone={handleSessionDone}
         onStartPractice={cfg => { setSessionConfig(cfg); setScreen('practice'); }}
       />
@@ -172,11 +209,16 @@ export default function App() {
     <StudentDashboard
       profile={profile}
       lastSyncedAt={lastSyncedAt}
-      onStartDailyReview={() => setScreen('daily-setup')}
+      onStartDailyReview={(cfg) => { setSessionConfig(cfg); setScreen('practice'); }}
       onPickOperation={pickOperation}
       onOpenStats={() => setScreen('stats')}
       onOpenSettings={() => setScreen('settings')}
       onStartQuiz={() => setScreen('quiz')}
+      onOpenAchievementDetail={(filter, data) => {
+        setAchievementFilter(filter);
+        setAchievementData(data);
+        setScreen('today-detail');
+      }}
     />
   );
 }

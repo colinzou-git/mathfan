@@ -71,8 +71,25 @@ export function SettingsPage({ profile, onUpdateProfile, onBack, onSwitchStudent
       const reg = await navigator.serviceWorker.getRegistration();
       if (!reg) { setUpdateState('none'); return; }
       if (reg.waiting) { setUpdateState('available'); return; }
-      await reg.update();
-      await new Promise(r => setTimeout(r, 1500));
+
+      // Listen for updatefound before calling update() so we never miss it.
+      // When a new SW is found, wait for it to reach 'installed' (waiting) state.
+      // Falls back after 8 s in case the event never fires (e.g. already current).
+      await new Promise<void>(resolve => {
+        let settled = false;
+        const done = () => { if (!settled) { settled = true; resolve(); } };
+
+        const onUpdateFound = () => {
+          const sw = reg.installing;
+          if (!sw) { done(); return; }
+          sw.addEventListener('statechange', () => { if (sw.state === 'installed') done(); });
+        };
+
+        reg.addEventListener('updatefound', onUpdateFound);
+        setTimeout(done, 8000);
+        reg.update().catch(done);
+      });
+
       const fresh = await navigator.serviceWorker.getRegistration();
       setUpdateState(fresh?.waiting ? 'available' : 'none');
     } catch {

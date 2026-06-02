@@ -55,6 +55,8 @@ export function FactStatsTable({ studentId, onStartPractice }: Props) {
   const [showPracticeSetup, setShowPracticeSetup] = useState(false);
 
   useEffect(() => {
+    // itemStateRepo is a derived cache of practice events + FSRS scheduling state.
+    // Ground truth: mathAnswerEvents (mode='practice'). See rebuildItemStatesFromEvents().
     itemStateRepo.getForStudent(studentId).then(s =>
       setStates(s.filter(st => st.attemptCount > 0))
     );

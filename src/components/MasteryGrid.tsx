@@ -21,6 +21,8 @@ export function MasteryGrid({ studentId }: Props) {
   const [selected, setSelected] = useState<{ a: number; b: number } | null>(null);
 
   useEffect(() => {
+    // itemStateRepo is a derived cache of practice events + FSRS state.
+    // Ground truth: mathAnswerEvents (mode='practice'). See rebuildItemStatesFromEvents().
     itemStateRepo.getForStudent(studentId).then(states => {
       const m = new Map<string, CellInfo>();
       for (const s of states) {

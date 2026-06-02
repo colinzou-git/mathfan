@@ -6,7 +6,8 @@ import type {
   QuizSession,
   QuizQuestion,
 } from './types';
-import type { SessionConfig } from '../../types/math';
+import type { SessionConfig, StudentSettings } from '../../types/math';
+import { speakProblem, speakFeedback, stopSpeech } from '../audio/speech';
 import { parseFactKey, createInitialFactStats } from './multiplicationFacts';
 import { MultiplicationMasteryGrid } from './MultiplicationMasteryGrid';
 import { applyAnswerToStats, SLOW_MS } from './masteryEngine';
@@ -18,6 +19,7 @@ import { recordAnswerEvent } from '../learning/learningEvents';
 
 interface Props {
   studentId: string;
+  settings: StudentSettings;
   onDone: () => void;
   onStartPractice?: (config: SessionConfig) => void;
 }
@@ -269,7 +271,7 @@ function SummaryScreen({
 
 // ── Main quiz component ────────────────────────────────────────────────────────
 
-export function MultiplicationQuizPage({ studentId, onDone, onStartPractice }: Props) {
+export function MultiplicationQuizPage({ studentId, settings, onDone, onStartPractice }: Props) {
   const [phase, setPhase] = useState<Phase>('setup');
   const [quizLength, setQuizLength] = useState(DEFAULT_LENGTH);
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
@@ -287,14 +289,26 @@ export function MultiplicationQuizPage({ studentId, onDone, onStartPractice }: P
   const sessionStartedAt = useRef(new Date().toISOString());
   const questionStartTime = useRef(0);
 
-  // Cleanup timer on unmount
-  useEffect(() => () => { if (feedbackTimer.current) clearTimeout(feedbackTimer.current); }, []);
+  // Cleanup timer and speech on unmount
+  useEffect(() => () => {
+    stopSpeech();
+    if (feedbackTimer.current) clearTimeout(feedbackTimer.current);
+  }, []);
 
   // Focus input on each new active question and when entering retry mode
   useEffect(() => {
     if (phase === 'active' || phase === 'retry') {
       requestAnimationFrame(() => inputRef.current?.focus());
     }
+  }, [phase, currentIndex]);
+
+  // Speak question when a new question appears (including retry)
+  useEffect(() => {
+    if ((phase === 'active' || phase === 'retry') && settings.audioEnabled) {
+      const q = questions[currentIndex];
+      if (q) speakProblem(`${q.left} × ${q.right} = ?`);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, currentIndex]);
 
   const startQuiz = useCallback(async (length: number) => {
@@ -350,6 +364,10 @@ export function MultiplicationQuizPage({ studentId, onDone, onStartPractice }: P
     };
 
     db.quizSessions.put(session).catch(console.warn);
+    // multFactStats is a derived cache — batch-write from the final in-memory map.
+    // Events are the canonical record; this write is equivalent to rebuildMultFactStatsFromEvents
+    // but uses the already-computed in-memory state for speed.
+    db.multFactStats.bulkPut([...map.values()]).catch(console.warn);
     setSummary(session);
     setStatsMap(map);
     setPhase('summary');
@@ -364,11 +382,35 @@ export function MultiplicationQuizPage({ studentId, onDone, onStartPractice }: P
     const parsed = input.trim() === '' ? null : parseInt(input.trim(), 10);
     const studentAnswer = parsed !== null && !isNaN(parsed) ? parsed : null;
     const isCorrect = studentAnswer !== null && studentAnswer === q.answer;
+    // Compute timing before branching so retry events also get accurate latency.
+    const responseTimeMs = Date.now() - questionStartTime.current;
+    const answeredAt = new Date().toISOString();
 
     if (phase === 'retry') {
-      // Retry: check correctness but don't record a new answer log
+      // Record retry as a MathAnswerEvent with isRetry=true.
+      // Retries do NOT change the mastery score, so factStatus is unchanged.
+      const currentStatus = statsMap.get(q.factKey)?.masteryState;
+      recordAnswerEvent({
+        id: generateId(),
+        studentId,
+        sessionId: sessionId.current,
+        itemId: `MUL_${q.factKey}`,
+        mode: 'quiz',
+        promptShown: `${q.left} × ${q.right} = ?`,
+        correctAnswer: q.answer,
+        studentAnswer,
+        isCorrect,
+        isRetry: true,
+        hintUsed: false,
+        latencyMs: responseTimeMs,
+        factStatusBefore: currentStatus,
+        factStatusAfter: currentStatus,
+        createdAt: answeredAt,
+      }).catch(console.warn);
+
       setLastIsCorrect(isCorrect);
       if (isCorrect) {
+        if (settings.audioEnabled) speakFeedback(true, q.answer);
         setPhase('feedback');
         setInput('');
         const nextIndex = currentIndex + 1;
@@ -392,8 +434,6 @@ export function MultiplicationQuizPage({ studentId, onDone, onStartPractice }: P
     }
 
     // First attempt (phase === 'active')
-    const responseTimeMs = Date.now() - questionStartTime.current;
-    const answeredAt = new Date().toISOString();
 
     const prevStats = statsMap.get(q.factKey) ?? createInitialFactStats(studentId, q.left, q.right);
     const { updated, prevState, prevScore } = applyAnswerToStats(prevStats, isCorrect, responseTimeMs, answeredAt);
@@ -424,7 +464,7 @@ export function MultiplicationQuizPage({ studentId, onDone, onStartPractice }: P
     setAnswerLogs(newLogs);
     setStatsMap(newMap);
 
-    db.multFactStats.put(updated).catch(console.warn);
+    // Record the first-attempt event. multFactStats is updated in batch when the quiz ends.
     recordAnswerEvent({
       id: generateId(),
       studentId,
@@ -444,6 +484,7 @@ export function MultiplicationQuizPage({ studentId, onDone, onStartPractice }: P
     }).catch(console.warn);
 
     if (isCorrect) {
+      if (settings.audioEnabled) speakFeedback(true, q.answer);
       setPhase('feedback');
 
       const nextIndex = currentIndex + 1;

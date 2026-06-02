@@ -6,8 +6,8 @@ import { MasteryGrid } from '../../components/MasteryGrid';
 import { QuizStatsView } from './QuizStatsView';
 import { MiniCalendar, type DateRange } from '../../components/MiniCalendar';
 import { StatsGraph, type DayPoint } from '../../components/StatsGraph';
-import { computeDayStats, addDays, startOfLocalDay, startOfWeek, startOfMonth, localDateStr } from '../stats/statsEngine';
-import { attemptRepo, sessionRepo } from '../../db/repositories';
+import { computeDayStats, addDays, startOfLocalDay, startOfWeek, startOfMonth, localDateStr, eventsToAttemptLogs } from '../stats/statsEngine';
+import { mathAnswerEventRepo, sessionRepo } from '../../db/repositories';
 import { appNow } from '../time/clock';
 import type { AttemptLog, PracticeSession, SessionConfig } from '../../types/math';
 
@@ -54,8 +54,10 @@ export function StatsPage({ studentId, lastSyncedAt, onBack, onStartPractice }: 
   const [sessions, setSessions] = useState<PracticeSession[]>([]);
 
   useEffect(() => {
+    // Load canonical events and adapt to AttemptLog for statsEngine functions.
+    // mathAnswerEvents is the source of truth; attemptRepo is a compat cache.
     Promise.all([
-      attemptRepo.getAll(studentId),
+      mathAnswerEventRepo.getAll(studentId).then(eventsToAttemptLogs),
       sessionRepo.getAll(studentId),
     ]).then(([a, s]) => { setAttempts(a); setSessions(s); });
   }, [studentId, lastSyncedAt]);

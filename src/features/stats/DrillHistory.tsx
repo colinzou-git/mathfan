@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import type { PracticeSession, AttemptLog } from '../../types/math';
 import type { DateRange } from '../../components/MiniCalendar';
-import { sessionRepo, attemptRepo } from '../../db/repositories';
+import { sessionRepo, mathAnswerEventRepo } from '../../db/repositories';
+import { eventsToAttemptLogs } from '../stats/statsEngine';
 import { appNow } from '../time/clock';
 import { derivePracticeMetrics } from '../practice/metrics';
 
@@ -68,7 +69,9 @@ export function DrillHistory({ studentId, dateRange }: Props) {
     const row = rows.find(r => r.session.id === sessionId);
     if (!row) return;
     if (!row.attempts) {
-      const attempts = await attemptRepo.getForSession(sessionId);
+      // Read from the canonical event log; adapt to AttemptLog for derivePracticeMetrics.
+      const events = await mathAnswerEventRepo.getForSession(sessionId);
+      const attempts = eventsToAttemptLogs(events);
       setRows(prev => prev.map(r =>
         r.session.id === sessionId ? { ...r, attempts } : r
       ));

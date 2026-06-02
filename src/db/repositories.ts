@@ -1,5 +1,6 @@
 import { db } from './dexie';
 import type { StudentProfile, StudentItemState, AttemptLog, PracticeSession } from '../types/math';
+import type { MathAnswerEvent } from '../features/learning/learningEvents';
 
 export const studentRepo = {
   async getAll(): Promise<StudentProfile[]> {
@@ -16,6 +17,13 @@ export const studentRepo = {
   },
 };
 
+/**
+ * DERIVED CACHE — do not treat as source of truth.
+ * These records are computed from mathAnswerEvents (practice mode) via applyReview.
+ * They are kept for scheduling speed (FSRS next-due lookups) and legacy UI.
+ * Ground truth: db.mathAnswerEvents where mode='practice'.
+ * Use rebuildItemStatesFromEvents() to regenerate.
+ */
 export const itemStateRepo = {
   async get(studentId: string, itemId: string): Promise<StudentItemState | undefined> {
     return db.itemStates.get([studentId, itemId]);
@@ -34,6 +42,12 @@ export const itemStateRepo = {
   },
 };
 
+/**
+ * COMPATIBILITY LAYER — do not treat as source of truth.
+ * These records duplicate data from mathAnswerEvents for backward compatibility.
+ * New reads should prefer mathAnswerEventRepo.
+ * Ground truth: db.mathAnswerEvents.
+ */
 export const attemptRepo = {
   async save(attempt: AttemptLog): Promise<void> {
     await db.attempts.put(attempt);
@@ -55,6 +69,41 @@ export const attemptRepo = {
       .where('studentId').equals(studentId)
       .reverse()
       .limit(limit)
+      .toArray();
+  },
+};
+
+/** Canonical answer-attempt log. All stats and mastery can be recomputed from these records. */
+export const mathAnswerEventRepo = {
+  async save(event: MathAnswerEvent): Promise<void> {
+    await db.mathAnswerEvents.put(event);
+  },
+  async bulkSave(events: MathAnswerEvent[]): Promise<void> {
+    await db.mathAnswerEvents.bulkPut(events);
+  },
+  async getAll(studentId: string): Promise<MathAnswerEvent[]> {
+    return db.mathAnswerEvents.where('studentId').equals(studentId).toArray();
+  },
+  async getForDateRange(studentId: string, start: Date, end: Date): Promise<MathAnswerEvent[]> {
+    return db.mathAnswerEvents
+      .where('[studentId+createdAt]')
+      .between([studentId, start.toISOString()], [studentId, end.toISOString()])
+      .toArray();
+  },
+  async getForSession(sessionId: string): Promise<MathAnswerEvent[]> {
+    return db.mathAnswerEvents.where('sessionId').equals(sessionId).toArray();
+  },
+  async getForItem(studentId: string, itemId: string): Promise<MathAnswerEvent[]> {
+    return db.mathAnswerEvents
+      .where('studentId').equals(studentId)
+      .and(e => e.itemId === itemId)
+      .toArray();
+  },
+  /** Returns only first-attempt events (isRetry=false) — excludes retries. */
+  async getFirstAttempts(studentId: string): Promise<MathAnswerEvent[]> {
+    return db.mathAnswerEvents
+      .where('studentId').equals(studentId)
+      .and(e => !e.isRetry)
       .toArray();
   },
 };

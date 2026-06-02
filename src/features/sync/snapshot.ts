@@ -1,6 +1,7 @@
 import type { StudentProfile, StudentItemState, AttemptLog, PracticeSession } from '../../types/math';
 import type { MultiplicationFactStats, QuizSession } from '../multiplication/types';
 import type { MathAnswerEvent } from '../learning/learningEvents';
+import { rebuildMultFactStatsFromEvents, rebuildItemStatesFromEvents } from '../learning/eventRebuild';
 import { db } from '../../db/dexie';
 
 export interface AppSnapshot {
@@ -48,24 +49,53 @@ export async function buildSnapshot(): Promise<AppSnapshot> {
 
 /**
  * Merge a remote snapshot into the local DB.
- * Strategy: union by ID — remote wins for students and itemStates when the remote
- * has more attempts; local wins for everything already present locally.
- * Attempts and sessions are unioned (deduped by ID).
- * MultFactStats: take the one with more totalAttempts (further along).
- * QuizSessions: union by ID.
+ *
+ * Strategy:
+ *   1. mathAnswerEvents are merged first (union by ID) — they are the source of truth.
+ *   2. Structural records (students, sessions, attempts, quizSessions) are unioned by ID.
+ *   3. itemStates from the remote are merged as a fallback for items without events.
+ *   4. multFactStats from the remote are merged as a fallback for facts without events.
+ *   5. After the transaction, derived tables (multFactStats, itemStates) are recomputed
+ *      from the merged event set for all affected students, overwriting the fallback values.
+ *
+ * This ensures that cross-device conflicts in derived caches are resolved from events,
+ * not from stale computed aggregates.
  */
 export async function mergeSnapshot(remote: AppSnapshot): Promise<void> {
+  // Collect affected student IDs so we know who to rebuild after the transaction.
+  const affectedStudentIds = new Set<string>([
+    ...remote.students.map(s => s.id),
+    ...(remote.mathAnswerEvents?.map(e => e.studentId) ?? []),
+  ]);
+
   await db.transaction(
     'rw',
     [db.students, db.itemStates, db.attempts, db.sessions, db.multFactStats, db.quizSessions, db.mathAnswerEvents],
     async () => {
+      // ── 1. Events first — source of truth ─────────────────────────────────
+      if (remote.mathAnswerEvents?.length) {
+        await db.mathAnswerEvents.bulkPut(remote.mathAnswerEvents);
+      }
 
-      // Students: upsert all remote students (don't delete local-only ones)
+      // ── 2. Students ────────────────────────────────────────────────────────
       for (const s of remote.students) {
         await db.students.put(s);
       }
 
-      // ItemStates: take the one with more attemptCount (further along)
+      // ── 3. Sessions ────────────────────────────────────────────────────────
+      await db.sessions.bulkPut(remote.sessions);
+
+      // ── 4. Attempts (compat layer) — union by ID ───────────────────────────
+      await db.attempts.bulkPut(remote.attempts);
+
+      // ── 5. QuizSessions — union by ID ──────────────────────────────────────
+      if (remote.quizSessions?.length) {
+        await db.quizSessions.bulkPut(remote.quizSessions);
+      }
+
+      // ── 6. ItemStates — fallback for items without events ──────────────────
+      // Prefer the record with more attempts. Will be overwritten by event-rebuild
+      // for any item that has events in the merged set.
       for (const remoteState of remote.itemStates) {
         const localState = await db.itemStates.get([remoteState.studentId, remoteState.itemId]);
         if (!localState || remoteState.attemptCount > localState.attemptCount) {
@@ -73,31 +103,24 @@ export async function mergeSnapshot(remote: AppSnapshot): Promise<void> {
         }
       }
 
-      // Attempts: union by ID (put is upsert — no-op if already exists with same id)
-      await db.attempts.bulkPut(remote.attempts);
-
-      // Sessions: union by ID
-      await db.sessions.bulkPut(remote.sessions);
-
-      // MultFactStats: take whichever has more totalAttempts
+      // ── 7. MultFactStats — fallback for facts without events ───────────────
+      // Will be overwritten by event-rebuild for any fact that has events.
       for (const remoteStats of remote.multFactStats ?? []) {
         const localStats = await db.multFactStats.get([remoteStats.studentId, remoteStats.key]);
         if (!localStats || remoteStats.totalAttempts > localStats.totalAttempts) {
           await db.multFactStats.put(remoteStats);
         }
       }
-
-      // QuizSessions: union by ID
-      if (remote.quizSessions?.length) {
-        await db.quizSessions.bulkPut(remote.quizSessions);
-      }
-
-      // MathAnswerEvents: union by ID
-      if (remote.mathAnswerEvents?.length) {
-        await db.mathAnswerEvents.bulkPut(remote.mathAnswerEvents);
-      }
     }
   );
+
+  // ── 8. Post-merge rebuild ──────────────────────────────────────────────────
+  // Recompute derived tables from the merged event set for each affected student.
+  // This overwrites any stale fallback values written in steps 6–7.
+  for (const studentId of affectedStudentIds) {
+    await rebuildMultFactStatsFromEvents(studentId);
+    await rebuildItemStatesFromEvents(studentId);
+  }
 }
 
 export function validateSnapshot(raw: unknown): raw is AppSnapshot {
