@@ -27,3 +27,26 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local HTTPS certs / generated private keys
+certs/
+scripts/certs/
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer
+
+# Local test result captures
+received-results/
+*.test-results.json
+
+# Local DB / generated data
+*.sqlite
+*.sqlite3
+*.db
+
+docs/code-map/CODEMAP.md
+
+docs/code-map/
