@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import type { MultiplicationFactStats, MultiplicationFactKey, QuizSession } from '../multiplication/types';
 import type { DateRange } from '../../components/MiniCalendar';
 import { MultiplicationMasteryGrid } from '../multiplication/MultiplicationMasteryGrid';
-import { db } from '../../db/dexie';
+import { quizStatsRepo } from '../../db/repositories';
 
 interface Props {
   studentId: string;
@@ -27,12 +27,11 @@ export function QuizStatsView({ studentId, dateRange }: Props) {
 
   useEffect(() => {
     Promise.all([
-      db.quizSessions.where('studentId').equals(studentId).toArray(),
-      db.multFactStats.where('studentId').equals(studentId).toArray(),
-    ]).then(([sess, stats]) => {
-      sess.sort((a, b) => b.startedAt.localeCompare(a.startedAt));
+      quizStatsRepo.getSessions(studentId),
+      quizStatsRepo.getStatsMap(studentId),
+    ]).then(([sess, statsMap]) => {
       setAllSessions(sess);
-      setStatsMap(new Map(stats.map(s => [s.key as MultiplicationFactKey, s as MultiplicationFactStats])));
+      setStatsMap(statsMap);
       setLoading(false);
     });
   }, [studentId]);

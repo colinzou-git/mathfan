@@ -18,11 +18,11 @@ import { generateWordProblemItems } from '../curriculum/wordProblemItems';
 import { generateRoundingItems } from '../curriculum/roundingItems';
 import { generateNumberTheoryItems } from '../curriculum/numberTheoryItems';
 import { generateDecimalItems } from '../curriculum/decimalItems';
-import { itemStateRepo, attemptRepo, sessionRepo } from '../../db/repositories';
+import { itemStateRepo, sessionRepo } from '../../db/repositories';
 import { db } from '../../db/dexie';
 import { appNow } from '../time/clock';
 import { generateId } from '../../utils/id';
-import { recordAnswerEvent } from '../learning/learningEvents';
+import { recordPracticeAnswer, type PracticeAnswerPayload } from '../learning/recordAnswer';
 import type { PracticeItem as PItem } from '../../types/math';
 
 // ── Public types ──────────────────────────────────────────────────────────────
@@ -109,6 +109,8 @@ export function usePracticeSession(studentId: string) {
   const currentAttemptsRef = useRef<number>(0);
   // Holds dynamically generated items (arithmetic/fractions) not in the static ITEM_MAP
   const dynamicItemsRef = useRef<Map<string, PItem>>(new Map());
+  // Carries the write payload from inside setState out to the async write call below it
+  const pendingWriteRef = useRef<PracticeAnswerPayload | null>(null);
 
   const resolveItem = useCallback((id: string): PItem => {
     return dynamicItemsRef.current.get(id) ?? getStaticItem(id);
@@ -236,6 +238,8 @@ export function usePracticeSession(studentId: string) {
   // ── submitAnswer ──────────────────────────────────────────────────────────
 
   const submitAnswer = useCallback(async (rawInput: string) => {
+    pendingWriteRef.current = null;
+
     setState(prev => {
       if (prev.phase !== 'active' || !prev.currentItem || !prev.sessionId) return prev;
 
@@ -243,40 +247,58 @@ export function usePracticeSession(studentId: string) {
       const latencyMs = Date.now() - questionStartRef.current;
       const result = checkAnswer(item, rawInput, latencyMs);
       const attemptNo = (currentAttemptsRef.current += 1);
+      const now = appNow();
+      const createdAt = now.toISOString();
 
-      // Fire-and-forget DB writes (can't await inside setState)
       const existing = statesRef.current.get(item.id) ?? createInitialState(studentId, item);
-      const updated = applyReview(existing, result.reviewGrade, latencyMs, rawInput, appNow());
-      statesRef.current.set(item.id, updated);
-      itemStateRepo.save(updated);
 
-      attemptRepo.save({
-        id: generateId(), studentId,
-        itemId: item.id, skillId: item.skillId, sessionId: prev.sessionId!,
-        promptShown: item.prompt, correctAnswer: item.answer,
-        studentAnswer: result.studentAnswer,
-        isCorrect: result.isCorrect, latencyMs,
-        reviewGrade: result.reviewGrade,
-        createdAt: appNow().toISOString(),
-      });
-      recordAnswerEvent({
-        id: generateId(),
-        studentId,
-        sessionId: prev.sessionId!,
-        itemId: item.id,
-        mode: 'practice',
-        promptShown: item.prompt,
-        correctAnswer: item.answer,
-        studentAnswer: result.studentAnswer,
-        isCorrect: result.isCorrect,
-        isRetry: attemptNo > 1,
-        hintUsed: false,
-        latencyMs,
-        reviewGrade: result.reviewGrade,
-        factStatusBefore: existing.masteryLevel,
-        factStatusAfter: updated.masteryLevel,
-        createdAt: appNow().toISOString(),
-      }).catch(console.warn);
+      // Only the first attempt at each question presentation updates long-term
+      // FSRS scheduling. Retries are logged for stats but don't distort the
+      // spaced-repetition schedule.
+      const isFirstAttempt = attemptNo === 1;
+      const updated = isFirstAttempt
+        ? applyReview(existing, result.reviewGrade, latencyMs, rawInput, now, { isCorrect: result.isCorrect })
+        : existing;
+      if (isFirstAttempt) {
+        statesRef.current.set(item.id, updated);
+      }
+
+      pendingWriteRef.current = {
+        event: {
+          id: generateId(),
+          studentId,
+          sessionId: prev.sessionId!,
+          itemId: item.id,
+          mode: 'practice',
+          promptShown: item.prompt,
+          correctAnswer: item.answer,
+          studentAnswer: result.studentAnswer,
+          isCorrect: result.isCorrect,
+          isRetry: !isFirstAttempt,
+          hintUsed: false,
+          latencyMs,
+          reviewGrade: result.reviewGrade,
+          factStatusBefore: existing.masteryLevel,
+          factStatusAfter: updated.masteryLevel,
+          createdAt,
+        },
+        // Retries do not change FSRS state — pass undefined to skip the itemStates write.
+        updatedState: isFirstAttempt ? updated : undefined,
+        attempt: {
+          id: generateId(),
+          studentId,
+          itemId: item.id,
+          skillId: item.skillId,
+          sessionId: prev.sessionId!,
+          promptShown: item.prompt,
+          correctAnswer: item.answer,
+          studentAnswer: result.studentAnswer,
+          isCorrect: result.isCorrect,
+          latencyMs,
+          reviewGrade: result.reviewGrade,
+          createdAt,
+        },
+      };
 
       if (!result.isCorrect) {
         // Wrong: stay on same question, clear input via retryKey, and remember the fact.
@@ -301,7 +323,6 @@ export function usePracticeSession(studentId: string) {
       const newFastest = prev.fastestMs === null
         ? latencyMs : Math.min(prev.fastestMs, latencyMs);
 
-      // Reset question timer for next question (done in nextQuestion)
       return {
         ...prev,
         phase: 'correct',
@@ -318,6 +339,10 @@ export function usePracticeSession(studentId: string) {
         fastestMs: newFastest,
       };
     });
+
+    if (pendingWriteRef.current) {
+      recordPracticeAnswer(pendingWriteRef.current).catch(console.warn);
+    }
   }, [studentId]);
 
   // ── nextQuestion ──────────────────────────────────────────────────────────

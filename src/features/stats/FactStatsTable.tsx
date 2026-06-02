@@ -1,9 +1,11 @@
 import { useEffect, useState, useMemo } from 'react';
-import type { StudentItemState, MasteryLevel, SessionConfig } from '../../types/math';
+import type { StudentItemState, SessionConfig } from '../../types/math';
+import type { MathFactStatus } from '../learning/learningEvents';
 import { itemStateRepo } from '../../db/repositories';
+import { db } from '../../db/dexie';
 import { TABLE_MIN, TABLE_MAX, tableFromItemId } from '../curriculum/multiplicationItems';
 import { describeItem } from '../curriculum/describeItem';
-import { MASTERY_COLORS } from '../../utils/masteryColors';
+import { FACT_STATUS_COLORS } from '../../utils/masteryColors';
 
 interface Props {
   studentId: string;
@@ -13,7 +15,7 @@ interface Props {
 type SortKey = 'accuracy' | 'wrong' | 'attempts' | 'avgSpeed' | 'bestSpeed';
 type TypeFilter = 'all' | 'mul' | 'div' | 'add' | 'sub' | 'frac' | 'word' | 'round' | 'factors' | 'dec';
 
-const ALL_MASTERY_LEVELS: MasteryLevel[] = ['new', 'learning', 'developing', 'strong', 'mastered'];
+const ALL_FACT_STATUSES: MathFactStatus[] = ['new', 'forgotten', 'weak', 'learning', 'developing', 'strong', 'mastered'];
 
 const OPERATION_TABS: { key: TypeFilter; label: string; icon: string }[] = [
   { key: 'all',     label: 'All',       icon: '∑' },
@@ -45,21 +47,31 @@ function bucketOf(itemId: string): Exclude<TypeFilter, 'all'> | 'other' {
 
 export function FactStatsTable({ studentId, onStartPractice }: Props) {
   const [states, setStates] = useState<StudentItemState[]>([]);
+  // Quiz-system status map: itemId → MathFactStatus (covers weak/forgotten from quiz events).
+  const [quizStatusMap, setQuizStatusMap] = useState<Map<string, MathFactStatus>>(new Map());
   const [sort, setSort] = useState<SortKey>('accuracy');
   const [sortAsc, setSortAsc] = useState(true);
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
   // Empty set = no filter (show all levels). Non-empty = show only selected levels.
-  const [statusFilter, setStatusFilter] = useState<Set<MasteryLevel>>(new Set());
+  const [statusFilter, setStatusFilter] = useState<Set<MathFactStatus>>(new Set());
   const [tableFilter, setTableFilter] = useState<number | 'all'>('all');
   const [practiceRounds, setPracticeRounds] = useState(3);
   const [showPracticeSetup, setShowPracticeSetup] = useState(false);
 
   useEffect(() => {
-    // itemStateRepo is a derived cache of practice events + FSRS scheduling state.
-    // Ground truth: mathAnswerEvents (mode='practice'). See rebuildItemStatesFromEvents().
-    itemStateRepo.getForStudent(studentId).then(s =>
-      setStates(s.filter(st => st.attemptCount > 0))
-    );
+    // itemStateRepo: derived cache of practice events + FSRS scheduling state.
+    // quizStatusMap: quiz mastery state from multFactStats (can include weak/forgotten).
+    // Ground truth for both: mathAnswerEvents. See rebuildItemStatesFromEvents().
+    Promise.all([
+      itemStateRepo.getForStudent(studentId),
+      db.multFactStats.where('studentId').equals(studentId).toArray(),
+    ]).then(([s, quizStats]) => {
+      setStates(s.filter(st => st.attemptCount > 0));
+      setQuizStatusMap(new Map(quizStats.map(qs => [
+        `MUL_${qs.key}`,
+        qs.masteryState as MathFactStatus,
+      ])));
+    });
   }, [studentId]);
 
   // Count of practiced facts per operation, for the tab badges
@@ -72,7 +84,11 @@ export function FactStatsTable({ studentId, onStartPractice }: Props) {
     return c;
   }, [states]);
 
-  const toggleStatus = (level: MasteryLevel) => {
+  // Quiz status (weak/forgotten) takes precedence over FSRS level for MUL_ items.
+  const effectiveStatus = (s: StudentItemState): MathFactStatus =>
+    quizStatusMap.get(s.itemId) ?? s.masteryLevel;
+
+  const toggleStatus = (level: MathFactStatus) => {
     setStatusFilter(prev => {
       const next = new Set(prev);
       if (next.has(level)) next.delete(level); else next.add(level);
@@ -83,7 +99,8 @@ export function FactStatsTable({ studentId, onStartPractice }: Props) {
   const rows = useMemo(() => {
     const filtered = states.filter(s => {
       if (typeFilter !== 'all' && bucketOf(s.itemId) !== typeFilter) return false;
-      if (statusFilter.size > 0 && !statusFilter.has(s.masteryLevel)) return false;
+      const status = quizStatusMap.get(s.itemId) ?? s.masteryLevel;
+      if (statusFilter.size > 0 && !statusFilter.has(status)) return false;
       if (tableFilter !== 'all') {
         const t = tableFromItemId(s.itemId);
         if (t !== tableFilter) return false;
@@ -112,7 +129,7 @@ export function FactStatsTable({ studentId, onStartPractice }: Props) {
     });
 
     return filtered;
-  }, [states, sort, sortAsc, typeFilter, statusFilter, tableFilter]);
+  }, [states, sort, sortAsc, typeFilter, statusFilter, tableFilter, quizStatusMap]);
 
   // Summary for the selected operation (ignores status/table filters)
   const summary = useMemo(() => {
@@ -188,8 +205,8 @@ export function FactStatsTable({ studentId, onStartPractice }: Props) {
         >
           All
         </button>
-        {ALL_MASTERY_LEVELS.map(level => {
-          const mc = MASTERY_COLORS[level];
+        {ALL_FACT_STATUSES.map(level => {
+          const mc = FACT_STATUS_COLORS[level];
           const active = statusFilter.has(level);
           return (
             <button
@@ -301,7 +318,7 @@ export function FactStatsTable({ studentId, onStartPractice }: Props) {
                     </td>
                     <td style={st.td}>
                       {(() => {
-                        const mc = MASTERY_COLORS[s.masteryLevel];
+                        const mc = FACT_STATUS_COLORS[effectiveStatus(s)];
                         return (
                           <span style={{ fontSize: '11px', fontWeight: '700', color: mc.text, background: mc.bg, border: `1px solid ${mc.border}`, borderRadius: '4px', padding: '2px 6px' }}>
                             {mc.letter} {mc.label}

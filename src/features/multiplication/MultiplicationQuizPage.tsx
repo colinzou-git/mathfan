@@ -15,7 +15,7 @@ import { selectQuizQuestions } from './quizQuestionSelector';
 import { generateRecommendations } from './practiceRecommendation';
 import { db } from '../../db/dexie';
 import { generateId } from '../../utils/id';
-import { recordAnswerEvent } from '../learning/learningEvents';
+import { recordQuizFirstAttempt, recordQuizRetry, finalizeQuizSession } from '../learning/recordAnswer';
 
 interface Props {
   studentId: string;
@@ -363,11 +363,10 @@ export function MultiplicationQuizPage({ studentId, settings, onDone, onStartPra
       recommendedPracticeFacts: generateRecommendations(logs, map),
     };
 
-    db.quizSessions.put(session).catch(console.warn);
-    // multFactStats is a derived cache — batch-write from the final in-memory map.
-    // Events are the canonical record; this write is equivalent to rebuildMultFactStatsFromEvents
+    // multFactStats is a derived cache — flush from the final in-memory map alongside the session.
+    // Events are the canonical record; this is equivalent to rebuildMultFactStatsFromEvents
     // but uses the already-computed in-memory state for speed.
-    db.multFactStats.bulkPut([...map.values()]).catch(console.warn);
+    finalizeQuizSession({ session, factStats: [...map.values()] }).catch(console.warn);
     setSummary(session);
     setStatsMap(map);
     setPhase('summary');
@@ -390,7 +389,7 @@ export function MultiplicationQuizPage({ studentId, settings, onDone, onStartPra
       // Record retry as a MathAnswerEvent with isRetry=true.
       // Retries do NOT change the mastery score, so factStatus is unchanged.
       const currentStatus = statsMap.get(q.factKey)?.masteryState;
-      recordAnswerEvent({
+      recordQuizRetry({
         id: generateId(),
         studentId,
         sessionId: sessionId.current,
@@ -464,8 +463,8 @@ export function MultiplicationQuizPage({ studentId, settings, onDone, onStartPra
     setAnswerLogs(newLogs);
     setStatsMap(newMap);
 
-    // Record the first-attempt event. multFactStats is updated in batch when the quiz ends.
-    recordAnswerEvent({
+    // Record the first-attempt event. multFactStats is flushed atomically when the quiz ends.
+    recordQuizFirstAttempt({
       id: generateId(),
       studentId,
       sessionId: sessionId.current,

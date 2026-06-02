@@ -1,4 +1,5 @@
 import type { MasteryLevel } from '../types/math';
+import type { MathFactStatus } from '../features/learning/learningEvents';
 
 /**
  * Color-blind friendly mastery palette.
@@ -20,4 +21,11 @@ export const MASTERY_COLORS: Record<MasteryLevel, MasteryColor> = {
   developing: { bg: '#fef08a', text: '#713f12', border: '#facc15', letter: 'D',  label: 'Developing' },
   strong:     { bg: '#bbf7d0', text: '#14532d', border: '#4ade80', letter: 'S',  label: 'Strong'     },
   mastered:   { bg: '#bfdbfe', text: '#1e3a5f', border: '#60a5fa', letter: 'M',  label: 'Mastered'   },
+};
+
+/** Extends MASTERY_COLORS with quiz-system statuses (weak, forgotten). */
+export const FACT_STATUS_COLORS: Record<MathFactStatus, MasteryColor> = {
+  ...MASTERY_COLORS,
+  weak:      { bg: '#fecdd3', text: '#9f1239', border: '#f87171', letter: 'W', label: 'Weak'      },
+  forgotten: { bg: '#fde68a', text: '#92400e', border: '#fcd34d', letter: 'F', label: 'Forgotten' },
 };

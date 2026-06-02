@@ -85,10 +85,10 @@ describe('MathAnswerEvent — retry', () => {
     expect(evt.isRetry).toBe(true);
   });
 
-  it('retries have mode=practice since quiz does not record retry attempts', () => {
-    const evt = makeEvent({ isRetry: true, mode: 'practice' });
+  it('quiz retries are recorded with mode=quiz and isRetry=true', () => {
+    const evt = makeEvent({ mode: 'quiz', isRetry: true });
+    expect(evt.mode).toBe('quiz');
     expect(evt.isRetry).toBe(true);
-    expect(evt.mode).toBe('practice');
   });
 });
 

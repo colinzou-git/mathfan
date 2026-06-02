@@ -14,6 +14,19 @@ import { applyReview, createInitialState } from '../scheduler/scheduler';
 import { makeItemFromId } from '../curriculum/makeItemFromId';
 import { deriveMasteryFromEvents } from '../multiplication/masteryEngine';
 import type { MultiplicationFactKey } from '../multiplication/types';
+import { classifyResponse } from '../practice/answerChecker';
+import type { ReviewGrade } from '../../types/math';
+
+/**
+ * Derive the FSRS review grade from a stored event.
+ * If reviewGrade was recorded, use it directly.
+ * Otherwise, reconstruct from correctness and latency so that events written
+ * before reviewGrade was added to the schema are still replayed correctly.
+ */
+function gradeFromEvent(event: MathAnswerEvent): ReviewGrade {
+  if (event.reviewGrade) return event.reviewGrade;
+  return classifyResponse(event.isCorrect, event.latencyMs);
+}
 
 /**
  * Recompute multFactStats for a student from quiz-mode mathAnswerEvents.
@@ -45,16 +58,31 @@ export async function rebuildMultFactStatsFromEvents(studentId: string): Promise
 
 /**
  * Recompute itemStates for a student from practice-mode mathAnswerEvents.
- * Replays all practice events (including retries) through applyReview in chronological order.
- * Overwrites only items that have at least one event — items without events are left untouched.
+ * Replays first-attempt events (isRetry=false) through applyReview in chronological order.
+ * Retry events are skipped — they are preserved in the event log for stats/history but
+ * must not affect the FSRS scheduler state, matching the live-practice behaviour in
+ * usePracticeSession (which also calls applyReview only on the first attempt).
+ *
+ * mode: 'preserve-legacy' (default) — overwrites only items that have events; items without
+ *   events are left untouched. Safe for sync/migration where pre-event legacy rows may exist.
+ * mode: 'strict' — additionally deletes any itemStates rows for this student that have no
+ *   corresponding events. Use for repair/debug/reset to bring the cache fully in sync with events.
  */
-export async function rebuildItemStatesFromEvents(studentId: string): Promise<void> {
+export async function rebuildItemStatesFromEvents(
+  studentId: string,
+  options: { mode: 'preserve-legacy' | 'strict' } = { mode: 'preserve-legacy' },
+): Promise<void> {
   const events = await db.mathAnswerEvents
     .where('studentId').equals(studentId)
     .and(e => e.mode === 'practice')
     .toArray();
 
-  if (events.length === 0) return;
+  if (events.length === 0) {
+    if (options.mode === 'strict') {
+      await db.itemStates.where('studentId').equals(studentId).delete();
+    }
+    return;
+  }
 
   events.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 
@@ -65,20 +93,34 @@ export async function rebuildItemStatesFromEvents(studentId: string): Promise<vo
     byItem.set(e.itemId, arr);
   }
 
+  const rebuilt = new Set<string>();
   for (const [itemId, itemEvents] of byItem) {
     const item = makeItemFromId(itemId);
     if (!item) continue; // can't reconstruct item metadata — skip
 
     let state = createInitialState(studentId, item);
     for (const event of itemEvents) {
+      // Skip retry events — they are logged for stats but don't update the
+      // scheduler. Old events that pre-date isRetry may lack the field; treat
+      // missing as false (first attempt) to preserve existing behaviour.
+      if (event.isRetry) continue;
       state = applyReview(
         state,
-        event.reviewGrade ?? 'good',
+        gradeFromEvent(event),
         event.latencyMs,
         String(event.studentAnswer ?? ''),
         new Date(event.createdAt),
+        { isCorrect: event.isCorrect },
       );
     }
     await db.itemStates.put(state);
+    rebuilt.add(itemId);
+  }
+
+  if (options.mode === 'strict') {
+    await db.itemStates
+      .where('studentId').equals(studentId)
+      .and(s => !rebuilt.has(s.itemId))
+      .delete();
   }
 }

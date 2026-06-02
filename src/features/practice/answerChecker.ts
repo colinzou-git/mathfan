@@ -1,8 +1,7 @@
 import type { PracticeItem, ReviewGrade } from '../../types/math';
 
-const FAST_MS = 1500;
-const NORMAL_MS = 4000;
-const TIMEOUT_MS = 10000;
+export const FAST_MS = 1500;
+export const NORMAL_MS = 4000;
 
 // Strict patterns — reject trailing/embedded junk that parseFloat silently ignores.
 // integerPattern: whole numbers only (positive or negative).
@@ -52,9 +51,20 @@ export function checkAnswer(
   return { isCorrect, reviewGrade: grade, latencyMs, correctAnswer, studentAnswer };
 }
 
+/**
+ * Map (isCorrect, latency) to a ReviewGrade for FSRS scheduling.
+ *
+ * Policy:
+ *   - Wrong answer → 'again' (FSRS lapse / retry immediately)
+ *   - Correct but slow (> NORMAL_MS) → 'hard' (not 'again')
+ *   - Correct and fast (≤ FAST_MS) → 'easy'
+ *   - Correct at normal speed → 'good'
+ *
+ * A correct answer is never graded 'again', regardless of latency.
+ * This prevents a slow-but-correct answer from being counted as an FSRS failure.
+ */
 export function classifyResponse(isCorrect: boolean, latencyMs: number): ReviewGrade {
   if (!isCorrect) return 'again';
-  if (latencyMs >= TIMEOUT_MS) return 'again';
   if (latencyMs > NORMAL_MS) return 'hard';
   if (latencyMs <= FAST_MS) return 'easy';
   return 'good';

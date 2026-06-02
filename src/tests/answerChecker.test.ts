@@ -91,5 +91,7 @@ describe('classifyResponse', () => {
   it('correct fast → easy', () => expect(classifyResponse(true, 1000)).toBe('easy'));
   it('correct normal → good', () => expect(classifyResponse(true, 2500)).toBe('good'));
   it('correct slow → hard', () => expect(classifyResponse(true, 5000)).toBe('hard'));
-  it('correct timeout → again', () => expect(classifyResponse(true, 11000)).toBe('again'));
+  // Correct answers are never 'again', regardless of latency — slow-but-correct = 'hard'
+  it('correct very slow → hard (not again)', () => expect(classifyResponse(true, 11000)).toBe('hard'));
+  it('wrong slow → again', () => expect(classifyResponse(false, 11000)).toBe('again'));
 });

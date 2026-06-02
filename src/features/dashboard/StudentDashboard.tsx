@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { StudentProfile, SessionConfig } from '../../types/math';
-import { itemStateRepo, attemptRepo, sessionRepo } from '../../db/repositories';
-import { computeTodayStats, computeStreak } from '../stats/statsEngine';
+import { itemStateRepo, mathAnswerEventRepo, sessionRepo } from '../../db/repositories';
+import { computeTodayStats, computeStreak, eventsToAttemptLogs } from '../stats/statsEngine';
 import { appNow } from '../time/clock';
 import { describeItem } from '../curriculum/describeItem';
 import { TodayAchievementSection } from '../stats/TodayAchievementSection';
@@ -73,11 +73,12 @@ export function StudentDashboard({ profile, lastSyncedAt, onStartDailyReview, on
     (async () => {
       const now = appNow();
       const nowStr = now.toISOString();
-      const [attempts, states, sessions] = await Promise.all([
-        attemptRepo.getAll(profile.id),
+      const [events, states, sessions] = await Promise.all([
+        mathAnswerEventRepo.getAll(profile.id),
         itemStateRepo.getForStudent(profile.id),
         sessionRepo.getAll(profile.id),
       ]);
+      const attempts = eventsToAttemptLogs(events);
       const todayStats = computeTodayStats(attempts, sessions, now);
       const streak = computeStreak(attempts, now);
 
