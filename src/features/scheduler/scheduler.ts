@@ -88,6 +88,7 @@ export function applyReview(
     nextDueAt,
     fsrsCardState: fsrsPatch.fsrsCardState,
     fsrsScheduledDays: fsrsPatch.fsrsScheduledDays,
+    fsrsLearningSteps: fsrsPatch.fsrsLearningSteps,
   };
   updated.masteryLevel = updateMasteryLevel(updated);
   return updated;

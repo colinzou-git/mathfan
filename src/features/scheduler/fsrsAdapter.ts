@@ -30,6 +30,7 @@ export type FsrsStatePatch = Pick<StudentItemState,
   | 'nextDueAt'
   | 'fsrsCardState'
   | 'fsrsScheduledDays'
+  | 'fsrsLearningSteps'
 >;
 
 /**
@@ -58,6 +59,7 @@ export function applyFsrsReview(
     nextDueAt: next.due.toISOString(),
     fsrsCardState: next.state,
     fsrsScheduledDays: next.scheduled_days,
+    fsrsLearningSteps: next.learning_steps,
   };
 }
 
@@ -98,7 +100,7 @@ function stateToCard(state: StudentItemState, now: Date): Card {
     difficulty: state.fsrsDifficulty,
     elapsed_days: elapsedDays,
     scheduled_days: scheduledDays,
-    learning_steps: 0,
+    learning_steps: state.fsrsLearningSteps ?? 0,
     reps,
     lapses: state.lapses ?? 0,
     state: cardState,

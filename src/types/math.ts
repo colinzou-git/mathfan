@@ -123,6 +123,8 @@ export interface StudentItemState {
   fsrsCardState?: number;
   /** Days the card was scheduled for at the last review. */
   fsrsScheduledDays?: number;
+  /** ts-fsrs learning_steps progress. Always 0 with enable_short_term=false; stored for forward compatibility. */
+  fsrsLearningSteps?: number;
   masteryLevel: MasteryLevel;
   lastSeenAt?: string;
   nextDueAt?: string;

@@ -347,7 +347,18 @@ export function usePracticeSession(studentId: string) {
 
     stateRef.current = nextState;
     setState(nextState);
-    recordPracticeAnswer(payload).catch(console.warn);
+
+    // Await the write so FSRS item state is durably saved; retry once on transient DB errors.
+    try {
+      await recordPracticeAnswer(payload);
+    } catch (err) {
+      console.warn('[usePracticeSession] event write failed, retrying…', err);
+      try {
+        await recordPracticeAnswer(payload);
+      } catch (retryErr) {
+        console.error('[usePracticeSession] event write failed after retry; event lost:', retryErr);
+      }
+    }
   }, [studentId]);
 
   // ── nextQuestion ──────────────────────────────────────────────────────────

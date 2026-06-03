@@ -25,7 +25,7 @@ interface Props {
   onStartPractice?: (config: SessionConfig) => void;
 }
 
-type Phase = 'setup' | 'loading' | 'active' | 'feedback' | 'retry' | 'summary';
+type Phase = 'setup' | 'loading' | 'active' | 'feedback' | 'retry' | 'saving' | 'summary';
 
 const QUIZ_LENGTHS = [10, 20, 30, 50];
 const DEFAULT_LENGTH = 20;
@@ -335,7 +335,7 @@ export function MultiplicationQuizPage({ studentId, settings, onDone, onStartPra
     setPhase('active');
   }, [studentId]);
 
-  const finishQuiz = useCallback((
+  const finishQuiz = useCallback(async (
     logs: QuizAnswerLog[],
     map: Map<MultiplicationFactKey, MultiplicationFactStats>,
     totalQuestions: number,
@@ -364,12 +364,27 @@ export function MultiplicationQuizPage({ studentId, settings, onDone, onStartPra
       recommendedPracticeFacts: generateRecommendations(logs, map),
     };
 
+    // Show summary data immediately; 'saving' phase shows a spinner while the DB write completes.
+    setSummary(session);
+    setStatsMap(map);
+    setPhase('saving');
+
     // multFactStats is a derived cache — flush from the final in-memory map alongside the session.
     // Events are the canonical record; this is equivalent to rebuildMultFactStatsFromEvents
     // but uses the already-computed in-memory state for speed.
-    finalizeQuizSession({ session, factStats: [...map.values()] }).catch(console.warn);
-    setSummary(session);
-    setStatsMap(map);
+    // Retry once on transient DB errors so session data is not silently lost.
+    const payload = { session, factStats: [...map.values()] };
+    try {
+      await finalizeQuizSession(payload);
+    } catch (err) {
+      console.warn('[MultiplicationQuizPage] quiz write failed, retrying…', err);
+      try {
+        await finalizeQuizSession(payload);
+      } catch (retryErr) {
+        console.error('[MultiplicationQuizPage] quiz write failed after retry; session lost:', retryErr);
+      }
+    }
+
     setPhase('summary');
   }, [studentId]);
 
@@ -538,7 +553,7 @@ export function MultiplicationQuizPage({ studentId, settings, onDone, onStartPra
     );
   }
 
-  if (phase === 'loading') {
+  if (phase === 'loading' || phase === 'saving') {
     return (
       <div style={{ ...s.container, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
         <div style={{ fontSize: '40px' }}>⏳</div>

@@ -388,6 +388,71 @@ describe('retry isolation', () => {
   });
 });
 
+// ── FSRS card envelope: fsrsCardState, fsrsScheduledDays, fsrsLearningSteps ───
+
+describe('applyReview — FSRS card envelope persists across reviews', () => {
+  it('stores fsrsCardState, fsrsScheduledDays, and fsrsLearningSteps after first review', () => {
+    const s = applyReview(fresh(), 'good', 2000, '72', now, { isCorrect: true });
+    expect(s.fsrsCardState).toBeDefined();
+    expect(s.fsrsScheduledDays).toBeDefined();
+    expect(s.fsrsScheduledDays).toBeGreaterThan(0);
+    expect(s.fsrsLearningSteps).toBeDefined();
+    // learning_steps is always 0 with enable_short_term=false
+    expect(s.fsrsLearningSteps).toBe(0);
+  });
+
+  it('fsrsScheduledDays grows on successive correct reviews', () => {
+    const t1 = now;
+    const first = applyReview(fresh(), 'good', 2000, '72', t1, { isCorrect: true });
+    const t2 = new Date(t1.getTime() + first.stabilityDays * MS_DAY);
+    const second = applyReview(first, 'good', 2000, '72', t2, { isCorrect: true });
+    expect(second.fsrsScheduledDays!).toBeGreaterThan(first.fsrsScheduledDays!);
+    expect(second.stabilityDays).toBeGreaterThan(first.stabilityDays);
+  });
+
+  it('stored fsrsScheduledDays is used in reconstruction — result matches direct chain', () => {
+    // Apply two reviews in sequence using stored envelope fields.
+    const t1 = now;
+    const first = applyReview(fresh(), 'good', 2000, '72', t1, { isCorrect: true });
+    const t2 = new Date(t1.getTime() + first.stabilityDays * MS_DAY);
+    const direct = applyReview(first, 'good', 2000, '72', t2, { isCorrect: true });
+
+    // Erase stored envelope (simulate a legacy record) — stateToCard falls back to deriving
+    // scheduledDays from dates and assumes State.Review. For a Review card the result matches.
+    const legacy = { ...first, fsrsCardState: undefined, fsrsScheduledDays: undefined, fsrsLearningSteps: undefined };
+    const fromLegacy = applyReview(legacy, 'good', 2000, '72', t2, { isCorrect: true });
+
+    expect(direct.stabilityDays).toBeCloseTo(fromLegacy.stabilityDays, 4);
+    expect(direct.reps).toBe(fromLegacy.reps);
+  });
+
+  it('card envelope fields survive three consecutive reviews', () => {
+    const t1 = now;
+    const r1 = applyReview(fresh(), 'good', 2000, '72', t1, { isCorrect: true });
+    const t2 = new Date(t1.getTime() + r1.stabilityDays * MS_DAY);
+    const r2 = applyReview(r1, 'good', 2000, '72', t2, { isCorrect: true });
+    const t3 = new Date(t2.getTime() + r2.stabilityDays * MS_DAY);
+    const r3 = applyReview(r2, 'good', 2000, '72', t3, { isCorrect: true });
+
+    expect(r3.fsrsCardState).toBeDefined();
+    expect(r3.fsrsScheduledDays!).toBeGreaterThan(r2.fsrsScheduledDays!);
+    expect(r3.fsrsLearningSteps).toBe(0);
+    expect(r3.reps).toBe(3);
+  });
+
+  it('lapse preserves card envelope (fsrsCardState, lapses incremented)', () => {
+    const first = applyReview(fresh(), 'easy', 1000, '72', now, { isCorrect: true });
+    const later = new Date(now.getTime() + first.stabilityDays * MS_DAY);
+    const lapsed = applyReview(first, 'again', 5000, '0', later, { isCorrect: false });
+
+    expect(lapsed.fsrsCardState).toBeDefined();
+    expect(lapsed.fsrsScheduledDays).toBeDefined();
+    expect(lapsed.lapses).toBe(1);
+    // Stability shrinks after a lapse
+    expect(lapsed.stabilityDays).toBeLessThan(first.stabilityDays);
+  });
+});
+
 // ── Quiz event isolation: quiz answers must not feed FSRS itemStates ──────────
 
 describe('quiz event isolation', () => {
