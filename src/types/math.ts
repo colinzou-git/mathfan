@@ -119,6 +119,10 @@ export interface StudentItemState {
   reps?: number;
   /** Times the card lapsed (answered "again" when it was due). */
   lapses?: number;
+  /** ts-fsrs State enum value (0=New,1=Learning,2=Review,3=Relearning). Absent = inferred from reps. */
+  fsrsCardState?: number;
+  /** Days the card was scheduled for at the last review. */
+  fsrsScheduledDays?: number;
   masteryLevel: MasteryLevel;
   lastSeenAt?: string;
   nextDueAt?: string;

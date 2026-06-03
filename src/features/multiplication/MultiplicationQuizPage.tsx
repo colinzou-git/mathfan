@@ -16,6 +16,7 @@ import { generateRecommendations } from './practiceRecommendation';
 import { db } from '../../db/dexie';
 import { generateId } from '../../utils/id';
 import { recordQuizFirstAttempt, recordQuizRetry, finalizeQuizSession } from '../learning/recordAnswer';
+import { appNow } from '../time/clock';
 
 interface Props {
   studentId: string;
@@ -286,7 +287,7 @@ export function MultiplicationQuizPage({ studentId, settings, onDone, onStartPra
   const inputRef = useRef<HTMLInputElement>(null);
   const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sessionId = useRef(generateId());
-  const sessionStartedAt = useRef(new Date().toISOString());
+  const sessionStartedAt = useRef(appNow().toISOString());
   const questionStartTime = useRef(0);
 
   // Cleanup timer and speech on unmount
@@ -314,7 +315,7 @@ export function MultiplicationQuizPage({ studentId, settings, onDone, onStartPra
   const startQuiz = useCallback(async (length: number) => {
     setPhase('loading');
     sessionId.current = generateId();
-    sessionStartedAt.current = new Date().toISOString();
+    sessionStartedAt.current = appNow().toISOString();
 
     const all = await db.multFactStats.where('studentId').equals(studentId).toArray();
     const map = new Map(all.map(s => [s.key as MultiplicationFactKey, s as MultiplicationFactStats]));
@@ -350,7 +351,7 @@ export function MultiplicationQuizPage({ studentId, settings, onDone, onStartPra
       category: 'multiplication',
       quizLength: totalQuestions,
       startedAt: sessionStartedAt.current,
-      completedAt: new Date().toISOString(),
+      completedAt: appNow().toISOString(),
       answerLogs: logs,
       correctCount: correct,
       incorrectCount: logs.length - correct,
@@ -383,7 +384,7 @@ export function MultiplicationQuizPage({ studentId, settings, onDone, onStartPra
     const isCorrect = studentAnswer !== null && studentAnswer === q.answer;
     // Compute timing before branching so retry events also get accurate latency.
     const responseTimeMs = Date.now() - questionStartTime.current;
-    const answeredAt = new Date().toISOString();
+    const answeredAt = appNow().toISOString();
 
     if (phase === 'retry') {
       // Record retry as a MathAnswerEvent with isRetry=true.

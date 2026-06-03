@@ -97,6 +97,9 @@ const INITIAL: SessionState = {
 
 export function usePracticeSession(studentId: string) {
   const [state, setState] = useState<SessionState>(INITIAL);
+  // Mirror of React state for reading in callbacks without closure staleness.
+  // Updated synchronously alongside every setState call.
+  const stateRef = useRef<SessionState>(INITIAL);
 
   // Mutable refs — accessed inside callbacks without being dependencies
   const queueRef = useRef<string[]>([]);
@@ -109,8 +112,6 @@ export function usePracticeSession(studentId: string) {
   const currentAttemptsRef = useRef<number>(0);
   // Holds dynamically generated items (arithmetic/fractions) not in the static ITEM_MAP
   const dynamicItemsRef = useRef<Map<string, PItem>>(new Map());
-  // Carries the write payload from inside setState out to the async write call below it
-  const pendingWriteRef = useRef<PracticeAnswerPayload | null>(null);
 
   const resolveItem = useCallback((id: string): PItem => {
     return dynamicItemsRef.current.get(id) ?? getStaticItem(id);
@@ -219,101 +220,106 @@ export function usePracticeSession(studentId: string) {
     queueRef.current = queue;
 
     if (queue.length === 0) {
-      setState({ ...INITIAL, phase: 'complete', sessionId, totalPlanned: 0, lastSession });
+      const s = { ...INITIAL, phase: 'complete' as const, sessionId, totalPlanned: 0, lastSession };
+      stateRef.current = s;
+      setState(s);
       return;
     }
 
     const first = resolveItem(queueRef.current.shift()!);
     questionStartRef.current = Date.now();
     currentAttemptsRef.current = 0;
-    setState({
-      ...INITIAL, phase: 'active',
+    const s = {
+      ...INITIAL, phase: 'active' as const,
       currentItem: first,
       totalPlanned: queue.length + 1,
       sessionId,
       lastSession,
-    });
+    };
+    stateRef.current = s;
+    setState(s);
   }, [studentId]);
 
   // ── submitAnswer ──────────────────────────────────────────────────────────
 
   const submitAnswer = useCallback(async (rawInput: string) => {
-    pendingWriteRef.current = null;
+    const prev = stateRef.current;
+    if (prev.phase !== 'active' || !prev.currentItem || !prev.sessionId) return;
 
-    setState(prev => {
-      if (prev.phase !== 'active' || !prev.currentItem || !prev.sessionId) return prev;
+    const item = prev.currentItem;
+    const latencyMs = Date.now() - questionStartRef.current;
+    const result = checkAnswer(item, rawInput, latencyMs);
+    const attemptNo = currentAttemptsRef.current + 1;
+    currentAttemptsRef.current = attemptNo;
+    const now = appNow();
+    const createdAt = now.toISOString();
 
-      const item = prev.currentItem;
-      const latencyMs = Date.now() - questionStartRef.current;
-      const result = checkAnswer(item, rawInput, latencyMs);
-      const attemptNo = (currentAttemptsRef.current += 1);
-      const now = appNow();
-      const createdAt = now.toISOString();
+    const existing = statesRef.current.get(item.id) ?? createInitialState(studentId, item);
 
-      const existing = statesRef.current.get(item.id) ?? createInitialState(studentId, item);
+    // Only the first attempt at each question presentation updates long-term
+    // FSRS scheduling. Retries are logged for stats but don't distort the
+    // spaced-repetition schedule.
+    const isFirstAttempt = attemptNo === 1;
+    const updated = isFirstAttempt
+      ? applyReview(existing, result.reviewGrade, latencyMs, rawInput, now, { isCorrect: result.isCorrect })
+      : existing;
 
-      // Only the first attempt at each question presentation updates long-term
-      // FSRS scheduling. Retries are logged for stats but don't distort the
-      // spaced-repetition schedule.
-      const isFirstAttempt = attemptNo === 1;
-      const updated = isFirstAttempt
-        ? applyReview(existing, result.reviewGrade, latencyMs, rawInput, now, { isCorrect: result.isCorrect })
-        : existing;
-      if (isFirstAttempt) {
-        statesRef.current.set(item.id, updated);
-      }
+    // Mutate refs before setState — safe because this is a plain event handler, not an updater.
+    if (isFirstAttempt) {
+      statesRef.current.set(item.id, updated);
+    }
 
-      pendingWriteRef.current = {
-        event: {
-          id: generateId(),
-          studentId,
-          sessionId: prev.sessionId!,
-          itemId: item.id,
-          mode: 'practice',
-          promptShown: item.prompt,
-          correctAnswer: item.answer,
-          studentAnswer: result.studentAnswer,
-          isCorrect: result.isCorrect,
-          isRetry: !isFirstAttempt,
-          hintUsed: false,
-          latencyMs,
-          reviewGrade: result.reviewGrade,
-          factStatusBefore: existing.masteryLevel,
-          factStatusAfter: updated.masteryLevel,
-          createdAt,
-        },
-        // Retries do not change FSRS state — pass undefined to skip the itemStates write.
-        updatedState: isFirstAttempt ? updated : undefined,
-        attempt: {
-          id: generateId(),
-          studentId,
-          itemId: item.id,
-          skillId: item.skillId,
-          sessionId: prev.sessionId!,
-          promptShown: item.prompt,
-          correctAnswer: item.answer,
-          studentAnswer: result.studentAnswer,
-          isCorrect: result.isCorrect,
-          latencyMs,
-          reviewGrade: result.reviewGrade,
-          createdAt,
-        },
+    const payload: PracticeAnswerPayload = {
+      event: {
+        id: generateId(),
+        studentId,
+        sessionId: prev.sessionId,
+        itemId: item.id,
+        mode: 'practice',
+        promptShown: item.prompt,
+        correctAnswer: item.answer,
+        studentAnswer: result.studentAnswer,
+        isCorrect: result.isCorrect,
+        isRetry: !isFirstAttempt,
+        hintUsed: false,
+        latencyMs,
+        reviewGrade: result.reviewGrade,
+        factStatusBefore: existing.masteryLevel,
+        factStatusAfter: updated.masteryLevel,
+        createdAt,
+      },
+      // Retries do not change FSRS state — pass undefined to skip the itemStates write.
+      updatedState: isFirstAttempt ? updated : undefined,
+      attempt: {
+        id: generateId(),
+        studentId,
+        itemId: item.id,
+        skillId: item.skillId,
+        sessionId: prev.sessionId,
+        promptShown: item.prompt,
+        correctAnswer: item.answer,
+        studentAnswer: result.studentAnswer,
+        isCorrect: result.isCorrect,
+        latencyMs,
+        reviewGrade: result.reviewGrade,
+        createdAt,
+      },
+    };
+
+    let nextState: SessionState;
+    if (!result.isCorrect) {
+      // Wrong: stay on same question, clear input via retryKey, and remember the fact.
+      const missedFacts = prev.missedFacts.includes(item.prompt)
+        ? prev.missedFacts
+        : [...prev.missedFacts, item.prompt];
+      nextState = {
+        ...prev,
+        retryKey: prev.retryKey + 1,
+        errorText: 'Incorrect — try again',
+        attemptCount: prev.attemptCount + 1,
+        missedFacts,
       };
-
-      if (!result.isCorrect) {
-        // Wrong: stay on same question, clear input via retryKey, and remember the fact.
-        const missedFacts = prev.missedFacts.includes(item.prompt)
-          ? prev.missedFacts
-          : [...prev.missedFacts, item.prompt];
-        return {
-          ...prev,
-          retryKey: prev.retryKey + 1,
-          errorText: 'Incorrect — try again',
-          attemptCount: prev.attemptCount + 1,
-          missedFacts,
-        };
-      }
-
+    } else {
       // Correct — classify how this presentation was solved.
       const outcome = classifyAttempts(attemptNo);
       const isSlowFirstTry = outcome === 'first-try' && result.reviewGrade === 'hard';
@@ -322,8 +328,7 @@ export function usePracticeSession(studentId: string) {
       const newLatencies = [...prev.latencies, latencyMs];
       const newFastest = prev.fastestMs === null
         ? latencyMs : Math.min(prev.fastestMs, latencyMs);
-
-      return {
+      nextState = {
         ...prev,
         phase: 'correct',
         errorText: null,
@@ -338,55 +343,55 @@ export function usePracticeSession(studentId: string) {
         latencies: newLatencies,
         fastestMs: newFastest,
       };
-    });
-
-    if (pendingWriteRef.current) {
-      recordPracticeAnswer(pendingWriteRef.current).catch(console.warn);
     }
+
+    stateRef.current = nextState;
+    setState(nextState);
+    recordPracticeAnswer(payload).catch(console.warn);
   }, [studentId]);
 
   // ── nextQuestion ──────────────────────────────────────────────────────────
 
   const nextQuestion = useCallback(async () => {
+    const prev = stateRef.current;
     const nextId = queueRef.current.shift();
 
-    // Update session record
-    setState(prev => {
-      if (prev.sessionId) {
-        const avgMs = prev.latencies.length
-          ? Math.round(prev.latencies.reduce((s, v) => s + v, 0) / prev.latencies.length)
-          : 0;
-        const isEnding = !nextId;
-        sessionRepo.get(prev.sessionId).then(s => {
-          if (!s) return;
-          if (isEnding && prev.completedCount === 0) {
-            // Never answered anything — remove the session entirely
-            db.sessions.delete(s.id);
-          } else {
-            sessionRepo.save({
-              ...s,
-              completedQuestionCount: prev.completedCount,
-              correctCount: prev.correctCount,
-              firstTryCount: prev.firstTryCount,
-              correctedCount: prev.correctedCount,
-              repeatedCount: prev.repeatedCount,
-              slowFirstTryCount: prev.slowFirstTryCount,
-              attemptCount: prev.attemptCount,
-              averageLatencyMs: avgMs,
-              fastestCorrectMs: prev.fastestMs ?? undefined,
-              endedAt: isEnding ? appNow().toISOString() : undefined,
-            });
-          }
-        });
-      }
+    // Persist session record (side effect before setState — pure event handler, not an updater).
+    if (prev.sessionId) {
+      const avgMs = prev.latencies.length
+        ? Math.round(prev.latencies.reduce((s, v) => s + v, 0) / prev.latencies.length)
+        : 0;
+      const isEnding = !nextId;
+      sessionRepo.get(prev.sessionId).then(s => {
+        if (!s) return;
+        if (isEnding && prev.completedCount === 0) {
+          // Never answered anything — remove the session entirely
+          db.sessions.delete(s.id);
+        } else {
+          sessionRepo.save({
+            ...s,
+            completedQuestionCount: prev.completedCount,
+            correctCount: prev.correctCount,
+            firstTryCount: prev.firstTryCount,
+            correctedCount: prev.correctedCount,
+            repeatedCount: prev.repeatedCount,
+            slowFirstTryCount: prev.slowFirstTryCount,
+            attemptCount: prev.attemptCount,
+            averageLatencyMs: avgMs,
+            fastestCorrectMs: prev.fastestMs ?? undefined,
+            endedAt: isEnding ? appNow().toISOString() : undefined,
+          });
+        }
+      });
+    }
 
-      if (!nextId) {
-        return { ...prev, phase: 'complete', correctResult: null, errorText: null };
-      }
-
+    let nextState: SessionState;
+    if (!nextId) {
+      nextState = { ...prev, phase: 'complete', correctResult: null, errorText: null };
+    } else {
       questionStartRef.current = Date.now();
       currentAttemptsRef.current = 0;
-      return {
+      nextState = {
         ...prev,
         phase: 'active',
         currentItem: resolveItem(nextId),
@@ -394,14 +399,18 @@ export function usePracticeSession(studentId: string) {
         errorText: null,
         correctResult: null,
       };
-    });
-  }, []);
+    }
+
+    stateRef.current = nextState;
+    setState(nextState);
+  }, [resolveItem]);
 
   // ── resetSession ─────────────────────────────────────────────────────────
 
   const resetSession = useCallback(() => {
     queueRef.current = [];
     configRef.current = null;
+    stateRef.current = INITIAL;
     setState(INITIAL);
   }, []);
 

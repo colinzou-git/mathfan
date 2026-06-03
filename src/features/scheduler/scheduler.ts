@@ -2,24 +2,26 @@ import type { StudentItemState, PracticeItem, ReviewGrade, MasteryLevel } from '
 import { applyFsrsReview } from './fsrsAdapter';
 
 // ── FSRS utility helpers (for display / tests) ────────────────────────────────
-// These are kept as lightweight math helpers used by the UI and tests.
-// Actual FSRS scheduling is performed by the adapter (fsrsAdapter.ts).
+// Lightweight display helpers used by the UI and tests.
+// These use the FSRS-4.5 forgetting-curve formula for retrievability display.
+// Actual card scheduling is performed by ts-fsrs (fsrsAdapter.ts), which uses
+// its own default parameters (FSRS-6) and may produce different intervals.
 
 /** Target retention for scheduling the next review. */
 export const TARGET_RETENTION = 0.9;
 
-// FSRS-4.5 forgetting-curve constants.
+// Forgetting-curve constants (FSRS-4.5 formula, display only).
 // R(t,S) = (1 + FACTOR·t/S)^DECAY   I(r,S) = S/FACTOR·(r^(1/DECAY) − 1)
 const DECAY = -0.5;
 const FACTOR = 19 / 81;
 
-/** Retrievability after `t` days at stability `s` (FSRS-4.5). */
+/** Retrievability after `t` days at stability `s` (display helper, FSRS-4.5 formula). */
 export function fsrsRetrievability(t: number, s: number): number {
   if (s <= 0) return 0;
   return Math.pow(1 + FACTOR * Math.max(0, t) / s, DECAY);
 }
 
-/** Interval (days) to reach `retention` at stability `s` (FSRS-4.5). At r=0.9 equals s exactly. */
+/** Interval (days) to reach `retention` at stability `s` (display helper, FSRS-4.5 formula). */
 export function fsrsInterval(s: number, retention = TARGET_RETENTION): number {
   return (s / FACTOR) * (Math.pow(retention, 1 / DECAY) - 1);
 }
@@ -84,6 +86,8 @@ export function applyReview(
     lapses: fsrsPatch.lapses,
     lastSeenAt: fsrsPatch.lastSeenAt,
     nextDueAt,
+    fsrsCardState: fsrsPatch.fsrsCardState,
+    fsrsScheduledDays: fsrsPatch.fsrsScheduledDays,
   };
   updated.masteryLevel = updateMasteryLevel(updated);
   return updated;

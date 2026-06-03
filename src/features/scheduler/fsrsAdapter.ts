@@ -28,6 +28,8 @@ export type FsrsStatePatch = Pick<StudentItemState,
   | 'lapses'
   | 'lastSeenAt'
   | 'nextDueAt'
+  | 'fsrsCardState'
+  | 'fsrsScheduledDays'
 >;
 
 /**
@@ -54,6 +56,8 @@ export function applyFsrsReview(
     lapses: next.lapses,
     lastSeenAt: now.toISOString(),
     nextDueAt: next.due.toISOString(),
+    fsrsCardState: next.state,
+    fsrsScheduledDays: next.scheduled_days,
   };
 }
 
@@ -76,12 +80,17 @@ function stateToCard(state: StudentItemState, now: Date): Card {
 
   const lastReview = state.lastSeenAt ? new Date(state.lastSeenAt) : now;
   const due = state.nextDueAt ? new Date(state.nextDueAt) : now;
-  const scheduledDays = Math.max(0, Math.round(
+  // Use stored scheduledDays when available; fall back to deriving from due/lastReview.
+  const scheduledDays = state.fsrsScheduledDays ?? Math.max(0, Math.round(
     (due.getTime() - lastReview.getTime()) / 86_400_000,
   ));
-  const elapsedDays = Math.max(0, Math.round(
+  const elapsedDays = Math.max(0, Math.floor(
     (now.getTime() - lastReview.getTime()) / 86_400_000,
   ));
+  // Use stored card state when available; fall back to State.Review for legacy records with reps>0.
+  const cardState: State = state.fsrsCardState !== undefined
+    ? (state.fsrsCardState as State)
+    : State.Review;
 
   return {
     due,
@@ -92,7 +101,7 @@ function stateToCard(state: StudentItemState, now: Date): Card {
     learning_steps: 0,
     reps,
     lapses: state.lapses ?? 0,
-    state: State.Review,
+    state: cardState,
     last_review: lastReview,
   };
 }
