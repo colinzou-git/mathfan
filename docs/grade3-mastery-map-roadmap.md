@@ -232,7 +232,7 @@ Created skillPracticePlanner.ts supporting all 7 spec skill IDs and the grade3Ma
 
 ### Phase 10 — Today’s Plan engine
 
-Status: TODO
+Status: DONE
 
 Goal:
 Create an engine that chooses the best next practice plan for a student.
@@ -285,7 +285,7 @@ Acceptance criteria:
 * TypeScript and tests pass.
 
 Implementation note:
-Not started.
+Created todayPlanEngine.ts with TodayPlan interface, planToday function, and priority logic (review_due → needs_practice → strong → new-with-prereqs). Includes warmup (easiest non-mastered skill, 5 questions), focus (chosen skill, 10 questions), review (overdue items, capped at 10), and estimatedMinutes (20s/question). Added 18 unit tests in todayPlanEngine.test.ts covering all priority branches, fallbacks, and edge cases. CI passes.
 
 ---
 
