@@ -491,7 +491,7 @@ Created DraggableEqualGroups.tsx using @dnd-kit/core (PointerSensor + KeyboardSe
 
 ### Phase 16 — Mafs fraction number-line task
 
-Status: TODO
+Status: DONE
 
 Goal:
 Create a number-line component for fractions.
@@ -524,7 +524,7 @@ Acceptance criteria:
 * TypeScript and tests pass.
 
 Implementation note:
-Not started.
+Created FractionNumberLine.tsx using Mafs (Mafs, Line.Segment, Point, Text components). Renders a horizontal number line 0→1 with tick marks at each a/d position, 0 and 1 endpoint labels, an optional highlighted Point at n/d, and an optional fraction label. Props: denominator (1–12), numerator (optional), width, showLabel. Display-only; not wired into practice. Accepts 1/2, 3/4, 2/3 and any fraction with d≤12. CI passes.
 
 ---
 
