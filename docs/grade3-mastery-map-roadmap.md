@@ -373,7 +373,7 @@ Created QuestionRenderer.tsx as an additive component (does not modify PracticeS
 
 ### Phase 13 — Diagnostic session
 
-Status: TODO
+Status: DONE
 
 Goal:
 Add a first diagnostic mode for multiplication and division.
@@ -408,7 +408,7 @@ Acceptance criteria:
 * TypeScript and tests pass.
 
 Implementation note:
-Not started.
+Created diagnosticPlanner.ts (buildDiagnosticPlan: 11 deterministic items covering easy/hard mul facts, unknown-factor division, equal-groups and array word problems; diagnosticItemSkillId: maps items to grade3MasteryMap skill IDs). Created DiagnosticSession.tsx (intro → active → done flow, records answers into mathAnswerEvents via recordAnswerEvent, uses QuestionRenderer with showVisual, no timer, FEEDBACK_MS auto-advance). Added 15 unit tests in diagnosticPlanner.test.ts. CI passes.
 
 ---
 
