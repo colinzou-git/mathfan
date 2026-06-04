@@ -142,7 +142,7 @@ Created Grade3MasteryMapPage (loads events/states, derives skill summaries via m
 
 ### Phase 8 — Dashboard entry point
 
-Status: TODO
+Status: DONE
 
 Goal:
 Add a Grade 3 Math Map card to the student dashboard.
@@ -179,7 +179,7 @@ Acceptance criteria:
 * TypeScript and tests pass.
 
 Implementation note:
-Not started.
+Added optional `onOpenMasteryMap` prop to StudentDashboard; added a purple-themed card button between the quiz button and the operation picker. Added 'mastery-map' to App.tsx Screen union, renders Grade3MasteryMapPage with back/practice/review callbacks. CI passes.
 
 ---
 

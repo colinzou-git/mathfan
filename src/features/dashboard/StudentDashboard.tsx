@@ -20,6 +20,7 @@ interface Props {
   onOpenSettings: () => void;
   onStartQuiz: () => void;
   onOpenAchievementDetail: (filter: AchievementFilter, data: TodayAchievementData) => void;
+  onOpenMasteryMap?: () => void;
 }
 
 interface QuickStats {
@@ -63,7 +64,7 @@ const OPERATIONS: { op: PracticeOp; label: string; icon: string }[] = [
   { op: 'decimals',       label: 'Decimals',  icon: '🔟' },
 ];
 
-export function StudentDashboard({ profile, lastSyncedAt, onStartDailyReview, onPickOperation, onOpenStats, onOpenSettings, onStartQuiz, onOpenAchievementDetail }: Props) {
+export function StudentDashboard({ profile, lastSyncedAt, onStartDailyReview, onPickOperation, onOpenStats, onOpenSettings, onStartQuiz, onOpenAchievementDetail, onOpenMasteryMap }: Props) {
   const [quick, setQuick] = useState<QuickStats | null>(null);
   const [dueByGroup, setDueByGroup] = useState<Record<string, DueGroup>>({});
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
@@ -187,6 +188,14 @@ export function StudentDashboard({ profile, lastSyncedAt, onStartDailyReview, on
         ✏️ Multiplication Quiz
       </button>
 
+      {/* Grade 3 Math Map */}
+      {onOpenMasteryMap && (
+        <button style={s.masteryMapBtn} onClick={onOpenMasteryMap}>
+          <div style={s.masteryMapTitle}>🗺 Grade 3 Math Map</div>
+          <div style={s.masteryMapSub}>See what is strong, learning, and ready to review.</div>
+        </button>
+      )}
+
       {/* Operation picker */}
       <p style={s.sectionLabel}>Practice an operation</p>
       <div style={s.opGrid}>
@@ -253,6 +262,9 @@ const s: Record<string, React.CSSProperties> = {
   quickRow: { display: 'flex', gap: '8px', marginBottom: '20px' },
   statsBtn: { width: '100%', padding: '13px', background: '#f9fafb', color: '#374151', border: '1.5px solid #e5e7eb', borderRadius: '12px', fontSize: '16px', fontWeight: '600', cursor: 'pointer', marginTop: '8px' },
   quizBtn: { width: '100%', padding: '14px', background: '#f0fdf4', color: '#15803d', border: '1.5px solid #86efac', borderRadius: '12px', fontSize: '16px', fontWeight: '600', cursor: 'pointer', marginTop: '8px' },
+  masteryMapBtn: { width: '100%', padding: '14px 16px', background: '#f5f3ff', color: '#5b21b6', border: '1.5px solid #c4b5fd', borderRadius: '12px', cursor: 'pointer', marginTop: '8px', textAlign: 'left', touchAction: 'manipulation' },
+  masteryMapTitle: { fontSize: '16px', fontWeight: '700', marginBottom: '3px' },
+  masteryMapSub: { fontSize: '13px', color: '#7c3aed', fontWeight: '400' },
   sectionLabel: { fontSize: '13px', fontWeight: '700', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '18px 0 10px' },
   opGrid: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' },
   opBtn: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', padding: '16px 0', background: '#fff', border: '2px solid #e5e7eb', borderRadius: '14px', cursor: 'pointer', touchAction: 'manipulation' },

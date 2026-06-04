@@ -12,6 +12,7 @@ import { SettingsPage } from './features/settings/SettingsPage';
 import { MultiplicationQuizPage } from './features/multiplication/MultiplicationQuizPage';
 import { TodayAchievementDetail } from './features/stats/TodayAchievementDetail';
 import type { AchievementFilter, TodayAchievementData } from './features/stats/todayAchievement';
+import { Grade3MasteryMapPage } from './features/mastery/Grade3MasteryMapPage';
 import { preloadVoices } from './features/audio/speech';
 import { useSync, initAuth } from './features/sync/useSync';
 import { pushLocal } from './features/sync/driveSync';
@@ -21,7 +22,7 @@ import { applyTheme } from './features/theme/themes';
 type Screen =
   | 'loading' | 'setup' | 'dashboard'
   | 'daily-setup' | 'range-setup' | 'practice'
-  | 'stats' | 'settings' | 'quiz' | 'today-detail';
+  | 'stats' | 'settings' | 'quiz' | 'today-detail' | 'mastery-map';
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('loading');
@@ -205,6 +206,24 @@ export default function App() {
     );
   }
 
+  if (screen === 'mastery-map') {
+    return (
+      <Grade3MasteryMapPage
+        profile={profile}
+        onBack={() => setScreen('dashboard')}
+        onPracticeSkill={skillId => {
+          // Placeholder: navigate to daily review for now; Phase 9 will supply a real config.
+          void skillId;
+          setScreen('dashboard');
+        }}
+        onReviewSkill={skillId => {
+          void skillId;
+          setScreen('dashboard');
+        }}
+      />
+    );
+  }
+
   return (
     <StudentDashboard
       profile={profile}
@@ -219,6 +238,7 @@ export default function App() {
         setAchievementData(data);
         setScreen('today-detail');
       }}
+      onOpenMasteryMap={() => setScreen('mastery-map')}
     />
   );
 }
