@@ -93,6 +93,11 @@ export default function App() {
     setScreen('dashboard');
   };
 
+  const startPractice = (cfg: SessionConfig) => {
+    setSessionConfig(cfg);
+    setScreen('practice');
+  };
+
   if (screen === 'loading') {
     return (
       <div style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -211,15 +216,7 @@ export default function App() {
       <Grade3MasteryMapPage
         profile={profile}
         onBack={() => setScreen('dashboard')}
-        onPracticeSkill={skillId => {
-          // Placeholder: navigate to daily review for now; Phase 9 will supply a real config.
-          void skillId;
-          setScreen('dashboard');
-        }}
-        onReviewSkill={skillId => {
-          void skillId;
-          setScreen('dashboard');
-        }}
+        onStartPractice={startPractice}
       />
     );
   }

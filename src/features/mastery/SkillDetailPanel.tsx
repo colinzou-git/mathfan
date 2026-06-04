@@ -5,8 +5,8 @@ interface Props {
   skill: MasterySkillNode;
   summary?: StudentSkillSummary;
   onClose: () => void;
-  onPractice: (skillId: string) => void;
-  onReview: (skillId: string) => void;
+  onPracticeSkill: (skillId: string) => void;
+  onReviewDue: (skillId: string) => void;
 }
 
 const DOMAIN_LABELS: Record<string, string> = {
@@ -17,7 +17,7 @@ const DOMAIN_LABELS: Record<string, string> = {
   geometry: 'Geometry',
 };
 
-export function SkillDetailPanel({ skill, summary, onClose, onPractice, onReview }: Props) {
+export function SkillDetailPanel({ skill, summary, onClose, onPracticeSkill, onReviewDue }: Props) {
   const accuracy = summary && summary.attemptCount > 0
     ? Math.round(summary.accuracy * 100)
     : null;
@@ -80,14 +80,14 @@ export function SkillDetailPanel({ skill, summary, onClose, onPractice, onReview
         <div style={s.actions}>
           <button
             style={s.practiceBtn}
-            onClick={() => onPractice(skill.id)}
+            onClick={() => onPracticeSkill(skill.id)}
           >
             ✏️ Practice this skill
           </button>
           {hasDueItems && (
             <button
               style={s.reviewBtn}
-              onClick={() => onReview(skill.id)}
+              onClick={() => onReviewDue(skill.id)}
             >
               ⏰ Review due items ({summary!.dueItemCount})
             </button>

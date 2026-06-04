@@ -1,8 +1,13 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { render, screen, cleanup } from '@testing-library/react';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { render, screen, cleanup, fireEvent } from '@testing-library/react';
 import { TutorChat } from '../features/ai/TutorChat';
 import { SessionSummary } from '../components/SessionSummary';
 import { NumPad } from '../components/NumPad';
+import { SkillDetailPanel } from '../features/mastery/SkillDetailPanel';
+import { ParentNextActionCard } from '../features/mastery/ParentNextActionCard';
+import type { MasterySkillNode } from '../features/mastery/grade3MasteryMap';
+import type { TodayPlan } from '../features/mastery/todayPlanEngine';
+import type { SessionConfig } from '../types/math';
 
 afterEach(cleanup);
 
@@ -53,5 +58,129 @@ describe('NumPad', () => {
     expect(screen.queryByRole('button', { name: 'Decimal point' })).toBeNull();
     rerender(<NumPad value="" onChange={() => {}} onSubmit={() => {}} allowDecimal />);
     expect(screen.getByRole('button', { name: 'Decimal point' })).toBeInTheDocument();
+  });
+});
+
+// ── SkillDetailPanel ─────────────────────────────────────────────────────────
+
+const testSkill: MasterySkillNode = {
+  id: 'g3-mul-tables-basic',
+  domain: 'multiplication',
+  title: 'Times Tables 1–5',
+  description: 'Fluently multiply within 25.',
+  prerequisites: [],
+  californiaStandardIds: ['3.OA.C.7'],
+};
+
+describe('SkillDetailPanel', () => {
+  it('calls onPracticeSkill with the skill ID when Practice button is clicked', () => {
+    const onPracticeSkill = vi.fn();
+    render(
+      <SkillDetailPanel
+        skill={testSkill}
+        onClose={() => {}}
+        onPracticeSkill={onPracticeSkill}
+        onReviewDue={() => {}}
+      />
+    );
+    fireEvent.click(screen.getByRole('button', { name: /practice this skill/i }));
+    expect(onPracticeSkill).toHaveBeenCalledWith('g3-mul-tables-basic');
+  });
+
+  it('does not show the Review button when there are no due items', () => {
+    render(
+      <SkillDetailPanel
+        skill={testSkill}
+        summary={{ skillId: 'g3-mul-tables-basic', studentId: 's1', status: 'needs_practice', attemptCount: 5, correctCount: 3, accuracy: 0.6, dueItemCount: 0, itemCount: 5, mistakePatterns: [] }}
+        onClose={() => {}}
+        onPracticeSkill={() => {}}
+        onReviewDue={() => {}}
+      />
+    );
+    expect(screen.queryByRole('button', { name: /review due/i })).toBeNull();
+  });
+
+  it('calls onReviewDue with the skill ID when Review button is clicked', () => {
+    const onReviewDue = vi.fn();
+    render(
+      <SkillDetailPanel
+        skill={testSkill}
+        summary={{ skillId: 'g3-mul-tables-basic', studentId: 's1', status: 'review_due', attemptCount: 10, correctCount: 9, accuracy: 0.9, dueItemCount: 3, itemCount: 10, mistakePatterns: [] }}
+        onClose={() => {}}
+        onPracticeSkill={() => {}}
+        onReviewDue={onReviewDue}
+      />
+    );
+    fireEvent.click(screen.getByRole('button', { name: /review due/i }));
+    expect(onReviewDue).toHaveBeenCalledWith('g3-mul-tables-basic');
+  });
+});
+
+// ── ParentNextActionCard ──────────────────────────────────────────────────────
+
+const focusConfig: SessionConfig = { mode: 'multiplication', sessionLength: 10 };
+const reviewConfig: SessionConfig = { mode: 'daily_review', sessionLength: 5 };
+
+describe('ParentNextActionCard', () => {
+  it('calls onStartPractice with focus config when focus button is clicked', () => {
+    const onStartPractice = vi.fn();
+    const plan: TodayPlan = {
+      warmup: null,
+      focusSkillId: 'g3-mul-tables-basic',
+      focus: focusConfig,
+      review: null,
+      estimatedMinutes: 5,
+    };
+    render(
+      <ParentNextActionCard
+        summaries={[]}
+        todayPlan={plan}
+        studentName="Alex"
+        onStartPractice={onStartPractice}
+      />
+    );
+    fireEvent.click(screen.getByRole('button', { name: /times tables 1/i }));
+    expect(onStartPractice).toHaveBeenCalledWith(focusConfig);
+  });
+
+  it('calls onStartPractice with review config when review button is clicked', () => {
+    const onStartPractice = vi.fn();
+    const plan: TodayPlan = {
+      warmup: null,
+      focusSkillId: null,
+      focus: null,
+      review: reviewConfig,
+      estimatedMinutes: 3,
+    };
+    render(
+      <ParentNextActionCard
+        summaries={[]}
+        todayPlan={plan}
+        studentName="Alex"
+        onStartPractice={onStartPractice}
+      />
+    );
+    fireEvent.click(screen.getByRole('button', { name: /review 5 items/i }));
+    expect(onStartPractice).toHaveBeenCalledWith(reviewConfig);
+  });
+
+  it('shows a disabled focus button when focus is null', () => {
+    const plan: TodayPlan = {
+      warmup: null,
+      focusSkillId: null,
+      focus: null,
+      review: reviewConfig,
+      estimatedMinutes: 3,
+    };
+    render(
+      <ParentNextActionCard
+        summaries={[]}
+        todayPlan={plan}
+        studentName="Alex"
+        onStartPractice={() => {}}
+      />
+    );
+    const noFocusBtn = screen.getByRole('button', { name: /no focus needed/i });
+    expect(noFocusBtn).toBeDisabled();
   });
 });

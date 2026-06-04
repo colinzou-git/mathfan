@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import type { StudentProfile } from '../../types/math';
+import type { StudentProfile, SessionConfig } from '../../types/math';
 import { GRADE3_MASTERY_MAP, getGrade3SkillsByDomain } from './grade3MasteryMap';
+import { planPracticeForSkill } from './skillPracticePlanner';
 import type { Grade3Domain, MasterySkillNode } from './grade3MasteryMap';
 import { deriveGrade3SkillSummaries } from './skillMasteryEngine';
 import type { StudentSkillSummary } from './skillMasteryEngine';
@@ -16,8 +17,7 @@ import { ParentNextActionCard } from './ParentNextActionCard';
 interface Props {
   profile: StudentProfile;
   onBack: () => void;
-  onPracticeSkill?: (skillId: string) => void;
-  onReviewSkill?: (skillId: string) => void;
+  onStartPractice: (config: SessionConfig) => void;
 }
 
 const DOMAIN_ORDER: Grade3Domain[] = [
@@ -44,7 +44,7 @@ const DOMAIN_ICONS: Record<Grade3Domain, string> = {
   geometry: '🔷',
 };
 
-export function Grade3MasteryMapPage({ profile, onBack, onPracticeSkill, onReviewSkill }: Props) {
+export function Grade3MasteryMapPage({ profile, onBack, onStartPractice }: Props) {
   const [summaries, setSummaries] = useState<StudentSkillSummary[]>([]);
   const [todayPlan, setTodayPlan] = useState<TodayPlan | null>(null);
   const [loading, setLoading] = useState(true);
@@ -122,6 +122,7 @@ export function Grade3MasteryMapPage({ profile, onBack, onPracticeSkill, onRevie
               summaries={summaries}
               todayPlan={todayPlan}
               studentName={profile.displayName}
+              onStartPractice={onStartPractice}
             />
           )}
 
@@ -162,13 +163,13 @@ export function Grade3MasteryMapPage({ profile, onBack, onPracticeSkill, onRevie
           skill={selectedSkill}
           summary={selectedSummary}
           onClose={() => setSelectedSkill(null)}
-          onPractice={skillId => {
+          onPracticeSkill={skillId => {
             setSelectedSkill(null);
-            onPracticeSkill?.(skillId);
+            onStartPractice(planPracticeForSkill(skillId));
           }}
-          onReview={skillId => {
+          onReviewDue={skillId => {
             setSelectedSkill(null);
-            onReviewSkill?.(skillId);
+            onStartPractice(planPracticeForSkill(skillId));
           }}
         />
       )}

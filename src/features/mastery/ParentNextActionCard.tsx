@@ -10,6 +10,7 @@
  * Wording is positive, encouraging, and non-shaming.
  */
 
+import type { SessionConfig } from '../../types/math';
 import type { StudentSkillSummary } from './skillMasteryEngine';
 import type { TodayPlan } from './todayPlanEngine';
 import { getGrade3Skill } from './grade3MasteryMap';
@@ -18,6 +19,7 @@ interface Props {
   summaries: StudentSkillSummary[];
   todayPlan: TodayPlan;
   studentName: string;
+  onStartPractice?: (config: SessionConfig) => void;
 }
 
 function skillTitle(skillId: string): string {
@@ -35,7 +37,7 @@ function parentActionText(todayPlan: TodayPlan, studentName: string): string {
   return `${studentName} is doing great! Encourage a short daily practice to keep things sharp.`;
 }
 
-export function ParentNextActionCard({ summaries, todayPlan, studentName }: Props) {
+export function ParentNextActionCard({ summaries, todayPlan, studentName, onStartPractice }: Props) {
   // Strongest: mastered or strong, sorted by accuracy desc
   const strongest = summaries
     .filter(s => s.status === 'mastered' || s.status === 'strong')
@@ -92,21 +94,49 @@ export function ParentNextActionCard({ summaries, todayPlan, studentName }: Prop
       )}
 
       {/* Today's plan */}
-      {(todayPlan.focus || todayPlan.review) && (
+      {(todayPlan.warmup || todayPlan.focus || todayPlan.review) && (
         <section style={s.section}>
           <div style={s.sectionLabel}>📅 Today's suggestion</div>
           <div style={s.planRow}>
-            {todayPlan.focus && (
-              <div style={s.planChip}>
+            {todayPlan.warmup && (
+              <button
+                style={s.planChip}
+                onClick={() => onStartPractice?.(todayPlan.warmup!)}
+                disabled={!onStartPractice}
+              >
+                <span style={s.planChipIcon}>🌅</span>
+                <span>Warm-up</span>
+              </button>
+            )}
+            {todayPlan.focus ? (
+              <button
+                style={s.planChip}
+                onClick={() => onStartPractice?.(todayPlan.focus!)}
+                disabled={!onStartPractice}
+              >
                 <span style={s.planChipIcon}>✏️</span>
                 <span>{skillTitle(todayPlan.focusSkillId!)}</span>
-              </div>
+              </button>
+            ) : (
+              <button style={{ ...s.planChip, opacity: 0.45, cursor: 'not-allowed' }} disabled>
+                <span style={s.planChipIcon}>✏️</span>
+                <span>No focus needed</span>
+              </button>
             )}
-            {todayPlan.review && (
-              <div style={{ ...s.planChip, background: '#ede9fe', borderColor: '#c4b5fd' }}>
+            {todayPlan.review ? (
+              <button
+                style={{ ...s.planChip, background: '#ede9fe', borderColor: '#c4b5fd', color: '#7c3aed' }}
+                onClick={() => onStartPractice?.(todayPlan.review!)}
+                disabled={!onStartPractice}
+              >
                 <span style={s.planChipIcon}>⏰</span>
                 <span>Review {todayPlan.review.sessionLength} items</span>
-              </div>
+              </button>
+            ) : (
+              <button style={{ ...s.planChip, background: '#ede9fe', borderColor: '#c4b5fd', color: '#7c3aed', opacity: 0.45, cursor: 'not-allowed' }} disabled>
+                <span style={s.planChipIcon}>⏰</span>
+                <span>No review due</span>
+              </button>
             )}
           </div>
           <p style={s.estMinutes}>
@@ -180,6 +210,9 @@ const s: Record<string, React.CSSProperties> = {
     fontSize: '13px',
     color: '#0369a1',
     fontWeight: '600',
+    cursor: 'pointer',
+    outline: 'none',
+    fontFamily: 'inherit',
   },
   planChipIcon: {
     fontSize: '14px',
