@@ -328,7 +328,7 @@ Created ArrayModel (SVG dot grid with row×col layout, capped at 144), EqualGrou
 
 ### Phase 12 — Scaffolded QuestionRenderer
 
-Status: TODO
+Status: DONE
 
 Goal:
 Add a lightweight question renderer that can optionally show visuals and hints.
@@ -367,7 +367,7 @@ Acceptance criteria:
 * No FSRS behavior changes.
 
 Implementation note:
-Not started.
+Created QuestionRenderer.tsx as an additive component (does not modify PracticeScreen). Exports LearningRenderMode type. Supports prompt display, optional VisualModel (via showVisual prop), optional hintText, and mode-specific styles (diagnose/practice/review). PracticeScreen is untouched. CI passes.
 
 ---
 
