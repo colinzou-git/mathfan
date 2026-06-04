@@ -185,7 +185,7 @@ Added optional `onOpenMasteryMap` prop to StudentDashboard; added a purple-theme
 
 ### Phase 9 — Skill-based practice planner
 
-Status: TODO
+Status: DONE
 
 Goal:
 Create a planner that converts a Grade 3 skill ID into a MathFan `SessionConfig`.
@@ -226,7 +226,7 @@ Acceptance criteria:
 * TypeScript and tests pass.
 
 Implementation note:
-Not started.
+Created skillPracticePlanner.ts supporting all 7 spec skill IDs and the grade3MasteryMap.ts IDs. Uses specificItemIds for all skills (mulId/divId/unkId/fracEqId/fracCmpId/wordId helpers). Added 29 unit tests in skillPracticePlanner.test.ts covering every skill, custom sessionLength, and unknown-skill fallback. CI passes.
 
 ---
 
