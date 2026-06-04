@@ -291,7 +291,7 @@ Created todayPlanEngine.ts with TodayPlan interface, planToday function, and pri
 
 ### Phase 11 — Lightweight visual components
 
-Status: TODO
+Status: DONE
 
 Goal:
 Add small visual learning components for Grade 3 practice.
@@ -322,7 +322,7 @@ Acceptance criteria:
 * TypeScript and tests pass.
 
 Implementation note:
-Not started.
+Created ArrayModel (SVG dot grid with row×col layout, capped at 144), EqualGroupsModel (bordered group containers with object emoji), FractionBar (shaded horizontal bar with optional label), and VisualModel (item-type dispatcher: mul/unk → ArrayModel, word_problem eg → EqualGroupsModel, fraction types → FractionBar). All touch-friendly, display-only. CI passes.
 
 ---
 
