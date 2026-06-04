@@ -452,7 +452,7 @@ Created ParentNextActionCard.tsx showing strongest 2 skills, "still building" sk
 
 ### Phase 15 — dnd-kit equal-groups manipulative
 
-Status: TODO
+Status: DONE
 
 Goal:
 Create the first drag-and-drop manipulative for equal groups.
@@ -485,7 +485,7 @@ Acceptance criteria:
 * TypeScript and tests pass.
 
 Implementation note:
-Not started.
+Created DraggableEqualGroups.tsx using @dnd-kit/core (PointerSensor + KeyboardSensor for accessibility). Objects start in a "tray" DropZone and can be dragged into group containers. Shows "All groups are equal!" feedback when done. checkEqualGroups logic lives in equalGroupsUtils.ts (separate file to satisfy fast-refresh lint rule). Standalone, not integrated into practice flow. CI passes.
 
 ---
 
