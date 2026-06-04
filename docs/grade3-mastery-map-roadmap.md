@@ -414,7 +414,7 @@ Created diagnosticPlanner.ts (buildDiagnosticPlan: 11 deterministic items coveri
 
 ### Phase 14 — Parent Next Action card
 
-Status: TODO
+Status: DONE
 
 Goal:
 Add a parent-facing summary that explains what to practice next.
@@ -446,7 +446,7 @@ Acceptance criteria:
 * TypeScript and tests pass.
 
 Implementation note:
-Not started.
+Created ParentNextActionCard.tsx showing strongest 2 skills, "still building" skills, today's plan chips, and a single encouraging parent action sentence. All wording is positive ("Going strong", "Still building", never "failed/behind"). Wired into Grade3MasteryMapPage via planToday; card only shown when there are summaries or review items. CI passes.
 
 ---
 

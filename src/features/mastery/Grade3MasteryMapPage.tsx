@@ -4,11 +4,14 @@ import { GRADE3_MASTERY_MAP, getGrade3SkillsByDomain } from './grade3MasteryMap'
 import type { Grade3Domain, MasterySkillNode } from './grade3MasteryMap';
 import { deriveGrade3SkillSummaries } from './skillMasteryEngine';
 import type { StudentSkillSummary } from './skillMasteryEngine';
+import { planToday } from './todayPlanEngine';
+import type { TodayPlan } from './todayPlanEngine';
 import { mathAnswerEventRepo, itemStateRepo } from '../../db/repositories';
 import { makeItemFromId } from '../curriculum/makeItemFromId';
 import { appNow } from '../time/clock';
 import { SkillTile } from './SkillTile';
 import { SkillDetailPanel } from './SkillDetailPanel';
+import { ParentNextActionCard } from './ParentNextActionCard';
 
 interface Props {
   profile: StudentProfile;
@@ -43,6 +46,7 @@ const DOMAIN_ICONS: Record<Grade3Domain, string> = {
 
 export function Grade3MasteryMapPage({ profile, onBack, onPracticeSkill, onReviewSkill }: Props) {
   const [summaries, setSummaries] = useState<StudentSkillSummary[]>([]);
+  const [todayPlan, setTodayPlan] = useState<TodayPlan | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedSkill, setSelectedSkill] = useState<MasterySkillNode | null>(null);
 
@@ -79,6 +83,14 @@ export function Grade3MasteryMapPage({ profile, onBack, onPracticeSkill, onRevie
 
       if (!cancelled) {
         setSummaries(derived);
+        // Compute today's plan from derived summaries
+        const plan = planToday({
+          studentId: profile.id,
+          skillSummaries: derived,
+          itemStates: states,
+          now: appNow(),
+        });
+        setTodayPlan(plan);
         setLoading(false);
       }
     })();
@@ -104,6 +116,15 @@ export function Grade3MasteryMapPage({ profile, onBack, onPracticeSkill, onRevie
         <div style={s.loading}>Loading your progress…</div>
       ) : (
         <>
+          {/* Parent Next Action Card — shown when parentModeEnabled or when there's useful data */}
+          {todayPlan && (summaries.length > 0 || todayPlan.review) && (
+            <ParentNextActionCard
+              summaries={summaries}
+              todayPlan={todayPlan}
+              studentName={profile.displayName}
+            />
+          )}
+
           {/* Legend */}
           <div style={s.legend}>
             {['new', 'needs_practice', 'review_due', 'strong', 'mastered'].map(status => (
