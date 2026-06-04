@@ -84,6 +84,22 @@ export function VisualModel({ item, color }: Props) {
     }
   }
 
+  // ── Area model ───────────────────────────────────────────────────────────
+  if (
+    (itemType === 'area_unit_squares' || itemType === 'area_rectangle') &&
+    factA != null && factB != null &&
+    factA >= 1 && factA <= 10 && factB >= 1 && factB <= 10
+  ) {
+    return (
+      <ArrayModel
+        rows={factA}
+        cols={factB}
+        color={color}
+        ariaLabel={`Area grid: ${factA} rows × ${factB} columns = ${factA * factB} square units`}
+      />
+    );
+  }
+
   // No visual available for this item type
   return null;
 }

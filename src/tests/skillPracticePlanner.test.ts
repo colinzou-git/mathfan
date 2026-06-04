@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { planPracticeForSkill } from '../features/mastery/skillPracticePlanner';
+import { makeItemFromId } from '../features/curriculum/makeItemFromId';
 
 // Supported skill IDs from the Phase 9 spec
 const SUPPORTED_SKILLS = [
@@ -136,5 +137,110 @@ describe('planPracticeForSkill — fallback for unknown skill', () => {
     const cfg = planPracticeForSkill('TOTALLY_UNKNOWN_SKILL');
     expect(cfg.mode).toBe('daily_review');
     expect(cfg.sessionLength).toBeGreaterThan(0);
+  });
+});
+
+describe('planPracticeForSkill — area skills return AREA_ items, not MUL_', () => {
+  it('G3_MD_AREA_ARRAYS uses area mode with AREA_SQ_ items', () => {
+    const cfg = planPracticeForSkill('G3_MD_AREA_ARRAYS');
+    expect(cfg.mode).toBe('area');
+    expect(cfg.specificItemIds).toBeDefined();
+    expect(cfg.specificItemIds!.every(id => id.startsWith('AREA_SQ_'))).toBe(true);
+    expect(cfg.specificItemIds!.some(id => id.startsWith('MUL_'))).toBe(false);
+  });
+
+  it('g3-area-concept uses area mode with AREA_SQ_ items', () => {
+    const cfg = planPracticeForSkill('g3-area-concept');
+    expect(cfg.mode).toBe('area');
+    expect(cfg.specificItemIds!.every(id => id.startsWith('AREA_SQ_'))).toBe(true);
+  });
+
+  it('g3-area-formula uses area mode with AREA_RECT_ items', () => {
+    const cfg = planPracticeForSkill('g3-area-formula');
+    expect(cfg.mode).toBe('area');
+    expect(cfg.specificItemIds!.every(id => id.startsWith('AREA_RECT_'))).toBe(true);
+    expect(cfg.specificItemIds!.some(id => id.startsWith('MUL_'))).toBe(false);
+  });
+
+  it('G3_MD_PERIMETER uses area mode with PERIM_RECT_ items', () => {
+    const cfg = planPracticeForSkill('G3_MD_PERIMETER');
+    expect(cfg.mode).toBe('area');
+    expect(cfg.specificItemIds!.every(id => id.startsWith('PERIM_RECT_'))).toBe(true);
+  });
+
+  it('g3-perimeter uses area mode with PERIM_RECT_ items', () => {
+    const cfg = planPracticeForSkill('g3-perimeter');
+    expect(cfg.mode).toBe('area');
+    expect(cfg.specificItemIds!.every(id => id.startsWith('PERIM_RECT_'))).toBe(true);
+  });
+});
+
+describe('planPracticeForSkill — geometry skills return GEO_ items, not MUL_', () => {
+  it('G3_G_SHAPES_ATTRIBUTES uses geometry mode with GEO_ items', () => {
+    const cfg = planPracticeForSkill('G3_G_SHAPES_ATTRIBUTES');
+    expect(cfg.mode).toBe('geometry');
+    expect(cfg.specificItemIds).toBeDefined();
+    expect(cfg.specificItemIds!.every(id => id.startsWith('GEO_'))).toBe(true);
+    expect(cfg.specificItemIds!.some(id => id.startsWith('MUL_'))).toBe(false);
+  });
+
+  it('g3-geo-categories uses geometry mode with GEO_ items', () => {
+    const cfg = planPracticeForSkill('g3-geo-categories');
+    expect(cfg.mode).toBe('geometry');
+    expect(cfg.specificItemIds!.every(id => id.startsWith('GEO_'))).toBe(true);
+  });
+});
+
+describe('makeItemFromId — area and geometry reconstruction', () => {
+  it('reconstructs AREA_RECT_3x4', () => {
+    const item = makeItemFromId('AREA_RECT_3x4');
+    expect(item).not.toBeNull();
+    expect(item!.id).toBe('AREA_RECT_3x4');
+    expect(item!.itemType).toBe('area_rectangle');
+    expect(item!.answer).toBe(12);
+    expect(item!.prompt).toMatch(/area/i);
+    expect(item!.prompt).toMatch(/rectangle/i);
+    expect(item!.prompt).not.toMatch(/^.*\d+\s*×\s*\d+\s*$/);
+  });
+
+  it('reconstructs AREA_SQ_4x5', () => {
+    const item = makeItemFromId('AREA_SQ_4x5');
+    expect(item).not.toBeNull();
+    expect(item!.itemType).toBe('area_unit_squares');
+    expect(item!.answer).toBe(20);
+    expect(item!.prompt).toMatch(/unit square/i);
+  });
+
+  it('reconstructs PERIM_RECT_3x5', () => {
+    const item = makeItemFromId('PERIM_RECT_3x5');
+    expect(item).not.toBeNull();
+    expect(item!.itemType).toBe('perimeter_rectangle');
+    expect(item!.answer).toBe(16);
+    expect(item!.prompt).toMatch(/perimeter/i);
+  });
+
+  it('reconstructs GEO_SIDES_triangle', () => {
+    const item = makeItemFromId('GEO_SIDES_triangle');
+    expect(item).not.toBeNull();
+    expect(item!.itemType).toBe('geometry_vocabulary');
+    expect(item!.answer).toBe(3);
+    expect(item!.prompt).toMatch(/triangle/i);
+  });
+
+  it('reconstructs GEO_NAME_3 with choices', () => {
+    const item = makeItemFromId('GEO_NAME_3');
+    expect(item).not.toBeNull();
+    expect(item!.itemType).toBe('geometry_vocabulary');
+    expect(item!.answer).toBe('triangle');
+    expect(item!.choices).toBeDefined();
+    expect(item!.choices!.length).toBeGreaterThan(1);
+  });
+
+  it('reconstructs GEO_ATTR_square_is_rect with True/False choices', () => {
+    const item = makeItemFromId('GEO_ATTR_square_is_rect');
+    expect(item).not.toBeNull();
+    expect(item!.answer).toBe('True');
+    expect(item!.choices).toContain('True');
+    expect(item!.choices).toContain('False');
   });
 });

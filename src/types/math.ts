@@ -20,7 +20,10 @@ export type ItemType =
   | 'fraction_number_line'
   | 'decimal_place_value'
   | 'geometry_vocabulary'
-  | 'competition_puzzle';
+  | 'competition_puzzle'
+  | 'area_unit_squares'
+  | 'area_rectangle'
+  | 'perimeter_rectangle';
 
 export type SessionMode =
   | 'daily_review'
@@ -36,7 +39,9 @@ export type SessionMode =
   | 'factors'
   | 'decimals'
   | 'audio'
-  | 'challenge';
+  | 'challenge'
+  | 'area'
+  | 'geometry';
 
 /** How the student enters an answer for an item. */
 export type AnswerInput = 'numeric' | 'choice';

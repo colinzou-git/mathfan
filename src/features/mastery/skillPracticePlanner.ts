@@ -5,6 +5,8 @@ import {
 } from '../curriculum/multiplicationItems';
 import { fracEqId, fracCmpId } from '../curriculum/fractionItems';
 import { wordId } from '../curriculum/wordProblemItems';
+import { areaSquaresItemIds, areaRectangleItemIds, perimeterRectangleItemIds } from '../curriculum/areaItems';
+import { geoItemIds } from '../curriculum/geometryItems';
 
 export interface PlanOptions {
   sessionLength?: number;
@@ -186,14 +188,48 @@ export function planPracticeForSkill(
     };
   }
 
-  // ── Area and perimeter: use multiplication with small ranges ─────────────────
-  if (skillId === 'g3-area-concept' || skillId === 'g3-area-formula') {
+  // ── G3_MD_AREA_ARRAYS / g3-area-concept — count unit squares ─────────────────
+  if (skillId === 'G3_MD_AREA_ARRAYS' || skillId === 'g3-area-concept') {
     return {
-      mode: 'multiplication',
-      operandMin: 1,
-      operandMax: 10,
-      operand2Min: 1,
-      operand2Max: 10,
+      mode: 'area',
+      specificItemIds: areaSquaresItemIds(),
+      sessionLength,
+    };
+  }
+
+  // ── g3-area-formula — area by multiplication ──────────────────────────────────
+  if (skillId === 'g3-area-formula') {
+    return {
+      mode: 'area',
+      specificItemIds: areaRectangleItemIds(),
+      sessionLength,
+    };
+  }
+
+  // ── G3_MD_PERIMETER / g3-perimeter — perimeter of rectangles ─────────────────
+  if (skillId === 'G3_MD_PERIMETER' || skillId === 'g3-perimeter') {
+    return {
+      mode: 'area',
+      specificItemIds: perimeterRectangleItemIds(),
+      sessionLength,
+    };
+  }
+
+  // ── G3_G_SHAPES_ATTRIBUTES / g3-geo-categories — shape attributes ─────────────
+  if (skillId === 'G3_G_SHAPES_ATTRIBUTES' || skillId === 'g3-geo-categories') {
+    return {
+      mode: 'geometry',
+      specificItemIds: geoItemIds(),
+      sessionLength,
+    };
+  }
+
+  // ── g3-geo-rectilinear-area — decompose composite figures ────────────────────
+  // Prereqs: g3-area-formula + g3-geo-categories; fall back to area rectangle items.
+  if (skillId === 'g3-geo-rectilinear-area') {
+    return {
+      mode: 'area',
+      specificItemIds: areaRectangleItemIds(),
       sessionLength,
     };
   }

@@ -6,6 +6,8 @@ import { makeRoundingItem } from './roundingItems';
 import { makePrimeItem, makeFactorItem } from './numberTheoryItems';
 import { makeDecimalAddItem, makeDecimalSubItem } from './decimalItems';
 import { makeWordProblem, type Schema } from './wordProblemItems';
+import { makeAreaUnitSquaresItem, makeAreaRectangleItem, makePerimeterRectangleItem } from './areaItems';
+import { GEO_ITEM_MAP } from './geometryItems';
 
 /**
  * Reconstruct a PracticeItem from its deterministic itemId.
@@ -14,6 +16,9 @@ import { makeWordProblem, type Schema } from './wordProblemItems';
 export function makeItemFromId(itemId: string): PracticeItem | null {
   const staticItem = ITEM_MAP.get(itemId);
   if (staticItem) return staticItem;
+
+  const geoItem = GEO_ITEM_MAP.get(itemId);
+  if (geoItem) return geoItem;
 
   let m: RegExpMatchArray | null;
 
@@ -66,6 +71,15 @@ export function makeItemFromId(itemId: string): PracticeItem | null {
 
   m = itemId.match(/^WORD_([a-z]+)_(\d+)_(\d+)$/);
   if (m) return makeWordProblem(m[1] as Schema, +m[2], +m[3]);
+
+  m = itemId.match(/^AREA_SQ_(\d+)x(\d+)$/);
+  if (m) return makeAreaUnitSquaresItem(+m[1], +m[2]);
+
+  m = itemId.match(/^AREA_RECT_(\d+)x(\d+)$/);
+  if (m) return makeAreaRectangleItem(+m[1], +m[2]);
+
+  m = itemId.match(/^PERIM_RECT_(\d+)x(\d+)$/);
+  if (m) return makePerimeterRectangleItem(+m[1], +m[2]);
 
   return null;
 }
