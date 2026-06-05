@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { planToday } from '../features/mastery/todayPlanEngine';
+import { GRADE3_MASTERY_MAP } from '../features/mastery/grade3MasteryMap';
 import type { StudentSkillSummary } from '../features/mastery/skillMasteryEngine';
 import type { StudentItemState } from '../types/math';
 
@@ -228,5 +229,61 @@ describe('planToday — skips mastered skills', () => {
     ];
     const plan = planToday({ ...BASE_ARGS, skillSummaries: summaries });
     expect(plan.focusSkillId).toBeNull();
+  });
+});
+
+// ── Brand-new student ─────────────────────────────────────────────────────────
+
+describe('planToday — brand-new student sees a suggested first skill', () => {
+  function buildCompleteSummaries(studentId: string): StudentSkillSummary[] {
+    return GRADE3_MASTERY_MAP.map(node => ({
+      skillId: node.id,
+      studentId,
+      status: 'new' as const,
+      attemptCount: 0,
+      correctCount: 0,
+      accuracy: 0,
+      dueItemCount: 0,
+      itemCount: 0,
+      mistakePatterns: [],
+    }));
+  }
+
+  it('returns a non-null focusSkillId for a brand-new student', () => {
+    const allNewSummaries = buildCompleteSummaries('new-student');
+    const plan = planToday({
+      studentId: 'new-student',
+      skillSummaries: allNewSummaries,
+      itemStates: [],
+      now: new Date(),
+    });
+    expect(plan.focusSkillId).not.toBeNull();
+    expect(plan.focus).not.toBeNull();
+  });
+
+  it('the suggested first skill has no prerequisites (is unlocked)', () => {
+    const allNewSummaries = buildCompleteSummaries('new-student');
+    const plan = planToday({
+      studentId: 'new-student',
+      skillSummaries: allNewSummaries,
+      itemStates: [],
+      now: new Date(),
+    });
+    if (plan.focusSkillId) {
+      const node = GRADE3_MASTERY_MAP.find(n => n.id === plan.focusSkillId);
+      expect(node).toBeDefined();
+      expect(node!.prerequisites.length).toBe(0);
+    }
+  });
+
+  it('the focus config has specificItemIds', () => {
+    const allNewSummaries = buildCompleteSummaries('new-student');
+    const plan = planToday({
+      studentId: 'new-student',
+      skillSummaries: allNewSummaries,
+      itemStates: [],
+      now: new Date(),
+    });
+    expect(plan.focus?.specificItemIds?.length).toBeGreaterThan(0);
   });
 });

@@ -92,7 +92,11 @@ export default function App() {
 
   const handleSessionDone = () => {
     if (authState().signedIn) pushLocal().catch(console.warn);
-    setScreen('dashboard');
+    if (practiceReturn === 'mastery-map' || practiceReturn === 'stats') {
+      setScreen(practiceReturn);
+    } else {
+      setScreen('dashboard');
+    }
   };
 
   const startPractice = (cfg: SessionConfig) => {

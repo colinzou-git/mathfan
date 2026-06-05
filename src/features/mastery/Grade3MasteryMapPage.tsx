@@ -188,8 +188,8 @@ export function Grade3MasteryMapPage({ profile, onBack, onStartPractice, onStart
         <div style={s.loading}>Loading your progress…</div>
       ) : (
         <>
-          {/* Parent Next Action Card — shown when parentModeEnabled or when there's useful data */}
-          {todayPlan && (summaries.length > 0 || todayPlan.review) && (
+          {/* Parent Next Action Card — shown whenever there is an actionable plan */}
+          {todayPlan && (todayPlan.focus || todayPlan.warmup || todayPlan.review) && (
             <ParentNextActionCard
               summaries={summaries}
               todayPlan={todayPlan}

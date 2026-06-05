@@ -646,7 +646,7 @@ DiagnosticSession now uses checkAnswer() instead of raw string equality (handles
 
 ### Phase 20 — Fix new-user mastery map UX and return navigation
 
-Status: TODO
+Status: DONE
 
 Goal:
 Fix Grade3MasteryMapPage so ParentNextActionCard is visible for brand-new students, and completing mastery-map-launched practice returns to the map.
@@ -661,6 +661,9 @@ Tests to add:
 
 Acceptance criteria:
 * `npm run build`, `npm test`, `npm run lint` pass.
+
+Implementation note:
+Fixed ParentNextActionCard render condition in Grade3MasteryMapPage: changed `summaries.length > 0 || todayPlan.review` to `todayPlan.focus || todayPlan.warmup || todayPlan.review` so the card shows for brand-new students. Fixed handleSessionDone in App.tsx to return to 'mastery-map' or 'stats' when practice was launched from those screens, preserving dashboard return for all other screens. Added 3 brand-new-student tests to todayPlanEngine.test.ts. 497 tests pass.
 
 ---
 
