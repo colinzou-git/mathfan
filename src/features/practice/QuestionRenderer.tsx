@@ -10,6 +10,7 @@
  * that PracticeScreen already uses — so it is safe to adopt incrementally.
  */
 
+import type { CSSProperties } from 'react';
 import type { PracticeItem } from '../../types/math';
 import { VisualModel } from '../visuals/VisualModel';
 
@@ -64,17 +65,13 @@ export function QuestionRenderer({
         </div>
       )}
 
-      {/* Mode badge (diagnose only) */}
-      {mode === 'diagnose' && (
-        <div style={s.modeBadge} aria-label="Diagnostic question">
-          Diagnostic
-        </div>
-      )}
+      {/* Note: DiagnosticSession already renders its own "Diagnostic" badge.
+          No mode badge here to avoid duplication. */}
     </div>
   );
 }
 
-const s: Record<string, React.CSSProperties> = {
+const s: Record<string, CSSProperties> = {
   wrapper: {
     display: 'flex',
     flexDirection: 'column',
@@ -104,15 +101,5 @@ const s: Record<string, React.CSSProperties> = {
     textAlign: 'center',
     maxWidth: '320px',
     lineHeight: 1.4,
-  },
-  modeBadge: {
-    fontSize: '11px',
-    fontWeight: '700',
-    color: '#7c3aed',
-    background: '#ede9fe',
-    padding: '3px 10px',
-    borderRadius: '20px',
-    letterSpacing: '0.05em',
-    textTransform: 'uppercase',
   },
 };

@@ -9,12 +9,9 @@ import { SettingsOverlay } from '../../components/SettingsOverlay';
 import { TutorChat } from '../ai/TutorChat';
 import { speakProblem, speakFeedback, stopSpeech } from '../audio/speech';
 import { VisualModel } from '../visuals/VisualModel';
+import { hasVisualModel } from '../visuals/visualModelUtils';
 
 const AUTO_ADVANCE_MS = 700;
-
-const VISUAL_ITEM_TYPES = new Set([
-  'area_unit_squares', 'area_rectangle', 'perimeter_rectangle', 'geometry_vocabulary',
-]);
 
 interface Props {
   studentId: string;
@@ -231,7 +228,7 @@ export function PracticeScreen({
     || state.currentItem?.itemType === 'decimal_sub';
   const progress = state.totalPlanned
     ? Math.round((state.completedCount / state.totalPlanned) * 100) : 0;
-  const isVisualItem = VISUAL_ITEM_TYPES.has(state.currentItem?.itemType ?? '');
+  const isVisualItem = state.currentItem != null && hasVisualModel(state.currentItem);
 
   const submitChoice = (choice: string) => {
     if (isCorrect) return;

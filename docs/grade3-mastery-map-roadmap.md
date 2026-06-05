@@ -669,7 +669,7 @@ Fixed ParentNextActionCard render condition in Grade3MasteryMapPage: changed `su
 
 ### Phase 21 — Wire visual models consistently
 
-Status: TODO
+Status: DONE
 
 Goal:
 Expand PracticeScreen visual display to all item types VisualModel supports; wire FractionNumberLine for `fraction_number_line` items; remove duplicate diagnostic badge.
@@ -687,6 +687,9 @@ Tests to add:
 
 Acceptance criteria:
 * `npm run build`, `npm test`, `npm run lint` pass.
+
+Implementation note:
+Created visualModelUtils.ts with hasVisualModel(), parseFractionFromPrompt(), geoShapeFromItemId() (extracted from VisualModel.tsx to satisfy fast-refresh lint rule). VisualModel now renders FractionNumberLine for fraction_number_line items (using factA/factB for n/d). PracticeScreen replaced VISUAL_ITEM_TYPES set with hasVisualModel() so all supported item types get visuals. Removed duplicate Diagnostic badge from QuestionRenderer (DiagnosticSession already shows it). Fixed React.CSSProperties → CSSProperties in QuestionRenderer. Added 13 hasVisualModel tests in visualModel.test.ts. 510 tests pass.
 
 ---
 
