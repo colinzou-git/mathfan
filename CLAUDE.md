@@ -32,7 +32,7 @@ MathFan is a React + TypeScript + Vite local-first PWA for elementary math pract
 
 \- Run `npm run ci` after changes.
 
-\- Make one commit per completed phase.
+\- Make one commit per completed bug fixe or feature.
 
 
 If CI fails:
@@ -41,8 +41,9 @@ If CI fails:
 
 \- If still failing, suggest debug actions from user.
 
-\- If this run introduced new source files, then do the following:
-Update .\tools\generate_code_maps.py to keep it cover new source files as well. Report updating status in a short sentence after each check/update. If no update, say reasons in a short sentence.
+At the end of a run, do the following:
+Report the new source files introduced. If no new source files, say 'No new source files added.'
+If any new source files were introduced, then update .\tools\generate_code_maps.py to cover new source files. Report updating status in a short sentence after each check/update. If no update, say reasons in a short sentence.
 Run 'python .\tools\generate_code_maps.py' to update code map and symbol map. Report running results in one short sentence after run. if no run, say reasons in a short sentence.
 
 
