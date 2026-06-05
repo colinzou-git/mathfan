@@ -11,12 +11,16 @@
 
 import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
-import type { PracticeItem } from '../../types/math';
+import type { PracticeItem, AttemptLog } from '../../types/math';
 import { buildDiagnosticPlan } from './diagnosticPlanner';
 import { QuestionRenderer } from '../practice/QuestionRenderer';
 import { NumPad } from '../../components/NumPad';
-import { recordAnswerEvent } from '../learning/learningEvents';
 import type { MathAnswerEvent } from '../learning/learningEvents';
+import { recordPracticeAnswer } from '../learning/recordAnswer';
+import { checkAnswer } from '../practice/answerChecker';
+import { applyReview, createInitialState } from '../scheduler/scheduler';
+import { detectMistakes } from '../mastery/misconceptionEngine';
+import { itemStateRepo } from '../../db/repositories';
 import { generateId } from '../../utils/id';
 import { appNow } from '../time/clock';
 
@@ -72,35 +76,77 @@ export function DiagnosticSession({ studentId, onComplete, onCancel }: Props) {
     if (!currentItem || showFeedback || !input.trim()) return;
 
     const latencyMs = Math.round(performance.now() - startTimeRef.current);
-    const studentAns = input.trim();
-    const correctAns = String(currentItem.answer);
-    const isCorrect = studentAns === correctAns;
+    const checked = checkAnswer(currentItem, input, latencyMs);
+    const { isCorrect, reviewGrade, studentAnswer } = checked;
 
     const result: QuestionResult = {
       item: currentItem,
-      studentAnswer: studentAns,
+      studentAnswer: String(studentAnswer),
       isCorrect,
       latencyMs,
     };
 
-    // Record the answer event
-    const event: MathAnswerEvent = {
-      id: generateId(),
-      studentId,
-      sessionId,
-      itemId: currentItem.id,
-      mode: 'diagnostic',
-      promptShown: currentItem.prompt,
-      correctAnswer: currentItem.answer,
-      studentAnswer: studentAns,
-      isCorrect,
-      isRetry: false,
-      hintUsed: false,
-      latencyMs,
-      createdAt: appNow().toISOString(),
-    };
+    const now = appNow();
+    const createdAt = now.toISOString();
 
-    pendingWritesRef.current.push(recordAnswerEvent(event).catch(console.warn) as Promise<void>);
+    // Write through the same durable path as practice (event + itemState + attempt).
+    const writePromise = (async () => {
+      let existing = await itemStateRepo.get(studentId, currentItem.id);
+      if (!existing) existing = createInitialState(studentId, currentItem);
+
+      let updated = existing;
+      try {
+        updated = applyReview(existing, reviewGrade, latencyMs, String(studentAnswer), now, { isCorrect });
+      } catch {
+        // FSRS error (e.g. clock drift) — keep existing state rather than blocking.
+      }
+
+      if (!isCorrect) {
+        const newTags = detectMistakes(currentItem, studentAnswer);
+        if (newTags.length > 0) {
+          const merged = Array.from(new Set([...(updated.mistakePatterns ?? []), ...newTags]));
+          updated = { ...updated, mistakePatterns: merged };
+        }
+      }
+
+      const event: MathAnswerEvent = {
+        id: generateId(),
+        studentId,
+        sessionId,
+        itemId: currentItem.id,
+        mode: 'diagnostic',
+        promptShown: currentItem.prompt,
+        correctAnswer: currentItem.answer,
+        studentAnswer,
+        isCorrect,
+        isRetry: false,
+        hintUsed: false,
+        latencyMs,
+        reviewGrade,
+        factStatusBefore: existing.masteryLevel,
+        factStatusAfter: updated.masteryLevel,
+        createdAt,
+      };
+
+      const attempt: AttemptLog = {
+        id: generateId(),
+        studentId,
+        itemId: currentItem.id,
+        skillId: currentItem.skillId,
+        sessionId,
+        promptShown: currentItem.prompt,
+        correctAnswer: currentItem.answer,
+        studentAnswer,
+        isCorrect,
+        latencyMs,
+        reviewGrade,
+        createdAt,
+      };
+
+      await recordPracticeAnswer({ event, updatedState: updated, attempt });
+    })().catch(console.warn) as Promise<void>;
+
+    pendingWritesRef.current.push(writePromise);
 
     setResults(prev => [...prev, result]);
     setShowFeedback(isCorrect ? 'correct' : 'wrong');

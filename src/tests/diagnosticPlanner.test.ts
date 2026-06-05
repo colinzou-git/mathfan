@@ -3,6 +3,7 @@ import {
   buildDiagnosticPlan,
   diagnosticItemSkillId,
 } from '../features/diagnosis/diagnosticPlanner';
+import { checkAnswer } from '../features/practice/answerChecker';
 
 describe('buildDiagnosticPlan', () => {
   it('returns between 10 and 12 items', () => {
@@ -17,10 +18,10 @@ describe('buildDiagnosticPlan', () => {
     expect(mulItems.length).toBeGreaterThan(0);
   });
 
-  it('includes unknown_factor items (division as unknown factor)', () => {
+  it('includes division_fact items for division diagnosis', () => {
     const plan = buildDiagnosticPlan('test-session-1');
-    const unkItems = plan.items.filter(i => i.itemType === 'unknown_factor');
-    expect(unkItems.length).toBeGreaterThan(0);
+    const divItems = plan.items.filter(i => i.itemType === 'division_fact');
+    expect(divItems.length).toBeGreaterThan(0);
   });
 
   it('includes word_problem items', () => {
@@ -89,11 +90,19 @@ describe('diagnosticItemSkillId', () => {
     }
   });
 
-  it('maps unknown_factor to g3-div-mul-relationship', () => {
+  it('maps division_fact with divisor ≤ 5 to g3-div-within-100', () => {
     const plan = buildDiagnosticPlan('sid');
-    const unkItem = plan.items.find(i => i.itemType === 'unknown_factor');
-    if (unkItem) {
-      expect(diagnosticItemSkillId(unkItem)).toBe('g3-div-mul-relationship');
+    const divItem = plan.items.find(i => i.itemType === 'division_fact' && (i.factB ?? 0) <= 5);
+    if (divItem) {
+      expect(diagnosticItemSkillId(divItem)).toBe('g3-div-within-100');
+    }
+  });
+
+  it('maps division_fact with divisor > 5 to g3-div-mul-relationship', () => {
+    const plan = buildDiagnosticPlan('sid');
+    const divItem = plan.items.find(i => i.itemType === 'division_fact' && (i.factB ?? 0) > 5);
+    if (divItem) {
+      expect(diagnosticItemSkillId(divItem)).toBe('g3-div-mul-relationship');
     }
   });
 
@@ -110,6 +119,42 @@ describe('diagnosticItemSkillId', () => {
     const arItem = plan.items.find(i => i.id.startsWith('WORD_ar_'));
     if (arItem) {
       expect(diagnosticItemSkillId(arItem)).toBe('g3-mul-meaning');
+    }
+  });
+});
+
+describe('diagnostic answer normalization — uses checkAnswer() not raw string equality', () => {
+  it('checkAnswer accepts "8" when answer is 8', () => {
+    const plan = buildDiagnosticPlan('norm-test');
+    const numericItem = plan.items.find(i => i.answerInput !== 'choice' && typeof i.answer === 'number');
+    if (!numericItem) return;
+    const r = checkAnswer(numericItem, String(numericItem.answer), 1000);
+    expect(r.isCorrect).toBe(true);
+  });
+
+  it('checkAnswer accepts "08" when answer is 8 (leading zero)', () => {
+    const plan = buildDiagnosticPlan('norm-test');
+    const item = plan.items.find(i => i.answer === 8);
+    if (!item) return;
+    const r = checkAnswer(item, '08', 1000);
+    expect(r.isCorrect).toBe(true);
+  });
+
+  it('checkAnswer rejects wrong answer', () => {
+    const plan = buildDiagnosticPlan('norm-test');
+    const numericItem = plan.items.find(i => typeof i.answer === 'number');
+    if (!numericItem) return;
+    const r = checkAnswer(numericItem, '999', 1000);
+    expect(r.isCorrect).toBe(false);
+  });
+
+  it('division diagnostic items credit to division skills, not multiplication', () => {
+    const plan = buildDiagnosticPlan('credit-test');
+    for (const item of plan.items) {
+      if (item.itemType === 'division_fact') {
+        const skillId = diagnosticItemSkillId(item);
+        expect(skillId).toMatch(/^g3-div-/);
+      }
     }
   });
 });

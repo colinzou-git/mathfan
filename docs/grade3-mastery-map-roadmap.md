@@ -620,7 +620,7 @@ A. BASIC_TABLES now [0,1,2,3,4,5] to match mastery map "Times Tables 1–5". B. 
 
 ### Phase 19 — Fix diagnostic correctness and mastery integration
 
-Status: TODO
+Status: DONE
 
 Goal:
 Fix DiagnosticSession so answers are checked with shared `checkAnswer()` logic, division diagnostic items credit to `g3-div-mul-relationship`, and diagnostic writes are awaited before completion.
@@ -638,6 +638,9 @@ Tests to add:
 
 Acceptance criteria:
 * `npm run build`, `npm test`, `npm run lint` pass.
+
+Implementation note:
+DiagnosticSession now uses checkAnswer() instead of raw string equality (handles leading zeros like "08"). Replaced unknown_factor diagnostic items with real division_fact items (DIV_12d3, DIV_42d7) so they correctly credit to g3-div-within-100 and g3-div-mul-relationship. Updated diagnosticItemSkillId() to handle division_fact type. DiagnosticSession now writes through recordPracticeAnswer() (event + itemState FSRS + attempt + mistakePatterns) with mode:'diagnostic'. Updated diagnosticPlanner tests. Added 4 new normalization/credit tests. 494 tests pass.
 
 ---
 

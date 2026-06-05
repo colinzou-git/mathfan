@@ -13,9 +13,9 @@
  */
 
 import type { PracticeItem } from '../../types/math';
-import { makeMultiplicationItem, unkId } from '../curriculum/multiplicationItems';
+import { makeMultiplicationItem } from '../curriculum/multiplicationItems';
+import { makeDivisionItem } from '../curriculum/arithmeticItems';
 import { makeWordProblem } from '../curriculum/wordProblemItems';
-import { makeItemFromId } from '../curriculum/makeItemFromId';
 
 export interface DiagnosticPlan {
   sessionId: string;
@@ -42,12 +42,9 @@ export function buildDiagnosticPlan(sessionId: string): DiagnosticPlan {
   items.push(makeMultiplicationItem(7, 4));    // 7 × 4
   items.push(makeMultiplicationItem(8, 6));    // 8 × 6
 
-  // ── Division as unknown factor ────────────────────────────────────────────
-  // UNK_{product}k{known}: a × ? = product
-  const unk1 = makeItemFromId(unkId(12, 3));   // 3 × ? = 12
-  const unk2 = makeItemFromId(unkId(42, 7));   // 7 × ? = 42
-  if (unk1) items.push(unk1);
-  if (unk2) items.push(unk2);
+  // ── Division facts — credits to g3-div-within-100 (÷3) and g3-div-mul-relationship (÷7)
+  items.push(makeDivisionItem(12, 3));    // 12 ÷ 3
+  items.push(makeDivisionItem(42, 7));    // 42 ÷ 7
 
   // ── Equal-groups word problems ────────────────────────────────────────────
   items.push(makeWordProblem('eg', 4, 6));     // 4 groups × 6 each
@@ -76,8 +73,10 @@ export function diagnosticItemSkillId(item: PracticeItem): string | null {
     const big = Math.max(factA ?? 0, factB ?? 0);
     return big <= 5 ? 'g3-mul-tables-basic' : 'g3-mul-tables-advanced';
   }
-  if (itemType === 'unknown_factor') {
-    return 'g3-div-mul-relationship';
+  if (itemType === 'division_fact') {
+    // factB holds the divisor for DIV_{product}d{divisor} items.
+    const divisor = factB ?? 0;
+    return divisor <= 5 ? 'g3-div-within-100' : 'g3-div-mul-relationship';
   }
   if (itemType === 'word_problem') {
     if (id.startsWith('WORD_eg_') || id.startsWith('WORD_ar_')) return 'g3-mul-meaning';
