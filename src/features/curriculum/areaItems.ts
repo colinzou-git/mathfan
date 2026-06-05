@@ -14,6 +14,10 @@ export function perimRectId(l: number, w: number): string {
   return `PERIM_RECT_${l}x${w}`;
 }
 
+export function rectiId(a1: number, b1: number, a2: number, b2: number): string {
+  return `RECTI_${a1}x${b1}_${a2}x${b2}`;
+}
+
 // ── Item makers ───────────────────────────────────────────────────────────────
 
 function difficulty(product: number): number {
@@ -92,6 +96,33 @@ export function areaRectangleItemIds(): string[] {
     }
   }
   return ids;
+}
+
+export function makeRectilinearAreaItem(a1: number, b1: number, a2: number, b2: number): PracticeItem {
+  const totalArea = a1 * b1 + a2 * b2;
+  return {
+    id: rectiId(a1, b1, a2, b2),
+    skillId: 'g3-geo-rectilinear-area',
+    itemType: 'rectilinear_area',
+    prompt: `An L-shaped figure is made of two rectangles. One is ${a1} by ${b1}. The other is ${a2} by ${b2}. What is the total area in square units?`,
+    answer: totalArea,
+    answerInput: 'numeric',
+    explanation: `Add the areas of both rectangles: ${a1}×${b1} = ${a1 * b1}, and ${a2}×${b2} = ${a2 * b2}. Total = ${totalArea}.`,
+    tags: ['area', 'rectilinear', 'decompose'],
+    difficulty: totalArea <= 20 ? 0.5 : 0.65,
+    factA: a1 * b1,
+    factB: a2 * b2,
+  };
+}
+
+/** Rectilinear-area items using two non-overlapping rectangles (Grade 3 range). */
+export function rectilinearAreaItemIds(): string[] {
+  const pairs: [number, number, number, number][] = [
+    [2, 3, 1, 2], [3, 4, 2, 2], [2, 5, 3, 3], [4, 3, 2, 4],
+    [3, 3, 2, 5], [5, 2, 3, 3], [4, 4, 2, 3], [3, 5, 4, 2],
+    [2, 6, 3, 4], [5, 3, 2, 4], [4, 5, 3, 2], [6, 2, 4, 3],
+  ];
+  return pairs.map(([a1, b1, a2, b2]) => rectiId(a1, b1, a2, b2));
 }
 
 /** Perimeter items for 1×1 through 10×10 rectangles. */

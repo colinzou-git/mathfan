@@ -594,7 +594,7 @@ Added named `CSSProperties` import to Grade3MasteryMapPage, SkillTile, SkillDeta
 
 ### Phase 18 — Fix mastery skill round-trip bugs
 
-Status: TODO
+Status: DONE
 
 Goal:
 Fix skill practice planner so every practiceable skill in GRADE3_MASTERY_MAP has targeted items, every specificItemId reconstructs, and every reconstructed item infers back to the correct skill.
@@ -612,6 +612,9 @@ Tests to add:
 Acceptance criteria:
 * Round-trip tests pass.
 * `npm run build`, `npm test`, `npm run lint` pass.
+
+Implementation note:
+A. BASIC_TABLES now [0,1,2,3,4,5] to match mastery map "Times Tables 1–5". B. Added `makeFractionNumberLineItem` + `fracNlId` to fractionItems.ts and FNL_ parser to makeItemFromId.ts; g3-frac-number-line now uses real FNL_ items. C. Added `makeRectilinearAreaItem` + `rectiId` + `rectilinearAreaItemIds` to areaItems.ts and RECTI_ parser; g3-geo-rectilinear-area now uses real RECTI_ items. D. Created mulPropertiesItems.ts with commutative/identity/zero items; g3-mul-properties now has specificItemIds. Added `rectilinear_area` and `multiplication_properties` to ItemType. Updated skillMapping.ts. Added 5 new regression tests including "every practiceable skill has specificItemIds". 489 tests pass.
 
 ---
 

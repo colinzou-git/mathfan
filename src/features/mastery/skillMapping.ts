@@ -51,9 +51,13 @@ export function inferGrade3SkillId(item: PracticeItem): string | null {
   if (itemType === 'area_unit_squares') return 'g3-area-concept';
   if (itemType === 'area_rectangle') return 'g3-area-formula';
   if (itemType === 'perimeter_rectangle') return 'g3-perimeter';
+  if (itemType === 'rectilinear_area') return 'g3-geo-rectilinear-area';
 
   // ── Geometry ──────────────────────────────────────────────────────────────
   if (itemType === 'geometry_vocabulary') return 'g3-geo-categories';
+
+  // ── Multiplication properties ─────────────────────────────────────────────
+  if (itemType === 'multiplication_properties') return 'g3-mul-properties';
 
   return null;
 }

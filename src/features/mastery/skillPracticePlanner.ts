@@ -5,8 +5,10 @@ import {
 } from '../curriculum/multiplicationItems';
 import { fracEqId, fracCmpId } from '../curriculum/fractionItems';
 import { wordId } from '../curriculum/wordProblemItems';
-import { areaSquaresItemIds, areaRectangleItemIds, perimeterRectangleItemIds } from '../curriculum/areaItems';
+import { areaSquaresItemIds, areaRectangleItemIds, perimeterRectangleItemIds, rectilinearAreaItemIds } from '../curriculum/areaItems';
 import { geoItemIds } from '../curriculum/geometryItems';
+import { mulPropertyItemIds } from '../curriculum/mulPropertiesItems';
+import { fracNlId } from '../curriculum/fractionItems';
 
 export interface PlanOptions {
   sessionLength?: number;
@@ -19,10 +21,10 @@ export interface PlanOptions {
 // We support both formats here.
 
 // Multiplication table sets.
-// 10 is excluded from BASIC (inferGrade3SkillId maps it to advanced via bigTable > 5).
-// Table 10 is included in ADVANCED so practice items credit correctly.
-const BASIC_TABLES = [0, 1, 2, 5];          // G3_OA_MUL_FACTS_0_2_5_10 (sans 10)
-const INTERMEDIATE_TABLES = [3, 4];          // G3_OA_MUL_FACTS_3_4
+// BASIC covers tables 0–5 matching the mastery map title "Times Tables 1–5".
+// inferGrade3SkillId maps bigTable <= 5 → g3-mul-tables-basic, consistent with this set.
+const BASIC_TABLES = [0, 1, 2, 3, 4, 5];    // g3-mul-tables-basic ("Times Tables 1–5")
+const INTERMEDIATE_TABLES = [3, 4];          // G3_OA_MUL_FACTS_3_4 (legacy spec ID)
 const ADVANCED_TABLES = [6, 7, 8, 9, 10];   // G3_OA_MUL_FACTS_6_9 (includes 10)
 
 // Division divisor sets — must stay >= TABLE_MIN (2) so every generated item ID
@@ -110,6 +112,17 @@ function divisionWordItemIds(): string[] {
     }
   }
   return ids;
+}
+
+function fracNumberLineItemIds(): string[] {
+  // Grade 3 fractions with denominators 2–8, numerator 1..d-1
+  const items: string[] = [];
+  for (const d of [2, 3, 4, 6, 8]) {
+    for (let n = 1; n < d; n++) {
+      items.push(fracNlId(n, d));
+    }
+  }
+  return items;
 }
 
 function fracUnitItemIds(): string[] {
@@ -254,12 +267,11 @@ export function planPracticeForSkill(
     };
   }
 
-  // ── g3-frac-number-line — compare fractions (position on number line) ────
+  // ── g3-frac-number-line — fraction number line items ─────────────────────
   if (skillId === 'g3-frac-number-line') {
     return {
       mode: 'fraction',
-      specificItemIds: fracCmpItemIds(),
-      fractionMode: 'compare',
+      specificItemIds: fracNumberLineItemIds(),
       sessionLength,
     };
   }
@@ -301,11 +313,19 @@ export function planPracticeForSkill(
   }
 
   // ── g3-geo-rectilinear-area — decompose composite figures ────────────────────
-  // Prereqs: g3-area-formula + g3-geo-categories; fall back to area rectangle items.
   if (skillId === 'g3-geo-rectilinear-area') {
     return {
       mode: 'area',
-      specificItemIds: areaRectangleItemIds(),
+      specificItemIds: rectilinearAreaItemIds(),
+      sessionLength,
+    };
+  }
+
+  // ── g3-mul-properties — commutative, identity, zero properties ───────────────
+  if (skillId === 'g3-mul-properties') {
+    return {
+      mode: 'multiplication',
+      specificItemIds: mulPropertyItemIds(),
       sessionLength,
     };
   }

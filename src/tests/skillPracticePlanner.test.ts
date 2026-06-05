@@ -247,7 +247,7 @@ describe('makeItemFromId — area and geometry reconstruction', () => {
   });
 });
 
-// ── Round-trip validity: Bug 1 + Bug 2 regression tests ──────────────────────
+// ── Round-trip validity: regression tests ────────────────────────────────────
 //
 // For every Grade 3 mastery-map skill:
 //   - All specificItemIds must reconstruct to non-null items.
@@ -256,16 +256,12 @@ describe('makeItemFromId — area and geometry reconstruction', () => {
 // For skills with a clean 1:1 credit mapping (explicit list below), every item
 // must also infer back to the expected skill ID.
 //
-// "Shared" skills whose items intentionally credit to a different skill are
-// excluded from the credit check and documented here:
+// "Shared" skills whose items intentionally credit to multiple skill IDs:
 //   g3-mul-tables-basic / g3-mul-tables-advanced — mulItemIds uses b from
 //     TABLE_MIN..TABLE_MAX; when b > table boundary, bigTable maps to the other
 //     skill level. Shared by design — standard "table drill" behaviour.
 //   g3-div-within-100 / g3-div-mul-relationship — UNK_ items credit to the
 //     corresponding multiplication skill (unknown_factor itemType).
-//   g3-frac-number-line — uses FCMP proxy items → credits to g3-frac-compare.
-//   g3-geo-rectilinear-area — uses AREA_RECT proxy → credits to g3-area-formula.
-//   g3-mul-properties — no specificItemIds (falls back to daily_review).
 
 describe('planPracticeForSkill — item round-trip: all items reconstruct non-null', () => {
   const ALL_GRADE3_SKILL_IDS = GRADE3_MASTERY_MAP.map(n => n.id);
@@ -298,18 +294,39 @@ describe('planPracticeForSkill — item round-trip: all items reconstruct non-nu
   });
 });
 
+describe('planPracticeForSkill — every practiceable grade3 skill has specificItemIds', () => {
+  it('every GRADE3_MASTERY_MAP skill returns specificItemIds (not daily_review fallback)', () => {
+    for (const node of GRADE3_MASTERY_MAP) {
+      const cfg = planPracticeForSkill(node.id);
+      expect(
+        cfg.specificItemIds && cfg.specificItemIds.length > 0,
+        `${node.id} should have specificItemIds, got mode="${cfg.mode}"`,
+      ).toBe(true);
+    }
+  });
+
+  it('g3-mul-tables-basic includes tables 3 and 4 (Times Tables 1–5)', () => {
+    const cfg = planPracticeForSkill('g3-mul-tables-basic');
+    expect(cfg.specificItemIds!.some(id => id.startsWith('MUL_3x'))).toBe(true);
+    expect(cfg.specificItemIds!.some(id => id.startsWith('MUL_4x'))).toBe(true);
+  });
+});
+
 describe('planPracticeForSkill — item round-trip: skill credit (clean-mapping skills)', () => {
   // Skills where every specificItemId credits back to the same skill via inferGrade3SkillId.
   const CLEAN_MAPPING: Record<string, string> = {
-    'g3-mul-meaning':    'g3-mul-meaning',
-    'g3-div-meaning':    'g3-div-meaning',
-    'g3-frac-unit':      'g3-frac-unit',
-    'g3-frac-equivalent':'g3-frac-equivalent',
-    'g3-frac-compare':   'g3-frac-compare',
-    'g3-area-concept':   'g3-area-concept',
-    'g3-area-formula':   'g3-area-formula',
-    'g3-perimeter':      'g3-perimeter',
-    'g3-geo-categories': 'g3-geo-categories',
+    'g3-mul-meaning':          'g3-mul-meaning',
+    'g3-mul-properties':       'g3-mul-properties',
+    'g3-div-meaning':          'g3-div-meaning',
+    'g3-frac-unit':            'g3-frac-unit',
+    'g3-frac-number-line':     'g3-frac-number-line',
+    'g3-frac-equivalent':      'g3-frac-equivalent',
+    'g3-frac-compare':         'g3-frac-compare',
+    'g3-area-concept':         'g3-area-concept',
+    'g3-area-formula':         'g3-area-formula',
+    'g3-perimeter':            'g3-perimeter',
+    'g3-geo-categories':       'g3-geo-categories',
+    'g3-geo-rectilinear-area': 'g3-geo-rectilinear-area',
   };
 
   for (const [skillId, expectedSkill] of Object.entries(CLEAN_MAPPING)) {

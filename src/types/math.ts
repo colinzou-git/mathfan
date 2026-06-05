@@ -23,7 +23,9 @@ export type ItemType =
   | 'competition_puzzle'
   | 'area_unit_squares'
   | 'area_rectangle'
-  | 'perimeter_rectangle';
+  | 'perimeter_rectangle'
+  | 'rectilinear_area'
+  | 'multiplication_properties';
 
 export type SessionMode =
   | 'daily_review'

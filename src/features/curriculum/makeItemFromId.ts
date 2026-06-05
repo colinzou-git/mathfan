@@ -1,13 +1,14 @@
 import type { PracticeItem } from '../../types/math';
 import { ITEM_MAP, makeMultiplicationItem } from './multiplicationItems';
 import { makeAdditionItem, makeSubtractionItem, makeDivisionItem } from './arithmeticItems';
-import { makeFractionEquivalentItem, makeFractionCompareItem } from './fractionItems';
+import { makeFractionEquivalentItem, makeFractionCompareItem, makeFractionNumberLineItem } from './fractionItems';
 import { makeRoundingItem } from './roundingItems';
 import { makePrimeItem, makeFactorItem } from './numberTheoryItems';
 import { makeDecimalAddItem, makeDecimalSubItem } from './decimalItems';
 import { makeWordProblem, type Schema } from './wordProblemItems';
-import { makeAreaUnitSquaresItem, makeAreaRectangleItem, makePerimeterRectangleItem } from './areaItems';
+import { makeAreaUnitSquaresItem, makeAreaRectangleItem, makePerimeterRectangleItem, makeRectilinearAreaItem } from './areaItems';
 import { GEO_ITEM_MAP } from './geometryItems';
+import { makePropCommutativityItem, makePropIdentityItem, makePropZeroItem } from './mulPropertiesItems';
 
 /**
  * Reconstruct a PracticeItem from its deterministic itemId.
@@ -80,6 +81,26 @@ export function makeItemFromId(itemId: string): PracticeItem | null {
 
   m = itemId.match(/^PERIM_RECT_(\d+)x(\d+)$/);
   if (m) return makePerimeterRectangleItem(+m[1], +m[2]);
+
+  // FNL_n_d — fraction number line
+  m = itemId.match(/^FNL_(\d+)_(\d+)$/);
+  if (m) return makeFractionNumberLineItem(+m[1], +m[2]);
+
+  // RECTI_a1xb1_a2xb2 — rectilinear area (two rectangles)
+  m = itemId.match(/^RECTI_(\d+)x(\d+)_(\d+)x(\d+)$/);
+  if (m) return makeRectilinearAreaItem(+m[1], +m[2], +m[3], +m[4]);
+
+  // PROP_CMT_AxB — commutative property
+  m = itemId.match(/^PROP_CMT_(\d+)x(\d+)$/);
+  if (m) return makePropCommutativityItem(+m[1], +m[2]);
+
+  // PROP_IDT_A — identity property
+  m = itemId.match(/^PROP_IDT_(\d+)$/);
+  if (m) return makePropIdentityItem(+m[1]);
+
+  // PROP_ZERO_A — zero property
+  m = itemId.match(/^PROP_ZERO_(\d+)$/);
+  if (m) return makePropZeroItem(+m[1]);
 
   return null;
 }
