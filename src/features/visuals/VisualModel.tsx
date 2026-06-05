@@ -28,6 +28,8 @@ interface Props {
   item: PracticeItem;
   /** Optional color override passed to the chosen visual. */
   color?: string;
+  /** Explicit explanation/review mode can reveal the marked answer. */
+  revealAnswer?: boolean;
 }
 
 function parseEqualGroupsFromId(itemId: string): { groups: number; perGroup: number } | null {
@@ -36,7 +38,7 @@ function parseEqualGroupsFromId(itemId: string): { groups: number; perGroup: num
   return { groups: parseInt(m[1], 10), perGroup: parseInt(m[2], 10) };
 }
 
-export function VisualModel({ item, color }: Props) {
+export function VisualModel({ item, color, revealAnswer = false }: Props) {
   const { itemType, factA, factB, id, prompt } = item;
 
   // ── Multiplication array ──────────────────────────────────────────────────
@@ -76,8 +78,8 @@ export function VisualModel({ item, color }: Props) {
       return (
         <FractionNumberLine
           denominator={d}
-          numerator={n ?? undefined}
-          showLabel={true}
+          numerator={revealAnswer ? n ?? undefined : undefined}
+          showLabel={revealAnswer}
         />
       );
     }

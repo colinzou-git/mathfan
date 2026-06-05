@@ -1,11 +1,16 @@
-import { describe, it, expect } from 'vitest';
+import { createElement } from 'react';
+import { afterEach, describe, it, expect } from 'vitest';
+import { cleanup, render, screen } from '@testing-library/react';
 import { hasVisualModel } from '../features/visuals/visualModelUtils';
+import { VisualModel } from '../features/visuals/VisualModel';
 import { makeMultiplicationItem } from '../features/curriculum/multiplicationItems';
 import { makeWordProblem } from '../features/curriculum/wordProblemItems';
 import { makeFractionNumberLineItem } from '../features/curriculum/fractionItems';
 import { makeAreaUnitSquaresItem, makeAreaRectangleItem, makePerimeterRectangleItem } from '../features/curriculum/areaItems';
 import { makeFractionCompareItem, makeFractionEquivalentItem } from '../features/curriculum/fractionItems';
 import { makeItemFromId } from '../features/curriculum/makeItemFromId';
+
+afterEach(cleanup);
 
 describe('hasVisualModel — multiplication', () => {
   it('returns true for multiplication_fact with small factors', () => {
@@ -41,6 +46,13 @@ describe('hasVisualModel — fraction_number_line', () => {
     const item = makeFractionNumberLineItem(3, 4);
     expect(item.itemType).toBe('fraction_number_line');
     expect(item.factB).toBe(4);
+  });
+
+  it('does not reveal the answer label during practice rendering', () => {
+    const item = makeItemFromId('FNL_3_4')!;
+    render(createElement(VisualModel, { item }));
+    expect(screen.queryByText('3/4')).not.toBeInTheDocument();
+    expect(screen.getByRole('img', { name: /divided into 4 equal parts/i })).toBeInTheDocument();
   });
 });
 

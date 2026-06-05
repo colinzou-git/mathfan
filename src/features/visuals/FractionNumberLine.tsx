@@ -44,7 +44,11 @@ export function FractionNumberLine({
   const ticks = Array.from({ length: d + 1 }, (_, i) => i);
 
   return (
-    <div style={{ width: `${width}px`, touchAction: 'none', userSelect: 'none' }}>
+    <div
+      role="img"
+      aria-label={`Number line from 0 to 1 divided into ${d} equal parts`}
+      style={{ width: `${width}px`, touchAction: 'none', userSelect: 'none' }}
+    >
       <Mafs
         width={width}
         height={Math.round(width * 0.3)}
