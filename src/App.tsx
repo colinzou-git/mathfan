@@ -20,6 +20,7 @@ import { pushLocal } from './features/sync/driveSync';
 import { currentState as authState } from './features/auth/googleAuth';
 import { applyTheme } from './features/theme/themes';
 import { syncDiagnosticCompletionIfSignedIn } from './features/diagnosis/diagnosticCompletion';
+import { resolvePracticeDoneDestination } from './features/practice/practiceNavigation';
 
 type Screen =
   | 'loading' | 'setup' | 'dashboard'
@@ -93,11 +94,7 @@ export default function App() {
 
   const handleSessionDone = () => {
     if (authState().signedIn) pushLocal().catch(console.warn);
-    if (practiceReturn === 'mastery-map' || practiceReturn === 'stats') {
-      setScreen(practiceReturn);
-    } else {
-      setScreen('dashboard');
-    }
+    setScreen(resolvePracticeDoneDestination(practiceReturn));
   };
 
   const startPractice = (cfg: SessionConfig) => {

@@ -135,24 +135,24 @@ describe('diagnostic answer normalization — uses checkAnswer() not raw string 
   it('checkAnswer accepts "8" when answer is 8', () => {
     const plan = buildDiagnosticPlan('norm-test');
     const numericItem = plan.items.find(i => i.answerInput !== 'choice' && typeof i.answer === 'number');
-    if (!numericItem) return;
-    const r = checkAnswer(numericItem, String(numericItem.answer), 1000);
+    expect(numericItem).toBeDefined();
+    const r = checkAnswer(numericItem!, String(numericItem!.answer), 1000);
     expect(r.isCorrect).toBe(true);
   });
 
   it('checkAnswer accepts "08" when answer is 8 (leading zero)', () => {
     const plan = buildDiagnosticPlan('norm-test');
     const item = plan.items.find(i => i.answer === 8);
-    if (!item) return;
-    const r = checkAnswer(item, '08', 1000);
+    expect(item).toBeDefined();
+    const r = checkAnswer(item!, '08', 1000);
     expect(r.isCorrect).toBe(true);
   });
 
   it('checkAnswer rejects wrong answer', () => {
     const plan = buildDiagnosticPlan('norm-test');
     const numericItem = plan.items.find(i => typeof i.answer === 'number');
-    if (!numericItem) return;
-    const r = checkAnswer(numericItem, '999', 1000);
+    expect(numericItem).toBeDefined();
+    const r = checkAnswer(numericItem!, '999', 1000);
     expect(r.isCorrect).toBe(false);
   });
 

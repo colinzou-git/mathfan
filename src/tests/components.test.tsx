@@ -1,15 +1,20 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { render, screen, cleanup, fireEvent } from '@testing-library/react';
+import { render, screen, cleanup, fireEvent, waitFor } from '@testing-library/react';
 import { TutorChat } from '../features/ai/TutorChat';
 import { SessionSummary } from '../components/SessionSummary';
 import { NumPad } from '../components/NumPad';
 import { SkillDetailPanel } from '../features/mastery/SkillDetailPanel';
 import { ParentNextActionCard } from '../features/mastery/ParentNextActionCard';
+import { Grade3MasteryMapPage } from '../features/mastery/Grade3MasteryMapPage';
+import { mathAnswerEventRepo, itemStateRepo } from '../db/repositories';
 import type { MasterySkillNode } from '../features/mastery/grade3MasteryMap';
 import type { TodayPlan } from '../features/mastery/todayPlanEngine';
-import type { SessionConfig } from '../types/math';
+import type { SessionConfig, StudentProfile } from '../types/math';
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+});
 
 describe('TutorChat', () => {
   beforeEach(() => { try { localStorage.clear(); } catch { /* ignore */ } });
@@ -182,5 +187,49 @@ describe('ParentNextActionCard', () => {
     );
     const noFocusBtn = screen.getByRole('button', { name: /no focus needed/i });
     expect(noFocusBtn).toBeDisabled();
+  });
+});
+
+describe('Grade3MasteryMapPage', () => {
+  it('shows a new-user suggestion and starts focused practice', async () => {
+    vi.spyOn(mathAnswerEventRepo, 'getAll').mockResolvedValue([]);
+    vi.spyOn(itemStateRepo, 'getForStudent').mockResolvedValue([]);
+    const onStartPractice = vi.fn();
+    const profile: StudentProfile = {
+      id: 'new-student',
+      displayName: 'Alex',
+      gradeLevel: 3,
+      timezone: 'America/Los_Angeles',
+      createdAt: '2026-01-01T00:00:00.000Z',
+      settings: {
+        audioEnabled: false,
+        speechRate: 1,
+        dailyGoalMinutes: 10,
+        sessionLength: 10,
+        autoAdvance: true,
+        theme: 'indigo',
+        allowTimedMode: false,
+        competitionModeEnabled: false,
+        parentModeEnabled: false,
+      },
+    };
+
+    render(
+      <Grade3MasteryMapPage
+        profile={profile}
+        onBack={() => {}}
+        onStartPractice={onStartPractice}
+        onStartDiagnostic={() => {}}
+      />,
+    );
+
+    expect(await screen.findByText(/Today's suggestion/i)).toBeInTheDocument();
+    const focusButton = screen.getAllByRole('button')
+      .find(button => !button.hasAttribute('disabled') && !/back|quick check/i.test(button.textContent ?? ''));
+    expect(focusButton).toBeDefined();
+    fireEvent.click(focusButton!);
+
+    await waitFor(() => expect(onStartPractice).toHaveBeenCalledTimes(1));
+    expect(onStartPractice.mock.calls[0][0].specificItemIds?.length).toBeGreaterThan(0);
   });
 });

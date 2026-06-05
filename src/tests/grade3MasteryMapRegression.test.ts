@@ -21,6 +21,7 @@ import { inferGrade3SkillId } from '../features/mastery/skillMapping';
 import { planToday } from '../features/mastery/todayPlanEngine';
 import { buildDiagnosticPlan, diagnosticItemSkillId } from '../features/diagnosis/diagnosticPlanner';
 import { checkAnswer } from '../features/practice/answerChecker';
+import { resolvePracticeDoneDestination } from '../features/practice/practiceNavigation';
 import type { StudentSkillSummary } from '../features/mastery/skillMasteryEngine';
 
 // ── Test helpers ─────────────────────────────────────────────────────────────
@@ -59,8 +60,9 @@ describe('regression: every specificItemId reconstructs via makeItemFromId()', (
   it('all skills: all specificItemIds reconstruct to non-null items', () => {
     for (const node of GRADE3_MASTERY_MAP) {
       const cfg = planPracticeForSkill(node.id);
-      if (!cfg.specificItemIds) continue;
-      for (const id of cfg.specificItemIds) {
+      const ids = cfg.specificItemIds;
+      expect(ids?.length, `${node.id} should have focused item ids`).toBeGreaterThan(0);
+      for (const id of ids ?? []) {
         const item = makeItemFromId(id);
         expect(item, `${node.id} → "${id}" should reconstruct`).not.toBeNull();
       }
@@ -74,13 +76,15 @@ describe('regression: every targeted item has a finite numeric answer', () => {
   it('no NaN or Infinity answers in any skill', () => {
     for (const node of GRADE3_MASTERY_MAP) {
       const cfg = planPracticeForSkill(node.id);
-      if (!cfg.specificItemIds) continue;
-      for (const id of cfg.specificItemIds) {
+      const ids = cfg.specificItemIds;
+      expect(ids?.length, `${node.id} should have focused item ids`).toBeGreaterThan(0);
+      for (const id of ids ?? []) {
         const item = makeItemFromId(id);
-        if (item && typeof item.answer === 'number') {
+        expect(item, `${node.id} should reconstruct "${id}"`).not.toBeNull();
+        if (typeof item!.answer === 'number') {
           expect(
-            Number.isFinite(item.answer),
-            `${node.id} → "${id}": answer ${item.answer} is not finite`,
+            Number.isFinite(item!.answer),
+            `${node.id} -> "${id}" should have a finite answer`,
           ).toBe(true);
         }
       }
@@ -180,16 +184,16 @@ describe('regression: diagnostic answer checking and division credit', () => {
   it('diagnostic uses checkAnswer() — handles leading zero "08" == 8', () => {
     const plan = buildDiagnosticPlan('reg-test');
     const item = plan.items.find(i => i.answer === 8);
-    if (!item) return;
-    const r = checkAnswer(item, '08', 500);
+    expect(item).toBeDefined();
+    const r = checkAnswer(item!, '08', 500);
     expect(r.isCorrect).toBe(true);
   });
 
   it('diagnostic uses checkAnswer() — rejects wrong numeric answer', () => {
     const plan = buildDiagnosticPlan('reg-test');
     const numericItem = plan.items.find(i => typeof i.answer === 'number');
-    if (!numericItem) return;
-    const r = checkAnswer(numericItem, '999', 500);
+    expect(numericItem).toBeDefined();
+    const r = checkAnswer(numericItem!, '999', 500);
     expect(r.isCorrect).toBe(false);
   });
 
@@ -212,26 +216,20 @@ describe('regression: diagnostic answer checking and division credit', () => {
 
 // ── 8. practiceReturn semantics: mastery-map launched practice returns to map ──
 
-function resolveDoneDestination(practiceReturn: string): string {
-  return (practiceReturn === 'mastery-map' || practiceReturn === 'stats')
-    ? practiceReturn
-    : 'dashboard';
-}
-
 describe('regression: practice launched from mastery map returns to mastery map', () => {
   it('practiceReturn mastery-map resolves to mastery-map', () => {
-    expect(resolveDoneDestination('mastery-map')).toBe('mastery-map');
+    expect(resolvePracticeDoneDestination('mastery-map')).toBe('mastery-map');
   });
 
   it('practiceReturn dashboard falls back to dashboard', () => {
-    expect(resolveDoneDestination('dashboard')).toBe('dashboard');
+    expect(resolvePracticeDoneDestination('dashboard')).toBe('dashboard');
   });
 
   it('practiceReturn stats returns to stats', () => {
-    expect(resolveDoneDestination('stats')).toBe('stats');
+    expect(resolvePracticeDoneDestination('stats')).toBe('stats');
   });
 
   it('practiceReturn quiz falls back to dashboard', () => {
-    expect(resolveDoneDestination('quiz')).toBe('dashboard');
+    expect(resolvePracticeDoneDestination('quiz')).toBe('dashboard');
   });
 });

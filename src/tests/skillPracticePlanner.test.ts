@@ -263,8 +263,9 @@ describe('planPracticeForSkill — item round-trip: all items reconstruct non-nu
   it('every skill: all specificItemIds reconstruct to a non-null item', () => {
     for (const skillId of ALL_GRADE3_SKILL_IDS) {
       const cfg = planPracticeForSkill(skillId);
-      if (!cfg.specificItemIds) continue;
-      for (const id of cfg.specificItemIds) {
+      const ids = cfg.specificItemIds;
+      expect(ids?.length, `${skillId} should have specificItemIds`).toBeGreaterThan(0);
+      for (const id of ids ?? []) {
         const item = makeItemFromId(id);
         expect(item, `${skillId} → "${id}" should reconstruct`).not.toBeNull();
       }
@@ -274,13 +275,15 @@ describe('planPracticeForSkill — item round-trip: all items reconstruct non-nu
   it('every skill: no numeric item has a NaN or Infinity answer', () => {
     for (const skillId of ALL_GRADE3_SKILL_IDS) {
       const cfg = planPracticeForSkill(skillId);
-      if (!cfg.specificItemIds) continue;
-      for (const id of cfg.specificItemIds) {
+      const ids = cfg.specificItemIds;
+      expect(ids?.length, `${skillId} should have specificItemIds`).toBeGreaterThan(0);
+      for (const id of ids ?? []) {
         const item = makeItemFromId(id);
-        if (item && typeof item.answer === 'number') {
+        expect(item, `${skillId} should reconstruct "${id}"`).not.toBeNull();
+        if (typeof item!.answer === 'number') {
           expect(
-            Number.isFinite(item.answer),
-            `${skillId} → "${id}": answer ${item.answer} is not finite`,
+            Number.isFinite(item!.answer),
+            `${skillId} -> "${id}" should have a finite answer`,
           ).toBe(true);
         }
       }
