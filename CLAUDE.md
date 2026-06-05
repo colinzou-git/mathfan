@@ -42,7 +42,6 @@ If CI fails:
 
 At the end of a run, do the following:
 Report the new source files introduced. If no new source files, say 'No new source files added.'
-If any new source files were introduced, then update .\tools\generate_code_maps.py to cover new source files. Report updating status in a short sentence after each check/update. If no update, say reasons in a short sentence.
 Run 'python .\tools\generate_code_maps.py' to update code map and symbol map. Report running results in one short sentence after run. if no run, say reasons in a short sentence.
 
 
