@@ -50,6 +50,8 @@ export function DiagnosticSession({ studentId, onComplete, onCancel }: Props) {
   const [results, setResults] = useState<QuestionResult[]>([]);
   const startTimeRef = useRef<number>(0);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Collect pending DB writes so we can await them before showing the map.
+  const pendingWritesRef = useRef<Promise<void>[]>([]);
 
   const items = plan.items;
   const currentItem = items[index];
@@ -86,7 +88,7 @@ export function DiagnosticSession({ studentId, onComplete, onCancel }: Props) {
       studentId,
       sessionId,
       itemId: currentItem.id,
-      mode: 'practice',
+      mode: 'diagnostic',
       promptShown: currentItem.prompt,
       correctAnswer: currentItem.answer,
       studentAnswer: studentAns,
@@ -97,7 +99,7 @@ export function DiagnosticSession({ studentId, onComplete, onCancel }: Props) {
       createdAt: appNow().toISOString(),
     };
 
-    recordAnswerEvent(event).catch(console.warn);
+    pendingWritesRef.current.push(recordAnswerEvent(event).catch(console.warn) as Promise<void>);
 
     setResults(prev => [...prev, result]);
     setShowFeedback(isCorrect ? 'correct' : 'wrong');
@@ -154,7 +156,10 @@ export function DiagnosticSession({ studentId, onComplete, onCancel }: Props) {
           <p style={s.body}>
             Your Math Map is updated with your results.
           </p>
-          <button style={s.startBtn} onClick={onComplete}>
+          <button style={s.startBtn} onClick={async () => {
+            await Promise.all(pendingWritesRef.current);
+            onComplete();
+          }}>
             See my Math Map
           </button>
         </div>
@@ -200,7 +205,7 @@ export function DiagnosticSession({ studentId, onComplete, onCancel }: Props) {
         )}
         {showFeedback === 'wrong' && (
           <div style={s.feedbackWrong}>
-            The answer is {currentItem.answer}.
+            Nice try! Keep going.
           </div>
         )}
       </div>

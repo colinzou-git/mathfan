@@ -13,6 +13,7 @@ import { MultiplicationQuizPage } from './features/multiplication/Multiplication
 import { TodayAchievementDetail } from './features/stats/TodayAchievementDetail';
 import type { AchievementFilter, TodayAchievementData } from './features/stats/todayAchievement';
 import { Grade3MasteryMapPage } from './features/mastery/Grade3MasteryMapPage';
+import { DiagnosticSession } from './features/diagnosis/DiagnosticSession';
 import { preloadVoices } from './features/audio/speech';
 import { useSync, initAuth } from './features/sync/useSync';
 import { pushLocal } from './features/sync/driveSync';
@@ -22,7 +23,7 @@ import { applyTheme } from './features/theme/themes';
 type Screen =
   | 'loading' | 'setup' | 'dashboard'
   | 'daily-setup' | 'range-setup' | 'practice'
-  | 'stats' | 'settings' | 'quiz' | 'today-detail' | 'mastery-map';
+  | 'stats' | 'settings' | 'quiz' | 'today-detail' | 'mastery-map' | 'diagnostic';
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('loading');
@@ -221,12 +222,23 @@ export default function App() {
     );
   }
 
+  if (screen === 'diagnostic') {
+    return (
+      <DiagnosticSession
+        studentId={profile.id}
+        onComplete={() => setScreen('mastery-map')}
+        onCancel={() => setScreen('mastery-map')}
+      />
+    );
+  }
+
   if (screen === 'mastery-map') {
     return (
       <Grade3MasteryMapPage
         profile={profile}
         onBack={() => setScreen('dashboard')}
         onStartPractice={startPractice}
+        onStartDiagnostic={() => setScreen('diagnostic')}
       />
     );
   }

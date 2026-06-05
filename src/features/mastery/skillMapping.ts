@@ -38,7 +38,12 @@ export function inferGrade3SkillId(item: PracticeItem): string | null {
   }
 
   // ── Fractions ─────────────────────────────────────────────────────────────
-  if (itemType === 'fraction_equivalent') return 'g3-frac-equivalent';
+  if (itemType === 'fraction_equivalent') {
+    // Unit fractions (numerator = 1) map to the unit-fraction skill.
+    // FEQ ID format: FEQ_${n}_${d}_${targetDen}; parse n from the ID.
+    const m = id.match(/^FEQ_(\d+)_/);
+    return m && m[1] === '1' ? 'g3-frac-unit' : 'g3-frac-equivalent';
+  }
   if (itemType === 'fraction_compare') return 'g3-frac-compare';
   if (itemType === 'fraction_number_line') return 'g3-frac-number-line';
 

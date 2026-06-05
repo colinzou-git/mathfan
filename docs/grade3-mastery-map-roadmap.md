@@ -528,6 +528,41 @@ Created FractionNumberLine.tsx using Mafs (Mafs, Line.Segment, Point, Text compo
 
 ---
 
+### Post-Phase Bug Fixes
+
+Status: DONE
+
+Goal:
+Fix 8 correctness bugs found in a post-phase audit of the mastery-map implementation.
+
+Fixes applied:
+
+1. **div-by-0 / unreconstructable items** (`skillPracticePlanner.ts`): `divItemIds` and `unknownFactorItemIds` now skip divisors/factors < 2 (was generating DIV_0d0, UNK_2k1, etc.).
+
+2. **Skill credit mismatches** (`skillPracticePlanner.ts`, `skillMapping.ts`):
+   - `BASIC_TABLES` now `[0,1,2,5]` (removed 10, which `inferGrade3SkillId` maps to advanced); `ADVANCED_TABLES` now `[6,7,8,9,10]`.
+   - Division practice split: `g3-div-within-100` uses divisors 2–5; `g3-div-mul-relationship` uses divisors 6–10. Each set credits correctly.
+   - `fraction_equivalent` items with n=1 now infer to `g3-frac-unit`; n>1 → `g3-frac-equivalent`. `fracEquivItemIds()` updated to use non-unit fractions only.
+   - `g3-frac-number-line` and `g3-geo-rectilinear-area` documented as explicit shared skills.
+
+3. **New-skill today plan** (`Grade3MasteryMapPage.tsx`): `planToday` now receives stubs for all GRADE3_MASTERY_MAP skills, so a brand-new student gets a focus skill suggestion.
+
+4. **"Review due items" button** (`Grade3MasteryMapPage.tsx`): `onReviewDue` now uses the actual due item IDs for that skill rather than calling `planPracticeForSkill`.
+
+5. **DiagnosticSession wiring** (`App.tsx`, `DiagnosticSession.tsx`, `learningEvents.ts`): Added `'diagnostic'` to `MathEventMode`. DiagnosticSession now records `mode: 'diagnostic'`, awaits all DB writes before calling `onComplete`, and shows "Nice try! Keep going." instead of revealing the answer. Wired via new `'diagnostic'` screen in App.tsx and "🔍 Quick Check" button on the mastery map.
+
+6. **Mastery awarded without item coverage** (`skillMasteryEngine.ts`): `classifyStatus` now requires `itemCount >= 4` (in addition to accuracy ≥ 0.90 and attempts ≥ 5) to reach `mastered`.
+
+7. **Locked skills not enforced** (`SkillTile.tsx`, `Grade3MasteryMapPage.tsx`): Skills with unmet prerequisites are visually dimmed, show a 🔒 badge and "Complete prerequisites first", and cannot be clicked.
+
+8. **Committed Python cache** (`.gitignore`, git history): Added `__pycache__/` and `*.py[cod]` to `.gitignore`; removed `tools/__pycache__/generate_code_maps.cpython-313.pyc` from git tracking.
+
+Added round-trip regression tests in `skillPracticePlanner.test.ts` verifying every skill generates only reconstructable items with finite answers, and that clean-mapping skills credit back to the correct skill ID.
+
+CI passes (484 tests).
+
+---
+
 ## Final Completion Criteria
 
 The Grade 3 mastery-map project is considered complete when:

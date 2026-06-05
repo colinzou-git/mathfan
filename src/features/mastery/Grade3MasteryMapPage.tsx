@@ -9,6 +9,7 @@ import { planToday } from './todayPlanEngine';
 import type { TodayPlan } from './todayPlanEngine';
 import { mathAnswerEventRepo, itemStateRepo } from '../../db/repositories';
 import { makeItemFromId } from '../curriculum/makeItemFromId';
+import { inferGrade3SkillId } from './skillMapping';
 import { appNow } from '../time/clock';
 import { SkillTile } from './SkillTile';
 import { SkillDetailPanel } from './SkillDetailPanel';
@@ -18,6 +19,7 @@ interface Props {
   profile: StudentProfile;
   onBack: () => void;
   onStartPractice: (config: SessionConfig) => void;
+  onStartDiagnostic?: () => void;
 }
 
 const DOMAIN_ORDER: Grade3Domain[] = [
@@ -44,11 +46,48 @@ const DOMAIN_ICONS: Record<Grade3Domain, string> = {
   geometry: '🔷',
 };
 
-export function Grade3MasteryMapPage({ profile, onBack, onStartPractice }: Props) {
+// Bug 3: Build a complete summary list (including stubs for unstarted skills) so
+// planToday can pick any unlocked new skill, not only skills already seen.
+function buildCompleteSummaries(
+  derived: StudentSkillSummary[],
+  studentId: string,
+): StudentSkillSummary[] {
+  const existing = new Map(derived.map(s => [s.skillId, s]));
+  return GRADE3_MASTERY_MAP.map(node => existing.get(node.id) ?? {
+    skillId: node.id,
+    studentId,
+    status: 'new' as const,
+    attemptCount: 0,
+    correctCount: 0,
+    accuracy: 0,
+    dueItemCount: 0,
+    itemCount: 0,
+    mistakePatterns: [],
+  });
+}
+
+// Bug 7: A skill is locked when any prerequisite is not yet mastered or strong.
+function computeLockedSkills(summaryMap: Map<string, StudentSkillSummary>): Set<string> {
+  const locked = new Set<string>();
+  for (const node of GRADE3_MASTERY_MAP) {
+    if (node.prerequisites.length === 0) continue;
+    const prereqsMet = node.prerequisites.every(prereqId => {
+      const s = summaryMap.get(prereqId);
+      return s != null && (s.status === 'mastered' || s.status === 'strong');
+    });
+    if (!prereqsMet) locked.add(node.id);
+  }
+  return locked;
+}
+
+export function Grade3MasteryMapPage({ profile, onBack, onStartPractice, onStartDiagnostic }: Props) {
   const [summaries, setSummaries] = useState<StudentSkillSummary[]>([]);
   const [todayPlan, setTodayPlan] = useState<TodayPlan | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedSkill, setSelectedSkill] = useState<MasterySkillNode | null>(null);
+  const [lockedSkills, setLockedSkills] = useState<Set<string>>(new Set());
+  // Bug 4: map from skillId → due item IDs for that skill
+  const [dueBySkill, setDueBySkill] = useState<Map<string, string[]>>(new Map());
 
   useEffect(() => {
     let cancelled = false;
@@ -83,10 +122,35 @@ export function Grade3MasteryMapPage({ profile, onBack, onStartPractice }: Props
 
       if (!cancelled) {
         setSummaries(derived);
-        // Compute today's plan from derived summaries
+
+        // Bug 7: derived summary map (real data only; missing entries → locked).
+        const derivedMap = new Map(derived.map(s => [s.skillId, s]));
+        setLockedSkills(computeLockedSkills(derivedMap));
+
+        // Bug 4: map due item IDs to the skill they belong to.
+        const nowStr = appNow().toISOString();
+        const computedDue = new Map<string, string[]>();
+        for (const state of states) {
+          if (state.nextDueAt != null && state.nextDueAt <= nowStr) {
+            const item = itemCache.get(state.itemId);
+            if (item) {
+              const skillId = inferGrade3SkillId(item);
+              if (skillId) {
+                const arr = computedDue.get(skillId) ?? [];
+                arr.push(state.itemId);
+                computedDue.set(skillId, arr);
+              }
+            }
+          }
+        }
+        setDueBySkill(computedDue);
+
+        // Bug 3: planToday needs stubs for all skills so it can pick unlocked
+        // new skills even before any events exist.
+        const completeSummaries = buildCompleteSummaries(derived, profile.id);
         const plan = planToday({
           studentId: profile.id,
-          skillSummaries: derived,
+          skillSummaries: completeSummaries,
           itemStates: states,
           now: appNow(),
         });
@@ -106,9 +170,16 @@ export function Grade3MasteryMapPage({ profile, onBack, onStartPractice }: Props
       {/* Header */}
       <header style={s.header}>
         <button style={s.backBtn} onClick={onBack} aria-label="Back">← Back</button>
-        <div>
-          <h1 style={s.pageTitle}>Grade 3 Math Map</h1>
-          <p style={s.subtitle}>See what is strong, learning, and ready to review.</p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div>
+            <h1 style={s.pageTitle}>Grade 3 Math Map</h1>
+            <p style={s.subtitle}>See what is strong, learning, and ready to review.</p>
+          </div>
+          {onStartDiagnostic && (
+            <button style={s.diagBtn} onClick={onStartDiagnostic} aria-label="Take a quick check">
+              🔍 Quick Check
+            </button>
+          )}
         </div>
       </header>
 
@@ -146,6 +217,7 @@ export function Grade3MasteryMapPage({ profile, onBack, onStartPractice }: Props
                     key={skill.id}
                     skill={skill}
                     summary={summaryMap.get(skill.id)}
+                    locked={lockedSkills.has(skill.id)}
                     onClick={setSelectedSkill.bind(null,
                       GRADE3_MASTERY_MAP.find(sk => sk.id === skill.id) ?? null
                     )}
@@ -169,7 +241,13 @@ export function Grade3MasteryMapPage({ profile, onBack, onStartPractice }: Props
           }}
           onReviewDue={skillId => {
             setSelectedSkill(null);
-            onStartPractice(planPracticeForSkill(skillId));
+            // Bug 4: use the actual due item IDs rather than a broad skill session.
+            const dueIds = dueBySkill.get(skillId) ?? [];
+            if (dueIds.length > 0) {
+              onStartPractice({ mode: 'daily_review', specificItemIds: dueIds, sessionLength: dueIds.length });
+            } else {
+              onStartPractice(planPracticeForSkill(skillId));
+            }
           }}
         />
       )}
@@ -234,6 +312,19 @@ const s: Record<string, React.CSSProperties> = {
     padding: '60px 0',
     color: '#9ca3af',
     fontSize: '16px',
+  },
+  diagBtn: {
+    background: '#f3f4f6',
+    border: '1px solid #e5e7eb',
+    borderRadius: '10px',
+    padding: '8px 12px',
+    fontSize: '13px',
+    fontWeight: '600',
+    color: '#4b5563',
+    cursor: 'pointer',
+    whiteSpace: 'nowrap' as const,
+    touchAction: 'manipulation',
+    flexShrink: 0,
   },
   legend: {
     display: 'flex',

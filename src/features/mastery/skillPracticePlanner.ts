@@ -18,9 +18,17 @@ export interface PlanOptions {
 // Note: grade3MasteryMap.ts uses a different id scheme (g3-mul-…).
 // We support both formats here.
 
-const BASIC_TABLES = [0, 1, 2, 5, 10];   // G3_OA_MUL_FACTS_0_2_5_10
-const INTERMEDIATE_TABLES = [3, 4];       // G3_OA_MUL_FACTS_3_4
-const ADVANCED_TABLES = [6, 7, 8, 9];    // G3_OA_MUL_FACTS_6_9
+// Multiplication table sets.
+// 10 is excluded from BASIC (inferGrade3SkillId maps it to advanced via bigTable > 5).
+// Table 10 is included in ADVANCED so practice items credit correctly.
+const BASIC_TABLES = [0, 1, 2, 5];          // G3_OA_MUL_FACTS_0_2_5_10 (sans 10)
+const INTERMEDIATE_TABLES = [3, 4];          // G3_OA_MUL_FACTS_3_4
+const ADVANCED_TABLES = [6, 7, 8, 9, 10];   // G3_OA_MUL_FACTS_6_9 (includes 10)
+
+// Division divisor sets — must stay >= TABLE_MIN (2) so every generated item ID
+// exists in the global ITEM_MAP or is parseable by makeItemFromId.
+const DIV_WITHIN_DIVISORS = [2, 3, 4, 5];      // g3-div-within-100
+const DIV_ADVANCED_DIVISORS = [6, 7, 8, 9, 10]; // g3-div-mul-relationship
 
 function mulItemIds(tables: number[]): string[] {
   const ids: string[] = [];
@@ -35,9 +43,11 @@ function mulItemIds(tables: number[]): string[] {
 function divItemIds(tables: number[]): string[] {
   const ids: string[] = [];
   for (const divisor of tables) {
+    // Divisor 0 → undefined (0÷0 = NaN). Divisor 1 → trivial (any ÷ 1 = itself).
+    // TABLE_MIN = 2, so divisors below 2 produce items not in the global catalogue.
+    if (divisor < 2) continue;
     for (let b = TABLE_MIN; b <= TABLE_MAX; b++) {
-      const product = divisor * b;
-      ids.push(divId(product, divisor));
+      ids.push(divId(divisor * b, divisor));
     }
   }
   return ids;
@@ -46,17 +56,21 @@ function divItemIds(tables: number[]): string[] {
 function unknownFactorItemIds(tables: number[]): string[] {
   const ids: string[] = [];
   for (const a of tables) {
+    // a=0 → 0×?=0 is degenerate. a=1 → UNK_k1 items are outside the static
+    // catalogue (generateUnknownFactorItems starts at TABLE_MIN=2) and have no
+    // fallback parser in makeItemFromId.
+    if (a < 2) continue;
     for (let b = TABLE_MIN; b <= TABLE_MAX; b++) {
-      const product = a * b;
-      ids.push(unkId(product, a));
+      ids.push(unkId(a * b, a));
     }
   }
   return ids;
 }
 
 function fracEquivItemIds(): string[] {
-  // Representative set: 1/2, 1/3, 1/4, 2/3, 3/4 with multipliers 2–4
-  const fracs = [[1, 2], [1, 3], [1, 4], [2, 3], [3, 4]];
+  // Only non-unit fractions (n > 1) so every item credits to g3-frac-equivalent,
+  // not g3-frac-unit. Unit fractions (n=1) are covered by fracUnitItemIds().
+  const fracs = [[2, 3], [3, 4], [2, 5], [3, 5], [2, 6]];
   const ids: string[] = [];
   for (const [n, d] of fracs) {
     for (let mult = 2; mult <= 4; mult++) {
@@ -155,17 +169,27 @@ export function planPracticeForSkill(
     };
   }
 
-  // ── G3_OA_DIV_UNKNOWN_FACTOR (also: g3-div-within-100, g3-div-mul-relationship) ─
-  if (
-    skillId === 'G3_OA_DIV_UNKNOWN_FACTOR' ||
-    skillId === 'g3-div-within-100' ||
-    skillId === 'g3-div-mul-relationship'
-  ) {
+  // ── G3_OA_DIV_UNKNOWN_FACTOR / g3-div-within-100 — divisors 2–5 ─────────────
+  // inferGrade3SkillId maps divisors 1–5 → g3-div-within-100.
+  if (skillId === 'G3_OA_DIV_UNKNOWN_FACTOR' || skillId === 'g3-div-within-100') {
     return {
       mode: 'division',
       specificItemIds: [
-        ...divItemIds([...BASIC_TABLES, ...INTERMEDIATE_TABLES]),
-        ...unknownFactorItemIds([...BASIC_TABLES, ...INTERMEDIATE_TABLES]),
+        ...divItemIds(DIV_WITHIN_DIVISORS),
+        ...unknownFactorItemIds(DIV_WITHIN_DIVISORS),
+      ],
+      sessionLength,
+    };
+  }
+
+  // ── g3-div-mul-relationship — divisors 6–10 ───────────────────────────────
+  // inferGrade3SkillId maps divisors 6–10 → g3-div-mul-relationship.
+  if (skillId === 'g3-div-mul-relationship') {
+    return {
+      mode: 'division',
+      specificItemIds: [
+        ...divItemIds(DIV_ADVANCED_DIVISORS),
+        ...unknownFactorItemIds(DIV_ADVANCED_DIVISORS),
       ],
       sessionLength,
     };

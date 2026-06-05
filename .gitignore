@@ -47,6 +47,10 @@ received-results/
 *.sqlite3
 *.db
 
+# Python cache
+__pycache__/
+*.py[cod]
+
 docs/code-map/CODEMAP.md
 
 docs/code-map/

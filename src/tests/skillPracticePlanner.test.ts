@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { planPracticeForSkill } from '../features/mastery/skillPracticePlanner';
 import { makeItemFromId } from '../features/curriculum/makeItemFromId';
+import { inferGrade3SkillId } from '../features/mastery/skillMapping';
+import { GRADE3_MASTERY_MAP } from '../features/mastery/grade3MasteryMap';
 
 // Supported skill IDs from the Phase 9 spec
 const SUPPORTED_SKILLS = [
@@ -242,5 +244,106 @@ describe('makeItemFromId — area and geometry reconstruction', () => {
     expect(item!.answer).toBe('True');
     expect(item!.choices).toContain('True');
     expect(item!.choices).toContain('False');
+  });
+});
+
+// ── Round-trip validity: Bug 1 + Bug 2 regression tests ──────────────────────
+//
+// For every Grade 3 mastery-map skill:
+//   - All specificItemIds must reconstruct to non-null items.
+//   - Numeric item answers must be finite (no NaN from 0÷0, no Infinity).
+//
+// For skills with a clean 1:1 credit mapping (explicit list below), every item
+// must also infer back to the expected skill ID.
+//
+// "Shared" skills whose items intentionally credit to a different skill are
+// excluded from the credit check and documented here:
+//   g3-mul-tables-basic / g3-mul-tables-advanced — mulItemIds uses b from
+//     TABLE_MIN..TABLE_MAX; when b > table boundary, bigTable maps to the other
+//     skill level. Shared by design — standard "table drill" behaviour.
+//   g3-div-within-100 / g3-div-mul-relationship — UNK_ items credit to the
+//     corresponding multiplication skill (unknown_factor itemType).
+//   g3-frac-number-line — uses FCMP proxy items → credits to g3-frac-compare.
+//   g3-geo-rectilinear-area — uses AREA_RECT proxy → credits to g3-area-formula.
+//   g3-mul-properties — no specificItemIds (falls back to daily_review).
+
+describe('planPracticeForSkill — item round-trip: all items reconstruct non-null', () => {
+  const ALL_GRADE3_SKILL_IDS = GRADE3_MASTERY_MAP.map(n => n.id);
+
+  it('every skill: all specificItemIds reconstruct to a non-null item', () => {
+    for (const skillId of ALL_GRADE3_SKILL_IDS) {
+      const cfg = planPracticeForSkill(skillId);
+      if (!cfg.specificItemIds) continue;
+      for (const id of cfg.specificItemIds) {
+        const item = makeItemFromId(id);
+        expect(item, `${skillId} → "${id}" should reconstruct`).not.toBeNull();
+      }
+    }
+  });
+
+  it('every skill: no numeric item has a NaN or Infinity answer', () => {
+    for (const skillId of ALL_GRADE3_SKILL_IDS) {
+      const cfg = planPracticeForSkill(skillId);
+      if (!cfg.specificItemIds) continue;
+      for (const id of cfg.specificItemIds) {
+        const item = makeItemFromId(id);
+        if (item && typeof item.answer === 'number') {
+          expect(
+            Number.isFinite(item.answer),
+            `${skillId} → "${id}": answer ${item.answer} is not finite`,
+          ).toBe(true);
+        }
+      }
+    }
+  });
+});
+
+describe('planPracticeForSkill — item round-trip: skill credit (clean-mapping skills)', () => {
+  // Skills where every specificItemId credits back to the same skill via inferGrade3SkillId.
+  const CLEAN_MAPPING: Record<string, string> = {
+    'g3-mul-meaning':    'g3-mul-meaning',
+    'g3-div-meaning':    'g3-div-meaning',
+    'g3-frac-unit':      'g3-frac-unit',
+    'g3-frac-equivalent':'g3-frac-equivalent',
+    'g3-frac-compare':   'g3-frac-compare',
+    'g3-area-concept':   'g3-area-concept',
+    'g3-area-formula':   'g3-area-formula',
+    'g3-perimeter':      'g3-perimeter',
+    'g3-geo-categories': 'g3-geo-categories',
+  };
+
+  for (const [skillId, expectedSkill] of Object.entries(CLEAN_MAPPING)) {
+    it(`${skillId}: every item credits to ${expectedSkill}`, () => {
+      const cfg = planPracticeForSkill(skillId);
+      expect(cfg.specificItemIds, `${skillId} should have specificItemIds`).toBeDefined();
+      for (const id of cfg.specificItemIds ?? []) {
+        const item = makeItemFromId(id);
+        if (!item) continue;
+        expect(
+          inferGrade3SkillId(item),
+          `${skillId} → item "${id}" should credit to ${expectedSkill}`,
+        ).toBe(expectedSkill);
+      }
+    });
+  }
+
+  it('g3-div-within-100: DIV_ items credit to g3-div-within-100', () => {
+    const cfg = planPracticeForSkill('g3-div-within-100');
+    for (const id of cfg.specificItemIds ?? []) {
+      if (!id.startsWith('DIV_')) continue; // UNK_ items shared with mul (see note above)
+      const item = makeItemFromId(id);
+      if (!item) continue;
+      expect(inferGrade3SkillId(item), `"${id}" should credit to g3-div-within-100`).toBe('g3-div-within-100');
+    }
+  });
+
+  it('g3-div-mul-relationship: DIV_ items credit to g3-div-mul-relationship', () => {
+    const cfg = planPracticeForSkill('g3-div-mul-relationship');
+    for (const id of cfg.specificItemIds ?? []) {
+      if (!id.startsWith('DIV_')) continue;
+      const item = makeItemFromId(id);
+      if (!item) continue;
+      expect(inferGrade3SkillId(item), `"${id}" should credit to g3-div-mul-relationship`).toBe('g3-div-mul-relationship');
+    }
   });
 });

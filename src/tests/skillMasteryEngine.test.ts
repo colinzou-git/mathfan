@@ -66,6 +66,9 @@ const ITEM_BASIC = makeMultiplicationItem(2, 3);
 const ITEM_ADV = makeMultiplicationItem(7, 8);
 // factA=4, factB=5 → bigTable=5 ≤ 5 → also g3-mul-tables-basic
 const ITEM_BASIC2 = makeMultiplicationItem(4, 5);
+// Additional basic items for coverage threshold tests (need >= 4 distinct items for mastery)
+const ITEM_BASIC3 = makeMultiplicationItem(3, 4);
+const ITEM_BASIC4 = makeMultiplicationItem(2, 5);
 
 // ── 1. No events → new ────────────────────────────────────────────────────────
 
@@ -170,9 +173,9 @@ describe('status: review_due', () => {
       now: NOW,
     });
 
-    // Not due yet → falls through to mastered (5 attempts, 100% accuracy)
+    // Not due yet → dueItemCount=0. Only 1 distinct item → strong (not mastered: itemCount < 4).
     expect(result[0].dueItemCount).toBe(0);
-    expect(result[0].status).toBe('mastered');
+    expect(result[0].status).toBe('strong');
   });
 
   it('does not count items with no nextDueAt as due', () => {
@@ -194,7 +197,29 @@ describe('status: review_due', () => {
 // ── 4. High accuracy → strong / mastered ─────────────────────────────────────
 
 describe('status: strong and mastered', () => {
-  it('returns mastered when accuracy ≥ 0.90 and attempts ≥ 5', () => {
+  it('returns mastered when accuracy ≥ 0.90, attempts ≥ 5, and item coverage ≥ 4', () => {
+    // 4 distinct items, 10 total correct events
+    const events = [
+      ...Array.from({ length: 3 }, () => makeEvent('s1', ITEM_BASIC.id, true)),
+      ...Array.from({ length: 3 }, () => makeEvent('s1', ITEM_BASIC2.id, true)),
+      ...Array.from({ length: 2 }, () => makeEvent('s1', ITEM_BASIC3.id, true)),
+      ...Array.from({ length: 2 }, () => makeEvent('s1', ITEM_BASIC4.id, true)),
+    ];
+
+    const result = deriveGrade3SkillSummaries({
+      studentId: 's1',
+      items: [ITEM_BASIC, ITEM_BASIC2, ITEM_BASIC3, ITEM_BASIC4],
+      mathAnswerEvents: events,
+      itemStates: [],
+      now: NOW,
+    });
+
+    expect(result[0].status).toBe('mastered');
+    expect(result[0].accuracy).toBe(1);
+    expect(result[0].itemCount).toBe(4);
+  });
+
+  it('stays strong when accuracy and attempts meet but item coverage < 4', () => {
     const events = Array.from({ length: 10 }, () => makeEvent('s1', ITEM_BASIC.id, true));
 
     const result = deriveGrade3SkillSummaries({
@@ -205,7 +230,8 @@ describe('status: strong and mastered', () => {
       now: NOW,
     });
 
-    expect(result[0].status).toBe('mastered');
+    // Only 1 distinct item → itemCount < MIN_ITEMS_MASTERED → stays strong.
+    expect(result[0].status).toBe('strong');
     expect(result[0].accuracy).toBe(1);
     expect(result[0].correctCount).toBe(10);
   });
@@ -290,7 +316,8 @@ describe('multiple items mapping to same skill', () => {
     expect(result[0].skillId).toBe('g3-mul-tables-basic');
     expect(result[0].attemptCount).toBe(10);
     expect(result[0].itemCount).toBe(2);
-    expect(result[0].status).toBe('mastered'); // 10 attempts, 100% accuracy
+    // 10 attempts, 100% accuracy, but only 2 distinct items < MIN_ITEMS_MASTERED (4) → strong.
+    expect(result[0].status).toBe('strong');
   });
 
   it('produces separate summaries for items that map to different skills', () => {
@@ -360,7 +387,8 @@ describe('item resolver function', () => {
 
     expect(result).toHaveLength(1);
     expect(result[0].skillId).toBe('g3-mul-tables-basic');
-    expect(result[0].status).toBe('mastered');
+    // 5 events on 1 distinct item → itemCount < MIN_ITEMS_MASTERED → strong.
+    expect(result[0].status).toBe('strong');
   });
 });
 

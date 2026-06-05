@@ -125,11 +125,19 @@ describe('inferGrade3SkillId — word problems', () => {
 // ── Fraction items ────────────────────────────────────────────────────────────
 
 describe('inferGrade3SkillId — fraction items', () => {
-  it('fraction_equivalent → g3-frac-equivalent', () =>
-    expect(inferGrade3SkillId(makeFractionEquivalentItem(1, 2, 2))).toBe('g3-frac-equivalent'));
+  // Unit fractions (n=1): FEQ_1_… → g3-frac-unit
+  it('fraction_equivalent with n=1 (unit fraction) → g3-frac-unit', () =>
+    expect(inferGrade3SkillId(makeFractionEquivalentItem(1, 2, 2))).toBe('g3-frac-unit'));
 
-  it('fraction_equivalent with different fractions', () =>
-    expect(inferGrade3SkillId(makeFractionEquivalentItem(1, 3, 3))).toBe('g3-frac-equivalent'));
+  it('fraction_equivalent with n=1 different denominator → g3-frac-unit', () =>
+    expect(inferGrade3SkillId(makeFractionEquivalentItem(1, 3, 3))).toBe('g3-frac-unit'));
+
+  // Non-unit fractions (n>1): FEQ_n_… → g3-frac-equivalent
+  it('fraction_equivalent with n=2 (non-unit) → g3-frac-equivalent', () =>
+    expect(inferGrade3SkillId(makeFractionEquivalentItem(2, 3, 2))).toBe('g3-frac-equivalent'));
+
+  it('fraction_equivalent with n=3 → g3-frac-equivalent', () =>
+    expect(inferGrade3SkillId(makeFractionEquivalentItem(3, 4, 2))).toBe('g3-frac-equivalent'));
 
   it('fraction_compare → g3-frac-compare', () =>
     expect(inferGrade3SkillId(makeFractionCompareItem(1, 2, 1, 3))).toBe('g3-frac-compare'));
@@ -223,7 +231,8 @@ describe('inferGrade3SkillId — all results are valid Grade 3 skill IDs', () =>
       makeWordProblem('ar', 2, 5),
       makeWordProblem('cmp', 3, 4),
       makeWordProblem('dv', 4, 3),
-      makeFractionEquivalentItem(1, 2, 2),
+      makeFractionEquivalentItem(1, 2, 2),   // n=1 → g3-frac-unit
+      makeFractionEquivalentItem(2, 3, 2),   // n=2 → g3-frac-equivalent
       makeFractionCompareItem(1, 2, 1, 3),
     ];
     for (const item of items) {

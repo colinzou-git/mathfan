@@ -4,6 +4,7 @@ import type { StudentSkillSummary, SkillSummaryStatus } from './skillMasteryEngi
 interface Props {
   skill: MasterySkillNode;
   summary?: StudentSkillSummary;
+  locked?: boolean;
   onClick: (skillId: string) => void;
 }
 
@@ -16,9 +17,10 @@ const STATUS_CONFIG: Record<SkillSummaryStatus, { color: string; bg: string; ico
 };
 
 const NEW_CONFIG = STATUS_CONFIG.new;
+const LOCKED_CONFIG = { color: '#9ca3af', bg: '#f9fafb', icon: '🔒', label: 'Locked' };
 
-export function SkillTile({ skill, summary, onClick }: Props) {
-  const cfg = summary ? STATUS_CONFIG[summary.status] : NEW_CONFIG;
+export function SkillTile({ skill, summary, locked, onClick }: Props) {
+  const cfg = locked ? LOCKED_CONFIG : (summary ? STATUS_CONFIG[summary.status] : NEW_CONFIG);
 
   return (
     <button
@@ -26,21 +28,27 @@ export function SkillTile({ skill, summary, onClick }: Props) {
         ...s.tile,
         background: cfg.bg,
         borderColor: cfg.color + '44',
+        opacity: locked ? 0.6 : 1,
+        cursor: locked ? 'default' : 'pointer',
       }}
-      onClick={() => onClick(skill.id)}
+      onClick={locked ? undefined : () => onClick(skill.id)}
+      disabled={locked}
       aria-label={`${skill.title}: ${cfg.label}`}
     >
       <div style={s.row}>
         <span style={{ fontSize: '18px' }}>{cfg.icon}</span>
         <div style={s.textBlock}>
           <div style={{ ...s.title, color: cfg.color }}>{skill.title}</div>
-          {summary && summary.attemptCount > 0 && (
+          {!locked && summary && summary.attemptCount > 0 && (
             <div style={s.stats}>
               {Math.round(summary.accuracy * 100)}% · {summary.attemptCount} tries
             </div>
           )}
-          {(!summary || summary.attemptCount === 0) && (
+          {!locked && (!summary || summary.attemptCount === 0) && (
             <div style={s.stats}>Not started yet</div>
+          )}
+          {locked && (
+            <div style={s.stats}>Complete prerequisites first</div>
           )}
         </div>
         <span style={{ ...s.badge, color: cfg.color, background: cfg.color + '22' }}>

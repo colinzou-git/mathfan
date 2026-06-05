@@ -35,16 +35,23 @@ export interface DeriveGrade3SkillSummariesArgs {
 const ACCURACY_NEEDS_PRACTICE = 0.60;
 const ACCURACY_MASTERED = 0.90;
 const ATTEMPTS_MASTERED = 5;
+// Require at least 4 distinct items to prevent mastery from repeated single-item drilling.
+const MIN_ITEMS_MASTERED = 4;
 
 function classifyStatus(
   attemptCount: number,
   accuracy: number,
   dueItemCount: number,
+  itemCount: number,
 ): SkillSummaryStatus {
   if (attemptCount === 0) return 'new';
   if (accuracy < ACCURACY_NEEDS_PRACTICE) return 'needs_practice';
   if (dueItemCount > 0) return 'review_due';
-  if (accuracy >= ACCURACY_MASTERED && attemptCount >= ATTEMPTS_MASTERED) return 'mastered';
+  if (
+    accuracy >= ACCURACY_MASTERED &&
+    attemptCount >= ATTEMPTS_MASTERED &&
+    itemCount >= MIN_ITEMS_MASTERED
+  ) return 'mastered';
   return 'strong';
 }
 
@@ -119,7 +126,7 @@ export function deriveGrade3SkillSummaries(
     return {
       skillId,
       studentId,
-      status: classifyStatus(attemptCount, accuracy, dueItemCount),
+      status: classifyStatus(attemptCount, accuracy, dueItemCount, skillItemIds.size),
       attemptCount,
       correctCount,
       accuracy,
