@@ -261,9 +261,19 @@ export function usePracticeSession(studentId: string) {
     // FSRS scheduling. Retries are logged for stats but don't distort the
     // spaced-repetition schedule.
     const isFirstAttempt = attemptNo === 1;
-    let updated = isFirstAttempt
-      ? applyReview(existing, result.reviewGrade, latencyMs, rawInput, now, { isCorrect: result.isCorrect })
-      : existing;
+    let updated: StudentItemState;
+    if (isFirstAttempt) {
+      try {
+        updated = applyReview(existing, result.reviewGrade, latencyMs, rawInput, now, { isCorrect: result.isCorrect });
+      } catch (err) {
+        // FSRS validation errors (e.g. negative delta_t from a future lastSeenAt due to
+        // clock drift) must not block the state update — skip FSRS scheduling for this attempt.
+        console.warn('[usePracticeSession] applyReview error; FSRS update skipped', err);
+        updated = existing;
+      }
+    } else {
+      updated = existing;
+    }
 
     // On first wrong attempt, detect misconception patterns and merge into state.
     if (isFirstAttempt && !result.isCorrect) {
