@@ -67,11 +67,11 @@ describe('planPracticeForSkill — division skill', () => {
     expect(cfg.mode).toBe('division');
   });
 
-  it('G3_OA_DIV_UNKNOWN_FACTOR specificItemIds includes DIV and UNK items', () => {
+  it('G3_OA_DIV_UNKNOWN_FACTOR specificItemIds includes only DIV items', () => {
     const cfg = planPracticeForSkill('G3_OA_DIV_UNKNOWN_FACTOR');
     expect(cfg.specificItemIds).toBeDefined();
     expect(cfg.specificItemIds!.some(id => id.startsWith('DIV_'))).toBe(true);
-    expect(cfg.specificItemIds!.some(id => id.startsWith('UNK_'))).toBe(true);
+    expect(cfg.specificItemIds!.some(id => id.startsWith('UNK_'))).toBe(false);
   });
 });
 
@@ -253,15 +253,9 @@ describe('makeItemFromId — area and geometry reconstruction', () => {
 //   - All specificItemIds must reconstruct to non-null items.
 //   - Numeric item answers must be finite (no NaN from 0÷0, no Infinity).
 //
-// For skills with a clean 1:1 credit mapping (explicit list below), every item
-// must also infer back to the expected skill ID.
-//
-// "Shared" skills whose items intentionally credit to multiple skill IDs:
-//   g3-mul-tables-basic / g3-mul-tables-advanced — mulItemIds uses b from
-//     TABLE_MIN..TABLE_MAX; when b > table boundary, bigTable maps to the other
-//     skill level. Shared by design — standard "table drill" behaviour.
-//   g3-div-within-100 / g3-div-mul-relationship — UNK_ items credit to the
-//     corresponding multiplication skill (unknown_factor itemType).
+// Every Grade 3 mastery-map focused-practice item must credit back to the
+// requested skill. Mixed review can still combine skills, but focused practice
+// must not silently train another map node.
 
 describe('planPracticeForSkill — item round-trip: all items reconstruct non-null', () => {
   const ALL_GRADE3_SKILL_IDS = GRADE3_MASTERY_MAP.map(n => n.id);
@@ -312,55 +306,49 @@ describe('planPracticeForSkill — every practiceable grade3 skill has specificI
   });
 });
 
-describe('planPracticeForSkill — item round-trip: skill credit (clean-mapping skills)', () => {
-  // Skills where every specificItemId credits back to the same skill via inferGrade3SkillId.
-  const CLEAN_MAPPING: Record<string, string> = {
-    'g3-mul-meaning':          'g3-mul-meaning',
-    'g3-mul-properties':       'g3-mul-properties',
-    'g3-div-meaning':          'g3-div-meaning',
-    'g3-frac-unit':            'g3-frac-unit',
-    'g3-frac-number-line':     'g3-frac-number-line',
-    'g3-frac-equivalent':      'g3-frac-equivalent',
-    'g3-frac-compare':         'g3-frac-compare',
-    'g3-area-concept':         'g3-area-concept',
-    'g3-area-formula':         'g3-area-formula',
-    'g3-perimeter':            'g3-perimeter',
-    'g3-geo-categories':       'g3-geo-categories',
-    'g3-geo-rectilinear-area': 'g3-geo-rectilinear-area',
-  };
-
-  for (const [skillId, expectedSkill] of Object.entries(CLEAN_MAPPING)) {
-    it(`${skillId}: every item credits to ${expectedSkill}`, () => {
-      const cfg = planPracticeForSkill(skillId);
-      expect(cfg.specificItemIds, `${skillId} should have specificItemIds`).toBeDefined();
+describe('planPracticeForSkill — focused mastery-map practice credits the requested skill', () => {
+  it('every Grade 3 mastery-map item infers back to its own skill', () => {
+    for (const node of GRADE3_MASTERY_MAP) {
+      const cfg = planPracticeForSkill(node.id);
+      expect(cfg.specificItemIds?.length, `${node.id} should have focused item ids`).toBeGreaterThan(0);
       for (const id of cfg.specificItemIds ?? []) {
         const item = makeItemFromId(id);
-        if (!item) continue;
+        expect(item, `${node.id} → "${id}" should reconstruct`).not.toBeNull();
         expect(
-          inferGrade3SkillId(item),
-          `${skillId} → item "${id}" should credit to ${expectedSkill}`,
-        ).toBe(expectedSkill);
+          inferGrade3SkillId(item!),
+          `${node.id} → "${id}" should credit to ${node.id}`,
+        ).toBe(node.id);
       }
-    });
-  }
-
-  it('g3-div-within-100: DIV_ items credit to g3-div-within-100', () => {
-    const cfg = planPracticeForSkill('g3-div-within-100');
-    for (const id of cfg.specificItemIds ?? []) {
-      if (!id.startsWith('DIV_')) continue; // UNK_ items shared with mul (see note above)
-      const item = makeItemFromId(id);
-      if (!item) continue;
-      expect(inferGrade3SkillId(item), `"${id}" should credit to g3-div-within-100`).toBe('g3-div-within-100');
     }
   });
 
-  it('g3-div-mul-relationship: DIV_ items credit to g3-div-mul-relationship', () => {
-    const cfg = planPracticeForSkill('g3-div-mul-relationship');
+  it('g3-mul-tables-basic has no item that credits to advanced tables', () => {
+    const cfg = planPracticeForSkill('g3-mul-tables-basic');
     for (const id of cfg.specificItemIds ?? []) {
-      if (!id.startsWith('DIV_')) continue;
       const item = makeItemFromId(id);
-      if (!item) continue;
-      expect(inferGrade3SkillId(item), `"${id}" should credit to g3-div-mul-relationship`).toBe('g3-div-mul-relationship');
+      expect(item, `"${id}" should reconstruct`).not.toBeNull();
+      expect(inferGrade3SkillId(item!), `"${id}" should not credit to advanced`).toBe('g3-mul-tables-basic');
+    }
+  });
+
+  it('division focused practice contains no UNK_ items', () => {
+    for (const skillId of ['g3-div-within-100', 'g3-div-mul-relationship']) {
+      const cfg = planPracticeForSkill(skillId);
+      expect(cfg.specificItemIds?.some(id => id.startsWith('UNK_')), `${skillId} should not use unknown-factor items`).toBe(false);
+    }
+  });
+
+  it('Grade 3 multiplication focused items do not include 11, 12, or 13 facts', () => {
+    for (const skillId of ['g3-mul-tables-basic', 'g3-mul-tables-advanced']) {
+      const cfg = planPracticeForSkill(skillId);
+      for (const id of cfg.specificItemIds ?? []) {
+        const match = id.match(/^MUL_(\d+)x(\d+)$/);
+        expect(match, `${skillId} → "${id}" should be a multiplication fact`).not.toBeNull();
+        const factors = [Number(match![1]), Number(match![2])];
+        expect(factors, `${skillId} → "${id}" should stay within 10x10 Grade 3 scope`).not.toContain(11);
+        expect(factors, `${skillId} → "${id}" should stay within 10x10 Grade 3 scope`).not.toContain(12);
+        expect(factors, `${skillId} → "${id}" should stay within 10x10 Grade 3 scope`).not.toContain(13);
+      }
     }
   });
 });

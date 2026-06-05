@@ -1,7 +1,6 @@
 import type { SessionConfig } from '../../types/math';
 import {
-  mulId, divId, unkId,
-  TABLE_MIN, TABLE_MAX,
+  mulId, divId,
 } from '../curriculum/multiplicationItems';
 import { fracEqId, fracCmpId } from '../curriculum/fractionItems';
 import { wordId } from '../curriculum/wordProblemItems';
@@ -32,38 +31,42 @@ const ADVANCED_TABLES = [6, 7, 8, 9, 10];   // G3_OA_MUL_FACTS_6_9 (includes 10)
 const DIV_WITHIN_DIVISORS = [2, 3, 4, 5];      // g3-div-within-100
 const DIV_ADVANCED_DIVISORS = [6, 7, 8, 9, 10]; // g3-div-mul-relationship
 
-function mulItemIds(tables: number[]): string[] {
+function mulItemIds(tables: number[], factors: number[]): string[] {
   const ids: string[] = [];
   for (const a of tables) {
-    for (let b = TABLE_MIN; b <= TABLE_MAX; b++) {
+    for (const b of factors) {
       ids.push(mulId(a, b));
     }
   }
   return ids;
 }
 
-function divItemIds(tables: number[]): string[] {
+function grade3BasicMulItemIds(): string[] {
+  const factors = [1, 2, 3, 4, 5];
+  return mulItemIds(factors, factors);
+}
+
+function grade3AdvancedMulItemIds(): string[] {
   const ids: string[] = [];
-  for (const divisor of tables) {
-    // Divisor 0 → undefined (0÷0 = NaN). Divisor 1 → trivial (any ÷ 1 = itself).
-    // TABLE_MIN = 2, so divisors below 2 produce items not in the global catalogue.
-    if (divisor < 2) continue;
-    for (let b = TABLE_MIN; b <= TABLE_MAX; b++) {
-      ids.push(divId(divisor * b, divisor));
+  for (let a = 1; a <= 10; a++) {
+    for (let b = 1; b <= 10; b++) {
+      if (Math.max(a, b) <= 5) continue;
+      if (a * b > 100) continue;
+      ids.push(mulId(a, b));
     }
   }
   return ids;
 }
 
-function unknownFactorItemIds(tables: number[]): string[] {
+function divItemIds(divisors: number[]): string[] {
   const ids: string[] = [];
-  for (const a of tables) {
-    // a=0 → 0×?=0 is degenerate. a=1 → UNK_k1 items are outside the static
-    // catalogue (generateUnknownFactorItems starts at TABLE_MIN=2) and have no
-    // fallback parser in makeItemFromId.
-    if (a < 2) continue;
-    for (let b = TABLE_MIN; b <= TABLE_MAX; b++) {
-      ids.push(unkId(a * b, a));
+  for (const divisor of divisors) {
+    // Divisor 0 → undefined (0÷0 = NaN). Divisor 1 → trivial (any ÷ 1 = itself).
+    // TABLE_MIN = 2, so divisors below 2 produce items not in the global catalogue.
+    if (divisor < 2) continue;
+    for (let quotient = 1; quotient <= 10; quotient++) {
+      const dividend = divisor * quotient;
+      if (dividend <= 100) ids.push(divId(dividend, divisor));
     }
   }
   return ids;
@@ -156,7 +159,9 @@ export function planPracticeForSkill(
   ) {
     return {
       mode: 'multiplication',
-      specificItemIds: mulItemIds(BASIC_TABLES),
+      specificItemIds: skillId === 'g3-mul-tables-basic'
+        ? grade3BasicMulItemIds()
+        : mulItemIds(BASIC_TABLES, [1, 2, 3, 4, 5, 10]),
       sessionLength,
     };
   }
@@ -165,7 +170,7 @@ export function planPracticeForSkill(
   if (skillId === 'G3_OA_MUL_FACTS_3_4') {
     return {
       mode: 'multiplication',
-      specificItemIds: mulItemIds(INTERMEDIATE_TABLES),
+      specificItemIds: mulItemIds(INTERMEDIATE_TABLES, [1, 2, 3, 4, 5, 10]),
       sessionLength,
     };
   }
@@ -177,7 +182,9 @@ export function planPracticeForSkill(
   ) {
     return {
       mode: 'multiplication',
-      specificItemIds: mulItemIds(ADVANCED_TABLES),
+      specificItemIds: skillId === 'g3-mul-tables-advanced'
+        ? grade3AdvancedMulItemIds()
+        : mulItemIds(ADVANCED_TABLES, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]),
       sessionLength,
     };
   }
@@ -187,10 +194,7 @@ export function planPracticeForSkill(
   if (skillId === 'G3_OA_DIV_UNKNOWN_FACTOR' || skillId === 'g3-div-within-100') {
     return {
       mode: 'division',
-      specificItemIds: [
-        ...divItemIds(DIV_WITHIN_DIVISORS),
-        ...unknownFactorItemIds(DIV_WITHIN_DIVISORS),
-      ],
+      specificItemIds: divItemIds(DIV_WITHIN_DIVISORS),
       sessionLength,
     };
   }
@@ -200,10 +204,7 @@ export function planPracticeForSkill(
   if (skillId === 'g3-div-mul-relationship') {
     return {
       mode: 'division',
-      specificItemIds: [
-        ...divItemIds(DIV_ADVANCED_DIVISORS),
-        ...unknownFactorItemIds(DIV_ADVANCED_DIVISORS),
-      ],
+      specificItemIds: divItemIds(DIV_ADVANCED_DIVISORS),
       sessionLength,
     };
   }

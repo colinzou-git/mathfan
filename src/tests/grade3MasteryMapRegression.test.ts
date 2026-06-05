@@ -90,54 +90,49 @@ describe('regression: every targeted item has a finite numeric answer', () => {
 
 // ── 4. Clean-mapped skills infer back correctly ───────────────────────────────
 
-describe('regression: clean-mapped skills infer back to correct skill ID', () => {
-  const CLEAN: Record<string, string> = {
-    'g3-mul-meaning':          'g3-mul-meaning',
-    'g3-mul-properties':       'g3-mul-properties',
-    'g3-div-meaning':          'g3-div-meaning',
-    'g3-frac-unit':            'g3-frac-unit',
-    'g3-frac-number-line':     'g3-frac-number-line',
-    'g3-frac-equivalent':      'g3-frac-equivalent',
-    'g3-frac-compare':         'g3-frac-compare',
-    'g3-area-concept':         'g3-area-concept',
-    'g3-area-formula':         'g3-area-formula',
-    'g3-perimeter':            'g3-perimeter',
-    'g3-geo-categories':       'g3-geo-categories',
-    'g3-geo-rectilinear-area': 'g3-geo-rectilinear-area',
-  };
-
-  for (const [skillId, expectedSkill] of Object.entries(CLEAN)) {
-    it(`${skillId}: all items credit back to ${expectedSkill}`, () => {
-      const cfg = planPracticeForSkill(skillId);
-      expect(cfg.specificItemIds).toBeDefined();
+describe('regression: focused mastery-map practice credits the selected skill', () => {
+  it('every GRADE3_MASTERY_MAP item reconstructs and infers to its own skill', () => {
+    for (const node of GRADE3_MASTERY_MAP) {
+      const cfg = planPracticeForSkill(node.id);
+      expect(cfg.specificItemIds?.length, `${node.id} should have focused item ids`).toBeGreaterThan(0);
       for (const id of cfg.specificItemIds ?? []) {
         const item = makeItemFromId(id);
-        if (!item) continue;
+        expect(item, `${node.id} -> "${id}" should reconstruct`).not.toBeNull();
         expect(
-          inferGrade3SkillId(item),
-          `"${id}" should credit to ${expectedSkill}`,
-        ).toBe(expectedSkill);
+          inferGrade3SkillId(item!),
+          `"${id}" should credit to ${node.id}`,
+        ).toBe(node.id);
       }
-    });
-  }
-
-  it('g3-div-within-100: DIV_ items credit to g3-div-within-100', () => {
-    const cfg = planPracticeForSkill('g3-div-within-100');
-    for (const id of cfg.specificItemIds ?? []) {
-      if (!id.startsWith('DIV_')) continue;
-      const item = makeItemFromId(id);
-      if (!item) continue;
-      expect(inferGrade3SkillId(item)).toBe('g3-div-within-100');
     }
   });
 
-  it('g3-div-mul-relationship: DIV_ items credit to g3-div-mul-relationship', () => {
-    const cfg = planPracticeForSkill('g3-div-mul-relationship');
+  it('g3-mul-tables-basic has no item that infers to g3-mul-tables-advanced', () => {
+    const cfg = planPracticeForSkill('g3-mul-tables-basic');
     for (const id of cfg.specificItemIds ?? []) {
-      if (!id.startsWith('DIV_')) continue;
       const item = makeItemFromId(id);
-      if (!item) continue;
-      expect(inferGrade3SkillId(item)).toBe('g3-div-mul-relationship');
+      expect(item, `"${id}" should reconstruct`).not.toBeNull();
+      expect(inferGrade3SkillId(item!)).toBe('g3-mul-tables-basic');
+    }
+  });
+
+  it('division focused practice contains no UNK_ items', () => {
+    for (const skillId of ['g3-div-within-100', 'g3-div-mul-relationship']) {
+      const cfg = planPracticeForSkill(skillId);
+      expect(cfg.specificItemIds?.some(id => id.startsWith('UNK_'))).toBe(false);
+    }
+  });
+
+  it('Grade 3 multiplication focused items do not include 11, 12, or 13 facts', () => {
+    for (const skillId of ['g3-mul-tables-basic', 'g3-mul-tables-advanced']) {
+      const cfg = planPracticeForSkill(skillId);
+      for (const id of cfg.specificItemIds ?? []) {
+        const match = id.match(/^MUL_(\d+)x(\d+)$/);
+        expect(match, `${skillId} -> "${id}" should be a multiplication fact`).not.toBeNull();
+        const factors = [Number(match![1]), Number(match![2])];
+        expect(factors).not.toContain(11);
+        expect(factors).not.toContain(12);
+        expect(factors).not.toContain(13);
+      }
     }
   });
 });
