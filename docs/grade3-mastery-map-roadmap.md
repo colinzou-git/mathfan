@@ -695,7 +695,7 @@ Created visualModelUtils.ts with hasVisualModel(), parseFractionFromPrompt(), ge
 
 ### Phase 22 — Final regression hardening
 
-Status: TODO
+Status: DONE
 
 Goal:
 Add comprehensive regression tests for the Grade 3 mastery map.
@@ -713,6 +713,9 @@ Tests required:
 Acceptance criteria:
 * All regression tests pass.
 * `npm run ci` passes.
+
+Implementation note:
+Created grade3MasteryMapRegression.test.ts with 43 regression tests covering: every skill has specificItemIds (16 per-skill tests), all items reconstruct non-null, all numeric items have finite answers, clean-mapped skills infer back correctly, brand-new student gets a useful focus skill, diagnostic uses checkAnswer() for normalization, diagnostic division items credit to g3-div- skills, and practiceReturn routing logic. 553 tests pass, npm run ci passes.
 
 ---
 
