@@ -4,7 +4,7 @@
  * Builds a short diagnostic session (10–12 questions) that covers:
  * - easy multiplication facts (×2, ×5)
  * - harder multiplication facts (×7, ×8)
- * - division as unknown factor
+ * - division facts
  * - equal-groups word problem
  * - array meaning word problem
  *
@@ -58,7 +58,7 @@ export function buildDiagnosticPlan(sessionId: string): DiagnosticPlan {
     sessionId,
     items,
     description:
-      'Quick check of times tables, unknown factors, and multiplication word problems.',
+      'Quick check of times tables, division facts, and multiplication word problems.',
   };
 }
 

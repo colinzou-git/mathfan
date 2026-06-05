@@ -16,7 +16,7 @@ import { buildDiagnosticPlan } from './diagnosticPlanner';
 import { QuestionRenderer } from '../practice/QuestionRenderer';
 import { NumPad } from '../../components/NumPad';
 import type { MathAnswerEvent } from '../learning/learningEvents';
-import { recordPracticeAnswer } from '../learning/recordAnswer';
+import { recordDiagnosticAnswerWithRetry } from './diagnosticPersistence';
 import { checkAnswer } from '../practice/answerChecker';
 import { applyReview, createInitialState } from '../scheduler/scheduler';
 import { detectMistakes } from '../mastery/misconceptionEngine';
@@ -27,7 +27,7 @@ import { appNow } from '../time/clock';
 interface Props {
   studentId: string;
   /** Called when all diagnostic questions are answered. */
-  onComplete: () => void;
+  onComplete: () => void | Promise<void>;
   /** Called if the student wants to exit early. */
   onCancel: () => void;
 }
@@ -40,6 +40,7 @@ interface QuestionResult {
 }
 
 type DiagPhase = 'intro' | 'active' | 'done';
+type SaveState = 'idle' | 'saving' | 'error';
 
 const FEEDBACK_MS = 1200;
 
@@ -53,6 +54,7 @@ export function DiagnosticSession({ studentId, onComplete, onCancel }: Props) {
   const [input, setInput] = useState('');
   const [showFeedback, setShowFeedback] = useState<'correct' | 'wrong' | null>(null);
   const [results, setResults] = useState<QuestionResult[]>([]);
+  const [saveState, setSaveState] = useState<SaveState>('idle');
   const startTimeRef = useRef<number>(0);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Collect pending DB writes so we can await them before showing the map.
@@ -143,8 +145,9 @@ export function DiagnosticSession({ studentId, onComplete, onCancel }: Props) {
         createdAt,
       };
 
-      await recordPracticeAnswer({ event, updatedState: updated, attempt });
-    })().catch(console.warn) as Promise<void>;
+      await recordDiagnosticAnswerWithRetry({ event, updatedState: updated, attempt });
+    })();
+    void writePromise.catch(() => {});
 
     pendingWritesRef.current.push(writePromise);
 
@@ -192,6 +195,16 @@ export function DiagnosticSession({ studentId, onComplete, onCancel }: Props) {
 
   if (phase === 'done') {
     const correct = results.filter(r => r.isCorrect).length;
+    const complete = async () => {
+      setSaveState('saving');
+      try {
+        await Promise.all(pendingWritesRef.current);
+        await onComplete();
+      } catch (err) {
+        console.warn('[DiagnosticSession] could not save diagnostic results', err);
+        setSaveState('error');
+      }
+    };
     return (
       <div style={s.container}>
         <div style={s.card}>
@@ -201,13 +214,14 @@ export function DiagnosticSession({ studentId, onComplete, onCancel }: Props) {
             You answered {correct} out of {total} correctly.
           </p>
           <p style={s.body}>
-            Your Math Map is updated with your results.
+            {saveState === 'saving'
+              ? 'Saving your results...'
+              : saveState === 'error'
+                ? 'Could not save results. Try again.'
+                : 'Your Math Map will update after your results are saved.'}
           </p>
-          <button style={s.startBtn} onClick={async () => {
-            await Promise.all(pendingWritesRef.current);
-            onComplete();
-          }}>
-            See my Math Map
+          <button style={s.startBtn} disabled={saveState === 'saving'} onClick={complete}>
+            {saveState === 'saving' ? 'Saving...' : saveState === 'error' ? 'Try again' : 'See my Math Map'}
           </button>
         </div>
       </div>

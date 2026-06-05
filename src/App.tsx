@@ -19,6 +19,7 @@ import { useSync, initAuth } from './features/sync/useSync';
 import { pushLocal } from './features/sync/driveSync';
 import { currentState as authState } from './features/auth/googleAuth';
 import { applyTheme } from './features/theme/themes';
+import { syncDiagnosticCompletionIfSignedIn } from './features/diagnosis/diagnosticCompletion';
 
 type Screen =
   | 'loading' | 'setup' | 'dashboard'
@@ -230,7 +231,14 @@ export default function App() {
     return (
       <DiagnosticSession
         studentId={profile.id}
-        onComplete={() => setScreen('mastery-map')}
+        onComplete={async () => {
+          try {
+            await syncDiagnosticCompletionIfSignedIn(authState().signedIn);
+          } catch (err) {
+            console.warn('[App] diagnostic sync failed', err);
+          }
+          setScreen('mastery-map');
+        }}
         onCancel={() => setScreen('mastery-map')}
       />
     );

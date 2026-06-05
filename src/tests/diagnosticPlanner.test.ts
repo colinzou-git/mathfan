@@ -61,6 +61,14 @@ describe('buildDiagnosticPlan', () => {
     expect(plan.description.length).toBeGreaterThan(0);
   });
 
+  it('description matches real division facts and does not mention unknown factors', () => {
+    const plan = buildDiagnosticPlan('test-session-1');
+    expect(plan.items.some(item => item.itemType === 'division_fact')).toBe(true);
+    expect(plan.items.some(item => item.itemType === 'unknown_factor')).toBe(false);
+    expect(plan.description).toMatch(/division facts/i);
+    expect(plan.description).not.toMatch(/unknown factors?/i);
+  });
+
   it('sessionId is stored in the plan', () => {
     const plan = buildDiagnosticPlan('my-session-id');
     expect(plan.sessionId).toBe('my-session-id');
