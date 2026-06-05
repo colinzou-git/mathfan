@@ -2,6 +2,8 @@ import type { SessionConfig, StudentItemState } from '../../types/math';
 import type { StudentSkillSummary } from './skillMasteryEngine';
 import { planPracticeForSkill } from './skillPracticePlanner';
 import { GRADE3_MASTERY_MAP } from './grade3MasteryMap';
+import { inferGrade3SkillId } from './skillMapping';
+import { makeItemFromId } from '../curriculum/makeItemFromId';
 
 export interface TodayPlan {
   warmup: SessionConfig | null;
@@ -43,6 +45,10 @@ function prerequisitesSatisfied(skillId: string, summaries: Map<string, StudentS
   });
 }
 
+function isSkillUnlocked(skillId: string, summaryMap: Map<string, StudentSkillSummary>): boolean {
+  return prerequisitesSatisfied(skillId, summaryMap);
+}
+
 function pickFocusSkill(
   summaries: StudentSkillSummary[],
   summaryMap: Map<string, StudentSkillSummary>,
@@ -52,8 +58,7 @@ function pickFocusSkill(
   const candidates = summaries
     .filter(s => {
       if (s.status === 'mastered') return false;
-      if (s.status === 'new') return prerequisitesSatisfied(s.skillId, summaryMap);
-      return true;
+      return isSkillUnlocked(s.skillId, summaryMap);
     })
     .sort((a, b) => {
       const pa = STATUS_PRIORITY[a.status] ?? 5;
@@ -65,10 +70,13 @@ function pickFocusSkill(
   return candidates[0] ?? null;
 }
 
-function buildWarmup(summaries: StudentSkillSummary[]): SessionConfig | null {
-  // Warm-up: pick the highest-accuracy non-mastered skill (easiest for today)
+function buildWarmup(
+  summaries: StudentSkillSummary[],
+  summaryMap: Map<string, StudentSkillSummary>,
+): SessionConfig | null {
+  // Warm-up: pick the highest-accuracy non-mastered unlocked skill (easiest for today)
   const easiest = summaries
-    .filter(s => s.status !== 'new' && s.status !== 'mastered')
+    .filter(s => s.status !== 'new' && s.status !== 'mastered' && isSkillUnlocked(s.skillId, summaryMap))
     .sort((a, b) => b.accuracy - a.accuracy)[0];
 
   if (!easiest) return null;
@@ -76,10 +84,24 @@ function buildWarmup(summaries: StudentSkillSummary[]): SessionConfig | null {
   return planPracticeForSkill(easiest.skillId, { sessionLength: 5 });
 }
 
-function buildReview(itemStates: StudentItemState[], now: Date): SessionConfig | null {
+function buildReview(
+  itemStates: StudentItemState[],
+  now: Date,
+  summaryMap: Map<string, StudentSkillSummary>,
+): SessionConfig | null {
   const nowStr = now.toISOString();
   const dueIds = itemStates
-    .filter(s => s.nextDueAt != null && s.nextDueAt <= nowStr)
+    .filter(s => {
+      if (s.nextDueAt == null || s.nextDueAt > nowStr) return false;
+      // Must reconstruct from ID (filters off-map/invalid IDs)
+      const item = makeItemFromId(s.itemId);
+      if (!item) return false;
+      // Must map to a Grade 3 mastery skill
+      const skillId = inferGrade3SkillId(item);
+      if (!skillId) return false;
+      // Must belong to an unlocked skill
+      return isSkillUnlocked(skillId, summaryMap);
+    })
     .map(s => s.itemId);
 
   if (dueIds.length === 0) return null;
@@ -118,8 +140,8 @@ export function planToday(args: PlanTodayArgs): TodayPlan {
     ? planPracticeForSkill(focusSkillId, { sessionLength: 10 })
     : null;
 
-  // Warm-up: easiest skill (skip if the focus IS the easiest)
-  const warmupConfig = buildWarmup(skillSummaries);
+  // Warm-up: easiest unlocked skill (skip if the focus IS the easiest)
+  const warmupConfig = buildWarmup(skillSummaries, summaryMap);
   const warmup = warmupConfig &&
     // Skip warmup if it would be the same skill as focus
     (focusSkillSummary == null ||
@@ -127,8 +149,8 @@ export function planToday(args: PlanTodayArgs): TodayPlan {
     ? warmupConfig
     : null;
 
-  // Review: due items
-  const review = buildReview(itemStates, now);
+  // Review: due items from unlocked Grade 3 skills only
+  const review = buildReview(itemStates, now, summaryMap);
 
   return {
     warmup,

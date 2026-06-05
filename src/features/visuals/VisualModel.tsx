@@ -52,7 +52,11 @@ export function VisualModel({ item, color, revealAnswer = false }: Props) {
         rows={factA}
         cols={factB}
         color={color}
-        ariaLabel={`Array showing ${factA} rows of ${factB} dots = ${factA * factB} total`}
+        ariaLabel={
+          revealAnswer
+            ? `Array showing ${factA} rows and ${factB} columns of dots, ${factA * factB} total`
+            : `Array showing ${factA} rows and ${factB} columns of dots`
+        }
       />
     );
   }
@@ -104,15 +108,15 @@ export function VisualModel({ item, color, revealAnswer = false }: Props) {
 
   // ── Area model ───────────────────────────────────────────────────────────
   if (itemType === 'area_unit_squares' && factA != null && factB != null) {
-    return <AreaGrid rows={factA} cols={factB} mode="unit_squares" color={color} />;
+    return <AreaGrid rows={factA} cols={factB} mode="unit_squares" color={color} revealAnswer={revealAnswer} />;
   }
 
   if (itemType === 'area_rectangle' && factA != null && factB != null) {
-    return <AreaGrid rows={factA} cols={factB} mode="rectangle" color={color} />;
+    return <AreaGrid rows={factA} cols={factB} mode="rectangle" color={color} revealAnswer={revealAnswer} />;
   }
 
   if (itemType === 'perimeter_rectangle' && factA != null && factB != null) {
-    return <AreaGrid rows={factA} cols={factB} mode="perimeter" color={color} />;
+    return <AreaGrid rows={factA} cols={factB} mode="perimeter" color={color} revealAnswer={revealAnswer} />;
   }
 
   // ── Geometry shape ────────────────────────────────────────────────────────

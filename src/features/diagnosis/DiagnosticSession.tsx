@@ -57,8 +57,10 @@ export function DiagnosticSession({ studentId, onComplete, onCancel }: Props) {
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const startTimeRef = useRef<number>(0);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Collect pending DB writes so we can await them before showing the map.
-  const pendingWritesRef = useRef<Promise<void>[]>([]);
+  // Retryable write jobs: each is a thunk that calls recordDiagnosticAnswerWithRetry
+  // with a pre-captured payload. Running the thunk fresh on each complete() call
+  // lets the "Try again" button actually retry instead of re-awaiting a settled promise.
+  const pendingWritesRef = useRef<Array<() => Promise<void>>>([]);
 
   const items = plan.items;
   const currentItem = items[index];
@@ -91,8 +93,10 @@ export function DiagnosticSession({ studentId, onComplete, onCancel }: Props) {
     const now = appNow();
     const createdAt = now.toISOString();
 
-    // Write through the same durable path as practice (event + itemState + attempt).
-    const writePromise = (async () => {
+    // Capture the payload asynchronously, then register a retryable write job.
+    // Storing a thunk (not a settled promise) means complete() always runs a fresh
+    // call to recordDiagnosticAnswerWithRetry, so "Try again" actually retries.
+    const capturedPayload = (async () => {
       let existing = await itemStateRepo.get(studentId, currentItem.id);
       if (!existing) existing = createInitialState(studentId, currentItem);
 
@@ -145,11 +149,13 @@ export function DiagnosticSession({ studentId, onComplete, onCancel }: Props) {
         createdAt,
       };
 
-      await recordDiagnosticAnswerWithRetry({ event, updatedState: updated, attempt });
+      return { event, updatedState: updated, attempt };
     })();
-    void writePromise.catch(() => {});
 
-    pendingWritesRef.current.push(writePromise);
+    pendingWritesRef.current.push(async () => {
+      const payload = await capturedPayload;
+      await recordDiagnosticAnswerWithRetry(payload);
+    });
 
     setResults(prev => [...prev, result]);
     setShowFeedback(isCorrect ? 'correct' : 'wrong');
@@ -198,7 +204,7 @@ export function DiagnosticSession({ studentId, onComplete, onCancel }: Props) {
     const complete = async () => {
       setSaveState('saving');
       try {
-        await Promise.all(pendingWritesRef.current);
+        await Promise.all(pendingWritesRef.current.map(job => job()));
         await onComplete();
       } catch (err) {
         console.warn('[DiagnosticSession] could not save diagnostic results', err);

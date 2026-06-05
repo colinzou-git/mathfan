@@ -93,3 +93,59 @@ describe('hasVisualModel — geometry', () => {
     expect(hasVisualModel(item)).toBe(true);
   });
 });
+
+describe('VisualModel — answer-leakage: revealAnswer=false hides computed values', () => {
+  it('3×4 multiplication array does not expose 12 in aria-label', () => {
+    const item = makeMultiplicationItem(3, 4);
+    render(createElement(VisualModel, { item, revealAnswer: false }));
+    const img = screen.getByRole('img');
+    expect(img.getAttribute('aria-label')).not.toMatch(/12/);
+    expect(img.getAttribute('aria-label')).not.toMatch(/total/i);
+  });
+
+  it('3×4 multiplication array includes 12 when revealAnswer=true', () => {
+    const item = makeMultiplicationItem(3, 4);
+    render(createElement(VisualModel, { item, revealAnswer: true }));
+    const img = screen.getByRole('img');
+    expect(img.getAttribute('aria-label')).toMatch(/12/);
+  });
+
+  it('area_rectangle 3×4 does not expose area 12 in aria-label when revealAnswer=false', () => {
+    const item = makeAreaRectangleItem(3, 4);
+    render(createElement(VisualModel, { item, revealAnswer: false }));
+    const img = screen.getByRole('img');
+    expect(img.getAttribute('aria-label')).not.toMatch(/area 12/i);
+    expect(img.getAttribute('aria-label')).not.toMatch(/12 square/i);
+  });
+
+  it('area_rectangle 3×4 includes area 12 when revealAnswer=true', () => {
+    const item = makeAreaRectangleItem(3, 4);
+    render(createElement(VisualModel, { item, revealAnswer: true }));
+    const img = screen.getByRole('img');
+    expect(img.getAttribute('aria-label')).toMatch(/12/);
+  });
+
+  it('perimeter_rectangle 3×5 does not expose perimeter 16 in aria-label when revealAnswer=false', () => {
+    const item = makePerimeterRectangleItem(3, 5);
+    render(createElement(VisualModel, { item, revealAnswer: false }));
+    const img = screen.getByRole('img');
+    expect(img.getAttribute('aria-label')).not.toMatch(/perimeter/i);
+    expect(img.getAttribute('aria-label')).not.toMatch(/16/);
+  });
+
+  it('perimeter_rectangle 3×5 includes perimeter 16 when revealAnswer=true', () => {
+    const item = makePerimeterRectangleItem(3, 5);
+    render(createElement(VisualModel, { item, revealAnswer: true }));
+    const img = screen.getByRole('img');
+    expect(img.getAttribute('aria-label')).toMatch(/perimeter/i);
+    expect(img.getAttribute('aria-label')).toMatch(/16/);
+  });
+
+  it('area_unit_squares 3×4 does not expose total 12 in aria-label when revealAnswer=false', () => {
+    const item = makeAreaUnitSquaresItem(3, 4);
+    render(createElement(VisualModel, { item, revealAnswer: false }));
+    const img = screen.getByRole('img');
+    expect(img.getAttribute('aria-label')).not.toMatch(/12/);
+    expect(img.getAttribute('aria-label')).not.toMatch(/total/i);
+  });
+});

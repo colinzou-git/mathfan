@@ -11,11 +11,12 @@ interface Props {
   cols: number;   // factB
   mode: 'unit_squares' | 'rectangle' | 'perimeter';
   color?: string;
+  revealAnswer?: boolean;
 }
 
 const DEFAULT_COLOR = '#4f46e5';
 
-export function AreaGrid({ rows, cols, mode, color = DEFAULT_COLOR }: Props) {
+export function AreaGrid({ rows, cols, mode, color = DEFAULT_COLOR, revealAnswer = false }: Props) {
   const r = Math.max(1, Math.min(rows, 10));
   const c = Math.max(1, Math.min(cols, 10));
 
@@ -28,7 +29,11 @@ export function AreaGrid({ rows, cols, mode, color = DEFAULT_COLOR }: Props) {
     return (
       <div
         role="img"
-        aria-label={`Grid of ${r} rows and ${c} columns of unit squares, ${r * c} total`}
+        aria-label={
+          revealAnswer
+            ? `Grid of ${r} rows and ${c} columns of unit squares, ${r * c} total`
+            : `Grid of ${r} rows and ${c} columns of unit squares`
+        }
         style={{ display: 'inline-block', padding: '8px' }}
       >
         <svg width={gridW} height={gridH} viewBox={`0 0 ${gridW} ${gridH}`} aria-hidden="true" style={{ display: 'block' }}>
@@ -54,8 +59,12 @@ export function AreaGrid({ rows, cols, mode, color = DEFAULT_COLOR }: Props) {
   const svgH = hPx + LP * 2;
   const fill = mode === 'rectangle' ? color + '22' : 'none';
   const ariaLabel = mode === 'rectangle'
-    ? `Rectangle ${c} units wide by ${r} units tall, area ${r * c} square units`
-    : `Rectangle with length ${c} and width ${r}, perimeter ${2 * (r + c)} units`;
+    ? revealAnswer
+      ? `Rectangle ${c} units wide by ${r} units tall, area ${r * c} square units`
+      : `Rectangle ${c} units wide by ${r} units tall`
+    : revealAnswer
+      ? `Rectangle with length ${c} and width ${r}, perimeter ${2 * (r + c)} units`
+      : `Rectangle with length ${c} and width ${r}`;
 
   return (
     <div role="img" aria-label={ariaLabel} style={{ display: 'inline-block', padding: '4px' }}>
