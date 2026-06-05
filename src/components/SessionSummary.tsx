@@ -19,6 +19,7 @@ interface Props {
   wasQuit?: boolean;
   onDone: () => void;
   onPlayAgain?: () => void;
+  onBack?: () => void;
 }
 
 export function SessionSummary({
@@ -36,6 +37,7 @@ export function SessionSummary({
   wasQuit,
   onDone,
   onPlayAgain,
+  onBack,
 }: Props) {
   const firstTryPct = completedCount ? Math.round((firstTryCount / completedCount) * 100) : 0;
   const learningMoments = correctedCount + repeatedCount;
@@ -141,6 +143,11 @@ export function SessionSummary({
           {onPlayAgain && (
             <button style={s.secondaryBtn} onClick={onPlayAgain}>
               Practice Again
+            </button>
+          )}
+          {onBack && (
+            <button style={s.secondaryBtn} onClick={onBack}>
+              ← Back
             </button>
           )}
           <button style={s.primaryBtn} onClick={onDone}>

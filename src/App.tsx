@@ -32,6 +32,7 @@ export default function App() {
   const [achievementFilter, setAchievementFilter] = useState<AchievementFilter>('total');
   const [achievementData, setAchievementData] = useState<TodayAchievementData | null>(null);
   const { auth, syncStatus, lastSyncedAt, syncError, handleSignIn, handleSignOut, manualSync } = useSync();
+  const [practiceReturn, setPracticeReturn] = useState<Screen>('dashboard');
 
   // After a successful sync, refresh the profile from DB.
   // This handles the case where Drive data was merged back onto a fresh install:
@@ -94,6 +95,7 @@ export default function App() {
   };
 
   const startPractice = (cfg: SessionConfig) => {
+    setPracticeReturn(screen);
     setSessionConfig(cfg);
     setScreen('practice');
   };
@@ -154,7 +156,7 @@ export default function App() {
         studentId={profile.id}
         lastSyncedAt={lastSyncedAt}
         onBack={() => setScreen('dashboard')}
-        onStartPractice={cfg => { setSessionConfig(cfg); setScreen('practice'); }}
+        onStartPractice={startPractice}
       />
     );
   }
@@ -165,7 +167,7 @@ export default function App() {
         studentId={profile.id}
         settings={profile.settings}
         onDone={handleSessionDone}
-        onStartPractice={cfg => { setSessionConfig(cfg); setScreen('practice'); }}
+        onStartPractice={startPractice}
       />
     );
   }
@@ -178,7 +180,7 @@ export default function App() {
         defaultCount={profile.settings.sessionLength ?? 10}
         mode="daily_review"
         onBack={() => setScreen('dashboard')}
-        onStart={cfg => { setSessionConfig(cfg); setScreen('practice'); }}
+        onStart={startPractice}
       />
     );
   }
@@ -189,12 +191,14 @@ export default function App() {
         spec={specFor(selectedOp, profile.gradeLevel)}
         defaultCount={profile.settings.sessionLength ?? 10}
         onBack={() => setScreen('dashboard')}
-        onStart={cfg => { setSessionConfig(cfg); setScreen('practice'); }}
+        onStart={startPractice}
       />
     );
   }
 
   if (screen === 'practice' && sessionConfig) {
+    const backToScreen: Screen | null =
+      practiceReturn === 'mastery-map' || practiceReturn === 'stats' ? practiceReturn : null;
     return (
       <PracticeScreen
         studentId={profile.id}
@@ -207,6 +211,12 @@ export default function App() {
           setScreen('loading');
           setTimeout(() => setScreen('practice'), 40);
         }}
+        onBack={backToScreen
+          ? () => {
+              if (authState().signedIn) pushLocal().catch(console.warn);
+              setScreen(backToScreen);
+            }
+          : undefined}
       />
     );
   }
@@ -225,7 +235,7 @@ export default function App() {
     <StudentDashboard
       profile={profile}
       lastSyncedAt={lastSyncedAt}
-      onStartDailyReview={(cfg) => { setSessionConfig(cfg); setScreen('practice'); }}
+      onStartDailyReview={startPractice}
       onPickOperation={pickOperation}
       onOpenStats={() => setScreen('stats')}
       onOpenSettings={() => setScreen('settings')}

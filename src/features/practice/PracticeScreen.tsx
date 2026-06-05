@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, useCallback } from 'react';
 import type { SessionConfig, StudentSettings } from '../../types/math';
 import { db } from '../../db/dexie';
 import { usePracticeSession } from './usePracticeSession';
@@ -7,8 +7,13 @@ import { SessionSummary } from '../../components/SessionSummary';
 import { SettingsOverlay } from '../../components/SettingsOverlay';
 import { TutorChat } from '../ai/TutorChat';
 import { speakProblem, speakFeedback, stopSpeech } from '../audio/speech';
+import { VisualModel } from '../visuals/VisualModel';
 
 const AUTO_ADVANCE_MS = 700;
+
+const VISUAL_ITEM_TYPES = new Set([
+  'area_unit_squares', 'area_rectangle', 'perimeter_rectangle', 'geometry_vocabulary',
+]);
 
 interface Props {
   studentId: string;
@@ -18,10 +23,11 @@ interface Props {
   onDone: () => void;
   onOpenSettings?: () => void;
   onPlayAgain?: () => void;
+  onBack?: () => void;
 }
 
 export function PracticeScreen({
-  studentId, config, settings, onUpdateSettings, onDone, onOpenSettings, onPlayAgain,
+  studentId, config, settings, onUpdateSettings, onDone, onOpenSettings, onPlayAgain, onBack,
 }: Props) {
   const { state, startSession, submitAnswer, nextQuestion } = usePracticeSession(studentId);
   const [input, setInput] = useState('');
@@ -31,6 +37,12 @@ export function PracticeScreen({
   const [quitting, setQuitting] = useState(false); // show summary with partial data
   const inputRef = useRef<HTMLInputElement>(null);
   const autoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Always-current shadow of `input` state — kept in sync via useLayoutEffect
+  // (runs synchronously after every commit) so the keyboard handler registered
+  // via useEffect (a macro-task) never reads a stale partial value when the
+  // user types the last digit and immediately presses Enter in the same frame.
+  const inputLatestRef = useRef<string>('');
+  useLayoutEffect(() => { inputLatestRef.current = input; });
 
   // ── Start ─────────────────────────────────────────────────────────────────
 
@@ -162,7 +174,9 @@ export function PracticeScreen({
         }
         if (e.key === 'Enter') {
           e.preventDefault();
-          if (input.trim()) { submitAnswer(input); setInput(''); }
+          // Read from ref (not closure) so rapid typing doesn't submit a stale partial value.
+          const val = inputLatestRef.current;
+          if (val.trim()) { submitAnswer(val); setInput(''); }
         }
       }
     };
@@ -170,7 +184,7 @@ export function PracticeScreen({
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.phase, state.currentItem, input, showSettings, showQuit, showTutor]);
+  }, [state.phase, state.currentItem, showSettings, showQuit, showTutor]);
 
   // ── Render: summary (complete or early quit) ──────────────────────────────
 
@@ -192,6 +206,7 @@ export function PracticeScreen({
         wasQuit={quitting}
         onDone={onDone}
         onPlayAgain={quitting ? undefined : onPlayAgain}
+        onBack={onBack}
       />
     );
   }
@@ -215,6 +230,7 @@ export function PracticeScreen({
     || state.currentItem?.itemType === 'decimal_sub';
   const progress = state.totalPlanned
     ? Math.round((state.completedCount / state.totalPlanned) * 100) : 0;
+  const isVisualItem = VISUAL_ITEM_TYPES.has(state.currentItem?.itemType ?? '');
 
   const submitChoice = (choice: string) => {
     if (isCorrect) return;
@@ -318,7 +334,15 @@ export function PracticeScreen({
 
         {/* Question zone */}
         <div className="drill-q">
-          <div style={st.prompt}>{state.currentItem?.prompt}</div>
+          <div style={{ ...st.prompt, fontSize: isVisualItem ? '24px' : '52px', letterSpacing: isVisualItem ? 'normal' : '-1px' }}>
+            {state.currentItem?.prompt}
+          </div>
+
+          {isVisualItem && state.currentItem && (
+            <div style={{ margin: '10px 0 6px', display: 'flex', justifyContent: 'center' }}>
+              <VisualModel item={state.currentItem} />
+            </div>
+          )}
 
           {isChoice ? (
             <div style={st.choiceDisplay}>

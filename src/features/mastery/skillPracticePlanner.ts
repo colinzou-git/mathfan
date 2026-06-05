@@ -87,6 +87,29 @@ function equalGroupsWordItemIds(): string[] {
   return ids;
 }
 
+function divisionWordItemIds(): string[] {
+  // Division word problems: schema 'dv', "p items shared into a groups → b each"
+  const ids: string[] = [];
+  for (let a = 2; a <= 6; a++) {
+    for (let b = 2; b <= 10; b++) {
+      ids.push(wordId('dv', a, b));
+    }
+  }
+  return ids;
+}
+
+function fracUnitItemIds(): string[] {
+  // Equivalent-fraction items for unit fractions (n=1): 1/2, 1/3, 1/4, 1/6, 1/8
+  const unitDenoms = [2, 3, 4, 6, 8];
+  const ids: string[] = [];
+  for (const d of unitDenoms) {
+    for (let mult = 2; mult <= 3; mult++) {
+      ids.push(fracEqId(1, d, d * mult));
+    }
+  }
+  return ids;
+}
+
 /**
  * Convert a Grade 3 skill ID to a SessionConfig.
  *
@@ -174,16 +197,45 @@ export function planPracticeForSkill(
     };
   }
 
-  // ── G3_OA_WORD_EQUAL_GROUPS (also: g3-mul-meaning, g3-div-meaning) ───────────
+  // ── G3_OA_WORD_EQUAL_GROUPS / g3-mul-meaning — equal-groups multiplication ──
   if (
     skillId === 'G3_OA_WORD_EQUAL_GROUPS' ||
-    skillId === 'g3-mul-meaning' ||
-    skillId === 'g3-div-meaning'
+    skillId === 'g3-mul-meaning'
   ) {
     return {
       mode: 'word_problem',
       specificItemIds: equalGroupsWordItemIds(),
       grade: 3,
+      sessionLength,
+    };
+  }
+
+  // ── g3-div-meaning — division word problems ───────────────────────────────
+  if (skillId === 'g3-div-meaning') {
+    return {
+      mode: 'word_problem',
+      specificItemIds: divisionWordItemIds(),
+      grade: 3,
+      sessionLength,
+    };
+  }
+
+  // ── g3-frac-unit — unit fraction equivalents (1/2, 1/3, 1/4 …) ──────────
+  if (skillId === 'g3-frac-unit') {
+    return {
+      mode: 'fraction',
+      specificItemIds: fracUnitItemIds(),
+      fractionMode: 'equivalent',
+      sessionLength,
+    };
+  }
+
+  // ── g3-frac-number-line — compare fractions (position on number line) ────
+  if (skillId === 'g3-frac-number-line') {
+    return {
+      mode: 'fraction',
+      specificItemIds: fracCmpItemIds(),
+      fractionMode: 'compare',
       sessionLength,
     };
   }

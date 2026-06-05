@@ -23,6 +23,7 @@ import { db } from '../../db/dexie';
 import { appNow } from '../time/clock';
 import { generateId } from '../../utils/id';
 import { recordPracticeAnswer, type PracticeAnswerPayload } from '../learning/recordAnswer';
+import { detectMistakes } from '../mastery/misconceptionEngine';
 import type { PracticeItem as PItem } from '../../types/math';
 
 // ── Public types ──────────────────────────────────────────────────────────────
@@ -260,9 +261,18 @@ export function usePracticeSession(studentId: string) {
     // FSRS scheduling. Retries are logged for stats but don't distort the
     // spaced-repetition schedule.
     const isFirstAttempt = attemptNo === 1;
-    const updated = isFirstAttempt
+    let updated = isFirstAttempt
       ? applyReview(existing, result.reviewGrade, latencyMs, rawInput, now, { isCorrect: result.isCorrect })
       : existing;
+
+    // On first wrong attempt, detect misconception patterns and merge into state.
+    if (isFirstAttempt && !result.isCorrect) {
+      const newTags = detectMistakes(item, result.studentAnswer);
+      if (newTags.length > 0) {
+        const merged = Array.from(new Set([...(updated.mistakePatterns ?? []), ...newTags]));
+        updated = { ...updated, mistakePatterns: merged };
+      }
+    }
 
     // Mutate refs before setState — safe because this is a plain event handler, not an updater.
     if (isFirstAttempt) {
