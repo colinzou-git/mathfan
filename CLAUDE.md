@@ -7,6 +7,7 @@ MathFan is a React + TypeScript + Vite local-first PWA for elementary math pract
 
 \## Core rules
 
+\- Before search repo code, read docs/code-map/CLAUDE_START_HERE.md first, then CODEMAP.md and SYMBOLS.md. Use code_map.json and symbols.json for lookup before scanning source files.
 
 \- Do not remove existing features.
 
@@ -23,8 +24,6 @@ MathFan is a React + TypeScript + Vite local-first PWA for elementary math pract
 \- Keep child-facing wording positive, encouraging, and non-shaming.
 
 \- Prefer small, testable changes.
-
-\- Before search repo code, read docs/code-map/CLAUDE_START_HERE.md first, then CODEMAP.md and SYMBOLS.md. Use code_map.json and symbols.json for lookup before scanning source files.
 
 \- Ask User questions if any before implement code.
 
