@@ -10,6 +10,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
+import type { CSSProperties } from 'react';
 import type { PracticeItem } from '../../types/math';
 import { buildDiagnosticPlan } from './diagnosticPlanner';
 import { QuestionRenderer } from '../practice/QuestionRenderer';
@@ -252,7 +253,7 @@ export function DiagnosticSession({ studentId, onComplete, onCancel }: Props) {
   );
 }
 
-const s: Record<string, React.CSSProperties> = {
+const s: Record<string, CSSProperties> = {
   container: {
     maxWidth: '480px',
     margin: '0 auto',

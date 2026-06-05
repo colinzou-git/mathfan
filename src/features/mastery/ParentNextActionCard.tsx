@@ -10,6 +10,7 @@
  * Wording is positive, encouraging, and non-shaming.
  */
 
+import type { CSSProperties } from 'react';
 import type { SessionConfig } from '../../types/math';
 import type { StudentSkillSummary } from './skillMasteryEngine';
 import type { TodayPlan } from './todayPlanEngine';
@@ -153,7 +154,7 @@ export function ParentNextActionCard({ summaries, todayPlan, studentName, onStar
   );
 }
 
-const s: Record<string, React.CSSProperties> = {
+const s: Record<string, CSSProperties> = {
   card: {
     background: '#fff',
     border: '1.5px solid #e5e7eb',
@@ -237,7 +238,7 @@ const s: Record<string, React.CSSProperties> = {
   },
 };
 
-const skillStyle: Record<string, React.CSSProperties> = {
+const skillStyle: Record<string, CSSProperties> = {
   item: {
     display: 'flex',
     justifyContent: 'space-between',

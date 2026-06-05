@@ -563,6 +563,147 @@ CI passes (484 tests).
 
 ---
 
+### Phase 17 — Build and type fixes
+
+Status: DONE
+
+Goal:
+Fix all TypeScript/build/lint errors without changing app behavior. Prefer named imports over `React.CSSProperties` / `React.ReactNode` namespace usage.
+
+Files to check:
+* `src/features/mastery/Grade3MasteryMapPage.tsx`
+* `src/features/mastery/SkillTile.tsx`
+* `src/features/mastery/SkillDetailPanel.tsx`
+* `src/features/mastery/ParentNextActionCard.tsx`
+* `src/features/diagnosis/DiagnosticSession.tsx`
+* `src/features/practice/PracticeScreen.tsx`
+* `src/components/SessionSummary.tsx`
+* `src/features/dashboard/StudentDashboard.tsx`
+* `src/features/visuals/ShapeModel.tsx`
+* `src/features/visuals/DraggableEqualGroups.tsx`
+
+Acceptance criteria:
+* `npm run build`, `npm test`, `npm run lint` all pass with 0 errors.
+* `React.CSSProperties` / `React.ReactNode` replaced with named imports.
+* No behavior changes.
+
+Implementation note:
+Added named `CSSProperties` import to Grade3MasteryMapPage, SkillTile, SkillDetailPanel, ParentNextActionCard, DiagnosticSession, PracticeScreen, SessionSummary, StudentDashboard. Added named `ReactNode` import to ShapeModel and DraggableEqualGroups. Replaced all `React.CSSProperties` / `React.ReactNode` usages. Build, 484 tests, lint (0 errors) all pass.
+
+---
+
+### Phase 18 — Fix mastery skill round-trip bugs
+
+Status: TODO
+
+Goal:
+Fix skill practice planner so every practiceable skill in GRADE3_MASTERY_MAP has targeted items, every specificItemId reconstructs, and every reconstructed item infers back to the correct skill.
+
+Known issues:
+A. `g3-mul-tables-basic`: BASIC_TABLES should include 3 and 4 → `[0,1,2,3,4,5]`.
+B. `g3-frac-number-line`: Use real `fraction_number_line` items, not fraction-compare proxies.
+C. `g3-geo-rectilinear-area`: Create real rectilinear-area items or mark skill unavailable.
+D. `g3-mul-properties`: Add property-focused items or lock skill with reason.
+
+Tests to add:
+* Every practiceable GRADE3_MASTERY_MAP node has specificItemIds.
+* Clean-mapped skills infer back to themselves.
+
+Acceptance criteria:
+* Round-trip tests pass.
+* `npm run build`, `npm test`, `npm run lint` pass.
+
+---
+
+### Phase 19 — Fix diagnostic correctness and mastery integration
+
+Status: TODO
+
+Goal:
+Fix DiagnosticSession so answers are checked with shared `checkAnswer()` logic, division diagnostic items credit to `g3-div-mul-relationship`, and diagnostic writes are awaited before completion.
+
+Known issues:
+1. Raw string equality check in DiagnosticSession; replace with `checkAnswer()`.
+2. `unknown_factor` items infer to multiplication skills, not `g3-div-mul-relationship`.
+3. `diagnosticItemSkillId()` not used in mastery derivation — integrate or remove.
+4. Diagnostic answers should use the same durable path as practice for itemStates/FSRS.
+
+Tests to add:
+* Numeric answer normalization in diagnostic.
+* Division diagnostic item credits to `g3-div-mul-relationship`.
+* Diagnostic completion awaits writes before calling `onComplete`.
+
+Acceptance criteria:
+* `npm run build`, `npm test`, `npm run lint` pass.
+
+---
+
+### Phase 20 — Fix new-user mastery map UX and return navigation
+
+Status: TODO
+
+Goal:
+Fix Grade3MasteryMapPage so ParentNextActionCard is visible for brand-new students, and completing mastery-map-launched practice returns to the map.
+
+Known issues:
+1. `ParentNextActionCard` hidden when `summaries.length === 0`; should show when `todayPlan.focus || warmup || review`.
+2. Completing practice from mastery map returns to dashboard; should return to mastery map.
+
+Tests to add:
+* Brand-new student sees a suggested first focus skill.
+* Finishing mastery-map practice returns to the map.
+
+Acceptance criteria:
+* `npm run build`, `npm test`, `npm run lint` pass.
+
+---
+
+### Phase 21 — Wire visual models consistently
+
+Status: TODO
+
+Goal:
+Expand PracticeScreen visual display to all item types VisualModel supports; wire FractionNumberLine for `fraction_number_line` items; remove duplicate diagnostic badge.
+
+Known issues:
+1. PracticeScreen shows visuals only for area/perimeter/geometry.
+2. VisualModel uses FractionBar for `fraction_number_line` instead of FractionNumberLine.
+3. Duplicate Diagnostic badge between DiagnosticSession and QuestionRenderer.
+
+Tests to add:
+* Multiplication visual appears.
+* Equal-groups word problem visual appears.
+* `fraction_number_line` uses FractionNumberLine.
+* Area/perimeter/geometry visuals still work.
+
+Acceptance criteria:
+* `npm run build`, `npm test`, `npm run lint` pass.
+
+---
+
+### Phase 22 — Final regression hardening
+
+Status: TODO
+
+Goal:
+Add comprehensive regression tests for the Grade 3 mastery map.
+
+Tests required:
+1. Every GRADE3_MASTERY_MAP skill is practiceable or explicitly marked unavailable.
+2. Every targeted specificItemId reconstructs via makeItemFromId().
+3. Every targeted item has a finite answer.
+4. For each clean skill, inferGrade3SkillId(item) returns the correct skill ID.
+5. planToday() for a brand-new student returns a useful first focus skill.
+6. Grade3MasteryMapPage shows a next action for a brand-new student.
+7. Diagnostic answers use shared answer checking and don't mis-credit unknown-factor division.
+8. Completing practice launched from mastery map returns to mastery map.
+
+Acceptance criteria:
+* All regression tests pass.
+* `npm run ci` passes.
+
+---
+
 ## Final Completion Criteria
 
 The Grade 3 mastery-map project is considered complete when:

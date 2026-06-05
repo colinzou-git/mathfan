@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import type { CSSProperties } from 'react';
 import type { StudentProfile, SessionConfig } from '../../types/math';
 import { itemStateRepo, mathAnswerEventRepo, sessionRepo } from '../../db/repositories';
 import { computeTodayStats, computeStreak, eventsToAttemptLogs } from '../stats/statsEngine';
@@ -253,7 +254,7 @@ function Chip({ label, value, color = '#1f2937' }: { label: string; value: strin
   );
 }
 
-const s: Record<string, React.CSSProperties> = {
+const s: Record<string, CSSProperties> = {
   container: { maxWidth: '480px', margin: '0 auto', padding: '16px', fontFamily: 'system-ui, sans-serif' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' },
   name: { fontSize: '26px', fontWeight: 'bold', margin: 0 },

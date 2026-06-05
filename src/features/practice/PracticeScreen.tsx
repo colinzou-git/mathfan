@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, useCallback } from 'react';
+import type { CSSProperties } from 'react';
 import type { SessionConfig, StudentSettings } from '../../types/math';
 import { db } from '../../db/dexie';
 import { usePracticeSession } from './usePracticeSession';
@@ -447,7 +448,7 @@ function KbChip({ k, label }: { k: string; label: string }) {
   );
 }
 
-const st: Record<string, React.CSSProperties> = {
+const st: Record<string, CSSProperties> = {
   container: { maxWidth: '480px', margin: '0 auto', padding: '12px 16px', fontFamily: 'system-ui, sans-serif' },
   center: { display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: '60vh', gap: '12px' },
   topBar: { display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px' },

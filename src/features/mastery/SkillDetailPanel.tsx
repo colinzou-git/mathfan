@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import type { MasterySkillNode } from './grade3MasteryMap';
 import type { StudentSkillSummary } from './skillMasteryEngine';
 
@@ -104,7 +105,7 @@ function formatPattern(pattern: string): string {
     .replace(/\b\w/g, c => c.toUpperCase());
 }
 
-const s: Record<string, React.CSSProperties> = {
+const s: Record<string, CSSProperties> = {
   overlay: {
     position: 'fixed',
     inset: 0,

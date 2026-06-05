@@ -1,3 +1,5 @@
+import type { CSSProperties } from 'react';
+
 interface LastSession {
   firstTryAccuracy: number | null; // 0–1
   averageLatencyMs: number;
@@ -173,7 +175,7 @@ function StatBox({ label, value, color = '#1f2937' }: { label: string; value: st
   );
 }
 
-const s: Record<string, React.CSSProperties> = {
+const s: Record<string, CSSProperties> = {
   container: {
     maxWidth: '440px',
     margin: '24px auto',

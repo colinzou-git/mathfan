@@ -9,6 +9,7 @@
  */
 
 import { useState } from 'react';
+import type { ReactNode } from 'react';
 import {
   DndContext,
   PointerSensor,
@@ -82,7 +83,7 @@ function DropZone({
 }: {
   id: string;
   label: string;
-  children: React.ReactNode;
+  children: ReactNode;
   highlight?: boolean;
 }) {
   const { isOver, setNodeRef } = useDroppable({ id });

@@ -2,6 +2,7 @@
  * ShapeModel — SVG diagram of a named 2D shape.
  * Squares and rectangles include right-angle corner markers.
  */
+import type { ReactNode } from 'react';
 
 export type ShapeName = 'triangle' | 'square' | 'rectangle' | 'pentagon' | 'hexagon' | 'quadrilateral';
 
@@ -37,7 +38,7 @@ function rightAnglePath(
   return `M ${p1[0].toFixed(1)},${p1[1].toFixed(1)} L ${mid[0].toFixed(1)},${mid[1].toFixed(1)} L ${p3[0].toFixed(1)},${p3[1].toFixed(1)}`;
 }
 
-function SVGWrap({ size, label, children }: { size: number; label: string; children: React.ReactNode }) {
+function SVGWrap({ size, label, children }: { size: number; label: string; children: ReactNode }) {
   return (
     <div role="img" aria-label={`Diagram of a ${label}`} style={{ display: 'inline-block', padding: '4px' }}>
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true" style={{ display: 'block' }}>

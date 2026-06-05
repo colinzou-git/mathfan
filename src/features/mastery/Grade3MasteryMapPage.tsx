@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import type { CSSProperties } from 'react';
 import type { StudentProfile, SessionConfig } from '../../types/math';
 import { GRADE3_MASTERY_MAP, getGrade3SkillsByDomain } from './grade3MasteryMap';
 import { planPracticeForSkill } from './skillPracticePlanner';
@@ -275,7 +276,7 @@ function LegendItem({ status }: { status: SkillSummaryStatus }) {
   );
 }
 
-const s: Record<string, React.CSSProperties> = {
+const s: Record<string, CSSProperties> = {
   container: {
     maxWidth: '480px',
     margin: '0 auto',

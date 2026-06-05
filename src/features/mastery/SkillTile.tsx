@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import type { MasterySkillNode } from './grade3MasteryMap';
 import type { StudentSkillSummary, SkillSummaryStatus } from './skillMasteryEngine';
 
@@ -59,7 +60,7 @@ export function SkillTile({ skill, summary, locked, onClick }: Props) {
   );
 }
 
-const s: Record<string, React.CSSProperties> = {
+const s: Record<string, CSSProperties> = {
   tile: {
     width: '100%',
     textAlign: 'left',
