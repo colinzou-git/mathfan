@@ -9,6 +9,7 @@ import { makeWordProblem, type Schema } from './wordProblemItems';
 import { makeAreaUnitSquaresItem, makeAreaRectangleItem, makePerimeterRectangleItem, makeRectilinearAreaItem } from './areaItems';
 import { GEO_ITEM_MAP } from './geometryItems';
 import { makePropCommutativityItem, makePropIdentityItem, makePropZeroItem } from './mulPropertiesItems';
+import { makeTimeItem, makeElapsedTimeItem, makeBarGraphItem, makeLinePlotItem, makeMeasurementWordProblem, type MeasSchema } from './measurementItems';
 
 /**
  * Reconstruct a PracticeItem from its deterministic itemId.
@@ -101,6 +102,26 @@ export function makeItemFromId(itemId: string): PracticeItem | null {
   // PROP_ZERO_A — zero property
   m = itemId.match(/^PROP_ZERO_(\d+)$/);
   if (m) return makePropZeroItem(+m[1]);
+
+  // CLCK_h_m — time to minute (analog clock reading)
+  m = itemId.match(/^CLCK_(\d+)_(\d+)$/);
+  if (m) return makeTimeItem(+m[1], +m[2]);
+
+  // ETIME_h1_m1_h2_m2 — elapsed time in minutes
+  m = itemId.match(/^ETIME_(\d+)_(\d+)_(\d+)_(\d+)$/);
+  if (m) return makeElapsedTimeItem(+m[1], +m[2], +m[3], +m[4]);
+
+  // BARG_scale_bars — scaled bar graph reading
+  m = itemId.match(/^BARG_(\d+)_(\d+)$/);
+  if (m) return makeBarGraphItem(+m[1], +m[2]);
+
+  // LPLOT_v1_v2_v3_v4 — line plot total
+  m = itemId.match(/^LPLOT_(\d+)_(\d+)_(\d+)_(\d+)$/);
+  if (m) return makeLinePlotItem(+m[1], +m[2], +m[3], +m[4]);
+
+  // MWRD_schema_a_b — measurement word problem
+  m = itemId.match(/^MWRD_([a-z]+)_(\d+)_(\d+)$/);
+  if (m) return makeMeasurementWordProblem(m[1] as MeasSchema, +m[2], +m[3]);
 
   return null;
 }

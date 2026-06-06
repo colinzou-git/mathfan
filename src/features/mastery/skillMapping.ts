@@ -13,6 +13,12 @@ export function inferGrade3SkillId(item: PracticeItem): string | null {
   if (itemType === 'multiplication_fact' || itemType === 'unknown_factor') {
     const a = factA ?? 0;
     const b = factB ?? 0;
+    // 3.NBT.A.3: one factor is a non-trivial multiple of 10 (20–90), other is single-digit
+    const isMultOf10 = (n: number) => n >= 20 && n <= 90 && n % 10 === 0;
+    const isSingleDigit = (n: number) => n >= 2 && n <= 9;
+    if ((isMultOf10(a) && isSingleDigit(b)) || (isMultOf10(b) && isSingleDigit(a))) {
+      return 'g3-mul-multiple-of-10';
+    }
     const bigTable = Math.max(a, b);
     // Grade 3 skill map: tables 0–5 = basic (3.OA.C.7 within 25), 6–10+ = advanced
     return bigTable <= 5 ? 'g3-mul-tables-basic' : 'g3-mul-tables-advanced';
@@ -89,6 +95,16 @@ export function inferGrade3SkillId(item: PracticeItem): string | null {
 
   // ── Multiplication properties ─────────────────────────────────────────────
   if (itemType === 'multiplication_properties') return 'g3-mul-properties';
+
+  // ── Rounding ──────────────────────────────────────────────────────────────
+  if (itemType === 'rounding') return 'g3-round-nearest-10-100';
+
+  // ── Measurement & Data ────────────────────────────────────────────────────
+  if (itemType === 'time_to_minute') return 'g3-time-to-minute';
+  if (itemType === 'elapsed_time') return 'g3-elapsed-time';
+  if (itemType === 'measurement_word') return 'g3-volume-mass-word-problems';
+  if (itemType === 'bar_graph_read') return 'g3-scaled-bar-graphs';
+  if (itemType === 'line_plot_read') return 'g3-line-plots';
 
   return null;
 }

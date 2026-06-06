@@ -25,7 +25,12 @@ export type ItemType =
   | 'area_rectangle'
   | 'perimeter_rectangle'
   | 'rectilinear_area'
-  | 'multiplication_properties';
+  | 'multiplication_properties'
+  | 'time_to_minute'
+  | 'elapsed_time'
+  | 'measurement_word'
+  | 'bar_graph_read'
+  | 'line_plot_read';
 
 export type SessionMode =
   | 'daily_review'
@@ -43,7 +48,8 @@ export type SessionMode =
   | 'audio'
   | 'challenge'
   | 'area'
-  | 'geometry';
+  | 'geometry'
+  | 'measurement';
 
 /** How the student enters an answer for an item. */
 export type AnswerInput = 'numeric' | 'choice';

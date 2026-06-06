@@ -9,6 +9,10 @@ import { geoItemIds } from '../curriculum/geometryItems';
 import { mulPropertyItemIds } from '../curriculum/mulPropertiesItems';
 import { fracNlId } from '../curriculum/fractionItems';
 import { addId, subId } from '../curriculum/arithmeticItems';
+import { roundId } from '../curriculum/roundingItems';
+import {
+  clckId, etimeId, bargId, lplotId, mwrdId,
+} from '../curriculum/measurementItems';
 
 export interface PlanOptions {
   sessionLength?: number;
@@ -193,6 +197,118 @@ function sub3DigitBorrowingItemIds(): string[] {
     [614, 258], [735, 469], [821, 347], [943, 256], [532, 174],
   ];
   return pairs.map(([hi, lo]) => subId(hi, lo));
+}
+
+// ── Rounding to nearest 10 or 100 ────────────────────────────────────────────
+
+function roundNearest10or100ItemIds(): string[] {
+  return [
+    // 2-digit, round to 10
+    roundId(43, 10), roundId(68, 10), roundId(25, 10), roundId(37, 10), roundId(84, 10),
+    roundId(51, 10), roundId(76, 10), roundId(19, 10), roundId(92, 10), roundId(63, 10),
+    // 3-digit, round to 100
+    roundId(247, 100), roundId(583, 100), roundId(164, 100), roundId(342, 100), roundId(856, 100),
+    roundId(431, 100), roundId(675, 100), roundId(124, 100), roundId(968, 100), roundId(450, 100),
+    // 3-digit, round to 10
+    roundId(243, 10), roundId(687, 10), roundId(351, 10), roundId(824, 10), roundId(462, 10),
+  ];
+}
+
+// ── Multiply by multiples of 10 ───────────────────────────────────────────────
+
+function mulMultipleOf10ItemIds(): string[] {
+  return [
+    mulId(3, 20), mulId(4, 20), mulId(5, 20),
+    mulId(3, 30), mulId(4, 30), mulId(6, 30),
+    mulId(3, 40), mulId(4, 40), mulId(7, 40),
+    mulId(3, 50), mulId(5, 50), mulId(6, 50),
+    mulId(2, 60), mulId(3, 60), mulId(4, 60),
+    mulId(2, 70), mulId(3, 70), mulId(5, 70),
+    mulId(2, 80), mulId(3, 80), mulId(4, 80),
+    mulId(2, 90), mulId(3, 90), mulId(4, 90),
+  ];
+}
+
+// ── Time to minute ────────────────────────────────────────────────────────────
+
+function timeToMinuteItemIds(): string[] {
+  return [
+    clckId(1, 0),  clckId(2, 15), clckId(3, 25), clckId(4, 30),
+    clckId(5, 35), clckId(6, 40), clckId(7, 45), clckId(8, 50),
+    clckId(9, 55), clckId(10, 5), clckId(11, 10), clckId(12, 20),
+    clckId(1, 30), clckId(2, 45), clckId(3, 15), clckId(4, 25),
+    clckId(5, 40), clckId(6, 55), clckId(7, 0),  clckId(8, 35),
+    clckId(9, 20), clckId(10, 50), clckId(11, 45), clckId(12, 10),
+  ];
+}
+
+// ── Elapsed time ──────────────────────────────────────────────────────────────
+
+function elapsedTimeItemIds(): string[] {
+  return [
+    etimeId(9, 15, 9, 45),   // 30 min
+    etimeId(10, 0, 10, 30),  // 30 min
+    etimeId(2, 30, 3, 15),   // 45 min
+    etimeId(1, 0, 1, 45),    // 45 min
+    etimeId(3, 15, 4, 0),    // 45 min
+    etimeId(11, 30, 12, 0),  // 30 min
+    etimeId(8, 45, 9, 30),   // 45 min
+    etimeId(4, 0, 4, 20),    // 20 min
+    etimeId(2, 10, 2, 40),   // 30 min
+    etimeId(7, 30, 8, 15),   // 45 min
+    etimeId(9, 0, 9, 25),    // 25 min
+    etimeId(10, 15, 11, 0),  // 45 min
+    etimeId(1, 30, 2, 15),   // 45 min
+    etimeId(3, 0, 3, 40),    // 40 min
+    etimeId(6, 15, 7, 0),    // 45 min
+    etimeId(11, 0, 11, 35),  // 35 min
+    etimeId(8, 30, 9, 0),    // 30 min
+    etimeId(4, 45, 5, 30),   // 45 min
+    etimeId(2, 0, 2, 55),    // 55 min
+    etimeId(7, 20, 8, 5),    // 45 min
+  ];
+}
+
+// ── Measurement word problems ─────────────────────────────────────────────────
+
+function measurementWordItemIds(): string[] {
+  return [
+    mwrdId('addg', 250, 150), mwrdId('addg', 350, 200), mwrdId('addg', 125, 175),
+    mwrdId('subg', 500, 150), mwrdId('subg', 600, 250), mwrdId('subg', 450, 200),
+    mwrdId('addl', 3, 5),     mwrdId('addl', 4, 7),     mwrdId('addl', 2, 8),
+    mwrdId('subl', 10, 4),    mwrdId('subl', 8, 3),     mwrdId('subl', 12, 5),
+    mwrdId('addkg', 8, 7),    mwrdId('addkg', 12, 8),
+    mwrdId('subkg', 25, 8),   mwrdId('subkg', 30, 12),
+    mwrdId('addml', 300, 450), mwrdId('addml', 250, 350),
+    mwrdId('subml', 750, 250), mwrdId('subml', 800, 300),
+  ];
+}
+
+// ── Scaled bar graphs ─────────────────────────────────────────────────────────
+
+function scaledBarGraphItemIds(): string[] {
+  return [
+    bargId(5, 3),  bargId(5, 4),  bargId(5, 6),  bargId(5, 7),  bargId(5, 8),
+    bargId(10, 2), bargId(10, 3), bargId(10, 4), bargId(10, 5), bargId(10, 7),
+    bargId(2, 5),  bargId(2, 7),  bargId(2, 9),
+    bargId(4, 3),  bargId(4, 5),  bargId(4, 7),
+    bargId(3, 4),  bargId(3, 6),  bargId(3, 8),
+    bargId(10, 8),
+  ];
+}
+
+// ── Line plots ────────────────────────────────────────────────────────────────
+
+function linePlotItemIds(): string[] {
+  return [
+    lplotId(1, 2, 2, 3), lplotId(2, 2, 3, 4), lplotId(1, 1, 3, 4),
+    lplotId(2, 3, 3, 4), lplotId(1, 2, 4, 4), lplotId(2, 3, 4, 5),
+    lplotId(1, 3, 3, 5), lplotId(2, 2, 4, 5), lplotId(3, 3, 3, 4),
+    lplotId(1, 2, 3, 6), lplotId(2, 4, 4, 5), lplotId(1, 3, 4, 6),
+    lplotId(3, 3, 4, 5), lplotId(2, 3, 5, 5), lplotId(1, 4, 4, 7),
+    lplotId(3, 4, 4, 6), lplotId(2, 3, 6, 7), lplotId(4, 4, 5, 5),
+    lplotId(3, 4, 5, 8), lplotId(2, 5, 6, 7),
+  ];
 }
 
 /**
@@ -418,6 +534,69 @@ export function planPracticeForSkill(
     return {
       mode: 'subtraction',
       specificItemIds: sub3DigitBorrowingItemIds(),
+      sessionLength,
+    };
+  }
+
+  // ── g3-round-nearest-10-100 — round to nearest 10 or 100 ─────────────────────
+  if (skillId === 'g3-round-nearest-10-100') {
+    return {
+      mode: 'rounding',
+      specificItemIds: roundNearest10or100ItemIds(),
+      sessionLength,
+    };
+  }
+
+  // ── g3-mul-multiple-of-10 — multiply by multiples of 10 ──────────────────────
+  if (skillId === 'g3-mul-multiple-of-10') {
+    return {
+      mode: 'multiplication',
+      specificItemIds: mulMultipleOf10ItemIds(),
+      sessionLength,
+    };
+  }
+
+  // ── g3-time-to-minute — tell time to the minute ───────────────────────────────
+  if (skillId === 'g3-time-to-minute') {
+    return {
+      mode: 'measurement',
+      specificItemIds: timeToMinuteItemIds(),
+      sessionLength,
+    };
+  }
+
+  // ── g3-elapsed-time — elapsed time in minutes ─────────────────────────────────
+  if (skillId === 'g3-elapsed-time') {
+    return {
+      mode: 'measurement',
+      specificItemIds: elapsedTimeItemIds(),
+      sessionLength,
+    };
+  }
+
+  // ── g3-volume-mass-word-problems — mass and liquid volume word problems ────────
+  if (skillId === 'g3-volume-mass-word-problems') {
+    return {
+      mode: 'word_problem',
+      specificItemIds: measurementWordItemIds(),
+      sessionLength,
+    };
+  }
+
+  // ── g3-scaled-bar-graphs — read scaled bar graphs ─────────────────────────────
+  if (skillId === 'g3-scaled-bar-graphs') {
+    return {
+      mode: 'measurement',
+      specificItemIds: scaledBarGraphItemIds(),
+      sessionLength,
+    };
+  }
+
+  // ── g3-line-plots — read line plots ──────────────────────────────────────────
+  if (skillId === 'g3-line-plots') {
+    return {
+      mode: 'measurement',
+      specificItemIds: linePlotItemIds(),
       sessionLength,
     };
   }

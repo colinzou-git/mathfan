@@ -10,9 +10,9 @@ import type { Grade3Domain, MasterySkillNode } from '../features/mastery/grade3M
 // ── Map shape ──────────────────────────────────────────────────────────────────
 
 describe('GRADE3_MASTERY_MAP', () => {
-  it('has between 19 and 25 skills', () => {
+  it('has between 19 and 35 skills', () => {
     expect(GRADE3_MASTERY_MAP.length).toBeGreaterThanOrEqual(19);
-    expect(GRADE3_MASTERY_MAP.length).toBeLessThanOrEqual(25);
+    expect(GRADE3_MASTERY_MAP.length).toBeLessThanOrEqual(35);
   });
 
   it('every skill has a non-empty id, title, description', () => {
@@ -37,9 +37,9 @@ describe('GRADE3_MASTERY_MAP', () => {
     }
   });
 
-  it('covers all six Grade3Domains', () => {
+  it('covers all core Grade3Domains', () => {
     const domains = new Set(GRADE3_MASTERY_MAP.map(s => s.domain));
-    const expected: Grade3Domain[] = ['multiplication', 'division', 'fractions', 'area_perimeter', 'geometry', 'addition_subtraction'];
+    const expected: Grade3Domain[] = ['multiplication', 'division', 'fractions', 'area_perimeter', 'geometry', 'addition_subtraction', 'measurement_data'];
     for (const d of expected) {
       expect(domains.has(d), `missing domain "${d}"`).toBe(true);
     }
@@ -101,8 +101,8 @@ describe('getGrade3SkillsByDomain', () => {
     expect(getGrade3SkillsByDomain('geometry').length).toBeGreaterThanOrEqual(1);
   });
 
-  it('all six domains together account for all skills', () => {
-    const domains: Grade3Domain[] = ['multiplication', 'division', 'fractions', 'area_perimeter', 'geometry', 'addition_subtraction'];
+  it('all domains together account for all skills', () => {
+    const domains: Grade3Domain[] = ['multiplication', 'division', 'fractions', 'area_perimeter', 'geometry', 'addition_subtraction', 'measurement_data'];
     const total = domains.reduce((sum, d) => sum + getGrade3SkillsByDomain(d).length, 0);
     expect(total).toBe(GRADE3_MASTERY_MAP.length);
   });

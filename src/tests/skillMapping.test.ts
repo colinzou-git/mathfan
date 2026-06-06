@@ -189,7 +189,7 @@ describe('inferGrade3SkillId — unsupported item types return null', () => {
     expect(inferGrade3SkillId(item)).toBeNull();
   });
 
-  it('rounding → null', () => {
+  it('rounding → g3-round-nearest-10-100', () => {
     const item: PracticeItem = {
       id: 'ROUND_34_10',
       skillId: 'SKILL_ROUND',
@@ -199,7 +199,7 @@ describe('inferGrade3SkillId — unsupported item types return null', () => {
       tags: ['rounding'],
       difficulty: 0.3,
     };
-    expect(inferGrade3SkillId(item)).toBeNull();
+    expect(inferGrade3SkillId(item)).toBe('g3-round-nearest-10-100');
   });
 
   it('decimal_add → null', () => {

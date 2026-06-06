@@ -22,6 +22,7 @@ import { FractionBar } from './FractionBar';
 import { FractionNumberLine } from './FractionNumberLine';
 import { AreaGrid } from './AreaGrid';
 import { ShapeModel } from './ShapeModel';
+import { ClockModel } from './ClockModel';
 import { parseFractionFromPrompt, geoShapeFromItemId } from './visualModelUtils';
 
 interface Props {
@@ -124,6 +125,11 @@ export function VisualModel({ item, color, revealAnswer = false }: Props) {
   if (itemType === 'geometry_vocabulary') {
     const shape = geoShapeFromItemId(id);
     if (shape) return <ShapeModel shape={shape} color={color} />;
+  }
+
+  // ── Analog clock (time to minute) ─────────────────────────────────────────
+  if (itemType === 'time_to_minute' && factA != null && factB != null) {
+    return <ClockModel hour={factA} minute={factB} />;
   }
 
   // No visual available for this item type

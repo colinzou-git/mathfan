@@ -30,6 +30,7 @@ const DOMAIN_ORDER: Grade3Domain[] = [
   'fractions',
   'area_perimeter',
   'geometry',
+  'measurement_data',
 ];
 
 const DOMAIN_LABELS: Record<Grade3Domain, string> = {
@@ -39,6 +40,7 @@ const DOMAIN_LABELS: Record<Grade3Domain, string> = {
   fractions: 'Fractions',
   area_perimeter: 'Area & Perimeter',
   geometry: 'Geometry',
+  measurement_data: 'Measurement & Data',
 };
 
 const DOMAIN_ICONS: Record<Grade3Domain, string> = {
@@ -48,6 +50,7 @@ const DOMAIN_ICONS: Record<Grade3Domain, string> = {
   fractions: '🍕',
   area_perimeter: '📐',
   geometry: '🔷',
+  measurement_data: '📏',
 };
 
 // Bug 3: Build a complete summary list (including stubs for unstarted skills) so

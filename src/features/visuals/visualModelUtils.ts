@@ -49,5 +49,7 @@ export function hasVisualModel(item: PracticeItem): boolean {
 
   if (itemType === 'geometry_vocabulary') return geoShapeFromItemId(id) != null;
 
+  if (itemType === 'time_to_minute' && factA != null && factB != null) return true;
+
   return false;
 }

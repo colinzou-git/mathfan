@@ -4,7 +4,8 @@ export type Grade3Domain =
   | 'fractions'
   | 'area_perimeter'
   | 'geometry'
-  | 'addition_subtraction';
+  | 'addition_subtraction'
+  | 'measurement_data';
 
 export type SkillStatus = 'locked' | 'available' | 'in_progress' | 'mastered';
 
@@ -183,6 +184,64 @@ export const GRADE3_MASTERY_MAP: readonly MasterySkillNode[] = [
     description: 'Decompose rectilinear figures into non-overlapping rectangles to find total area.',
     prerequisites: ['g3-area-formula', 'g3-geo-categories'],
     californiaStandardIds: ['3.MD.C.7d'],
+  },
+  // ── Rounding & Number Operations ────────────────────────────────────────────
+  {
+    id: 'g3-round-nearest-10-100',
+    domain: 'addition_subtraction',
+    title: 'Rounding to Nearest 10 or 100',
+    description: 'Round whole numbers to the nearest 10 or 100.',
+    prerequisites: [],
+    californiaStandardIds: ['3.NBT.A.1'],
+  },
+  {
+    id: 'g3-mul-multiple-of-10',
+    domain: 'multiplication',
+    title: 'Multiply by Multiples of 10',
+    description: 'Multiply one-digit whole numbers by multiples of 10 (e.g., 4 × 30 = 120).',
+    prerequisites: ['g3-mul-tables-basic'],
+    californiaStandardIds: ['3.NBT.A.3'],
+  },
+  // ── Measurement & Data ───────────────────────────────────────────────────────
+  {
+    id: 'g3-time-to-minute',
+    domain: 'measurement_data',
+    title: 'Tell Time to the Minute',
+    description: 'Tell and write time to the nearest minute using analog and digital clocks.',
+    prerequisites: [],
+    californiaStandardIds: ['3.MD.A.1'],
+  },
+  {
+    id: 'g3-elapsed-time',
+    domain: 'measurement_data',
+    title: 'Elapsed Time',
+    description: 'Solve word problems involving elapsed time in minutes.',
+    prerequisites: ['g3-time-to-minute'],
+    californiaStandardIds: ['3.MD.A.1'],
+  },
+  {
+    id: 'g3-volume-mass-word-problems',
+    domain: 'measurement_data',
+    title: 'Mass and Liquid Volume',
+    description: 'Solve word problems involving masses and liquid volumes using addition, subtraction, and multiplication.',
+    prerequisites: [],
+    californiaStandardIds: ['3.MD.A.2'],
+  },
+  {
+    id: 'g3-scaled-bar-graphs',
+    domain: 'measurement_data',
+    title: 'Scaled Bar Graphs',
+    description: 'Read and interpret scaled bar graphs where each unit represents more than 1.',
+    prerequisites: [],
+    californiaStandardIds: ['3.MD.B.3'],
+  },
+  {
+    id: 'g3-line-plots',
+    domain: 'measurement_data',
+    title: 'Line Plots',
+    description: 'Read line plots and solve problems using the data displayed.',
+    prerequisites: [],
+    californiaStandardIds: ['3.MD.B.4'],
   },
 ];
 
