@@ -24,6 +24,7 @@ interface Props {
 }
 
 const DOMAIN_ORDER: Grade3Domain[] = [
+  'addition_subtraction',
   'multiplication',
   'division',
   'fractions',
@@ -32,6 +33,7 @@ const DOMAIN_ORDER: Grade3Domain[] = [
 ];
 
 const DOMAIN_LABELS: Record<Grade3Domain, string> = {
+  addition_subtraction: 'Add & Subtract',
   multiplication: 'Multiplication',
   division: 'Division',
   fractions: 'Fractions',
@@ -40,6 +42,7 @@ const DOMAIN_LABELS: Record<Grade3Domain, string> = {
 };
 
 const DOMAIN_ICONS: Record<Grade3Domain, string> = {
+  addition_subtraction: '➕',
   multiplication: '✖️',
   division: '➗',
   fractions: '🍕',

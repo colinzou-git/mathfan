@@ -37,6 +37,37 @@ export function inferGrade3SkillId(item: PracticeItem): string | null {
     return 'g3-mul-meaning';
   }
 
+  // ── Addition regrouping ───────────────────────────────────────────────────
+  if (itemType === 'addition_fact') {
+    const a = factA ?? 0;
+    const b = factB ?? 0;
+    if (a >= 10 && a <= 99 && b >= 10 && b <= 99 && (a % 10) + (b % 10) >= 10) {
+      return 'g3-add-2digit-regrouping';
+    }
+    if (a >= 100 && a <= 999 && b >= 100 && b <= 999) {
+      const onesCarry = (a % 10) + (b % 10) >= 10;
+      const tensCarry = Math.floor(a / 10) % 10 + Math.floor(b / 10) % 10 >= 10;
+      if (onesCarry || tensCarry) return 'g3-add-3digit-regrouping';
+    }
+    return null;
+  }
+
+  // ── Subtraction regrouping ────────────────────────────────────────────────
+  if (itemType === 'subtraction_fact') {
+    // makeSubtractionItem always sets factA = minuend (larger), factB = subtrahend (smaller)
+    const a = factA ?? 0;
+    const b = factB ?? 0;
+    if (a >= 10 && a <= 99 && b >= 10 && b <= 99 && (a % 10) < (b % 10)) {
+      return 'g3-sub-2digit-regrouping';
+    }
+    if (a >= 100 && a <= 999 && b >= 100 && b <= 999) {
+      const onesBorrow = (a % 10) < (b % 10);
+      const tensBorrow = Math.floor(a / 10) % 10 < Math.floor(b / 10) % 10;
+      if (onesBorrow || tensBorrow) return 'g3-sub-3digit-regrouping';
+    }
+    return null;
+  }
+
   // ── Fractions ─────────────────────────────────────────────────────────────
   if (itemType === 'fraction_equivalent') {
     // Unit fractions (numerator = 1) map to the unit-fraction skill.

@@ -8,6 +8,7 @@ import { areaSquaresItemIds, areaRectangleItemIds, perimeterRectangleItemIds, re
 import { geoItemIds } from '../curriculum/geometryItems';
 import { mulPropertyItemIds } from '../curriculum/mulPropertiesItems';
 import { fracNlId } from '../curriculum/fractionItems';
+import { addId, subId } from '../curriculum/arithmeticItems';
 
 export interface PlanOptions {
   sessionLength?: number;
@@ -138,6 +139,60 @@ function fracUnitItemIds(): string[] {
     }
   }
   return ids;
+}
+
+// ── Addition/Subtraction regrouping item generators ──────────────────────────
+// Each function returns a deterministic set of item IDs where every item
+// requires carrying (addition) or borrowing (subtraction).
+
+function add2DigitRegroupingItemIds(): string[] {
+  // Both addends in [10,99]; ones digits sum >= 10 (requires carrying)
+  const pairs: [number, number][] = [
+    [47, 28], [56, 37], [68, 25], [35, 48], [79, 14],
+    [43, 29], [57, 36], [64, 28], [38, 47], [75, 18],
+    [26, 47], [53, 39], [82, 19], [45, 56], [67, 24],
+    [33, 48], [74, 19], [28, 56], [49, 37], [86, 15],
+    [18, 73], [27, 64], [39, 55], [46, 66], [58, 34],
+  ];
+  return pairs.map(([a, b]) => addId(a, b));
+}
+
+function add3DigitRegroupingItemIds(): string[] {
+  // Both addends in [100,999]; at least one column requires carrying
+  const pairs: [number, number][] = [
+    [247, 386], [568, 275], [409, 296], [735, 189], [462, 358],
+    [374, 249], [583, 267], [691, 149], [425, 386], [758, 164],
+    [347, 285], [463, 279], [572, 348], [681, 259], [394, 437],
+    [246, 387], [574, 358], [682, 249], [453, 367], [791, 138],
+    [305, 297], [416, 385], [523, 278], [634, 189], [742, 259],
+  ];
+  return pairs.map(([a, b]) => addId(a, b));
+}
+
+function sub2DigitBorrowingItemIds(): string[] {
+  // Minuend in [10,99], subtrahend in [10,99]; ones of minuend < ones of subtrahend (requires borrowing)
+  // subId(hi, lo) with hi > lo, hi%10 < lo%10
+  const pairs: [number, number][] = [
+    [52, 28], [71, 46], [90, 37], [63, 47], [84, 29],
+    [41, 18], [73, 56], [62, 38], [80, 43], [51, 27],
+    [34, 19], [46, 28], [75, 38], [93, 47], [61, 35],
+    [40, 23], [72, 49], [83, 57], [92, 65], [50, 34],
+    [44, 27], [66, 49], [85, 38], [97, 68], [73, 46],
+  ];
+  return pairs.map(([hi, lo]) => subId(hi, lo));
+}
+
+function sub3DigitBorrowingItemIds(): string[] {
+  // Minuend in [100,999], subtrahend in [100,999]; at least one column requires borrowing
+  // Includes zero-digit cases (e.g. 703-458, 900-376)
+  const pairs: [number, number][] = [
+    [524, 286], [703, 458], [900, 376], [835, 467], [612, 345],
+    [741, 286], [830, 457], [963, 478], [524, 267], [705, 348],
+    [412, 285], [631, 274], [820, 356], [753, 289], [941, 456],
+    [302, 175], [500, 237], [403, 168], [700, 423], [800, 547],
+    [614, 258], [735, 469], [821, 347], [943, 256], [532, 174],
+  ];
+  return pairs.map(([hi, lo]) => subId(hi, lo));
 }
 
 /**
@@ -327,6 +382,42 @@ export function planPracticeForSkill(
     return {
       mode: 'multiplication',
       specificItemIds: mulPropertyItemIds(),
+      sessionLength,
+    };
+  }
+
+  // ── g3-add-2digit-regrouping — 2-digit addition with carrying ────────────────
+  if (skillId === 'g3-add-2digit-regrouping') {
+    return {
+      mode: 'addition',
+      specificItemIds: add2DigitRegroupingItemIds(),
+      sessionLength,
+    };
+  }
+
+  // ── g3-add-3digit-regrouping — 3-digit addition with carrying ────────────────
+  if (skillId === 'g3-add-3digit-regrouping') {
+    return {
+      mode: 'addition',
+      specificItemIds: add3DigitRegroupingItemIds(),
+      sessionLength,
+    };
+  }
+
+  // ── g3-sub-2digit-regrouping — 2-digit subtraction with borrowing ─────────────
+  if (skillId === 'g3-sub-2digit-regrouping') {
+    return {
+      mode: 'subtraction',
+      specificItemIds: sub2DigitBorrowingItemIds(),
+      sessionLength,
+    };
+  }
+
+  // ── g3-sub-3digit-regrouping — 3-digit subtraction with borrowing ─────────────
+  if (skillId === 'g3-sub-3digit-regrouping') {
+    return {
+      mode: 'subtraction',
+      specificItemIds: sub3DigitBorrowingItemIds(),
       sessionLength,
     };
   }

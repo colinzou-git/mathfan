@@ -58,7 +58,7 @@ export function ParentNextActionCard({ summaries, todayPlan, studentName, onStar
       {/* Header */}
       <div style={s.header}>
         <span style={s.headerIcon}>👨‍👩‍👧</span>
-        <span style={s.headerTitle}>Parent Summary</span>
+        <span style={s.headerTitle}>Summary</span>
       </div>
 
       {/* Strongest skills */}

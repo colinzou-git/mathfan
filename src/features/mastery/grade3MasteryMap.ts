@@ -3,7 +3,8 @@ export type Grade3Domain =
   | 'division'
   | 'fractions'
   | 'area_perimeter'
-  | 'geometry';
+  | 'geometry'
+  | 'addition_subtraction';
 
 export type SkillStatus = 'locked' | 'available' | 'in_progress' | 'mastered';
 
@@ -132,6 +133,39 @@ export const GRADE3_MASTERY_MAP: readonly MasterySkillNode[] = [
     description: 'Find the perimeter of polygons by adding side lengths.',
     prerequisites: [],
     californiaStandardIds: ['3.MD.D.8'],
+  },
+  // ── Addition & Subtraction ──────────────────────────────────────────────────
+  {
+    id: 'g3-add-2digit-regrouping',
+    domain: 'addition_subtraction',
+    title: '2-Digit Addition with Regrouping',
+    description: 'Add 2-digit numbers that require carrying/regrouping.',
+    prerequisites: [],
+    californiaStandardIds: ['3.NBT.A.2'],
+  },
+  {
+    id: 'g3-add-3digit-regrouping',
+    domain: 'addition_subtraction',
+    title: '3-Digit Addition with Regrouping',
+    description: 'Add 3-digit numbers that require carrying/regrouping in ones, tens, or both.',
+    prerequisites: ['g3-add-2digit-regrouping'],
+    californiaStandardIds: ['3.NBT.A.2'],
+  },
+  {
+    id: 'g3-sub-2digit-regrouping',
+    domain: 'addition_subtraction',
+    title: '2-Digit Subtraction with Borrowing',
+    description: 'Subtract 2-digit numbers that require borrowing/regrouping.',
+    prerequisites: [],
+    californiaStandardIds: ['3.NBT.A.2'],
+  },
+  {
+    id: 'g3-sub-3digit-regrouping',
+    domain: 'addition_subtraction',
+    title: '3-Digit Subtraction with Borrowing',
+    description: 'Subtract 3-digit numbers that require borrowing/regrouping across tens, hundreds, or zeros.',
+    prerequisites: ['g3-sub-2digit-regrouping'],
+    californiaStandardIds: ['3.NBT.A.2'],
   },
   // ── Geometry ────────────────────────────────────────────────────────────────
   {

@@ -160,6 +160,14 @@ export function SettingsPage({ profile, onUpdateProfile, onBack, onSwitchStudent
     return `${d.getUTCFullYear()}-${p(d.getUTCMonth() + 1)}-${p(d.getUTCDate())} ${p(d.getUTCHours())}:${p(d.getUTCMinutes())} UTC`;
   }
 
+  // Compact build identifier derived from the build timestamp, e.g. "20260605.2212".
+  // Changes on every build even when the semver stays the same.
+  function buildId(iso: string): string {
+    const d = new Date(iso);
+    const p = (n: number) => String(n).padStart(2, '0');
+    return `${d.getUTCFullYear()}${p(d.getUTCMonth() + 1)}${p(d.getUTCDate())}.${p(d.getUTCHours())}${p(d.getUTCMinutes())}`;
+  }
+
   function fmt(bytes: number): string {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -420,8 +428,7 @@ export function SettingsPage({ profile, onUpdateProfile, onBack, onSwitchStudent
       {/* ── About ───────────────────────────────────────────────────── */}
       <Section title="About">
         <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: '13px', lineHeight: 1.9, color: '#374151' }}>
-          <div>MathFan v{__APP_VERSION__}</div>
-          <div style={{ color: '#9ca3af' }}>Build: {__GIT_SHA__.slice(0, 7)}</div>
+          <div>MathFan v{__APP_VERSION__}+{buildId(__BUILD_TIME__)}</div>
           <div style={{ color: '#9ca3af' }}>Built: {fmtBuildTime(__BUILD_TIME__)}</div>
         </div>
         <div style={{ marginTop: '12px' }}>
