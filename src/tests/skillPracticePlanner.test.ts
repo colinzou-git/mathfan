@@ -164,16 +164,19 @@ describe('planPracticeForSkill — area skills return AREA_ items, not MUL_', ()
     expect(cfg.specificItemIds!.some(id => id.startsWith('MUL_'))).toBe(false);
   });
 
-  it('G3_MD_PERIMETER uses area mode with PERIM_RECT_ items', () => {
+  it('G3_MD_PERIMETER uses area mode with perimeter items', () => {
     const cfg = planPracticeForSkill('G3_MD_PERIMETER');
     expect(cfg.mode).toBe('area');
-    expect(cfg.specificItemIds!.every(id => id.startsWith('PERIM_RECT_'))).toBe(true);
+    expect(cfg.specificItemIds!.some(id => id.startsWith('PERIM_RECT_'))).toBe(true);
+    expect(cfg.specificItemIds!.every(id => /^PERIM_(RECT|POLY|UNKSIDE)_/.test(id))).toBe(true);
   });
 
-  it('g3-perimeter uses area mode with PERIM_RECT_ items', () => {
+  it('g3-perimeter uses area mode with perimeter items', () => {
     const cfg = planPracticeForSkill('g3-perimeter');
     expect(cfg.mode).toBe('area');
-    expect(cfg.specificItemIds!.every(id => id.startsWith('PERIM_RECT_'))).toBe(true);
+    expect(cfg.specificItemIds!.some(id => id.startsWith('PERIM_RECT_'))).toBe(true);
+    expect(cfg.specificItemIds!.some(id => id.startsWith('PERIM_POLY_'))).toBe(true);
+    expect(cfg.specificItemIds!.some(id => id.startsWith('PERIM_UNKSIDE_'))).toBe(true);
   });
 });
 

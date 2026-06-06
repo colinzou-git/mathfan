@@ -4,7 +4,10 @@ import {
 } from '../curriculum/multiplicationItems';
 import { fracEqId, fracCmpId } from '../curriculum/fractionItems';
 import { wordId } from '../curriculum/wordProblemItems';
-import { areaSquaresItemIds, areaRectangleItemIds, perimeterRectangleItemIds, rectilinearAreaItemIds } from '../curriculum/areaItems';
+import {
+  areaSquaresItemIds, areaRectangleItemIds, perimeterRectangleItemIds, rectilinearAreaItemIds,
+  perimeterPolygonItemIds, perimeterUnknownSideItemIds, areaPerimCompareItemIds,
+} from '../curriculum/areaItems';
 import { geoItemIds } from '../curriculum/geometryItems';
 import { mulPropertyItemIds } from '../curriculum/mulPropertiesItems';
 import { fracNlId } from '../curriculum/fractionItems';
@@ -524,11 +527,24 @@ export function planPracticeForSkill(
     };
   }
 
-  // ── G3_MD_PERIMETER / g3-perimeter — perimeter of rectangles ─────────────────
+  // ── G3_MD_PERIMETER / g3-perimeter — perimeter of rectangles + polygons + unknown sides ──
   if (skillId === 'G3_MD_PERIMETER' || skillId === 'g3-perimeter') {
     return {
       mode: 'area',
-      specificItemIds: perimeterRectangleItemIds(),
+      specificItemIds: [
+        ...perimeterRectangleItemIds(),
+        ...perimeterPolygonItemIds(),
+        ...perimeterUnknownSideItemIds(),
+      ],
+      sessionLength,
+    };
+  }
+
+  // ── g3-area-perimeter-compare — same area/diff perim, same perim/diff area ──
+  if (skillId === 'g3-area-perimeter-compare') {
+    return {
+      mode: 'area',
+      specificItemIds: areaPerimCompareItemIds(),
       sessionLength,
     };
   }

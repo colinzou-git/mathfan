@@ -10,6 +10,7 @@ import { TutorChat } from '../ai/TutorChat';
 import { speakProblem, speakFeedback, stopSpeech } from '../audio/speech';
 import { VisualModel } from '../visuals/VisualModel';
 import { hasVisualModel } from '../visuals/visualModelUtils';
+import { getHint } from './hintEngine';
 
 const AUTO_ADVANCE_MS = 700;
 
@@ -33,6 +34,7 @@ export function PracticeScreen({
   const [showTutor, setShowTutor] = useState(false);
   const [showQuit, setShowQuit] = useState(false);
   const [quitting, setQuitting] = useState(false); // show summary with partial data
+  const [showExplanation, setShowExplanation] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const autoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Always-current shadow of `input` state — kept in sync via useLayoutEffect
@@ -67,6 +69,7 @@ export function PracticeScreen({
   if (state.phase === 'active' && currentItemKey !== lastItemKey) {
     setLastItemKey(currentItemKey);
     setInput('');
+    setShowExplanation(false);
   }
 
   // New question or retry → focus + speak
@@ -367,6 +370,26 @@ export function PracticeScreen({
 
           {hasError && !isCorrect && <p style={st.errorText}>{state.errorText}</p>}
 
+          {/* Progressive hint — shown automatically after each wrong attempt */}
+          {hasError && !isCorrect && state.currentItem && state.retryKey > 0 && (() => {
+            const h = getHint(state.currentItem, state.retryKey);
+            if (!h) return null;
+            return (
+              <div style={st.hintBox} role="status" aria-live="polite">
+                <p style={st.hintLabel}>💡 Hint</p>
+                <p style={st.hintHintText}>{h.text}</p>
+                {h.showExplanationButton && !showExplanation && (
+                  <button style={st.explainBtn} onClick={() => setShowExplanation(true)}>
+                    Show Explanation
+                  </button>
+                )}
+                {showExplanation && state.currentItem.explanation && (
+                  <p style={st.explanationText}>{state.currentItem.explanation}</p>
+                )}
+              </div>
+            );
+          })()}
+
           {isCorrect && (
             <p style={st.correctText}>
               {state.correctResult?.isNewPersonalBest ? '⚡ New personal best!' : '✓ Correct!'}
@@ -481,6 +504,11 @@ const st: Record<string, CSSProperties> = {
   correctText: { color: '#16a34a', fontSize: '15px', fontWeight: '600', margin: '10px 0 0' },
   subText: { color: '#9ca3af', fontWeight: 'normal' },
   hintText: { color: '#d1d5db', fontSize: '13px', margin: '8px 0 0' },
+  hintBox: { marginTop: '12px', padding: '10px 14px', background: '#fffbeb', borderRadius: '10px', border: '1px solid #fde68a', textAlign: 'left' as const },
+  hintLabel: { fontSize: '12px', fontWeight: '700', color: '#92400e', margin: '0 0 4px' },
+  hintHintText: { fontSize: '14px', color: '#78350f', margin: 0, lineHeight: 1.5 },
+  explainBtn: { marginTop: '8px', padding: '6px 14px', background: '#f59e0b', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '600', cursor: 'pointer' },
+  explanationText: { marginTop: '8px', fontSize: '13px', color: '#78350f', lineHeight: 1.5, borderTop: '1px solid #fde68a', paddingTop: '8px' },
   nextBtn: { display: 'block', width: '100%', marginTop: '16px', padding: '14px', background: '#4f46e5', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '17px', fontWeight: 'bold', cursor: 'pointer' },
   kbRow: { display: 'flex', justifyContent: 'center', gap: '16px', marginTop: '14px', flexWrap: 'wrap' },
   kbTag: { fontSize: '11px', background: 'rgba(255,255,255,0.25)', borderRadius: '4px', padding: '1px 4px', fontFamily: 'monospace' },

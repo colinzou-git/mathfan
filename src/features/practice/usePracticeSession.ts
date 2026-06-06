@@ -301,7 +301,7 @@ export function usePracticeSession(studentId: string) {
         studentAnswer: result.studentAnswer,
         isCorrect: result.isCorrect,
         isRetry: !isFirstAttempt,
-        hintUsed: false,
+        hintUsed: !isFirstAttempt,  // hints are shown automatically after first wrong answer
         latencyMs,
         reviewGrade: result.reviewGrade,
         factStatusBefore: existing.masteryLevel,

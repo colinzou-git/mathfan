@@ -6,7 +6,10 @@ import { makeRoundingItem } from './roundingItems';
 import { makePrimeItem, makeFactorItem } from './numberTheoryItems';
 import { makeDecimalAddItem, makeDecimalSubItem } from './decimalItems';
 import { makeWordProblem, type Schema } from './wordProblemItems';
-import { makeAreaUnitSquaresItem, makeAreaRectangleItem, makePerimeterRectangleItem, makeRectilinearAreaItem } from './areaItems';
+import {
+  makeAreaUnitSquaresItem, makeAreaRectangleItem, makePerimeterRectangleItem, makeRectilinearAreaItem,
+  makePerimeterPolygonItem, makePerimeterUnknownSideItem, makeAreaPerimCompareItem, type AreaPerimVariant,
+} from './areaItems';
 import { GEO_ITEM_MAP } from './geometryItems';
 import { makePropCommutativityItem, makePropIdentityItem, makePropZeroItem, makePropAssociativeItem, makePropDistributiveItem } from './mulPropertiesItems';
 import { makeTimeItem, makeElapsedTimeItem, makeBarGraphItem, makeLinePlotItem, makeMeasurementWordProblem, type MeasSchema } from './measurementItems';
@@ -92,6 +95,18 @@ export function makeItemFromId(itemId: string): PracticeItem | null {
   // RECTI_a1xb1_a2xb2 — rectilinear area (two rectangles)
   m = itemId.match(/^RECTI_(\d+)x(\d+)_(\d+)x(\d+)$/);
   if (m) return makeRectilinearAreaItem(+m[1], +m[2], +m[3], +m[4]);
+
+  // PERIM_POLY_s1-s2-... — perimeter of a general polygon
+  m = itemId.match(/^PERIM_POLY_(\d+(?:-\d+)*)$/);
+  if (m) return makePerimeterPolygonItem(m[1].split('-').map(Number));
+
+  // PERIM_UNKSIDE_total_s1-s2-... — perimeter with unknown side
+  m = itemId.match(/^PERIM_UNKSIDE_(\d+)_(\d+(?:-\d+)*)$/);
+  if (m) return makePerimeterUnknownSideItem(+m[1], m[2].split('-').map(Number));
+
+  // AREA_PERIM_CMP_sadp|spad_N — area/perimeter comparison
+  m = itemId.match(/^AREA_PERIM_CMP_(sadp|spad)_(\d+)$/);
+  if (m) return makeAreaPerimCompareItem(m[1] as AreaPerimVariant, +m[2]);
 
   // PROP_CMT_AxB — commutative property
   m = itemId.match(/^PROP_CMT_(\d+)x(\d+)$/);

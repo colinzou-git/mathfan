@@ -24,6 +24,7 @@ import { AreaGrid } from './AreaGrid';
 import { ShapeModel } from './ShapeModel';
 import { ClockModel } from './ClockModel';
 import { parseFractionFromPrompt, geoShapeFromItemId } from './visualModelUtils';
+import { RectilinearAreaModel } from './RectilinearAreaModel';
 
 interface Props {
   item: PracticeItem;
@@ -119,6 +120,20 @@ export function VisualModel({ item, color, revealAnswer = false }: Props) {
 
   if (itemType === 'perimeter_rectangle' && factA != null && factB != null) {
     return <AreaGrid rows={factA} cols={factB} mode="perimeter" color={color} revealAnswer={revealAnswer} />;
+  }
+
+  // ── Rectilinear (L-shaped) area ───────────────────────────────────────────
+  if (itemType === 'rectilinear_area') {
+    const rm = id.match(/^RECTI_(\d+)x(\d+)_(\d+)x(\d+)$/);
+    if (rm) {
+      return (
+        <RectilinearAreaModel
+          a1={+rm[1]} b1={+rm[2]} a2={+rm[3]} b2={+rm[4]}
+          color={color}
+          revealAnswer={revealAnswer}
+        />
+      );
+    }
   }
 
   // ── Geometry shape ────────────────────────────────────────────────────────

@@ -31,7 +31,10 @@ export type ItemType =
   | 'measurement_word'
   | 'bar_graph_read'
   | 'line_plot_read'
-  | 'arithmetic_pattern';
+  | 'arithmetic_pattern'
+  | 'perimeter_polygon'
+  | 'perimeter_unknown_side'
+  | 'area_perimeter_compare';
 
 export type SessionMode =
   | 'daily_review'

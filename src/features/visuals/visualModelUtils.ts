@@ -47,6 +47,8 @@ export function hasVisualModel(item: PracticeItem): boolean {
   if ((itemType === 'area_unit_squares' || itemType === 'area_rectangle' ||
        itemType === 'perimeter_rectangle') && factA != null && factB != null) return true;
 
+  if (itemType === 'rectilinear_area') return /^RECTI_\d+x\d+_\d+x\d+$/.test(id);
+
   if (itemType === 'geometry_vocabulary') return geoShapeFromItemId(id) != null;
 
   if (itemType === 'time_to_minute' && factA != null && factB != null) return true;

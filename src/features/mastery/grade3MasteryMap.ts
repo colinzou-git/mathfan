@@ -135,6 +135,14 @@ export const GRADE3_MASTERY_MAP: readonly MasterySkillNode[] = [
     prerequisites: [],
     californiaStandardIds: ['3.MD.D.8'],
   },
+  {
+    id: 'g3-area-perimeter-compare',
+    domain: 'area_perimeter',
+    title: 'Compare Area and Perimeter',
+    description: 'Understand that rectangles can have the same area but different perimeters, or the same perimeter but different areas.',
+    prerequisites: ['g3-area-formula', 'g3-perimeter'],
+    californiaStandardIds: ['3.MD.D.8'],
+  },
   // ── Addition & Subtraction ──────────────────────────────────────────────────
   {
     id: 'g3-add-2digit-regrouping',
