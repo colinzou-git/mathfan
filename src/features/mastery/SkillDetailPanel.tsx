@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-import type { MasterySkillNode } from './grade3MasteryMap';
+import type { Grade3Domain, MasterySkillNode } from './grade3MasteryMap';
 import type { StudentSkillSummary } from './skillMasteryEngine';
 
 interface Props {
@@ -10,13 +10,14 @@ interface Props {
   onReviewDue: (skillId: string) => void;
 }
 
-const DOMAIN_LABELS: Record<string, string> = {
+const DOMAIN_LABELS: Record<Grade3Domain, string> = {
   addition_subtraction: 'Add & Subtract',
   multiplication: 'Multiplication',
   division: 'Division',
   fractions: 'Fractions',
   area_perimeter: 'Area & Perimeter',
   geometry: 'Geometry',
+  measurement_data: 'Measurement & Data',
 };
 
 export function SkillDetailPanel({ skill, summary, onClose, onPracticeSkill, onReviewDue }: Props) {
