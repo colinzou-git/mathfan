@@ -125,8 +125,8 @@ describe('status: needs_practice', () => {
     expect(result[0].accuracy).toBeCloseTo(0.2);
   });
 
-  it('needs_practice takes priority over due items', () => {
-    // Low accuracy AND a due item state — needs_practice wins
+  it('review_due takes priority over needs_practice when dueItemCount > 0', () => {
+    // Low accuracy AND a due item state — review_due wins (due items are scheduled work)
     const events = [makeEvent('s1', ITEM_BASIC.id, false)];
     const state = makeState('s1', ITEM_BASIC.id, PAST);
 
@@ -138,7 +138,30 @@ describe('status: needs_practice', () => {
       now: NOW,
     });
 
-    expect(result[0].status).toBe('needs_practice');
+    expect(result[0].status).toBe('review_due');
+    expect(result[0].dueItemCount).toBe(1);
+  });
+
+  it('returns review_due when attemptCount > 0, accuracy < 0.60, and dueItemCount > 0', () => {
+    // 3 correct, 7 wrong → 30% accuracy; item state is overdue
+    const events = [
+      ...Array.from({ length: 3 }, () => makeEvent('s1', ITEM_BASIC.id, true)),
+      ...Array.from({ length: 7 }, () => makeEvent('s1', ITEM_BASIC.id, false)),
+    ];
+    const state = makeState('s1', ITEM_BASIC.id, PAST);
+
+    const result = deriveGrade3SkillSummaries({
+      studentId: 's1',
+      items: [ITEM_BASIC],
+      mathAnswerEvents: events,
+      itemStates: [state],
+      now: NOW,
+    });
+
+    expect(result[0].attemptCount).toBe(10);
+    expect(result[0].accuracy).toBeCloseTo(0.3);
+    expect(result[0].dueItemCount).toBe(1);
+    expect(result[0].status).toBe('review_due');
   });
 });
 

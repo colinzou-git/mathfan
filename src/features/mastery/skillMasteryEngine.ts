@@ -45,8 +45,8 @@ function classifyStatus(
   itemCount: number,
 ): SkillSummaryStatus {
   if (attemptCount === 0) return 'new';
-  if (accuracy < ACCURACY_NEEDS_PRACTICE) return 'needs_practice';
   if (dueItemCount > 0) return 'review_due';
+  if (accuracy < ACCURACY_NEEDS_PRACTICE) return 'needs_practice';
   if (
     accuracy >= ACCURACY_MASTERED &&
     attemptCount >= ATTEMPTS_MASTERED &&
