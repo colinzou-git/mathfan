@@ -11,6 +11,7 @@ interface Props {
 }
 
 const DOMAIN_LABELS: Record<string, string> = {
+  addition_subtraction: 'Add & Subtract',
   multiplication: 'Multiplication',
   division: 'Division',
   fractions: 'Fractions',
