@@ -8,7 +8,7 @@ import { makeDecimalAddItem, makeDecimalSubItem } from './decimalItems';
 import { makeWordProblem, type Schema } from './wordProblemItems';
 import { makeAreaUnitSquaresItem, makeAreaRectangleItem, makePerimeterRectangleItem, makeRectilinearAreaItem } from './areaItems';
 import { GEO_ITEM_MAP } from './geometryItems';
-import { makePropCommutativityItem, makePropIdentityItem, makePropZeroItem } from './mulPropertiesItems';
+import { makePropCommutativityItem, makePropIdentityItem, makePropZeroItem, makePropAssociativeItem, makePropDistributiveItem } from './mulPropertiesItems';
 import { makeTimeItem, makeElapsedTimeItem, makeBarGraphItem, makeLinePlotItem, makeMeasurementWordProblem, type MeasSchema } from './measurementItems';
 import { makeTwoStepWordProblem, type TwoStepSchema } from './twoStepItems';
 import { makeArithmeticPatternItem } from './patternItems';
@@ -104,6 +104,14 @@ export function makeItemFromId(itemId: string): PracticeItem | null {
   // PROP_ZERO_A — zero property
   m = itemId.match(/^PROP_ZERO_(\d+)$/);
   if (m) return makePropZeroItem(+m[1]);
+
+  // PROP_ASC_AxBxC — associative property
+  m = itemId.match(/^PROP_ASC_(\d+)x(\d+)x(\d+)$/);
+  if (m) return makePropAssociativeItem(+m[1], +m[2], +m[3]);
+
+  // PROP_DIST_AxBpC — distributive property
+  m = itemId.match(/^PROP_DIST_(\d+)x(\d+)p(\d+)$/);
+  if (m) return makePropDistributiveItem(+m[1], +m[2], +m[3]);
 
   // CLCK_h_m — time to minute (analog clock reading)
   m = itemId.match(/^CLCK_(\d+)_(\d+)$/);
