@@ -5,7 +5,7 @@ export interface ItemDescription {
   prompt: string;
   itemType: ItemType;
   /** Coarse operation group for filtering/tabs. */
-  group: 'mul' | 'div' | 'unk' | 'add' | 'sub' | 'frac' | 'word' | 'round' | 'factors' | 'dec' | 'other';
+  group: 'mul' | 'div' | 'unk' | 'add' | 'sub' | 'frac' | 'word' | 'round' | 'factors' | 'dec' | 'area' | 'other';
 }
 
 /**
@@ -75,15 +75,33 @@ export function describeItem(itemId: string): ItemDescription {
 
   // Area: AREA_SQ_{r}x{c}
   m = itemId.match(/^AREA_SQ_(\d+)x(\d+)$/);
-  if (m) return { prompt: `Area: ${m[1]}×${m[2]} unit squares`, itemType: 'area_unit_squares', group: 'other' };
+  if (m) return { prompt: `Area: ${m[1]}×${m[2]} unit squares`, itemType: 'area_unit_squares', group: 'area' };
 
   // Area rectangle: AREA_RECT_{r}x{c}
   m = itemId.match(/^AREA_RECT_(\d+)x(\d+)$/);
-  if (m) return { prompt: `Area: ${m[1]} × ${m[2]} rectangle`, itemType: 'area_rectangle', group: 'other' };
+  if (m) return { prompt: `Area: ${m[1]} × ${m[2]} rectangle`, itemType: 'area_rectangle', group: 'area' };
 
   // Perimeter rectangle: PERIM_RECT_{l}x{w}
   m = itemId.match(/^PERIM_RECT_(\d+)x(\d+)$/);
-  if (m) return { prompt: `Perimeter: ${m[1]}×${m[2]} rectangle`, itemType: 'perimeter_rectangle', group: 'other' };
+  if (m) return { prompt: `Perimeter: ${m[1]}×${m[2]} rectangle`, itemType: 'perimeter_rectangle', group: 'area' };
+
+  // Perimeter polygon: PERIM_POLY_{s1}-{s2}-...
+  m = itemId.match(/^PERIM_POLY_([\d-]+)$/);
+  if (m) {
+    const sides = m[1].split('-').join(', ');
+    return { prompt: `Perimeter of polygon (${sides})`, itemType: 'perimeter_polygon', group: 'area' };
+  }
+
+  // Perimeter unknown side: PERIM_UNKSIDE_{total}_{s1}-{s2}-...
+  m = itemId.match(/^PERIM_UNKSIDE_(\d+)_([\d-]+)$/);
+  if (m) {
+    const known = m[2].split('-').join(', ');
+    return { prompt: `Perimeter: total ${m[1]}, known sides ${known}`, itemType: 'perimeter_unknown_side', group: 'area' };
+  }
+
+  // Area/perimeter compare: AREA_PERIM_CMP_{sadp|spad}_{index}
+  m = itemId.match(/^AREA_PERIM_CMP_(sadp|spad)_(\d+)$/);
+  if (m) return { prompt: `Area/perimeter compare (${m[1]} #${m[2]})`, itemType: 'area_perimeter_compare', group: 'area' };
 
   // Geometry: GEO_{type}_{key}
   if (itemId.startsWith('GEO_')) return { prompt: itemId.replace(/_/g, ' '), itemType: 'geometry_vocabulary', group: 'other' };

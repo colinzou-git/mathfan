@@ -26,4 +26,58 @@ describe('describeItem', () => {
   it('itemPrompt falls back to the raw id for unknown formats', () => {
     expect(itemPrompt('WEIRD_xyz')).toBe('WEIRD_xyz');
   });
+
+  // ── Area/perimeter items — group 'area' ──────────────────────────────────────
+
+  it('parses AREA_SQ as area group', () => {
+    expect(describeItem('AREA_SQ_3x4')).toMatchObject({ itemType: 'area_unit_squares', group: 'area' });
+  });
+
+  it('parses AREA_RECT as area group', () => {
+    expect(describeItem('AREA_RECT_5x6')).toMatchObject({ itemType: 'area_rectangle', group: 'area' });
+  });
+
+  it('parses PERIM_RECT as area group', () => {
+    expect(describeItem('PERIM_RECT_4x3')).toMatchObject({ itemType: 'perimeter_rectangle', group: 'area' });
+  });
+
+  it('parses PERIM_POLY with correct prompt and group', () => {
+    expect(describeItem('PERIM_POLY_3-4-5')).toMatchObject({
+      prompt: 'Perimeter of polygon (3, 4, 5)',
+      itemType: 'perimeter_polygon',
+      group: 'area',
+    });
+  });
+
+  it('parses PERIM_POLY with four sides', () => {
+    expect(describeItem('PERIM_POLY_2-3-4-5')).toMatchObject({
+      prompt: 'Perimeter of polygon (2, 3, 4, 5)',
+      itemType: 'perimeter_polygon',
+      group: 'area',
+    });
+  });
+
+  it('parses PERIM_UNKSIDE with correct prompt and group', () => {
+    expect(describeItem('PERIM_UNKSIDE_12_3-4')).toMatchObject({
+      prompt: 'Perimeter: total 12, known sides 3, 4',
+      itemType: 'perimeter_unknown_side',
+      group: 'area',
+    });
+  });
+
+  it('parses AREA_PERIM_CMP sadp with correct prompt and group', () => {
+    expect(describeItem('AREA_PERIM_CMP_sadp_0')).toMatchObject({
+      prompt: 'Area/perimeter compare (sadp #0)',
+      itemType: 'area_perimeter_compare',
+      group: 'area',
+    });
+  });
+
+  it('parses AREA_PERIM_CMP spad with correct group', () => {
+    expect(describeItem('AREA_PERIM_CMP_spad_2')).toMatchObject({
+      prompt: 'Area/perimeter compare (spad #2)',
+      itemType: 'area_perimeter_compare',
+      group: 'area',
+    });
+  });
 });
