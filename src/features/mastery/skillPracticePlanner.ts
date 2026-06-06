@@ -13,6 +13,8 @@ import { roundId } from '../curriculum/roundingItems';
 import {
   clckId, etimeId, bargId, lplotId, mwrdId,
 } from '../curriculum/measurementItems';
+import { wrd2Id, type TwoStepSchema } from '../curriculum/twoStepItems';
+import { apatId } from '../curriculum/patternItems';
 
 export interface PlanOptions {
   sessionLength?: number;
@@ -197,6 +199,62 @@ function sub3DigitBorrowingItemIds(): string[] {
     [614, 258], [735, 469], [821, 347], [943, 256], [532, 174],
   ];
   return pairs.map(([hi, lo]) => subId(hi, lo));
+}
+
+// ── Two-step word problems ────────────────────────────────────────────────────
+
+function twoStepItemIds(): string[] {
+  // schema, a, b, c — all answers are positive integers
+  const items: [TwoStepSchema, number, number, number][] = [
+    // muls: (a × b) − c
+    ['muls', 4, 5, 8],  // 12
+    ['muls', 3, 6, 7],  // 11
+    ['muls', 5, 4, 9],  // 11
+    ['muls', 6, 3, 5],  // 13
+    ['muls', 2, 8, 6],  // 10
+    ['muls', 3, 7, 8],  // 13
+    // mula: (a × b) + c
+    ['mula', 3, 4, 8],  // 20
+    ['mula', 2, 5, 7],  // 17
+    ['mula', 4, 3, 9],  // 21
+    ['mula', 5, 4, 6],  // 26
+    ['mula', 3, 6, 4],  // 22
+    ['mula', 2, 7, 8],  // 22
+    // diva: (a ÷ b) + c  [a divisible by b]
+    ['diva', 12, 3, 5], // 9
+    ['diva', 20, 4, 6], // 11
+    ['diva', 15, 5, 4], // 7
+    ['diva', 18, 6, 3], // 6
+    ['diva', 28, 7, 4], // 8
+    ['diva', 16, 4, 7], // 11
+    // divs: (a ÷ b) − c  [a divisible by b, a/b > c]
+    ['divs', 24, 4, 3], // 3
+    ['divs', 60, 6, 4], // 6
+    ['divs', 56, 8, 3], // 4
+    ['divs', 72, 8, 5], // 4
+    ['divs', 70, 7, 6], // 4
+    ['divs', 45, 9, 2], // 3
+  ];
+  return items.map(([s, a, b, c]) => wrd2Id(s, a, b, c));
+}
+
+// ── Arithmetic patterns ───────────────────────────────────────────────────────
+
+function arithmeticPatternItemIds(): string[] {
+  // [start, step, terms]
+  const items: [number, number, number][] = [
+    // Count-by sequences (table × n)
+    [2, 2, 4],   [3, 3, 4],   [4, 4, 4],   [5, 5, 4],
+    [6, 6, 4],   [7, 7, 4],   [8, 8, 4],   [9, 9, 4],
+    [10, 10, 4],
+    // Starting from 0 (extra terms for readability)
+    [0, 3, 5],   [0, 4, 5],   [0, 6, 4],
+    // Non-zero starts
+    [1, 3, 4],   [2, 4, 4],   [5, 3, 4],
+    [10, 5, 4],  [4, 6, 4],   [20, 10, 4],
+    [15, 5, 4],  [6, 4, 4],
+  ];
+  return items.map(([start, step, terms]) => apatId(start, step, terms));
 }
 
 // ── Rounding to nearest 10 or 100 ────────────────────────────────────────────
@@ -534,6 +592,24 @@ export function planPracticeForSkill(
     return {
       mode: 'subtraction',
       specificItemIds: sub3DigitBorrowingItemIds(),
+      sessionLength,
+    };
+  }
+
+  // ── g3-word-two-step — two-step word problems ─────────────────────────────────
+  if (skillId === 'g3-word-two-step') {
+    return {
+      mode: 'word_problem',
+      specificItemIds: twoStepItemIds(),
+      sessionLength,
+    };
+  }
+
+  // ── g3-patterns-arithmetic — arithmetic sequence patterns ────────────────────
+  if (skillId === 'g3-patterns-arithmetic') {
+    return {
+      mode: 'multiplication',
+      specificItemIds: arithmeticPatternItemIds(),
       sessionLength,
     };
   }

@@ -10,6 +10,8 @@ import { makeAreaUnitSquaresItem, makeAreaRectangleItem, makePerimeterRectangleI
 import { GEO_ITEM_MAP } from './geometryItems';
 import { makePropCommutativityItem, makePropIdentityItem, makePropZeroItem } from './mulPropertiesItems';
 import { makeTimeItem, makeElapsedTimeItem, makeBarGraphItem, makeLinePlotItem, makeMeasurementWordProblem, type MeasSchema } from './measurementItems';
+import { makeTwoStepWordProblem, type TwoStepSchema } from './twoStepItems';
+import { makeArithmeticPatternItem } from './patternItems';
 
 /**
  * Reconstruct a PracticeItem from its deterministic itemId.
@@ -122,6 +124,14 @@ export function makeItemFromId(itemId: string): PracticeItem | null {
   // MWRD_schema_a_b — measurement word problem
   m = itemId.match(/^MWRD_([a-z]+)_(\d+)_(\d+)$/);
   if (m) return makeMeasurementWordProblem(m[1] as MeasSchema, +m[2], +m[3]);
+
+  // WRD2_schema_a_b_c — two-step word problem
+  m = itemId.match(/^WRD2_([a-z]+)_(\d+)_(\d+)_(\d+)$/);
+  if (m) return makeTwoStepWordProblem(m[1] as TwoStepSchema, +m[2], +m[3], +m[4]);
+
+  // APAT_start_step_terms — arithmetic sequence pattern
+  m = itemId.match(/^APAT_(\d+)_(\d+)_(\d+)$/);
+  if (m) return makeArithmeticPatternItem(+m[1], +m[2], +m[3]);
 
   return null;
 }

@@ -34,6 +34,8 @@ export function inferGrade3SkillId(item: PracticeItem): string | null {
 
   // ── Word problems ─────────────────────────────────────────────────────────
   if (itemType === 'word_problem') {
+    // Two-step word problems (WRD2_ prefix) — check before single-step
+    if (id.startsWith('WRD2_')) return 'g3-word-two-step';
     // Tags always include the schema: 'eg' | 'ar' | 'cmp' | 'dv'
     if (tags.includes('dv')) return 'g3-div-meaning';
     // Fallback: parse schema from WORD_{schema}_{a}_{b} ID
@@ -95,6 +97,9 @@ export function inferGrade3SkillId(item: PracticeItem): string | null {
 
   // ── Multiplication properties ─────────────────────────────────────────────
   if (itemType === 'multiplication_properties') return 'g3-mul-properties';
+
+  // ── Arithmetic patterns ───────────────────────────────────────────────────
+  if (itemType === 'arithmetic_pattern') return 'g3-patterns-arithmetic';
 
   // ── Rounding ──────────────────────────────────────────────────────────────
   if (itemType === 'rounding') return 'g3-round-nearest-10-100';

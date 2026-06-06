@@ -30,7 +30,8 @@ export type ItemType =
   | 'elapsed_time'
   | 'measurement_word'
   | 'bar_graph_read'
-  | 'line_plot_read';
+  | 'line_plot_read'
+  | 'arithmetic_pattern';
 
 export type SessionMode =
   | 'daily_review'

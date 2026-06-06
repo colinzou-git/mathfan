@@ -202,6 +202,22 @@ export const GRADE3_MASTERY_MAP: readonly MasterySkillNode[] = [
     prerequisites: ['g3-mul-tables-basic'],
     californiaStandardIds: ['3.NBT.A.3'],
   },
+  {
+    id: 'g3-word-two-step',
+    domain: 'multiplication',
+    title: 'Two-Step Word Problems',
+    description: 'Solve two-step word problems using the four operations (+, −, ×, ÷).',
+    prerequisites: ['g3-mul-meaning', 'g3-div-meaning'],
+    californiaStandardIds: ['3.OA.D.8'],
+  },
+  {
+    id: 'g3-patterns-arithmetic',
+    domain: 'multiplication',
+    title: 'Arithmetic Patterns',
+    description: 'Identify and extend arithmetic patterns in number sequences and multiplication tables.',
+    prerequisites: ['g3-mul-tables-basic'],
+    californiaStandardIds: ['3.OA.D.9'],
+  },
   // ── Measurement & Data ───────────────────────────────────────────────────────
   {
     id: 'g3-time-to-minute',

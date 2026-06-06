@@ -108,6 +108,14 @@ export function describeItem(itemId: string): ItemDescription {
   m = itemId.match(/^MWRD_([a-z]+)_(\d+)_(\d+)$/);
   if (m) return { prompt: `Measurement (${m[1]}): ${m[2]}, ${m[3]}`, itemType: 'measurement_word', group: 'word' };
 
+  // Two-step word problem: WRD2_schema_a_b_c
+  m = itemId.match(/^WRD2_([a-z]+)_(\d+)_(\d+)_(\d+)$/);
+  if (m) return { prompt: `Two-step (${m[1]}): ${m[2]},${m[3]},${m[4]}`, itemType: 'word_problem', group: 'word' };
+
+  // Arithmetic pattern: APAT_start_step_terms
+  m = itemId.match(/^APAT_(\d+)_(\d+)_(\d+)$/);
+  if (m) return { prompt: `Pattern: +${m[2]} from ${m[1]}`, itemType: 'arithmetic_pattern', group: 'other' };
+
   // Fallback to the static catalogue (or the raw id)
   const item = ITEM_MAP.get(itemId);
   if (item) {
