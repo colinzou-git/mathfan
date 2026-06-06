@@ -69,6 +69,7 @@ export function VisualModel({ item, color, revealAnswer = false }: Props) {
         <EqualGroupsModel
           groups={parsed.groups}
           itemsPerGroup={parsed.perGroup}
+          revealAnswer={revealAnswer}
         />
       );
     }

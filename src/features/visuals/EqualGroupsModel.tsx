@@ -13,6 +13,8 @@ interface Props {
   groupColor?: string;
   /** Accessible label override. */
   ariaLabel?: string;
+  /** When false (default), omit the computed total from aria-label to avoid answer leakage. */
+  revealAnswer?: boolean;
 }
 
 const DEFAULT_GROUP_COLOR = '#7c3aed';
@@ -23,13 +25,17 @@ export function EqualGroupsModel({
   objectChar = '●',
   groupColor = DEFAULT_GROUP_COLOR,
   ariaLabel,
+  revealAnswer = false,
 }: Props) {
   const g = Math.max(1, Math.min(Math.floor(groups), 12));
   const n = Math.max(1, Math.min(Math.floor(itemsPerGroup), 12));
   const total = g * n;
 
-  const label = ariaLabel ??
-    `${g} equal groups with ${n} object${n !== 1 ? 's' : ''} in each group, ${total} total`;
+  const label = ariaLabel ?? (
+    revealAnswer
+      ? `${g} equal groups with ${n} object${n !== 1 ? 's' : ''} in each group, ${total} total`
+      : `${g} equal groups with ${n} object${n !== 1 ? 's' : ''} in each group`
+  );
 
   return (
     <div

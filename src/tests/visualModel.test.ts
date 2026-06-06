@@ -148,4 +148,19 @@ describe('VisualModel — answer-leakage: revealAnswer=false hides computed valu
     expect(img.getAttribute('aria-label')).not.toMatch(/12/);
     expect(img.getAttribute('aria-label')).not.toMatch(/total/i);
   });
+
+  it('equal-groups word problem 3×4 does not expose total 12 in aria-label when revealAnswer=false', () => {
+    const item = makeWordProblem('eg', 3, 4);
+    render(createElement(VisualModel, { item, revealAnswer: false }));
+    const img = screen.getByRole('img');
+    expect(img.getAttribute('aria-label')).not.toMatch(/12/);
+    expect(img.getAttribute('aria-label')).not.toMatch(/total/i);
+  });
+
+  it('equal-groups word problem 3×4 includes total 12 when revealAnswer=true', () => {
+    const item = makeWordProblem('eg', 3, 4);
+    render(createElement(VisualModel, { item, revealAnswer: true }));
+    const img = screen.getByRole('img');
+    expect(img.getAttribute('aria-label')).toMatch(/12/);
+  });
 });
