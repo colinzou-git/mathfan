@@ -16,6 +16,27 @@ export function fracEqId(n: number, d: number, targetDen: number): string {
 export function fracCmpId(n1: number, d1: number, n2: number, d2: number): string {
   return `FCMP_${n1}_${d1}_${n2}_${d2}`;
 }
+export function fracNlId(n: number, d: number): string {
+  return `FNL_${n}_${d}`;
+}
+
+// ── Fraction number line: mark n/d on a 0-to-1 number line ───────────────────
+
+export function makeFractionNumberLineItem(n: number, d: number): PracticeItem {
+  return {
+    id: fracNlId(n, d),
+    skillId: 'g3-frac-number-line',
+    itemType: 'fraction_number_line',
+    prompt: `On a number line from 0 to 1 divided into ${d} equal parts, which mark shows ${n}/${d}? (Count from 0)`,
+    answer: n,
+    answerInput: 'numeric',
+    explanation: `${n}/${d} is ${n} step${n === 1 ? '' : 's'} from 0 when the line is divided into ${d} equal parts.`,
+    tags: ['fractions', 'number_line'],
+    difficulty: d <= 4 ? 0.4 : 0.55,
+    factA: n,
+    factB: d,
+  };
+}
 
 // ── Equivalent fractions: 2/3 = ?/6 ───────────────────────────────────────────
 

@@ -62,6 +62,7 @@ let idSeq = 0;
 
 beforeEach(() => {
   idSeq = 0;
+  vi.clearAllMocks();
   vi.mocked(recordPracticeAnswer).mockResolvedValue(undefined);
   vi.mocked(itemStateRepo.getForStudent).mockResolvedValue([]);
   vi.mocked(sessionRepo.getLastByMode).mockResolvedValue(undefined);
@@ -186,5 +187,73 @@ describe('usePracticeSession — wrong first attempt + correct retry', () => {
     // Called at least twice: initial attempt + retry
     expect(vi.mocked(recordPracticeAnswer).mock.calls.length).toBeGreaterThanOrEqual(2);
     expect(result.current.state.phase).toBe('correct');
+  });
+});
+
+// ── Phase 6: mistake pattern detection ───────────────────────────────────────
+
+describe('usePracticeSession — mistake pattern detection', () => {
+  it('wrong first attempt records mistakePatterns in updatedState', async () => {
+    const { result } = renderHook(() => usePracticeSession(STUDENT_ID));
+    await act(async () => { await result.current.startSession(SESSION_CONFIG); });
+
+    // 63 = 7×9 → mul:neighbor_fact; |63−56|=7 → mul:skip_count_error
+    await act(async () => { await result.current.submitAnswer('63'); });
+
+    const [payload] = vi.mocked(recordPracticeAnswer).mock.calls[0];
+    expect(payload.updatedState?.mistakePatterns).toContain('mul:neighbor_fact');
+  });
+
+  it('retry does not add new mistakePatterns', async () => {
+    const { result } = renderHook(() => usePracticeSession(STUDENT_ID));
+    await act(async () => { await result.current.startSession(SESSION_CONFIG); });
+
+    await act(async () => { await result.current.submitAnswer('63'); }); // wrong first attempt
+    await act(async () => { await result.current.submitAnswer('15'); }); // wrong retry
+
+    const calls = vi.mocked(recordPracticeAnswer).mock.calls;
+    // Retry payload has no updatedState — mistakePatterns cannot have been modified
+    expect(calls[1][0].updatedState).toBeUndefined();
+  });
+
+  it('correct answer does not add mistakes', async () => {
+    const { result } = renderHook(() => usePracticeSession(STUDENT_ID));
+    await act(async () => { await result.current.startSession(SESSION_CONFIG); });
+
+    await act(async () => { await result.current.submitAnswer('56'); }); // correct
+
+    const [payload] = vi.mocked(recordPracticeAnswer).mock.calls[0];
+    expect(payload.updatedState?.mistakePatterns ?? []).toHaveLength(0);
+  });
+
+  it('existing mistakePatterns are preserved and deduplicated', async () => {
+    vi.mocked(itemStateRepo.getForStudent).mockResolvedValue([{
+      studentId: STUDENT_ID,
+      itemId: 'MUL_7x8',
+      skillId: 'mul-7',
+      attemptCount: 5,
+      correctCount: 3,
+      lastCorrect: true,
+      lastLatencyMs: 2000,
+      medianLatencyMs: 2000,
+      ease: 2.5,
+      stabilityDays: 1,
+      difficulty: 0.3,
+      masteryLevel: 'learning' as const,
+      mistakePatterns: ['mul:neighbor_fact'],
+    }]);
+
+    const { result } = renderHook(() => usePracticeSession(STUDENT_ID));
+    await act(async () => { await result.current.startSession(SESSION_CONFIG); });
+
+    // 63 → mul:neighbor_fact (already present) + mul:skip_count_error (new)
+    await act(async () => { await result.current.submitAnswer('63'); });
+
+    const [payload] = vi.mocked(recordPracticeAnswer).mock.calls[0];
+    const patterns: string[] = payload.updatedState?.mistakePatterns ?? [];
+    expect(patterns).toContain('mul:neighbor_fact');
+    expect(patterns).toContain('mul:skip_count_error');
+    // No duplicates of the pre-existing pattern
+    expect(patterns.filter(p => p === 'mul:neighbor_fact')).toHaveLength(1);
   });
 });

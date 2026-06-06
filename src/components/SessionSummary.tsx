@@ -1,3 +1,5 @@
+import type { CSSProperties } from 'react';
+
 interface LastSession {
   firstTryAccuracy: number | null; // 0–1
   averageLatencyMs: number;
@@ -19,6 +21,7 @@ interface Props {
   wasQuit?: boolean;
   onDone: () => void;
   onPlayAgain?: () => void;
+  onBack?: () => void;
 }
 
 export function SessionSummary({
@@ -36,6 +39,7 @@ export function SessionSummary({
   wasQuit,
   onDone,
   onPlayAgain,
+  onBack,
 }: Props) {
   const firstTryPct = completedCount ? Math.round((firstTryCount / completedCount) * 100) : 0;
   const learningMoments = correctedCount + repeatedCount;
@@ -143,6 +147,11 @@ export function SessionSummary({
               Practice Again
             </button>
           )}
+          {onBack && (
+            <button style={s.secondaryBtn} onClick={onBack}>
+              ← Back
+            </button>
+          )}
           <button style={s.primaryBtn} onClick={onDone}>
             Home
           </button>
@@ -166,7 +175,7 @@ function StatBox({ label, value, color = '#1f2937' }: { label: string; value: st
   );
 }
 
-const s: Record<string, React.CSSProperties> = {
+const s: Record<string, CSSProperties> = {
   container: {
     maxWidth: '440px',
     margin: '24px auto',

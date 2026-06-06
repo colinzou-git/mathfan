@@ -2,7 +2,7 @@ import type { ReviewGrade, MasteryLevel } from '../../types/math';
 import type { MasteryState } from '../multiplication/types';
 import { db } from '../../db/dexie';
 
-export type MathEventMode = 'quiz' | 'practice';
+export type MathEventMode = 'quiz' | 'practice' | 'diagnostic';
 
 export type MathFactStatus =
   | 'new'

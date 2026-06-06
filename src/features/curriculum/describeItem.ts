@@ -73,6 +73,21 @@ export function describeItem(itemId: string): ItemDescription {
   m = itemId.match(/^DSUB_([\dp]+)_([\dp]+)$/);
   if (m) return { prompt: `${m[1].replace('p', '.')} − ${m[2].replace('p', '.')}`, itemType: 'decimal_sub', group: 'dec' };
 
+  // Area: AREA_SQ_{r}x{c}
+  m = itemId.match(/^AREA_SQ_(\d+)x(\d+)$/);
+  if (m) return { prompt: `Area: ${m[1]}×${m[2]} unit squares`, itemType: 'area_unit_squares', group: 'other' };
+
+  // Area rectangle: AREA_RECT_{r}x{c}
+  m = itemId.match(/^AREA_RECT_(\d+)x(\d+)$/);
+  if (m) return { prompt: `Area: ${m[1]} × ${m[2]} rectangle`, itemType: 'area_rectangle', group: 'other' };
+
+  // Perimeter rectangle: PERIM_RECT_{l}x{w}
+  m = itemId.match(/^PERIM_RECT_(\d+)x(\d+)$/);
+  if (m) return { prompt: `Perimeter: ${m[1]}×${m[2]} rectangle`, itemType: 'perimeter_rectangle', group: 'other' };
+
+  // Geometry: GEO_{type}_{key}
+  if (itemId.startsWith('GEO_')) return { prompt: itemId.replace(/_/g, ' '), itemType: 'geometry_vocabulary', group: 'other' };
+
   // Fallback to the static catalogue (or the raw id)
   const item = ITEM_MAP.get(itemId);
   if (item) {

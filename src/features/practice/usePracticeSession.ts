@@ -23,6 +23,7 @@ import { db } from '../../db/dexie';
 import { appNow } from '../time/clock';
 import { generateId } from '../../utils/id';
 import { recordPracticeAnswer, type PracticeAnswerPayload } from '../learning/recordAnswer';
+import { detectMistakes } from '../mastery/misconceptionEngine';
 import type { PracticeItem as PItem } from '../../types/math';
 
 // ── Public types ──────────────────────────────────────────────────────────────
@@ -260,9 +261,28 @@ export function usePracticeSession(studentId: string) {
     // FSRS scheduling. Retries are logged for stats but don't distort the
     // spaced-repetition schedule.
     const isFirstAttempt = attemptNo === 1;
-    const updated = isFirstAttempt
-      ? applyReview(existing, result.reviewGrade, latencyMs, rawInput, now, { isCorrect: result.isCorrect })
-      : existing;
+    let updated: StudentItemState;
+    if (isFirstAttempt) {
+      try {
+        updated = applyReview(existing, result.reviewGrade, latencyMs, rawInput, now, { isCorrect: result.isCorrect });
+      } catch (err) {
+        // FSRS validation errors (e.g. negative delta_t from a future lastSeenAt due to
+        // clock drift) must not block the state update — skip FSRS scheduling for this attempt.
+        console.warn('[usePracticeSession] applyReview error; FSRS update skipped', err);
+        updated = existing;
+      }
+    } else {
+      updated = existing;
+    }
+
+    // On first wrong attempt, detect misconception patterns and merge into state.
+    if (isFirstAttempt && !result.isCorrect) {
+      const newTags = detectMistakes(item, result.studentAnswer);
+      if (newTags.length > 0) {
+        const merged = Array.from(new Set([...(updated.mistakePatterns ?? []), ...newTags]));
+        updated = { ...updated, mistakePatterns: merged };
+      }
+    }
 
     // Mutate refs before setState — safe because this is a plain event handler, not an updater.
     if (isFirstAttempt) {

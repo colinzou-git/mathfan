@@ -38,6 +38,10 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         // Ensure navigateFallback works under the base path
         navigateFallback: `${base}index.html`,
+        // New builds activate immediately instead of sitting in 'waiting'.
+        // controllerchange in main.tsx then reloads the page automatically.
+        skipWaiting: true,
+        clientsClaim: true,
       },
     }),
   ],

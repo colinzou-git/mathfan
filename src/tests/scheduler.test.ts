@@ -165,6 +165,26 @@ describe('applyReview — legacy state compatibility', () => {
     };
     expect(() => applyReview(unInit, 'good', 2000, '72', now, { isCorrect: true })).not.toThrow();
   });
+
+  it('does not throw when lastSeenAt is in the future (clock drift / Drive sync)', () => {
+    // Regression: ts-fsrs throws FSRSValidationError for delta_t < 0. This can happen
+    // when the device clock was set ahead when the item was last reviewed.
+    const future = new Date(now.getTime() + 38 * MS_DAY); // 38 days in the future
+    const driftState: StudentItemState = {
+      studentId: 's1', itemId: 'MUL_8x9', skillId: 'sk',
+      attemptCount: 10, correctCount: 9, lastCorrect: true,
+      lastLatencyMs: 1500, medianLatencyMs: 1600, ease: 2.5,
+      stabilityDays: 14, fsrsDifficulty: 4.5,
+      reps: 10, lapses: 0, fsrsCardState: 2,
+      difficulty: 0.6, masteryLevel: 'strong', mistakePatterns: [],
+      lastSeenAt: future.toISOString(),
+      nextDueAt: future.toISOString(),
+    };
+    expect(() => applyReview(driftState, 'good', 1500, '72', now, { isCorrect: true })).not.toThrow();
+    const updated = applyReview(driftState, 'good', 1500, '72', now, { isCorrect: true });
+    // After clamping, the next due date should be in the future from now
+    expect(new Date(updated.lastSeenAt!).getTime()).toBeLessThanOrEqual(now.getTime());
+  });
 });
 
 // ── Retry behaviour ───────────────────────────────────────────────────────────

@@ -80,7 +80,11 @@ function stateToCard(state: StudentItemState, now: Date): Card {
     return createEmptyCard(now);
   }
 
-  const lastReview = state.lastSeenAt ? new Date(state.lastSeenAt) : now;
+  const lastReviewRaw = state.lastSeenAt ? new Date(state.lastSeenAt) : now;
+  // Clamp to now: ts-fsrs throws FSRSValidationError for delta_t < 0, which occurs
+  // when lastSeenAt is in the future (clock drift or Drive-synced data from a device
+  // with an incorrect clock).
+  const lastReview = lastReviewRaw.getTime() > now.getTime() ? now : lastReviewRaw;
   const due = state.nextDueAt ? new Date(state.nextDueAt) : now;
   // Use stored scheduledDays when available; fall back to deriving from due/lastReview.
   const scheduledDays = state.fsrsScheduledDays ?? Math.max(0, Math.round(

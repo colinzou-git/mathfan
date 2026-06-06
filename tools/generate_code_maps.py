@@ -239,12 +239,34 @@ def guess_purpose(path: str, text: str, info_hint: dict[str, list[str]]) -> str:
         return "Cloud sync/auth/data transfer logic."
     if "/auth/" in lower or "oauth" in text.lower() or "googleauth" in lower:
         return "Authentication integration."
+    if "/visuals/" in lower:
+        return "Reusable SVG visual model components (area grids, shape diagrams, fraction bars, arrays)."
+    if "/curriculum/" in lower:
+        if "items" in lower:
+            return "Practice item definitions and ID generators for a math curriculum topic."
+        return "Curriculum module: item definitions, skill mappings, or content utilities."
     if "/practice/" in lower:
         return "Practice session UI and/or quiz interaction logic."
     if "/stats/" in lower:
         return "Progress/statistics screens or calculations."
     if "/settings/" in lower:
         return "Student/app settings UI or persistence."
+    if "/mastery/" in lower:
+        if "misconception" in lower:
+            return "Misconception detection engine: identifies common mistake patterns in student answers."
+        if "planner" in lower:
+            return "Grade 3 skill practice planner: maps skill IDs to SessionConfig for the mastery map."
+        if "today" in lower:
+            return "Today's plan engine: determines which skills to review/practice based on mastery summaries."
+        if "engine" in lower:
+            return "Grade 3 skill mastery engine: derives per-skill summaries from events and item states."
+        if "mapping" in lower:
+            return "Grade 3 skill-to-item mapping: links curriculum items to mastery skill IDs."
+        if "page" in lower or "panel" in lower or "tile" in lower or "card" in lower:
+            return "Grade 3 mastery map UI: skill display, detail panels, and parent action cards."
+        return "Grade 3 mastery map: skill definitions, prerequisites, and item-to-skill mapping."
+    if "/scheduler/" in lower or "/scheduler" in lower:
+        return "FSRS spaced-repetition scheduler: session planning and card state updates."
     if "/dashboard/" in lower:
         return "Dashboard/profile setup/student navigation feature."
     if "/audio/" in lower or "speech" in lower:
