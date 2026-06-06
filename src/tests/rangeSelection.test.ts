@@ -98,4 +98,57 @@ describe('opSpecs', () => {
     expect(specFor('word', 3).buildConfig([{ lo: 2, hi: 10 }], '', 10).grade).toBe(3);
     expect(specFor('decimals', 5).buildConfig([{ lo: 0, hi: 20 }], '', 10).grade).toBe(5);
   });
+
+  it('area returns specificItemIds with area/perimeter items and mode area', () => {
+    const spec = specFor('area', 3);
+    expect(spec.ranges).toHaveLength(0);
+    const cfg = spec.buildConfig([], '', 20);
+    expect(cfg.mode).toBe('area');
+    expect(cfg.sessionLength).toBe(20);
+    expect(cfg.specificItemIds).toBeDefined();
+    expect(cfg.specificItemIds!.length).toBeGreaterThan(0);
+    expect(cfg.specificItemIds!.some(id => id.startsWith('AREA_') || id.startsWith('PERIM_') || id.startsWith('RECTI_'))).toBe(true);
+  });
+
+  it('geometry returns geoItemIds and mode geometry', () => {
+    const spec = specFor('geometry', 3);
+    expect(spec.ranges).toHaveLength(0);
+    const cfg = spec.buildConfig([], '', 15);
+    expect(cfg.mode).toBe('geometry');
+    expect(cfg.sessionLength).toBe(15);
+    expect(cfg.specificItemIds).toBeDefined();
+    expect(cfg.specificItemIds!.length).toBeGreaterThan(0);
+    expect(cfg.specificItemIds!.every(id => id.startsWith('GEO_'))).toBe(true);
+  });
+
+  it('measurement returns mixed clock/elapsed/word item ids', () => {
+    const spec = specFor('measurement', 3);
+    expect(spec.ranges).toHaveLength(0);
+    const cfg = spec.buildConfig([], '', 10);
+    expect(cfg.mode).toBe('measurement');
+    expect(cfg.specificItemIds).toBeDefined();
+    expect(cfg.specificItemIds!.length).toBeGreaterThan(0);
+    expect(cfg.specificItemIds!.some(id => id.startsWith('CLCK_'))).toBe(true);
+    expect(cfg.specificItemIds!.some(id => id.startsWith('ETIME_'))).toBe(true);
+    expect(cfg.specificItemIds!.some(id => id.startsWith('MWRD_'))).toBe(true);
+  });
+
+  it('data returns bar graph and line plot item ids', () => {
+    const spec = specFor('data', 3);
+    expect(spec.ranges).toHaveLength(0);
+    const cfg = spec.buildConfig([], '', 10);
+    expect(cfg.specificItemIds).toBeDefined();
+    expect(cfg.specificItemIds!.length).toBeGreaterThan(0);
+    expect(cfg.specificItemIds!.some(id => id.startsWith('BARG_'))).toBe(true);
+    expect(cfg.specificItemIds!.some(id => id.startsWith('LPLOT_'))).toBe(true);
+  });
+
+  it('pattern returns arithmetic sequence item ids', () => {
+    const spec = specFor('pattern', 3);
+    expect(spec.ranges).toHaveLength(0);
+    const cfg = spec.buildConfig([], '', 10);
+    expect(cfg.specificItemIds).toBeDefined();
+    expect(cfg.specificItemIds!.length).toBeGreaterThan(0);
+    expect(cfg.specificItemIds!.every(id => id.startsWith('APAT_'))).toBe(true);
+  });
 });
