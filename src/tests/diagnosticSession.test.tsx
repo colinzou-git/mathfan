@@ -67,38 +67,58 @@ describe('DiagnosticSession persistence', () => {
     cleanup();
   });
 
-  it('waits for pending diagnostic writes before completing', async () => {
+  it('auto-persists writes when last question transitions to done without button click', async () => {
+    vi.mocked(recordDiagnosticAnswerWithRetry).mockResolvedValue(undefined);
+
+    render(<DiagnosticSession studentId="student-1" onComplete={vi.fn()} onCancel={() => {}} />);
+    await answerOnlyQuestion();
+
+    // Persistence triggered automatically — no button click needed
+    expect(vi.mocked(recordDiagnosticAnswerWithRetry)).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows saving indicator while auto-save is in progress', async () => {
     const write = deferred<void>();
     vi.mocked(recordDiagnosticAnswerWithRetry).mockReturnValue(write.promise);
+
+    render(<DiagnosticSession studentId="student-1" onComplete={vi.fn()} onCancel={() => {}} />);
+    await answerOnlyQuestion();
+
+    // Auto-flush started immediately — saving indicator is visible
+    expect(screen.getByText(/saving your results/i)).toBeInTheDocument();
+
+    // Resolve the write and confirm "See my Math Map" button appears
+    await act(async () => {
+      write.resolve();
+      await write.promise;
+    });
+    expect(screen.getByRole('button', { name: /see my math map/i })).toBeInTheDocument();
+  });
+
+  it('does not duplicate writes when "See my Math Map" is clicked after auto-save', async () => {
+    vi.mocked(recordDiagnosticAnswerWithRetry).mockResolvedValue(undefined);
     const onComplete = vi.fn();
 
     render(<DiagnosticSession studentId="student-1" onComplete={onComplete} onCancel={() => {}} />);
     await answerOnlyQuestion();
 
+    // Auto-save already completed; click the button to navigate
     fireEvent.click(screen.getByRole('button', { name: /see my math map/i }));
-    expect(screen.getByText(/saving your results/i)).toBeInTheDocument();
-    expect(onComplete).not.toHaveBeenCalled();
-
-    await act(async () => {
-      write.resolve();
-      await write.promise;
-    });
+    await act(async () => { await Promise.resolve(); });
 
     expect(onComplete).toHaveBeenCalledTimes(1);
+    // Only the auto-flush wrote; no second call on button click
+    expect(vi.mocked(recordDiagnosticAnswerWithRetry)).toHaveBeenCalledTimes(1);
   });
 
-  it('does not complete when diagnostic writes fail', async () => {
+  it('shows error state when auto-save fails', async () => {
     vi.mocked(recordDiagnosticAnswerWithRetry).mockRejectedValue(new Error('db unavailable'));
     const onComplete = vi.fn();
 
     render(<DiagnosticSession studentId="student-1" onComplete={onComplete} onCancel={() => {}} />);
     await answerOnlyQuestion();
 
-    fireEvent.click(screen.getByRole('button', { name: /see my math map/i }));
-
-    await act(async () => {
-      await Promise.resolve();
-    });
+    await act(async () => { await Promise.resolve(); });
     expect(screen.getByText(/could not save results/i)).toBeInTheDocument();
     expect(vi.mocked(recordDiagnosticAnswerWithRetry)).toHaveBeenCalledTimes(1);
     expect(onComplete).not.toHaveBeenCalled();
@@ -113,8 +133,7 @@ describe('DiagnosticSession persistence', () => {
     render(<DiagnosticSession studentId="student-1" onComplete={onComplete} onCancel={() => {}} />);
     await answerOnlyQuestion();
 
-    // First attempt — should fail and show error
-    fireEvent.click(screen.getByRole('button', { name: /see my math map/i }));
+    // Auto-flush failed — error shown
     await act(async () => { await Promise.resolve(); });
     expect(screen.getByText(/could not save results/i)).toBeInTheDocument();
     expect(onComplete).not.toHaveBeenCalled();

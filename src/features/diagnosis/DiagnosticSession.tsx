@@ -58,9 +58,12 @@ export function DiagnosticSession({ studentId, onComplete, onCancel }: Props) {
   const startTimeRef = useRef<number>(0);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Retryable write jobs: each is a thunk that calls recordDiagnosticAnswerWithRetry
-  // with a pre-captured payload. Running the thunk fresh on each complete() call
-  // lets the "Try again" button actually retry instead of re-awaiting a settled promise.
+  // with a pre-captured payload. Running the thunk fresh on each retry lets
+  // "Try again" actually retry instead of re-awaiting a settled promise.
   const pendingWritesRef = useRef<Array<() => Promise<void>>>([]);
+  // Tracks whether the auto-flush (triggered when phase → 'done') succeeded.
+  // Used by complete() to skip duplicate writes when the user clicks "See my Math Map".
+  const writesSucceededRef = useRef(false);
 
   const items = plan.items;
   const currentItem = items[index];
@@ -161,11 +164,22 @@ export function DiagnosticSession({ studentId, onComplete, onCancel }: Props) {
     setShowFeedback(isCorrect ? 'correct' : 'wrong');
     setInput('');
 
-    // Auto-advance after feedback delay
-    timerRef.current = setTimeout(() => {
+    // Auto-advance after feedback delay. On the last question, flush pending writes
+    // before (or concurrently with) the done-screen transition so results are
+    // persisted even if the user never taps "See my Math Map".
+    timerRef.current = setTimeout(async () => {
       setShowFeedback(null);
       if (index + 1 >= total) {
         setPhase('done');
+        setSaveState('saving');
+        try {
+          await Promise.all(pendingWritesRef.current.map(job => job()));
+          writesSucceededRef.current = true;
+          setSaveState('idle');
+        } catch (err) {
+          console.warn('[DiagnosticSession] could not save diagnostic results', err);
+          setSaveState('error');
+        }
       } else {
         setIndex(i => i + 1);
       }
@@ -202,9 +216,17 @@ export function DiagnosticSession({ studentId, onComplete, onCancel }: Props) {
   if (phase === 'done') {
     const correct = results.filter(r => r.isCorrect).length;
     const complete = async () => {
+      if (saveState === 'saving') return;
+      // Auto-flush already succeeded — skip writes and navigate directly.
+      if (writesSucceededRef.current) {
+        await onComplete();
+        return;
+      }
+      // Retry failed writes.
       setSaveState('saving');
       try {
         await Promise.all(pendingWritesRef.current.map(job => job()));
+        writesSucceededRef.current = true;
         await onComplete();
       } catch (err) {
         console.warn('[DiagnosticSession] could not save diagnostic results', err);
