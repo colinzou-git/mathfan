@@ -97,6 +97,13 @@ export default function App() {
     setScreen(resolvePracticeDoneDestination(practiceReturn));
   };
 
+  // Quiz always returns to dashboard. Using handleSessionDone would read a stale
+  // practiceReturn left over from an earlier practice session launched from mastery-map or stats.
+  const handleQuizDone = () => {
+    if (authState().signedIn) pushLocal().catch(console.warn);
+    setScreen('dashboard');
+  };
+
   const startPractice = (cfg: SessionConfig) => {
     setPracticeReturn(screen);
     setSessionConfig(cfg);
@@ -169,7 +176,7 @@ export default function App() {
       <MultiplicationQuizPage
         studentId={profile.id}
         settings={profile.settings}
-        onDone={handleSessionDone}
+        onDone={handleQuizDone}
         onStartPractice={startPractice}
       />
     );
