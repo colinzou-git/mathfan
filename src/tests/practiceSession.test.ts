@@ -42,6 +42,7 @@ import { recordPracticeAnswer } from '../features/learning/recordAnswer';
 import { itemStateRepo, sessionRepo } from '../db/repositories';
 import { appNow } from '../features/time/clock';
 import { generateId } from '../utils/id';
+import { makeItemFromId } from '../features/curriculum/makeItemFromId';
 import type { SessionConfig } from '../types/math';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -255,5 +256,40 @@ describe('usePracticeSession — mistake pattern detection', () => {
     expect(patterns).toContain('mul:skip_count_error');
     // No duplicates of the pre-existing pattern
     expect(patterns.filter(p => p === 'mul:neighbor_fact')).toHaveLength(1);
+  });
+});
+
+// ── Measurement mode ──────────────────────────────────────────────────────────
+
+describe('usePracticeSession — measurement mode', () => {
+  it('creates a non-empty queue and enters active phase', async () => {
+    const { result } = renderHook(() => usePracticeSession(STUDENT_ID));
+    await act(async () => {
+      await result.current.startSession({ mode: 'measurement', sessionLength: 10 });
+    });
+    expect(result.current.state.phase).toBe('active');
+    expect(result.current.state.totalPlanned).toBe(10);
+    expect(result.current.state.currentItem).not.toBeNull();
+  });
+
+  it('first queued item ID reconstructs via makeItemFromId', async () => {
+    const { result } = renderHook(() => usePracticeSession(STUDENT_ID));
+    await act(async () => {
+      await result.current.startSession({ mode: 'measurement', sessionLength: 5 });
+    });
+    const id = result.current.state.currentItem?.id;
+    expect(id).toBeDefined();
+    if (id) {
+      expect(makeItemFromId(id)).not.toBeNull();
+    }
+  });
+
+  it('specificItemIds sessions still work as before', async () => {
+    const { result } = renderHook(() => usePracticeSession(STUDENT_ID));
+    await act(async () => {
+      await result.current.startSession({ mode: 'daily_review', sessionLength: 2, specificItemIds: ['MUL_7x8'] });
+    });
+    expect(result.current.state.phase).toBe('active');
+    expect(result.current.state.currentItem?.id).toBe('MUL_7x8');
   });
 });

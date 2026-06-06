@@ -155,6 +155,16 @@ export function PracticeScreen({
         const item = state.currentItem;
         if (item?.answerInput === 'choice') {
           const opts = (item.choices ?? []).map(String);
+          // Numeric 1–4: submit by position (works for any choice type)
+          if (e.key >= '1' && e.key <= '4') {
+            const idx = Number(e.key) - 1;
+            if (idx < opts.length) {
+              e.preventDefault();
+              submitAnswer(opts[idx]);
+              setInput('');
+            }
+            return;
+          }
           // Symbol choices: accept < = > directly
           if (e.key === '<' || e.key === '=' || e.key === '>') {
             if (opts.includes(e.key)) {
@@ -402,7 +412,7 @@ export function PracticeScreen({
               {isChoice
                 ? (choices.every(c => String(c).length === 1)
                     ? 'Tap a choice · keys < = > · H for a hint'
-                    : 'Tap a choice · press its first letter · H for a hint')
+                    : 'Tap a choice · keys 1-4 · H for a hint')
                 : 'Type your answer · Enter to check · H for a hint'}
             </p>
           )}

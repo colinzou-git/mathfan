@@ -10,7 +10,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { getHint } from '../features/practice/hintEngine';
-import { makeMultiplicationItem } from '../features/curriculum/multiplicationItems';
+import { makeMultiplicationItem, ITEM_MAP } from '../features/curriculum/multiplicationItems';
 import { makeDivisionItem } from '../features/curriculum/arithmeticItems';
 import { makeAdditionItem, makeSubtractionItem } from '../features/curriculum/arithmeticItems';
 import { makeWordProblem } from '../features/curriculum/wordProblemItems';
@@ -253,6 +253,62 @@ describe('getHint — showExplanationButton', () => {
     // area_rectangle items may not have explanation — check dynamically
     const h4 = getHint(item, 4)!;
     expect(h4.showExplanationButton).toBe(!!item.explanation);
+  });
+});
+
+// ── unknown_factor — no answer leakage ───────────────────────────────────────
+
+describe('getHint — unknown_factor answer leakage', () => {
+  // UNK_72k8: 8 × ? = 72, answer = 9 (non-perfect-square)
+  const unkItem = ITEM_MAP.get('UNK_72k8')!;
+
+  it('attempt 1: non-null and does not contain the answer', () => {
+    const h = getHint(unkItem, 1)!;
+    expect(h).not.toBeNull();
+    expect(h.text).not.toContain(String(unkItem.answer));
+  });
+
+  it('attempt 2: non-null and does not contain the answer', () => {
+    const h = getHint(unkItem, 2)!;
+    expect(h).not.toBeNull();
+    expect(h.text).not.toContain(String(unkItem.answer));
+  });
+
+  it('attempt 3: non-null and does not contain the answer', () => {
+    const h = getHint(unkItem, 3)!;
+    expect(h).not.toBeNull();
+    expect(h.text).not.toContain(String(unkItem.answer));
+  });
+
+  // UNK_9k3: 3×?=9, answer=3 — perfect-square where product "9" doesn't contain "3"
+  it('perfect-square UNK_9k3 (answer=3): attempt 1 does not contain answer', () => {
+    const sq = ITEM_MAP.get('UNK_9k3')!;
+    expect(sq).toBeDefined();
+    expect(getHint(sq, 1)!.text).not.toContain(String(sq.answer));
+  });
+
+  it('perfect-square UNK_9k3 (answer=3): attempt 3 does not contain answer', () => {
+    const sq = ITEM_MAP.get('UNK_9k3')!;
+    expect(getHint(sq, 3)!.text).not.toContain(String(sq.answer));
+  });
+});
+
+// ── multiplication_fact ×1 attempt 3 — no answer leakage ─────────────────────
+
+describe('getHint — multiplication_fact x1 attempt 3', () => {
+  it('7×1: attempt 3 does not contain "7"', () => {
+    const item = makeMultiplicationItem(7, 1); // answer = 7
+    expect(getHint(item, 3)!.text).not.toContain('7');
+  });
+
+  it('1×8: attempt 3 does not contain "8"', () => {
+    const item = makeMultiplicationItem(1, 8); // answer = 8
+    expect(getHint(item, 3)!.text).not.toContain('8');
+  });
+
+  it('1×1: attempt 3 hint uses word "one" not digit "1"', () => {
+    const item = makeMultiplicationItem(1, 1); // answer = 1
+    expect(getHint(item, 3)!.text).not.toContain('1');
   });
 });
 

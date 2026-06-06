@@ -35,8 +35,10 @@ export function getHint(item: PracticeItem, wrongAttempts: number): HintResult |
 
   switch (itemType) {
     case 'multiplication_fact':
-    case 'unknown_factor':
       return mulHint(a, b, wrongAttempts);
+
+    case 'unknown_factor':
+      return unknownFactorHint(item, wrongAttempts);
 
     case 'division_fact':
       return divHint(a, b, wrongAttempts);
@@ -90,10 +92,32 @@ function mulHint(a: number, b: number, attempt: number): HintResult {
     return hint(`Try skip-counting by ${smaller}. Count ${bigger} hops.`);
   }
   // attempt === 3: show setup using a near-fact (no final answer)
-  if (b > 1) {
+  if (b > 1 && a !== 1) {
     return hint(`You know ${a} × ${b - 1} = ${a * (b - 1)}. Add ${a} more to that.`);
   }
-  return hint(`${a} × 1 is just ${a} itself.`);
+  return hint('Any number multiplied by one equals itself.');
+}
+
+// ── Unknown factor ────────────────────────────────────────────────────────────
+
+function unknownFactorHint(item: PracticeItem, attempt: number): HintResult {
+  // Parse "known × ? = product" from the prompt
+  const m = item.prompt.match(/^(\d+) × \? = (\d+)$/);
+  const known = m ? +m[1] : (item.factA ?? 1);
+  const product = m ? +m[2] : (item.factA ?? 1) * (typeof item.answer === 'number' ? item.answer : 1);
+  const answer = typeof item.answer === 'number' ? item.answer : 0;
+
+  // Perfect-square edge case: known === answer, so we cannot mention the known factor
+  if (known === answer) {
+    if (attempt === 1) return hint(`Think: what number times itself equals ${product}?`);
+    if (attempt === 2) return hint(`Find the number that, when multiplied by itself, gives ${product}.`);
+    return hint(`Try each number starting from 1: which one times itself reaches ${product}?`);
+  }
+
+  if (attempt === 1) return hint(`Think: ${known} × ? = ${product}. What number goes in the blank?`);
+  if (attempt === 2) return hint(`Use the related division fact: ${product} ÷ ${known} = ?`);
+  // attempt === 3: show first few multiples without reaching the answer
+  return hint(`List multiples of ${known}: ${known}, ${2 * known}, ${3 * known}, … Stop when you reach ${product}.`);
 }
 
 // ── Division ──────────────────────────────────────────────────────────────────

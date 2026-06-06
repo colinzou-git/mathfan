@@ -204,6 +204,31 @@ export function usePracticeSession(studentId: string) {
       queue = registerDynamic(generateNumberTheoryItems(g, sessionLength, operandMin, operandMax));
     } else if (mode === 'decimals') {
       queue = registerDynamic(generateDecimalItems(g, sessionLength, operandMin, operandMax));
+    } else if (mode === 'measurement') {
+      // Fixed pool covering time, elapsed time, measurement word, bar graph, and line plot.
+      const pool = [
+        'CLCK_1_0', 'CLCK_2_15', 'CLCK_3_25', 'CLCK_4_30', 'CLCK_5_35', 'CLCK_6_40',
+        'CLCK_7_45', 'CLCK_8_50', 'CLCK_9_55', 'CLCK_10_5', 'CLCK_11_10', 'CLCK_12_20',
+        'ETIME_9_15_9_45', 'ETIME_10_0_10_30', 'ETIME_2_30_3_15', 'ETIME_1_0_1_45',
+        'ETIME_3_15_4_0', 'ETIME_11_30_12_0', 'ETIME_8_45_9_30',
+        'MWRD_addg_250_150', 'MWRD_subg_500_150', 'MWRD_addl_3_5', 'MWRD_subl_10_4',
+        'BARG_5_3', 'BARG_5_4', 'BARG_10_2', 'BARG_2_5', 'BARG_3_4',
+        'LPLOT_1_2_2_3', 'LPLOT_2_2_3_4', 'LPLOT_1_1_3_4',
+      ];
+      for (const id of pool) {
+        if (!dynamicItemsRef.current.has(id)) {
+          const rebuilt = makeItemFromId(id);
+          if (rebuilt) dynamicItemsRef.current.set(id, rebuilt);
+        }
+      }
+      const shuffled = [...pool].sort(() => Math.random() - 0.5);
+      queue = [];
+      while (queue.length < sessionLength) {
+        for (const id of shuffled) {
+          if (queue.length >= sessionLength) break;
+          queue.push(id);
+        }
+      }
     } else {
       const plan = planSession(ALL_ITEMS, stateMap, now, sessionLength);
       queue = [...plan.dueItems, ...plan.weakItems, ...plan.newItems];
