@@ -10,7 +10,8 @@ import type { AchievementFilter, TodayAchievementData } from '../stats/todayAchi
 
 export type PracticeOp =
   | 'multiplication' | 'division' | 'addition' | 'subtraction' | 'fraction'
-  | 'word' | 'rounding' | 'factors' | 'decimals';
+  | 'word' | 'rounding' | 'factors' | 'decimals'
+  | 'area' | 'geometry' | 'measurement' | 'data' | 'pattern';
 
 interface Props {
   profile: StudentProfile;
@@ -39,19 +40,24 @@ interface DueGroup {
 }
 
 const GROUP_DISPLAY: Record<string, { label: string; icon: string }> = {
-  mul:     { label: 'Multiply',  icon: '✖️' },
-  div:     { label: 'Divide',    icon: '➗' },
-  add:     { label: 'Add',       icon: '➕' },
-  sub:     { label: 'Subtract',  icon: '➖' },
-  frac:    { label: 'Fractions', icon: '🍕' },
-  word:    { label: 'Word',      icon: '📖' },
-  round:   { label: 'Rounding',  icon: '🔵' },
-  factors: { label: 'Primes',    icon: '🔢' },
-  dec:     { label: 'Decimals',  icon: '🔟' },
-  other:   { label: 'Other',     icon: '📝' },
+  mul:         { label: 'Multiply',    icon: '✖️' },
+  div:         { label: 'Divide',      icon: '➗' },
+  add:         { label: 'Add',         icon: '➕' },
+  sub:         { label: 'Subtract',    icon: '➖' },
+  frac:        { label: 'Fractions',   icon: '🍕' },
+  word:        { label: 'Word',        icon: '📖' },
+  round:       { label: 'Rounding',    icon: '🔵' },
+  factors:     { label: 'Primes',      icon: '🔢' },
+  dec:         { label: 'Decimals',    icon: '🔟' },
+  area:        { label: 'Area',        icon: '📐' },
+  geometry:    { label: 'Geometry',    icon: '🔷' },
+  measurement: { label: 'Measure',     icon: '⏰' },
+  data:        { label: 'Data',        icon: '📊' },
+  pattern:     { label: 'Patterns',    icon: '🔁' },
+  other:       { label: 'Other',       icon: '📝' },
 };
 
-const GROUP_ORDER = ['mul', 'div', 'add', 'sub', 'frac', 'word', 'round', 'factors', 'dec', 'other'];
+const GROUP_ORDER = ['mul', 'div', 'add', 'sub', 'frac', 'word', 'round', 'factors', 'dec', 'area', 'geometry', 'measurement', 'data', 'pattern', 'other'];
 
 const OPERATIONS: { op: PracticeOp; label: string; icon: string }[] = [
   { op: 'multiplication', label: 'Multiply',  icon: '✖️' },
@@ -63,6 +69,11 @@ const OPERATIONS: { op: PracticeOp; label: string; icon: string }[] = [
   { op: 'rounding',       label: 'Rounding',  icon: '🔵' },
   { op: 'factors',        label: 'Primes',    icon: '🔢' },
   { op: 'decimals',       label: 'Decimals',  icon: '🔟' },
+  { op: 'area',           label: 'Area',      icon: '📐' },
+  { op: 'geometry',       label: 'Geometry',  icon: '🔷' },
+  { op: 'measurement',    label: 'Measure',   icon: '⏰' },
+  { op: 'data',           label: 'Data',      icon: '📊' },
+  { op: 'pattern',        label: 'Patterns',  icon: '🔁' },
 ];
 
 export function StudentDashboard({ profile, lastSyncedAt, onStartDailyReview, onPickOperation, onOpenStats, onOpenSettings, onStartQuiz, onOpenAchievementDetail, onOpenMasteryMap }: Props) {

@@ -13,21 +13,26 @@ interface Props {
 }
 
 type SortKey = 'accuracy' | 'wrong' | 'attempts' | 'avgSpeed' | 'bestSpeed';
-type TypeFilter = 'all' | 'mul' | 'div' | 'add' | 'sub' | 'frac' | 'word' | 'round' | 'factors' | 'dec';
+type TypeFilter = 'all' | 'mul' | 'div' | 'add' | 'sub' | 'frac' | 'word' | 'round' | 'factors' | 'dec' | 'area' | 'geometry' | 'measurement' | 'data' | 'pattern';
 
 const ALL_FACT_STATUSES: MathFactStatus[] = ['new', 'forgotten', 'weak', 'learning', 'developing', 'strong', 'mastered'];
 
 const OPERATION_TABS: { key: TypeFilter; label: string; icon: string }[] = [
-  { key: 'all',     label: 'All',       icon: '∑' },
-  { key: 'mul',     label: 'Multiply',  icon: '✖️' },
-  { key: 'div',     label: 'Divide',    icon: '➗' },
-  { key: 'add',     label: 'Add',       icon: '➕' },
-  { key: 'sub',     label: 'Subtract',  icon: '➖' },
-  { key: 'frac',    label: 'Fractions', icon: '🍕' },
-  { key: 'word',    label: 'Word',      icon: '📖' },
-  { key: 'round',   label: 'Rounding',  icon: '🔵' },
-  { key: 'factors', label: 'Primes',    icon: '🔢' },
-  { key: 'dec',     label: 'Decimals',  icon: '🔟' },
+  { key: 'all',         label: 'All',        icon: '∑' },
+  { key: 'mul',         label: 'Multiply',   icon: '✖️' },
+  { key: 'div',         label: 'Divide',     icon: '➗' },
+  { key: 'add',         label: 'Add',        icon: '➕' },
+  { key: 'sub',         label: 'Subtract',   icon: '➖' },
+  { key: 'frac',        label: 'Fractions',  icon: '🍕' },
+  { key: 'word',        label: 'Word',       icon: '📖' },
+  { key: 'round',       label: 'Rounding',   icon: '🔵' },
+  { key: 'factors',     label: 'Primes',     icon: '🔢' },
+  { key: 'dec',         label: 'Decimals',   icon: '🔟' },
+  { key: 'area',        label: 'Area',       icon: '📐' },
+  { key: 'geometry',    label: 'Geometry',   icon: '🔷' },
+  { key: 'measurement', label: 'Measure',    icon: '⏰' },
+  { key: 'data',        label: 'Data',       icon: '📊' },
+  { key: 'pattern',     label: 'Patterns',   icon: '🔁' },
 ];
 
 /** Bucket an itemId's describe-group into a TypeFilter (unknown-factor counts as multiply). */
@@ -42,6 +47,11 @@ function bucketOf(itemId: string): Exclude<TypeFilter, 'all'> | 'other' {
   if (g === 'round') return 'round';
   if (g === 'factors') return 'factors';
   if (g === 'dec') return 'dec';
+  if (g === 'area') return 'area';
+  if (g === 'geometry') return 'geometry';
+  if (g === 'measurement') return 'measurement';
+  if (g === 'data') return 'data';
+  if (g === 'pattern') return 'pattern';
   return 'other';
 }
 

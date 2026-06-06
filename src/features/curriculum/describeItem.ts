@@ -5,7 +5,7 @@ export interface ItemDescription {
   prompt: string;
   itemType: ItemType;
   /** Coarse operation group for filtering/tabs. */
-  group: 'mul' | 'div' | 'unk' | 'add' | 'sub' | 'frac' | 'word' | 'round' | 'factors' | 'dec' | 'area' | 'other';
+  group: 'mul' | 'div' | 'unk' | 'add' | 'sub' | 'frac' | 'word' | 'round' | 'factors' | 'dec' | 'area' | 'geometry' | 'measurement' | 'data' | 'pattern' | 'other';
 }
 
 /**
@@ -104,27 +104,27 @@ export function describeItem(itemId: string): ItemDescription {
   if (m) return { prompt: `Area/perimeter compare (${m[1]} #${m[2]})`, itemType: 'area_perimeter_compare', group: 'area' };
 
   // Geometry: GEO_{type}_{key}
-  if (itemId.startsWith('GEO_')) return { prompt: itemId.replace(/_/g, ' '), itemType: 'geometry_vocabulary', group: 'other' };
+  if (itemId.startsWith('GEO_')) return { prompt: itemId.replace(/_/g, ' '), itemType: 'geometry_vocabulary', group: 'geometry' };
 
   // Clock time: CLCK_h_m
   m = itemId.match(/^CLCK_(\d+)_(\d+)$/);
-  if (m) return { prompt: `Time: ${m[1]}:${m[2].padStart(2,'0')}`, itemType: 'time_to_minute', group: 'other' };
+  if (m) return { prompt: `Time: ${m[1]}:${m[2].padStart(2,'0')}`, itemType: 'time_to_minute', group: 'measurement' };
 
   // Elapsed time: ETIME_h1_m1_h2_m2
   m = itemId.match(/^ETIME_(\d+)_(\d+)_(\d+)_(\d+)$/);
-  if (m) return { prompt: `Elapsed: ${m[1]}:${m[2].padStart(2,'0')} → ${m[3]}:${m[4].padStart(2,'0')}`, itemType: 'elapsed_time', group: 'other' };
+  if (m) return { prompt: `Elapsed: ${m[1]}:${m[2].padStart(2,'0')} → ${m[3]}:${m[4].padStart(2,'0')}`, itemType: 'elapsed_time', group: 'measurement' };
 
   // Bar graph: BARG_scale_bars
   m = itemId.match(/^BARG_(\d+)_(\d+)$/);
-  if (m) return { prompt: `Bar graph scale ${m[1]}, ${m[2]} bars`, itemType: 'bar_graph_read', group: 'other' };
+  if (m) return { prompt: `Bar graph scale ${m[1]}, ${m[2]} bars`, itemType: 'bar_graph_read', group: 'data' };
 
   // Line plot: LPLOT_v1_v2_v3_v4
   m = itemId.match(/^LPLOT_(\d+)_(\d+)_(\d+)_(\d+)$/);
-  if (m) return { prompt: `Line plot: ${m[1]},${m[2]},${m[3]},${m[4]}`, itemType: 'line_plot_read', group: 'other' };
+  if (m) return { prompt: `Line plot: ${m[1]},${m[2]},${m[3]},${m[4]}`, itemType: 'line_plot_read', group: 'data' };
 
   // Measurement word: MWRD_schema_a_b
   m = itemId.match(/^MWRD_([a-z]+)_(\d+)_(\d+)$/);
-  if (m) return { prompt: `Measurement (${m[1]}): ${m[2]}, ${m[3]}`, itemType: 'measurement_word', group: 'word' };
+  if (m) return { prompt: `Measurement (${m[1]}): ${m[2]}, ${m[3]}`, itemType: 'measurement_word', group: 'measurement' };
 
   // Two-step word problem: WRD2_schema_a_b_c
   m = itemId.match(/^WRD2_([a-z]+)_(\d+)_(\d+)_(\d+)$/);
@@ -132,7 +132,7 @@ export function describeItem(itemId: string): ItemDescription {
 
   // Arithmetic pattern: APAT_start_step_terms
   m = itemId.match(/^APAT_(\d+)_(\d+)_(\d+)$/);
-  if (m) return { prompt: `Pattern: +${m[2]} from ${m[1]}`, itemType: 'arithmetic_pattern', group: 'other' };
+  if (m) return { prompt: `Pattern: +${m[2]} from ${m[1]}`, itemType: 'arithmetic_pattern', group: 'pattern' };
 
   // Fallback to the static catalogue (or the raw id)
   const item = ITEM_MAP.get(itemId);

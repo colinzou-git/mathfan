@@ -80,4 +80,34 @@ describe('describeItem', () => {
       group: 'area',
     });
   });
+
+  // ── Grade 3 new groups ────────────────────────────────────────────────────────
+
+  it('parses GEO_ as geometry group', () => {
+    expect(describeItem('GEO_SIDES_triangle')).toMatchObject({ itemType: 'geometry_vocabulary', group: 'geometry' });
+  });
+
+  it('parses CLCK_ as measurement group', () => {
+    expect(describeItem('CLCK_3_15')).toMatchObject({ itemType: 'time_to_minute', group: 'measurement' });
+  });
+
+  it('parses ETIME_ as measurement group', () => {
+    expect(describeItem('ETIME_9_15_9_45')).toMatchObject({ itemType: 'elapsed_time', group: 'measurement' });
+  });
+
+  it('parses MWRD_ as measurement group', () => {
+    expect(describeItem('MWRD_addg_250_150')).toMatchObject({ itemType: 'measurement_word', group: 'measurement' });
+  });
+
+  it('parses BARG_ as data group', () => {
+    expect(describeItem('BARG_5_3')).toMatchObject({ itemType: 'bar_graph_read', group: 'data' });
+  });
+
+  it('parses LPLOT_ as data group', () => {
+    expect(describeItem('LPLOT_1_2_2_3')).toMatchObject({ itemType: 'line_plot_read', group: 'data' });
+  });
+
+  it('parses APAT_ as pattern group', () => {
+    expect(describeItem('APAT_2_2_4')).toMatchObject({ itemType: 'arithmetic_pattern', group: 'pattern' });
+  });
 });

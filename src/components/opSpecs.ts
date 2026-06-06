@@ -1,5 +1,83 @@
 import type { SessionConfig, SessionMode, GradeLevel } from '../types/math';
 import type { PracticeOp } from '../features/dashboard/StudentDashboard';
+import {
+  areaSquaresItemIds, areaRectangleItemIds, perimeterRectangleItemIds, rectilinearAreaItemIds,
+  perimeterPolygonItemIds, perimeterUnknownSideItemIds, areaPerimCompareItemIds,
+} from '../features/curriculum/areaItems';
+import { geoItemIds } from '../features/curriculum/geometryItems';
+import { clckId, etimeId, mwrdId, bargId, lplotId } from '../features/curriculum/measurementItems';
+import { apatId } from '../features/curriculum/patternItems';
+
+// ── Deterministic item ID sets for Grade 3 fixed-content operations ──────────
+
+function allAreaItemIds(): string[] {
+  return [
+    ...areaSquaresItemIds(),
+    ...areaRectangleItemIds(),
+    ...rectilinearAreaItemIds(),
+    ...perimeterRectangleItemIds(),
+    ...perimeterPolygonItemIds(),
+    ...perimeterUnknownSideItemIds(),
+    ...areaPerimCompareItemIds(),
+  ];
+}
+
+function allMeasurementItemIds(): string[] {
+  return [
+    clckId(1, 0),  clckId(2, 15), clckId(3, 25), clckId(4, 30),
+    clckId(5, 35), clckId(6, 40), clckId(7, 45), clckId(8, 50),
+    clckId(9, 55), clckId(10, 5), clckId(11, 10), clckId(12, 20),
+    clckId(1, 30), clckId(2, 45), clckId(3, 15), clckId(4, 25),
+    clckId(5, 40), clckId(6, 55), clckId(7, 0),  clckId(8, 35),
+    clckId(9, 20), clckId(10, 50), clckId(11, 45), clckId(12, 10),
+    etimeId(9, 15, 9, 45),   etimeId(10, 0, 10, 30), etimeId(2, 30, 3, 15),
+    etimeId(1, 0, 1, 45),   etimeId(3, 15, 4, 0),   etimeId(11, 30, 12, 0),
+    etimeId(8, 45, 9, 30),  etimeId(4, 0, 4, 20),   etimeId(2, 10, 2, 40),
+    etimeId(7, 30, 8, 15),  etimeId(9, 0, 9, 25),   etimeId(10, 15, 11, 0),
+    etimeId(1, 30, 2, 15),  etimeId(3, 0, 3, 40),   etimeId(6, 15, 7, 0),
+    etimeId(11, 0, 11, 35), etimeId(8, 30, 9, 0),   etimeId(4, 45, 5, 30),
+    etimeId(2, 0, 2, 55),   etimeId(7, 20, 8, 5),
+    mwrdId('addg', 250, 150), mwrdId('addg', 350, 200), mwrdId('addg', 125, 175),
+    mwrdId('subg', 500, 150), mwrdId('subg', 600, 250), mwrdId('subg', 450, 200),
+    mwrdId('addl', 3, 5),     mwrdId('addl', 4, 7),     mwrdId('addl', 2, 8),
+    mwrdId('subl', 10, 4),    mwrdId('subl', 8, 3),     mwrdId('subl', 12, 5),
+    mwrdId('addkg', 8, 7),    mwrdId('addkg', 12, 8),
+    mwrdId('subkg', 25, 8),   mwrdId('subkg', 30, 12),
+    mwrdId('addml', 300, 450), mwrdId('addml', 250, 350),
+    mwrdId('subml', 750, 250), mwrdId('subml', 800, 300),
+  ];
+}
+
+function allDataItemIds(): string[] {
+  return [
+    bargId(5, 3),  bargId(5, 4),  bargId(5, 6),  bargId(5, 7),  bargId(5, 8),
+    bargId(10, 2), bargId(10, 3), bargId(10, 4), bargId(10, 5), bargId(10, 7),
+    bargId(2, 5),  bargId(2, 7),  bargId(2, 9),
+    bargId(4, 3),  bargId(4, 5),  bargId(4, 7),
+    bargId(3, 4),  bargId(3, 6),  bargId(3, 8),
+    bargId(10, 8),
+    lplotId(1, 2, 2, 3), lplotId(2, 2, 3, 4), lplotId(1, 1, 3, 4),
+    lplotId(2, 3, 3, 4), lplotId(1, 2, 4, 4), lplotId(2, 3, 4, 5),
+    lplotId(1, 3, 3, 5), lplotId(2, 2, 4, 5), lplotId(3, 3, 3, 4),
+    lplotId(1, 2, 3, 6), lplotId(2, 4, 4, 5), lplotId(1, 3, 4, 6),
+    lplotId(3, 3, 4, 5), lplotId(2, 3, 5, 5), lplotId(1, 4, 4, 7),
+    lplotId(3, 4, 4, 6), lplotId(2, 3, 6, 7), lplotId(4, 4, 5, 5),
+    lplotId(3, 4, 5, 8), lplotId(2, 5, 6, 7),
+  ];
+}
+
+function allPatternItemIds(): string[] {
+  const items: [number, number, number][] = [
+    [2, 2, 4],  [3, 3, 4],  [4, 4, 4],  [5, 5, 4],
+    [6, 6, 4],  [7, 7, 4],  [8, 8, 4],  [9, 9, 4],
+    [10, 10, 4],
+    [0, 3, 5],  [0, 4, 5],  [0, 6, 4],
+    [1, 3, 4],  [2, 4, 4],  [5, 3, 4],
+    [10, 5, 4], [4, 6, 4],  [20, 10, 4],
+    [15, 5, 4], [6, 4, 4],
+  ];
+  return items.map(([start, step, terms]) => apatId(start, step, terms));
+}
 
 export interface RangeFieldSpec {
   /** Caption shown above the min/max inputs, e.g. "First number". */
@@ -203,6 +281,76 @@ export function specFor(op: PracticeOp, grade: GradeLevel): RangeSetupSpec {
         buildConfig: (v, _s, count) => ({
           mode: 'decimals', sessionLength: count, grade,
           operandMin: v[0].lo, operandMax: v[0].hi,
+        }),
+      };
+
+    case 'area':
+      return {
+        mode: 'area' as SessionMode,
+        title: 'Area & Perimeter', icon: '📐',
+        description: 'Practice area with unit squares, rectangles, rectilinear figures, and perimeter.',
+        ranges: [],
+        example: () => 'Area, perimeter, and comparison items',
+        buildConfig: (_v, _s, count) => ({
+          mode: 'area' as SessionMode,
+          specificItemIds: allAreaItemIds(),
+          sessionLength: count,
+        }),
+      };
+
+    case 'geometry':
+      return {
+        mode: 'geometry' as SessionMode,
+        title: 'Geometry', icon: '🔷',
+        description: 'Identify shapes by their properties: sides, angles, and categories.',
+        ranges: [],
+        example: () => 'Shape names, sides, and attributes',
+        buildConfig: (_v, _s, count) => ({
+          mode: 'geometry' as SessionMode,
+          specificItemIds: geoItemIds(),
+          sessionLength: count,
+        }),
+      };
+
+    case 'measurement':
+      return {
+        mode: 'measurement' as SessionMode,
+        title: 'Measurement', icon: '⏰',
+        description: 'Tell time to the minute, find elapsed time, and solve mass/volume word problems.',
+        ranges: [],
+        example: () => 'Clock, elapsed time, and measurement word problems',
+        buildConfig: (_v, _s, count) => ({
+          mode: 'measurement' as SessionMode,
+          specificItemIds: allMeasurementItemIds(),
+          sessionLength: count,
+        }),
+      };
+
+    case 'data':
+      return {
+        mode: 'measurement' as SessionMode,
+        title: 'Data & Graphs', icon: '📊',
+        description: 'Read scaled bar graphs and line plots.',
+        ranges: [],
+        example: () => 'Scaled bar graphs and line plots',
+        buildConfig: (_v, _s, count) => ({
+          mode: 'measurement' as SessionMode,
+          specificItemIds: allDataItemIds(),
+          sessionLength: count,
+        }),
+      };
+
+    case 'pattern':
+      return {
+        mode: 'multiplication' as SessionMode,
+        title: 'Patterns', icon: '🔁',
+        description: 'Find the next number in arithmetic sequences.',
+        ranges: [],
+        example: () => 'Arithmetic sequence patterns',
+        buildConfig: (_v, _s, count) => ({
+          mode: 'multiplication' as SessionMode,
+          specificItemIds: allPatternItemIds(),
+          sessionLength: count,
         }),
       };
   }
