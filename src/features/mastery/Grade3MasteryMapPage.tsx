@@ -73,18 +73,25 @@ function buildCompleteSummaries(
   });
 }
 
-// Bug 7: A skill is locked when any prerequisite is not yet mastered or strong.
-function computeLockedSkills(summaryMap: Map<string, StudentSkillSummary>): Set<string> {
-  const locked = new Set<string>();
+// Returns a map from skillId → names of prerequisites not yet mastered/strong.
+// Empty array means all prerequisites are satisfied.
+function computeUnmetPrereqNames(summaryMap: Map<string, StudentSkillSummary>): Map<string, string[]> {
+  const result = new Map<string, string[]>();
   for (const node of GRADE3_MASTERY_MAP) {
     if (node.prerequisites.length === 0) continue;
-    const prereqsMet = node.prerequisites.every(prereqId => {
+    const unmetIds = node.prerequisites.filter(prereqId => {
       const s = summaryMap.get(prereqId);
-      return s != null && (s.status === 'mastered' || s.status === 'strong');
+      return !(s && (s.status === 'mastered' || s.status === 'strong'));
     });
-    if (!prereqsMet) locked.add(node.id);
+    if (unmetIds.length > 0) {
+      const names = unmetIds.map(id => {
+        const prereqNode = GRADE3_MASTERY_MAP.find(n => n.id === id);
+        return prereqNode?.title ?? id;
+      });
+      result.set(node.id, names);
+    }
   }
-  return locked;
+  return result;
 }
 
 export function Grade3MasteryMapPage({ profile, onBack, onStartPractice, onStartDiagnostic }: Props) {
@@ -92,7 +99,7 @@ export function Grade3MasteryMapPage({ profile, onBack, onStartPractice, onStart
   const [todayPlan, setTodayPlan] = useState<TodayPlan | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedSkill, setSelectedSkill] = useState<MasterySkillNode | null>(null);
-  const [lockedSkills, setLockedSkills] = useState<Set<string>>(new Set());
+  const [unmetPrereqsBySkill, setUnmetPrereqsBySkill] = useState<Map<string, string[]>>(new Map());
   // Bug 4: map from skillId → due item IDs for that skill
   const [dueBySkill, setDueBySkill] = useState<Map<string, string[]>>(new Map());
 
@@ -130,9 +137,9 @@ export function Grade3MasteryMapPage({ profile, onBack, onStartPractice, onStart
       if (!cancelled) {
         setSummaries(derived);
 
-        // Bug 7: derived summary map (real data only; missing entries → locked).
+        // Compute unmet prerequisites for soft recommendations (not hard locks).
         const derivedMap = new Map(derived.map(s => [s.skillId, s]));
-        setLockedSkills(computeLockedSkills(derivedMap));
+        setUnmetPrereqsBySkill(computeUnmetPrereqNames(derivedMap));
 
         // Bug 4: map due item IDs to the skill they belong to.
         const nowStr = appNow().toISOString();
@@ -224,7 +231,7 @@ export function Grade3MasteryMapPage({ profile, onBack, onStartPractice, onStart
                     key={skill.id}
                     skill={skill}
                     summary={summaryMap.get(skill.id)}
-                    locked={lockedSkills.has(skill.id)}
+                    unmetPrereqs={unmetPrereqsBySkill.get(skill.id)}
                     onClick={setSelectedSkill.bind(null,
                       GRADE3_MASTERY_MAP.find(sk => sk.id === skill.id) ?? null
                     )}
@@ -241,6 +248,7 @@ export function Grade3MasteryMapPage({ profile, onBack, onStartPractice, onStart
         <SkillDetailPanel
           skill={selectedSkill}
           summary={selectedSummary}
+          unmetPrereqNames={unmetPrereqsBySkill.get(selectedSkill.id)}
           onClose={() => setSelectedSkill(null)}
           onPracticeSkill={skillId => {
             setSelectedSkill(null);

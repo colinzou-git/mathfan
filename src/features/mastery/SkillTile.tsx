@@ -5,7 +5,8 @@ import type { StudentSkillSummary, SkillSummaryStatus } from './skillMasteryEngi
 interface Props {
   skill: MasterySkillNode;
   summary?: StudentSkillSummary;
-  locked?: boolean;
+  /** Names of prerequisite skills not yet mastered/strong. Empty = all prereqs met. */
+  unmetPrereqs?: string[];
   onClick: (skillId: string) => void;
 }
 
@@ -18,10 +19,19 @@ const STATUS_CONFIG: Record<SkillSummaryStatus, { color: string; bg: string; ico
 };
 
 const NEW_CONFIG = STATUS_CONFIG.new;
-const LOCKED_CONFIG = { color: '#9ca3af', bg: '#f9fafb', icon: '🔒', label: 'Locked' };
 
-export function SkillTile({ skill, summary, locked, onClick }: Props) {
-  const cfg = locked ? LOCKED_CONFIG : (summary ? STATUS_CONFIG[summary.status] : NEW_CONFIG);
+export function SkillTile({ skill, summary, unmetPrereqs, onClick }: Props) {
+  const cfg = summary ? STATUS_CONFIG[summary.status] : NEW_CONFIG;
+  const hasUnmetPrereqs = (unmetPrereqs ?? []).length > 0;
+
+  let subtitle: string;
+  if (summary && summary.attemptCount > 0) {
+    subtitle = `${Math.round(summary.accuracy * 100)}% · ${summary.attemptCount} tries`;
+  } else if (hasUnmetPrereqs) {
+    subtitle = `Recommended after: ${unmetPrereqs![0]}`;
+  } else {
+    subtitle = 'Not started yet';
+  }
 
   return (
     <button
@@ -29,32 +39,27 @@ export function SkillTile({ skill, summary, locked, onClick }: Props) {
         ...s.tile,
         background: cfg.bg,
         borderColor: cfg.color + '44',
-        opacity: locked ? 0.6 : 1,
-        cursor: locked ? 'default' : 'pointer',
+        cursor: 'pointer',
       }}
-      onClick={locked ? undefined : () => onClick(skill.id)}
-      disabled={locked}
+      onClick={() => onClick(skill.id)}
       aria-label={`${skill.title}: ${cfg.label}`}
     >
       <div style={s.row}>
         <span style={{ fontSize: '18px' }}>{cfg.icon}</span>
         <div style={s.textBlock}>
           <div style={{ ...s.title, color: cfg.color }}>{skill.title}</div>
-          {!locked && summary && summary.attemptCount > 0 && (
-            <div style={s.stats}>
-              {Math.round(summary.accuracy * 100)}% · {summary.attemptCount} tries
-            </div>
-          )}
-          {!locked && (!summary || summary.attemptCount === 0) && (
-            <div style={s.stats}>Not started yet</div>
-          )}
-          {locked && (
-            <div style={s.stats}>Complete prerequisites first</div>
+          <div style={{ ...s.stats, color: hasUnmetPrereqs && !(summary && summary.attemptCount > 0) ? '#92400e' : undefined }}>
+            {subtitle}
+          </div>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+          <span style={{ ...s.badge, color: cfg.color, background: cfg.color + '22' }}>
+            {cfg.label}
+          </span>
+          {hasUnmetPrereqs && (
+            <span style={s.prereqBadge}>Review prerequisite first</span>
           )}
         </div>
-        <span style={{ ...s.badge, color: cfg.color, background: cfg.color + '22' }}>
-          {cfg.label}
-        </span>
       </div>
     </button>
   );
@@ -96,5 +101,14 @@ const s: Record<string, CSSProperties> = {
     padding: '3px 8px',
     borderRadius: '20px',
     whiteSpace: 'nowrap',
+  },
+  prereqBadge: {
+    fontSize: '10px',
+    fontWeight: '600',
+    padding: '2px 7px',
+    borderRadius: '20px',
+    whiteSpace: 'nowrap',
+    background: '#fef3c7',
+    color: '#92400e',
   },
 };

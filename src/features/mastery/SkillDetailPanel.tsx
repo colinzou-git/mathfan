@@ -5,6 +5,8 @@ import type { StudentSkillSummary } from './skillMasteryEngine';
 interface Props {
   skill: MasterySkillNode;
   summary?: StudentSkillSummary;
+  /** Names of prerequisites not yet mastered/strong, for soft advisory display. */
+  unmetPrereqNames?: string[];
   onClose: () => void;
   onPracticeSkill: (skillId: string) => void;
   onReviewDue: (skillId: string) => void;
@@ -20,7 +22,7 @@ const DOMAIN_LABELS: Record<Grade3Domain, string> = {
   measurement_data: 'Measurement & Data',
 };
 
-export function SkillDetailPanel({ skill, summary, onClose, onPracticeSkill, onReviewDue }: Props) {
+export function SkillDetailPanel({ skill, summary, unmetPrereqNames, onClose, onPracticeSkill, onReviewDue }: Props) {
   const accuracy = summary && summary.attemptCount > 0
     ? Math.round(summary.accuracy * 100)
     : null;
@@ -78,6 +80,18 @@ export function SkillDetailPanel({ skill, summary, onClose, onPracticeSkill, onR
             <span key={id} style={s.standardChip}>{id}</span>
           ))}
         </div>
+
+        {/* Prerequisite advisory note */}
+        {unmetPrereqNames && unmetPrereqNames.length > 0 && (
+          <div style={s.prereqNote} role="note">
+            <span style={s.prereqNoteIcon}>💡</span>
+            <p style={s.prereqNoteText}>
+              This skill may be easier after reviewing:{' '}
+              <strong>{unmetPrereqNames.join(', ')}</strong>.
+              {' '}Continue below when ready.
+            </p>
+          </div>
+        )}
 
         {/* Action buttons */}
         <div style={s.actions}>
@@ -223,6 +237,26 @@ const s: Record<string, CSSProperties> = {
     padding: '3px 8px',
     fontSize: '11px',
     fontWeight: '600',
+  },
+  prereqNote: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: '8px',
+    background: '#fffbeb',
+    border: '1px solid #fcd34d',
+    borderRadius: '10px',
+    padding: '12px',
+    marginBottom: '16px',
+  },
+  prereqNoteIcon: {
+    fontSize: '16px',
+    flexShrink: 0,
+  },
+  prereqNoteText: {
+    fontSize: '13px',
+    color: '#78350f',
+    margin: 0,
+    lineHeight: 1.5,
   },
   actions: {
     display: 'flex',

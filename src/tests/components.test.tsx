@@ -4,6 +4,7 @@ import { TutorChat } from '../features/ai/TutorChat';
 import { SessionSummary } from '../components/SessionSummary';
 import { NumPad } from '../components/NumPad';
 import { SkillDetailPanel } from '../features/mastery/SkillDetailPanel';
+import { SkillTile } from '../features/mastery/SkillTile';
 import { ParentNextActionCard } from '../features/mastery/ParentNextActionCard';
 import { Grade3MasteryMapPage } from '../features/mastery/Grade3MasteryMapPage';
 import { mathAnswerEventRepo, itemStateRepo } from '../db/repositories';
@@ -187,6 +188,137 @@ describe('ParentNextActionCard', () => {
     );
     const noFocusBtn = screen.getByRole('button', { name: /no focus needed/i });
     expect(noFocusBtn).toBeDisabled();
+  });
+});
+
+// ── SkillTile ─────────────────────────────────────────────────────────────────
+
+describe('SkillTile — soft prerequisite recommendations', () => {
+  it('is clickable when unmetPrereqs is provided (not disabled)', () => {
+    const onClick = vi.fn();
+    render(
+      <SkillTile
+        skill={testSkill}
+        unmetPrereqs={['Meaning of Multiplication']}
+        onClick={onClick}
+      />
+    );
+    const btn = screen.getByRole('button');
+    expect(btn).not.toBeDisabled();
+    fireEvent.click(btn);
+    expect(onClick).toHaveBeenCalledWith('g3-mul-tables-basic');
+  });
+
+  it('shows recommendation text when there are unmet prerequisites', () => {
+    render(
+      <SkillTile
+        skill={testSkill}
+        unmetPrereqs={['Meaning of Multiplication']}
+        onClick={() => {}}
+      />
+    );
+    expect(screen.getByText(/recommended after: Meaning of Multiplication/i)).toBeInTheDocument();
+  });
+
+  it('shows "Review prerequisite first" badge when there are unmet prerequisites', () => {
+    render(
+      <SkillTile
+        skill={testSkill}
+        unmetPrereqs={['Meaning of Multiplication']}
+        onClick={() => {}}
+      />
+    );
+    expect(screen.getByText(/review prerequisite first/i)).toBeInTheDocument();
+  });
+
+  it('does not show prerequisite badge when prereqs are met', () => {
+    render(
+      <SkillTile
+        skill={testSkill}
+        onClick={() => {}}
+      />
+    );
+    expect(screen.queryByText(/review prerequisite first/i)).toBeNull();
+  });
+
+  it('is clickable when no unmetPrereqs provided', () => {
+    const onClick = vi.fn();
+    render(<SkillTile skill={testSkill} onClick={onClick} />);
+    const btn = screen.getByRole('button');
+    expect(btn).not.toBeDisabled();
+    fireEvent.click(btn);
+    expect(onClick).toHaveBeenCalledWith('g3-mul-tables-basic');
+  });
+
+  it('shows mastered status without locking when skill has a summary', () => {
+    render(
+      <SkillTile
+        skill={testSkill}
+        summary={{ skillId: 'g3-mul-tables-basic', studentId: 's1', status: 'mastered', attemptCount: 20, correctCount: 20, accuracy: 1.0, dueItemCount: 0, itemCount: 20, mistakePatterns: [] }}
+        onClick={() => {}}
+      />
+    );
+    expect(screen.getByText('Mastered')).toBeInTheDocument();
+    expect(screen.getByRole('button')).not.toBeDisabled();
+  });
+});
+
+// ── SkillDetailPanel — prerequisite advisory ──────────────────────────────────
+
+describe('SkillDetailPanel — prerequisite advisory note', () => {
+  it('shows prereq advisory note when unmetPrereqNames is provided', () => {
+    render(
+      <SkillDetailPanel
+        skill={testSkill}
+        unmetPrereqNames={['Meaning of Multiplication']}
+        onClose={() => {}}
+        onPracticeSkill={() => {}}
+        onReviewDue={() => {}}
+      />
+    );
+    expect(screen.getByRole('note')).toBeInTheDocument();
+    expect(screen.getByText(/Meaning of Multiplication/i)).toBeInTheDocument();
+    expect(screen.getByText(/easier after reviewing/i)).toBeInTheDocument();
+  });
+
+  it('does not show prereq note when unmetPrereqNames is empty', () => {
+    render(
+      <SkillDetailPanel
+        skill={testSkill}
+        unmetPrereqNames={[]}
+        onClose={() => {}}
+        onPracticeSkill={() => {}}
+        onReviewDue={() => {}}
+      />
+    );
+    expect(screen.queryByRole('note')).toBeNull();
+  });
+
+  it('does not show prereq note when unmetPrereqNames is not provided', () => {
+    render(
+      <SkillDetailPanel
+        skill={testSkill}
+        onClose={() => {}}
+        onPracticeSkill={() => {}}
+        onReviewDue={() => {}}
+      />
+    );
+    expect(screen.queryByRole('note')).toBeNull();
+  });
+
+  it('still shows Practice button when prereq note is shown', () => {
+    const onPracticeSkill = vi.fn();
+    render(
+      <SkillDetailPanel
+        skill={testSkill}
+        unmetPrereqNames={['Meaning of Multiplication']}
+        onClose={() => {}}
+        onPracticeSkill={onPracticeSkill}
+        onReviewDue={() => {}}
+      />
+    );
+    fireEvent.click(screen.getByRole('button', { name: /practice this skill/i }));
+    expect(onPracticeSkill).toHaveBeenCalledWith('g3-mul-tables-basic');
   });
 });
 
