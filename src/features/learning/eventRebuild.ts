@@ -57,8 +57,12 @@ export async function rebuildMultFactStatsFromEvents(studentId: string): Promise
 }
 
 /**
- * Recompute itemStates for a student from practice-mode mathAnswerEvents.
+ * Recompute itemStates for a student from practice- and diagnostic-mode mathAnswerEvents.
  * Replays first-attempt events (isRetry=false) through applyReview in chronological order.
+ * Both modes write FSRS itemState live (practice via recordPracticeAnswer, diagnostic via
+ * recordDiagnosticAnswerWithRetry → recordPracticeAnswer), so both must be replayed here or
+ * diagnostic-derived scheduler state is silently dropped after a sync merge/restore/repair.
+ * Quiz events are excluded — they feed multFactStats, not the FSRS scheduler.
  * Retry events are skipped — they are preserved in the event log for stats/history but
  * must not affect the FSRS scheduler state, matching the live-practice behaviour in
  * usePracticeSession (which also calls applyReview only on the first attempt).
@@ -74,7 +78,7 @@ export async function rebuildItemStatesFromEvents(
 ): Promise<void> {
   const events = await db.mathAnswerEvents
     .where('studentId').equals(studentId)
-    .and(e => e.mode === 'practice')
+    .and(e => e.mode === 'practice' || e.mode === 'diagnostic')
     .toArray();
 
   if (events.length === 0) {

@@ -14,7 +14,8 @@ export interface TodayQuestionDetail {
   sessionMode: string;
   isDue: boolean;                      // session.mode === 'daily_review'
   isQuiz: boolean;                     // event.mode === 'quiz'
-  isPractice: boolean;                 // practice, not due and not quiz
+  isDiagnostic: boolean;               // event.mode === 'diagnostic'
+  isPractice: boolean;                 // event.mode === 'practice' and not due (excludes quiz/diagnostic)
   isSkipped: boolean;                  // null answer or no correct event in session
   tries: number;                       // total events in group (first + retries)
   firstCorrect: boolean;               // answered correctly on first attempt
@@ -122,7 +123,10 @@ export function computeTodayAchievement(
 
     const isDue = sessionMode === 'daily_review';
     const isQuiz = firstEv.mode === 'quiz';
-    const isPractice = !isDue && !isQuiz;
+    const isDiagnostic = firstEv.mode === 'diagnostic';
+    // Only genuine practice events count as practice — diagnostics write FSRS state
+    // but are a separate activity and must not inflate the practice tile.
+    const isPractice = firstEv.mode === 'practice' && !isDue;
 
     const hasNullAnswer = evs.some(e => e.studentAnswer === null);
     const correctEv = evs.find(e => e.isCorrect);
@@ -163,6 +167,7 @@ export function computeTodayAchievement(
       sessionMode,
       isDue,
       isQuiz,
+      isDiagnostic,
       isPractice,
       isSkipped,
       tries: evs.length,
