@@ -124,6 +124,33 @@ describe('DiagnosticSession persistence', () => {
     expect(onComplete).not.toHaveBeenCalled();
   });
 
+  it('retries when the first payload construction fails, not just the write', async () => {
+    // The thunk reads itemStateRepo.get before building the payload. If that read
+    // throws on the first flush, "Try again" must rebuild the payload from scratch
+    // and succeed — the old design captured a settled (rejected) promise and could
+    // never recover from a construction-time failure.
+    vi.mocked(itemStateRepo.get)
+      .mockRejectedValueOnce(new Error('itemState read failed'))
+      .mockResolvedValue(undefined);
+    vi.mocked(recordDiagnosticAnswerWithRetry).mockResolvedValue(undefined);
+    const onComplete = vi.fn();
+
+    render(<DiagnosticSession studentId="student-1" onComplete={onComplete} onCancel={() => {}} />);
+    await answerOnlyQuestion();
+
+    // Auto-flush failed during payload construction — the write was never attempted.
+    await act(async () => { await Promise.resolve(); });
+    expect(screen.getByText(/could not save results/i)).toBeInTheDocument();
+    expect(vi.mocked(recordDiagnosticAnswerWithRetry)).not.toHaveBeenCalled();
+    expect(onComplete).not.toHaveBeenCalled();
+
+    // Retry — the read now succeeds, payload is rebuilt, and the write goes through.
+    fireEvent.click(screen.getByRole('button', { name: /try again/i }));
+    await act(async () => { await Promise.resolve(); });
+    expect(vi.mocked(recordDiagnosticAnswerWithRetry)).toHaveBeenCalledTimes(1);
+    expect(onComplete).toHaveBeenCalledTimes(1);
+  });
+
   it('retries failed diagnostic writes when "Try again" is clicked', async () => {
     vi.mocked(recordDiagnosticAnswerWithRetry)
       .mockRejectedValueOnce(new Error('db unavailable'))

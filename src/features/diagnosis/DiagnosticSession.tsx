@@ -95,13 +95,21 @@ export function DiagnosticSession({ studentId, onComplete, onCancel }: Props) {
 
     const now = appNow();
     const createdAt = now.toISOString();
+    const item = currentItem;
+    // Stable identities, generated once. The thunk below rebuilds the event/attempt
+    // objects fresh on every run, but reuses these ids so a retry is an idempotent
+    // put (no duplicate rows) even if an earlier run partially succeeded.
+    const eventId = generateId();
+    const attemptId = generateId();
 
-    // Capture the payload asynchronously, then register a retryable write job.
-    // Storing a thunk (not a settled promise) means complete() always runs a fresh
-    // call to recordDiagnosticAnswerWithRetry, so "Try again" actually retries.
-    const capturedPayload = (async () => {
-      let existing = await itemStateRepo.get(studentId, currentItem.id);
-      if (!existing) existing = createInitialState(studentId, currentItem);
+    // Register a retryable write job that reconstructs the payload *fresh* every time
+    // it runs. Building the payload inside the thunk (rather than awaiting a settled
+    // promise captured at submit time) means that if payload construction itself fails
+    // — e.g. the itemStateRepo.get read throws — the "Try again" path rebuilds it from
+    // scratch and can actually succeed on retry.
+    pendingWritesRef.current.push(async () => {
+      let existing = await itemStateRepo.get(studentId, item.id);
+      if (!existing) existing = createInitialState(studentId, item);
 
       let updated = existing;
       try {
@@ -111,7 +119,7 @@ export function DiagnosticSession({ studentId, onComplete, onCancel }: Props) {
       }
 
       if (!isCorrect) {
-        const newTags = detectMistakes(currentItem, studentAnswer);
+        const newTags = detectMistakes(item, studentAnswer);
         if (newTags.length > 0) {
           const merged = Array.from(new Set([...(updated.mistakePatterns ?? []), ...newTags]));
           updated = { ...updated, mistakePatterns: merged };
@@ -119,13 +127,13 @@ export function DiagnosticSession({ studentId, onComplete, onCancel }: Props) {
       }
 
       const event: MathAnswerEvent = {
-        id: generateId(),
+        id: eventId,
         studentId,
         sessionId,
-        itemId: currentItem.id,
+        itemId: item.id,
         mode: 'diagnostic',
-        promptShown: currentItem.prompt,
-        correctAnswer: currentItem.answer,
+        promptShown: item.prompt,
+        correctAnswer: item.answer,
         studentAnswer,
         isCorrect,
         isRetry: false,
@@ -138,13 +146,13 @@ export function DiagnosticSession({ studentId, onComplete, onCancel }: Props) {
       };
 
       const attempt: AttemptLog = {
-        id: generateId(),
+        id: attemptId,
         studentId,
-        itemId: currentItem.id,
-        skillId: currentItem.skillId,
+        itemId: item.id,
+        skillId: item.skillId,
         sessionId,
-        promptShown: currentItem.prompt,
-        correctAnswer: currentItem.answer,
+        promptShown: item.prompt,
+        correctAnswer: item.answer,
         studentAnswer,
         isCorrect,
         latencyMs,
@@ -152,12 +160,7 @@ export function DiagnosticSession({ studentId, onComplete, onCancel }: Props) {
         createdAt,
       };
 
-      return { event, updatedState: updated, attempt };
-    })();
-
-    pendingWritesRef.current.push(async () => {
-      const payload = await capturedPayload;
-      await recordDiagnosticAnswerWithRetry(payload);
+      await recordDiagnosticAnswerWithRetry({ event, updatedState: updated, attempt });
     });
 
     setResults(prev => [...prev, result]);
