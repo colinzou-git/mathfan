@@ -1,49 +1,43 @@
-\# MathFan Claude Instructions
-
+MathFan Claude Instructions
 
 MathFan is a React + TypeScript + Vite local-first PWA for elementary math practice.
 
+# Core rules
 
+Before search repo code, read docs/code-map/CLAUDE_START_HERE.md first, then CODEMAP.md and SYMBOLS.md. Use code_map.json and symbols.json for lookup before scanning source files.
 
-\## Core rules
+Do not remove existing features.
 
-\- Before search repo code, read docs/code-map/CLAUDE_START_HERE.md first, then CODEMAP.md and SYMBOLS.md. Use code_map.json and symbols.json for lookup before scanning source files.
+Do not redesign unrelated UI.
 
-\- Do not remove existing features.
+Preserve current FSRS scheduling behavior.
 
-\- Do not redesign unrelated UI.
+Preserve existing quiz, practice, stats, sync, and AI tutor behavior unless explicitly requested.
 
-\- Preserve current FSRS scheduling behavior.
+Use `mathAnswerEvents` as source of truth where possible.
 
-\- Preserve existing quiz, practice, stats, sync, and AI tutor behavior unless explicitly requested.
+Treat `itemStates`, `multFactStats`, and future `studentSkillStates` as derived caches.
 
-\- Use `mathAnswerEvents` as source of truth where possible.
+Keep child-facing wording positive, encouraging, and non-shaming.
 
-\- Treat `itemStates`, `multFactStats`, and future `studentSkillStates` as derived caches.
+Prefer small, testable changes.
 
-\- Keep child-facing wording positive, encouraging, and non-shaming.
+Ask User questions if any before implement code.
 
-\- Prefer small, testable changes.
+Add tests for new logic.
 
-\- Ask User questions if any before implement code.
+Run `npm run ci` after changes.
 
-\- Add tests for new logic.
-
-\- Run `npm run ci` after changes.
-
-\- Make one commit per completed bug fixe or feature.
-
+Make one commit per completed bug fixe or feature.
 
 If CI fails:
 
-\- Fix the issue if it is clearly caused by your changes.
+Fix the issue if it is clearly caused by your changes.
 
-\- If still failing, suggest debug actions from user.
+If still failing, suggest debug actions from user.
 
-At the end of a run, do the following:
-Report the new source files introduced. If no new source files, say 'No new source files added.'
+At the end of a run, do the following:  
+Report the new source files introduced. If no new source files, say 'No new source files added.'  
 Run 'python .\tools\generate_code_maps.py' to update code map and symbol map. Report running results in one short sentence after run. if no run, say reasons in a short sentence.
 
-
-
-
+push to origin main

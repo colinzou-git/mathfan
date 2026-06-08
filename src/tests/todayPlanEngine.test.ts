@@ -131,14 +131,16 @@ describe('planToday — priority: new with prerequisites', () => {
     expect(plan.focusSkillId).toBe('g3-mul-tables-basic');
   });
 
-  it('skips all-mastered new skill (prerequisites not in summaries = not satisfied)', () => {
-    // Only a new skill with prerequisites not in summaries at all
+  it('still suggests a new skill with unmet prerequisites, flagged as advisory', () => {
+    // Only a new skill whose prerequisites are not in summaries at all.
+    // Soft behavior: prerequisites no longer exclude it — it is suggested with
+    // an advisory listing the unmet prerequisite(s).
     const summaries = [
       makeSummary('g3-mul-tables-advanced', 'new'),
     ];
     const plan = planToday({ ...BASE_ARGS, skillSummaries: summaries });
-    // Prerequisites not in summaries → not satisfied → no focus
-    expect(plan.focusSkillId).toBeNull();
+    expect(plan.focusSkillId).toBe('g3-mul-tables-advanced');
+    expect(plan.focusPrereqAdvisory ?? []).not.toHaveLength(0);
   });
 });
 
@@ -238,56 +240,79 @@ describe('planToday — estimatedMinutes', () => {
   });
 });
 
-// ── Prerequisite lock applies to ALL statuses ─────────────────────────────────
+// ── Prerequisites are a soft signal for non-new statuses ──────────────────────
 
-describe('planToday — prerequisite lock for non-new statuses', () => {
-  it('does not focus g3-frac-equivalent (needs_practice) when g3-frac-unit is not strong/mastered', () => {
-    // g3-frac-equivalent requires g3-frac-unit; here it is 'new' (not satisfied → locked)
-    // g3-frac-unit itself has no prerequisites and is unlocked, so it becomes the focus instead
+describe('planToday — prerequisites are advisory, not a lock (non-new statuses)', () => {
+  it('still focuses g3-frac-equivalent (needs_practice) when g3-frac-unit is not strong/mastered', () => {
+    // g3-frac-equivalent requires g3-frac-unit; here it is 'new' (unmet prereq).
+    // needs_practice (priority 2) outranks the 'new' prerequisite (priority 10),
+    // so the due-for-practice skill is suggested despite the unmet prerequisite,
+    // with an advisory naming it.
     const summaries = [
       makeSummary('g3-frac-unit', 'new'),
       makeSummary('g3-frac-equivalent', 'needs_practice'),
     ];
     const plan = planToday({ ...BASE_ARGS, skillSummaries: summaries });
-    expect(plan.focusSkillId).not.toBe('g3-frac-equivalent');
-    expect(plan.focusSkillId).toBe('g3-frac-unit');
+    expect(plan.focusSkillId).toBe('g3-frac-equivalent');
+    expect(plan.focusPrereqAdvisory).toContain(
+      GRADE3_MASTERY_MAP.find(n => n.id === 'g3-frac-unit')!.title,
+    );
   });
 
-  it('does not focus g3-area-formula (review_due) when prerequisites are not strong/mastered', () => {
-    // g3-area-formula requires g3-area-concept AND g3-mul-tables-basic
+  it('still focuses g3-area-formula (review_due) when prerequisites are not strong/mastered', () => {
+    // g3-area-formula requires g3-area-concept AND g3-mul-tables-basic.
+    // review_due (priority 1) wins; the unmet prerequisites only produce advisory copy.
     const summaries = [
       makeSummary('g3-area-concept', 'needs_practice'),
       makeSummary('g3-mul-tables-basic', 'needs_practice'),
       makeSummary('g3-area-formula', 'review_due'),
     ];
     const plan = planToday({ ...BASE_ARGS, skillSummaries: summaries });
-    expect(plan.focusSkillId).not.toBe('g3-area-formula');
+    expect(plan.focusSkillId).toBe('g3-area-formula');
+    expect(plan.focusPrereqAdvisory ?? []).not.toHaveLength(0);
   });
 
-  it('selects g3-frac-equivalent (needs_practice) when g3-frac-unit is strong', () => {
+  it('prefers a satisfied-prereq skill over an unmet one within the same status', () => {
+    // Both are needs_practice with the same accuracy. g3-frac-unit has no
+    // prerequisites (satisfied); g3-frac-equivalent's prereq is unmet. The
+    // satisfied skill ranks first as a soft tiebreaker.
+    const summaries = [
+      makeSummary('g3-frac-unit', 'needs_practice', { accuracy: 0.4 }),
+      makeSummary('g3-frac-equivalent', 'needs_practice', { accuracy: 0.4 }),
+    ];
+    const plan = planToday({ ...BASE_ARGS, skillSummaries: summaries });
+    expect(plan.focusSkillId).toBe('g3-frac-unit');
+    expect(plan.focusPrereqAdvisory ?? []).toHaveLength(0);
+  });
+
+  it('leaves focusPrereqAdvisory empty when prerequisites are satisfied', () => {
     const summaries = [
       makeSummary('g3-frac-unit', 'strong'),
       makeSummary('g3-frac-equivalent', 'needs_practice'),
     ];
     const plan = planToday({ ...BASE_ARGS, skillSummaries: summaries });
     expect(plan.focusSkillId).toBe('g3-frac-equivalent');
+    expect(plan.focusPrereqAdvisory ?? []).toHaveLength(0);
   });
 });
 
-// ── Warmup respects locks ─────────────────────────────────────────────────────
+// ── Warmup ignores locks (soft) ───────────────────────────────────────────────
 
-describe('planToday — warmup does not select locked skill', () => {
-  it('skips a high-accuracy skill whose prerequisites are not satisfied', () => {
-    // g3-div-within-100 requires g3-div-meaning and g3-mul-tables-basic
-    // If those are 'new', div-within-100 is locked and must not appear in warmup
+describe('planToday — warmup may select a skill with unmet prerequisites', () => {
+  it('uses an unmet-prereq skill for warmup when no satisfied skill is available', () => {
+    // Both non-new skills have unmet prerequisites: g3-frac-equivalent
+    // (needs_practice) is the focus, and g3-div-within-100 (strong, highest
+    // accuracy) is the warmup. Neither is excluded by the unmet prerequisites.
     const summaries = [
+      makeSummary('g3-frac-unit', 'new'),
+      makeSummary('g3-frac-equivalent', 'needs_practice', { accuracy: 0.4 }),
       makeSummary('g3-div-meaning', 'new'),
       makeSummary('g3-mul-tables-basic', 'new'),
       makeSummary('g3-div-within-100', 'strong', { accuracy: 0.99 }),
     ];
     const plan = planToday({ ...BASE_ARGS, skillSummaries: summaries });
-    // warmup picks highest-accuracy non-new unlocked skill; none qualifies here
-    expect(plan.warmup).toBeNull();
+    expect(plan.focusSkillId).toBe('g3-frac-equivalent');
+    expect(plan.warmup).not.toBeNull();
   });
 });
 
@@ -304,16 +329,17 @@ describe('planToday — review filtering', () => {
     expect(plan.review).toBeNull();
   });
 
-  it('excludes due items for locked skills', () => {
-    // MUL_6x7 → g3-mul-tables-advanced which requires g3-mul-tables-basic
-    // g3-mul-tables-basic is 'new', so advanced is locked
+  it('includes due items even when the skill has unmet prerequisites', () => {
+    // MUL_6x7 → g3-mul-tables-advanced which requires g3-mul-tables-basic.
+    // g3-mul-tables-basic is 'new' (unmet), but a due item is still due — soft
+    // prerequisites do not exclude review items.
     const states = [makeItemState('MUL_6x7', PAST)];
     const summaries = [
       makeSummary('g3-mul-tables-basic', 'new'),
       makeSummary('g3-mul-tables-advanced', 'review_due'),
     ];
     const plan = planToday({ ...BASE_ARGS, skillSummaries: summaries, itemStates: states });
-    expect(plan.review?.specificItemIds ?? []).not.toContain('MUL_6x7');
+    expect(plan.review?.specificItemIds ?? []).toContain('MUL_6x7');
   });
 
   it('includes due items for unlocked Grade 3 skills', () => {

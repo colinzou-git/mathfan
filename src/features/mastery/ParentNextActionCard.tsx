@@ -143,6 +143,11 @@ export function ParentNextActionCard({ summaries, todayPlan, studentName, onStar
           <p style={s.estMinutes}>
             About {todayPlan.estimatedMinutes} minute{todayPlan.estimatedMinutes !== 1 ? 's' : ''}
           </p>
+          {todayPlan.focusPrereqAdvisory && todayPlan.focusPrereqAdvisory.length > 0 && (
+            <p style={s.prereqAdvisory}>
+              💡 It may help to review {todayPlan.focusPrereqAdvisory.join(' and ')} first.
+            </p>
+          )}
         </section>
       )}
 
@@ -222,6 +227,12 @@ const s: Record<string, CSSProperties> = {
     fontSize: '12px',
     color: '#9ca3af',
     margin: 0,
+  },
+  prereqAdvisory: {
+    fontSize: '12px',
+    color: '#92400e',
+    margin: '6px 0 0 0',
+    lineHeight: 1.4,
   },
   actionBox: {
     background: '#f0fdf4',

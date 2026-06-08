@@ -11,6 +11,11 @@ export interface TodayPlan {
   focus: SessionConfig | null;
   review: SessionConfig | null;
   estimatedMinutes: number;
+  // Soft advisory: titles of the focus skill's prerequisites that are not yet
+  // strong/mastered. Empty/absent when prerequisites are satisfied. The focus
+  // skill is still suggested — this is copy for a "review prerequisite first"
+  // note, not a reason to exclude the skill.
+  focusPrereqAdvisory?: string[];
 }
 
 export interface PlanTodayArgs {
@@ -24,8 +29,13 @@ export interface PlanTodayArgs {
 // 1. review_due
 // 2. needs_practice
 // 3. strong (learning / needs more reps)
-// 4. new (next skill whose prerequisites are satisfied)
+// 4. new (next skill)
 // 5. maintenance review if available
+//
+// Prerequisites are a *soft* signal: within a priority bucket, a skill whose
+// prerequisites are not yet satisfied ranks below one whose are, but it is never
+// excluded. A due/needs-practice skill is suggested even with unmet prerequisites
+// (the UI shows an advisory) — only ranking is affected, not eligibility.
 
 const STATUS_PRIORITY: Record<string, number> = {
   review_due:     1,
@@ -45,25 +55,34 @@ function prerequisitesSatisfied(skillId: string, summaries: Map<string, StudentS
   });
 }
 
-function isSkillUnlocked(skillId: string, summaryMap: Map<string, StudentSkillSummary>): boolean {
-  return prerequisitesSatisfied(skillId, summaryMap);
+// Titles of the prerequisites not yet strong/mastered, for advisory copy.
+function unmetPrereqNames(skillId: string, summaries: Map<string, StudentSkillSummary>): string[] {
+  const node = GRADE3_MASTERY_MAP.find(n => n.id === skillId);
+  if (!node) return [];
+  return node.prerequisites
+    .filter(prereqId => {
+      const s = summaries.get(prereqId);
+      return !(s && (s.status === 'mastered' || s.status === 'strong'));
+    })
+    .map(prereqId => GRADE3_MASTERY_MAP.find(n => n.id === prereqId)?.title ?? prereqId);
 }
 
 function pickFocusSkill(
   summaries: StudentSkillSummary[],
   summaryMap: Map<string, StudentSkillSummary>,
 ): StudentSkillSummary | null {
-  // Sort by priority (lower number = higher priority), then by accuracy ascending
-  // (so we focus on the weakest skill within the same priority bucket).
+  // Sort by status priority, then prefer skills whose prerequisites are satisfied
+  // (soft demotion, not exclusion), then by accuracy ascending so we focus on the
+  // weakest skill within the same bucket.
   const candidates = summaries
-    .filter(s => {
-      if (s.status === 'mastered') return false;
-      return isSkillUnlocked(s.skillId, summaryMap);
-    })
+    .filter(s => s.status !== 'mastered')
     .sort((a, b) => {
       const pa = STATUS_PRIORITY[a.status] ?? 5;
       const pb = STATUS_PRIORITY[b.status] ?? 5;
       if (pa !== pb) return pa - pb;
+      const ra = prerequisitesSatisfied(a.skillId, summaryMap) ? 0 : 1;
+      const rb = prerequisitesSatisfied(b.skillId, summaryMap) ? 0 : 1;
+      if (ra !== rb) return ra - rb;
       return a.accuracy - b.accuracy; // weaker first within same priority
     });
 
@@ -74,10 +93,16 @@ function buildWarmup(
   summaries: StudentSkillSummary[],
   summaryMap: Map<string, StudentSkillSummary>,
 ): SessionConfig | null {
-  // Warm-up: pick the highest-accuracy non-mastered unlocked skill (easiest for today)
+  // Warm-up: an easy confidence-builder. Prefer a skill whose prerequisites are
+  // satisfied, then the highest-accuracy non-new, non-mastered skill.
   const easiest = summaries
-    .filter(s => s.status !== 'new' && s.status !== 'mastered' && isSkillUnlocked(s.skillId, summaryMap))
-    .sort((a, b) => b.accuracy - a.accuracy)[0];
+    .filter(s => s.status !== 'new' && s.status !== 'mastered')
+    .sort((a, b) => {
+      const ra = prerequisitesSatisfied(a.skillId, summaryMap) ? 0 : 1;
+      const rb = prerequisitesSatisfied(b.skillId, summaryMap) ? 0 : 1;
+      if (ra !== rb) return ra - rb;
+      return b.accuracy - a.accuracy; // easiest (highest accuracy) first
+    })[0];
 
   if (!easiest) return null;
 
@@ -87,7 +112,6 @@ function buildWarmup(
 function buildReview(
   itemStates: StudentItemState[],
   now: Date,
-  summaryMap: Map<string, StudentSkillSummary>,
 ): SessionConfig | null {
   const nowStr = now.toISOString();
   const dueIds = itemStates
@@ -96,11 +120,11 @@ function buildReview(
       // Must reconstruct from ID (filters off-map/invalid IDs)
       const item = makeItemFromId(s.itemId);
       if (!item) return false;
-      // Must map to a Grade 3 mastery skill
+      // Must map to a Grade 3 mastery skill (prerequisites do not gate review —
+      // a due item is due regardless of whether its skill's prereqs are met).
       const skillId = inferGrade3SkillId(item);
       if (!skillId) return false;
-      // Must belong to an unlocked skill
-      return isSkillUnlocked(skillId, summaryMap);
+      return true;
     })
     .map(s => s.itemId);
 
@@ -139,8 +163,11 @@ export function planToday(args: PlanTodayArgs): TodayPlan {
   const focus = focusSkillId
     ? planPracticeForSkill(focusSkillId, { sessionLength: 10 })
     : null;
+  const focusPrereqAdvisory = focusSkillId
+    ? unmetPrereqNames(focusSkillId, summaryMap)
+    : [];
 
-  // Warm-up: easiest unlocked skill (skip if the focus IS the easiest)
+  // Warm-up: easiest skill (skip if the focus IS the easiest)
   const warmupConfig = buildWarmup(skillSummaries, summaryMap);
   const warmup = warmupConfig &&
     // Skip warmup if it would be the same skill as focus
@@ -149,8 +176,8 @@ export function planToday(args: PlanTodayArgs): TodayPlan {
     ? warmupConfig
     : null;
 
-  // Review: due items from unlocked Grade 3 skills only
-  const review = buildReview(itemStates, now, summaryMap);
+  // Review: due items from Grade 3 skills (prerequisites do not exclude items)
+  const review = buildReview(itemStates, now);
 
   return {
     warmup,
@@ -158,5 +185,6 @@ export function planToday(args: PlanTodayArgs): TodayPlan {
     focus,
     review,
     estimatedMinutes: estimateMinutes(warmup, focus, review),
+    focusPrereqAdvisory,
   };
 }
