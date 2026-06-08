@@ -155,7 +155,7 @@ describe('regression: planToday() for brand-new student', () => {
     expect(plan.focus).not.toBeNull();
   });
 
-  it('focus skill has no prerequisites (unlocked for new students)', () => {
+  it('focus skill has no prerequisites (ranked first by the soft tiebreaker for new students)', () => {
     const plan = planToday({
       studentId: 'new',
       skillSummaries: allNewSummaries('new'),

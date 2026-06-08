@@ -4,7 +4,7 @@ MathFan is a React + TypeScript + Vite local-first PWA for elementary math pract
 
 # Core rules
 
-Before search repo code, read docs/code-map/CLAUDE_START_HERE.md first, then CODEMAP.md and SYMBOLS.md. Use code_map.json and symbols.json for lookup before scanning source files.
+Before search repo code, read docs/code-map/CLAUDE_START_HERE.md first, then docs/code-map/CODEMAP.md and docs/code-map/SYMBOLS.md. Use docs/code-map/code_map.json for lookup before scanning source files.
 
 Do not remove existing features.
 
@@ -40,4 +40,4 @@ At the end of a run, do the following:
 Report the new source files introduced. If no new source files, say 'No new source files added.'  
 Run 'python .\tools\generate_code_maps.py' to update code map and symbol map. Report running results in one short sentence after run. if no run, say reasons in a short sentence.
 
-push to origin main
+When the work is committed and CI is green, ask before pushing to origin main (or push if the user has already authorized it for this task).

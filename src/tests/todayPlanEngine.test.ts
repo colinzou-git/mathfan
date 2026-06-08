@@ -58,7 +58,7 @@ const BASE_ARGS = {
 
 describe('planToday — priority: review_due', () => {
   it('picks review_due skill over needs_practice', () => {
-    // Use prerequisite-free skills so locking doesn't interfere with priority ordering
+    // Use prerequisite-free skills so the soft prerequisite tiebreaker doesn't shift ordering
     const summaries = [
       makeSummary('g3-mul-meaning', 'needs_practice'),
       makeSummary('g3-frac-unit', 'review_due'),
@@ -82,7 +82,7 @@ describe('planToday — priority: review_due', () => {
 
 describe('planToday — priority: needs_practice', () => {
   it('picks needs_practice over strong when no review_due exists', () => {
-    // Use prerequisite-free skills so locking doesn't interfere with priority ordering
+    // Use prerequisite-free skills so the soft prerequisite tiebreaker doesn't shift ordering
     const summaries = [
       makeSummary('g3-area-concept', 'strong'),
       makeSummary('g3-mul-meaning', 'needs_practice'),
@@ -96,7 +96,7 @@ describe('planToday — priority: needs_practice', () => {
 
 describe('planToday — priority: strong', () => {
   it('picks strong when no review_due or needs_practice exists', () => {
-    // g3-mul-meaning has no prerequisites, so it is always unlocked
+    // g3-mul-meaning has no prerequisites
     const summaries = [
       makeSummary('g3-mul-meaning', 'strong'),
     ];
@@ -118,16 +118,16 @@ describe('planToday — priority: new with prerequisites', () => {
     expect(plan.focusSkillId).toBe('g3-mul-tables-basic');
   });
 
-  it('does not pick new skill whose prerequisites are not satisfied', () => {
-    // g3-mul-tables-advanced requires g3-mul-tables-basic (strong), but basic is only needs_practice
-    // g3-mul-meaning must be mastered so that g3-mul-tables-basic is unlocked
+  it('prefers a needs_practice skill over a new skill by status priority', () => {
+    // needs_practice (priority 2) outranks new (priority 10), so the due-for-practice
+    // basic skill is chosen ahead of the new advanced skill. This is priority-based
+    // ordering, not prerequisite gating — the new skill is never excluded, just lower.
     const summaries = [
       makeSummary('g3-mul-meaning', 'mastered'),
       makeSummary('g3-mul-tables-basic', 'needs_practice'),
       makeSummary('g3-mul-tables-advanced', 'new'),
     ];
     const plan = planToday({ ...BASE_ARGS, skillSummaries: summaries });
-    // Should focus on needs_practice basic, not the blocked new advanced skill
     expect(plan.focusSkillId).toBe('g3-mul-tables-basic');
   });
 
@@ -154,8 +154,8 @@ describe('planToday — empty summaries', () => {
     expect(plan.warmup).toBeNull();
   });
 
-  it('returns review config when there are due items for unlocked skills', () => {
-    // AREA_SQ_3x4 → g3-area-concept (no prerequisites, always unlocked)
+  it('returns review config when there are due items for a Grade 3 skill', () => {
+    // AREA_SQ_3x4 → g3-area-concept (a reconstructable Grade 3 skill)
     const states = [makeItemState('AREA_SQ_3x4', PAST)];
     const plan = planToday({ ...BASE_ARGS, skillSummaries: [], itemStates: states });
     expect(plan.review).not.toBeNull();
@@ -167,7 +167,8 @@ describe('planToday — empty summaries', () => {
 
 describe('planToday — review config', () => {
   it('includes review config when items are due', () => {
-    // Use items from unlocked skills (g3-mul-tables-basic requires g3-mul-meaning to be strong)
+    // MUL items map to g3-mul-tables-basic, a Grade 3 skill; due items are included
+    // regardless of prerequisite status.
     const summaries = [makeSummary('g3-mul-meaning', 'mastered')];
     const states = [
       makeItemState('MUL_3x4', PAST),
@@ -193,7 +194,7 @@ describe('planToday — review config', () => {
   });
 
   it('caps review length at 10 items', () => {
-    // AREA_SQ items → g3-area-concept (no prerequisites, always unlocked)
+    // AREA_SQ items → g3-area-concept (a Grade 3 skill)
     const states = Array.from({ length: 20 }, (_, i) =>
       makeItemState(`AREA_SQ_${Math.floor(i / 5) + 1}x${(i % 5) + 1}`, PAST),
     );
@@ -214,7 +215,7 @@ describe('planToday — focus config', () => {
   });
 
   it('focus config mode matches expected skill mode', () => {
-    // g3-frac-equivalent requires g3-frac-unit (strong) to be unlocked
+    // g3-frac-equivalent is needs_practice; its prereq g3-frac-unit is strong (satisfied)
     const summaries = [
       makeSummary('g3-frac-unit', 'strong'),
       makeSummary('g3-frac-equivalent', 'needs_practice'),
@@ -316,7 +317,7 @@ describe('planToday — warmup may select a skill with unmet prerequisites', () 
   });
 });
 
-// ── Review filters: only unlocked Grade 3 items ───────────────────────────────
+// ── Review filters: reconstructable Grade 3 due items; prerequisites are advisory ─
 
 describe('planToday — review filtering', () => {
   it('excludes due items with unrecognized item IDs', () => {
@@ -342,8 +343,8 @@ describe('planToday — review filtering', () => {
     expect(plan.review?.specificItemIds ?? []).toContain('MUL_6x7');
   });
 
-  it('includes due items for unlocked Grade 3 skills', () => {
-    // MUL_3x4 → g3-mul-tables-basic (requires g3-mul-meaning to be strong/mastered)
+  it('includes due items for reconstructable Grade 3 skills', () => {
+    // MUL_3x4 → g3-mul-tables-basic; the due item is included regardless of prereqs
     const states = [makeItemState('MUL_3x4', PAST)];
     const summaries = [
       makeSummary('g3-mul-meaning', 'mastered'),
@@ -403,7 +404,7 @@ describe('planToday — brand-new student sees a suggested first skill', () => {
     expect(plan.focus).not.toBeNull();
   });
 
-  it('the suggested first skill has no prerequisites (is unlocked)', () => {
+  it('the suggested first skill has no prerequisites (ranked first by the soft tiebreaker)', () => {
     const allNewSummaries = buildCompleteSummaries('new-student');
     const plan = planToday({
       studentId: 'new-student',
