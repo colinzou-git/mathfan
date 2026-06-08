@@ -166,6 +166,31 @@ describe('rebuildItemStatesFromEvents — diagnostic events feed FSRS', () => {
   });
 });
 
+// ── mistakePatterns derived cache is rebuilt from wrong first-attempt events ───
+
+describe('rebuildItemStatesFromEvents — misconception tags survive rebuild', () => {
+  it('keeps the mistakePatterns tag from a wrong first-attempt event', async () => {
+    // 7 × 8 = 56; answering 15 (= 7 + 8) is the addition-confusion misconception.
+    fakeDb.mathAnswerEvents.rows = [
+      makeEvent({
+        id: 'wrong1',
+        mode: 'diagnostic',
+        itemId: 'MUL_7x8',
+        isCorrect: false,
+        studentAnswer: 15,
+        reviewGrade: 'again',
+        isRetry: false,
+      }),
+    ];
+
+    await rebuildItemStatesFromEvents(STUDENT, { mode: 'strict' });
+
+    const state = fakeDb.itemStates.rows.find(s => s.itemId === 'MUL_7x8');
+    expect(state).toBeDefined();
+    expect(state!.mistakePatterns).toContain('mul:addition_confusion');
+  });
+});
+
 // ── Sync-style regression: merge + rebuild preserves diagnostic FSRS state ─────
 
 describe('rebuildItemStatesFromEvents — sync merge preserves diagnostic FSRS state', () => {

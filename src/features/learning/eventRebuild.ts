@@ -12,6 +12,7 @@ import { db } from '../../db/dexie';
 import type { MathAnswerEvent } from './learningEvents';
 import { applyReview, createInitialState } from '../scheduler/scheduler';
 import { makeItemFromId } from '../curriculum/makeItemFromId';
+import { detectMistakes } from '../mastery/misconceptionEngine';
 import { deriveMasteryFromEvents } from '../multiplication/masteryEngine';
 import type { MultiplicationFactKey } from '../multiplication/types';
 import { classifyResponse } from '../practice/answerChecker';
@@ -116,6 +117,19 @@ export async function rebuildItemStatesFromEvents(
         new Date(event.createdAt),
         { isCorrect: event.isCorrect },
       );
+
+      // Live practice/diagnostic sessions merge misconception tags into itemState
+      // on first wrong attempts (see usePracticeSession/DiagnosticSession). Replay
+      // that derived-cache behaviour here so a rebuild doesn't drop mistakePatterns.
+      if (!event.isCorrect) {
+        const newTags = detectMistakes(item, String(event.studentAnswer ?? ''));
+        if (newTags.length > 0) {
+          state = {
+            ...state,
+            mistakePatterns: Array.from(new Set([...(state.mistakePatterns ?? []), ...newTags])),
+          };
+        }
+      }
     }
     await db.itemStates.put(state);
     rebuilt.add(itemId);
