@@ -5,6 +5,9 @@
  * Touch-friendly for iPad. Display-only in this phase.
  */
 
+import { fractionToWords } from '../audio/mathSpeech';
+import { FractionText } from './FractionText';
+
 interface Props {
   numerator: number;
   denominator: number;
@@ -37,7 +40,7 @@ export function FractionBar({
   // Clamp numerator to denominator
   const shaded = Math.min(n, d);
 
-  const label = ariaLabel ?? `Fraction bar showing ${n}/${d}`;
+  const label = ariaLabel ?? `Fraction bar showing ${fractionToWords(n, d)}`;
 
   return (
     <div
@@ -75,12 +78,12 @@ export function FractionBar({
           style={{
             textAlign: 'center',
             marginTop: '6px',
-            fontSize: '16px',
+            fontSize: '20px',
             fontWeight: '700',
             color: fillColor,
           }}
         >
-          {n}/{d}
+          <FractionText numerator={n} denominator={d} />
         </div>
       )}
     </div>

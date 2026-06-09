@@ -107,3 +107,41 @@ describe('speech promise timing', () => {
     await expect(speakFeedback(true, 5)).resolves.toBeUndefined();
   });
 });
+
+describe('speakProblem speaks fractions naturally (never "slash")', () => {
+  const spokenTextFor = (prompt: string) => {
+    speakProblem(prompt);
+    return utterances.at(-1)?.text ?? '';
+  };
+
+  it('speaks a numeric fraction with an equals sign', () => {
+    expect(spokenTextFor('1/4 = ?')).toBe('one fourth = what');
+  });
+
+  it('speaks 3/4 as "three fourths"', () => {
+    expect(spokenTextFor('3/4 = ?')).toBe('three fourths = what');
+  });
+
+  it('does not speak raw slashes for a compare prompt', () => {
+    const text = spokenTextFor('2/3 ▢ 3/4');
+    expect(text).toBe('two thirds blank three fourths');
+    expect(text).not.toContain('/');
+    expect(text.toLowerCase()).not.toContain('slash');
+  });
+
+  it('speaks an unknown numerator as "what number over six"', () => {
+    expect(spokenTextFor('?/6')).toBe('what number over six');
+  });
+
+  it('speaks an unknown denominator as "two over what number"', () => {
+    expect(spokenTextFor('2/?')).toBe('two over what number');
+  });
+
+  it('never emits "/" or "slash" for an equivalent-fraction prompt', () => {
+    const text = spokenTextFor('2/3 = ?/6');
+    expect(text).not.toContain('/');
+    expect(text.toLowerCase()).not.toContain('slash');
+    expect(text).toContain('two thirds');
+    expect(text).toContain('what number over six');
+  });
+});

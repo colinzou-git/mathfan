@@ -9,6 +9,7 @@
 
 import { Mafs, Line, Point, Text } from 'mafs';
 import 'mafs/core.css';
+import { FractionText } from './FractionText';
 
 interface Props {
   /** The denominator — determines tick mark spacing. */
@@ -96,28 +97,31 @@ export function FractionNumberLine({
         <Text x={0} y={-0.35} size={LABEL_SIZE}>0</Text>
         <Text x={1} y={-0.35} size={LABEL_SIZE}>1</Text>
 
-        {/* Highlight point */}
+        {/* Highlight point (Mafs <Text> can't host the stacked FractionText, so
+            the fraction label is rendered as HTML below the graph instead). */}
         {hasHighlight && n != null && (
-          <>
-            <Point
-              x={xAt(n)}
-              y={LINE_Y}
-              color={HIGHLIGHT_COLOR}
-              opacity={1}
-            />
-            {showLabel && (
-              <Text
-                x={xAt(n)}
-                y={0.35}
-                size={LABEL_SIZE}
-                color={HIGHLIGHT_COLOR}
-              >
-                {n}/{d}
-              </Text>
-            )}
-          </>
+          <Point
+            x={xAt(n)}
+            y={LINE_Y}
+            color={HIGHLIGHT_COLOR}
+            opacity={1}
+          />
         )}
       </Mafs>
+
+      {hasHighlight && n != null && showLabel && (
+        <div
+          style={{
+            textAlign: 'center',
+            marginTop: '4px',
+            fontSize: '20px',
+            fontWeight: 700,
+            color: HIGHLIGHT_COLOR,
+          }}
+        >
+          <FractionText numerator={n} denominator={d} />
+        </div>
+      )}
     </div>
   );
 }

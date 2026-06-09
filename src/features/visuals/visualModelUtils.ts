@@ -7,6 +7,29 @@ export function parseFractionFromPrompt(prompt: string): { n: number; d: number 
   return { n: parseInt(m[1], 10), d: parseInt(m[2], 10) };
 }
 
+export interface FractionToken {
+  raw: string;
+  numerator: string;
+  denominator: string;
+  index: number;
+}
+
+/**
+ * Finds simple fraction patterns in a prompt string — numeric (1/4, 2/3) and
+ * unknown-part (?/6, 2/?) — returning each match with its position so a renderer
+ * can splice in stacked fractions. MathFan prompts are controlled generated
+ * strings, so a simple parser is sufficient (no date/URL/path heuristics needed).
+ */
+export function findFractionsInText(text: string): FractionToken[] {
+  const tokens: FractionToken[] = [];
+  const re = /(\d+|\?|▢)\s*\/\s*(\d+|\?|▢)/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null) {
+    tokens.push({ raw: m[0], numerator: m[1], denominator: m[2], index: m.index });
+  }
+  return tokens;
+}
+
 export function geoShapeFromItemId(id: string): ShapeName | null {
   const sidesMatch = id.match(/^GEO_SIDES_(\w+)$/);
   if (sidesMatch) {

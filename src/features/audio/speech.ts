@@ -1,5 +1,7 @@
 // Text-to-speech via Web Speech API — adapted from pwa-starter-kit MODULE-MAP §10
 
+import { normalizeMathForSpeech } from './mathSpeech';
+
 let voice: SpeechSynthesisVoice | null = null;
 
 function getBestVoice(): SpeechSynthesisVoice | null {
@@ -35,13 +37,9 @@ export function speak(text: string, rate = 0.9): Promise<void> {
 }
 
 export function speakProblem(prompt: string, rate?: number): Promise<void> {
-  // Replace math symbols with spoken words for natural speech
-  const spoken = prompt
-    .replace(/×/g, 'times')
-    .replace(/÷/g, 'divided by')
-    .replace(/−/g, 'minus')
-    .replace(/\?/g, 'what');
-  return speak(spoken, rate);
+  // Rewrite math symbols and fractions into natural spoken words (e.g. "1/4"
+  // becomes "one fourth", never "one slash four").
+  return speak(normalizeMathForSpeech(prompt), rate);
 }
 
 export function speakFeedback(isCorrect: boolean, answer: number | string): Promise<void> {

@@ -9,6 +9,7 @@ import { SettingsOverlay } from '../../components/SettingsOverlay';
 import { TutorChat } from '../ai/TutorChat';
 import { speakProblem, speakFeedback, stopSpeech } from '../audio/speech';
 import { VisualModel } from '../visuals/VisualModel';
+import { MathPrompt } from '../visuals/MathPrompt';
 import { hasVisualModel } from '../visuals/visualModelUtils';
 import { getHint } from './hintEngine';
 
@@ -362,7 +363,7 @@ export function PracticeScreen({
         {/* Question zone */}
         <div className="drill-q">
           <div style={{ ...st.prompt, fontSize: isVisualItem ? '24px' : '52px', letterSpacing: isVisualItem ? 'normal' : '-1px' }}>
-            {state.currentItem?.prompt}
+            <MathPrompt text={state.currentItem?.prompt ?? ''} />
           </div>
 
           {isVisualItem && state.currentItem && (
