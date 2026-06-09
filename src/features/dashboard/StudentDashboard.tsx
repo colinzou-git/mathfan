@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import type { StudentProfile, SessionConfig } from '../../types/math';
 import { itemStateRepo, mathAnswerEventRepo, sessionRepo } from '../../db/repositories';
@@ -80,7 +80,17 @@ export function StudentDashboard({ profile, lastSyncedAt, onStartDailyReview, on
   const [quick, setQuick] = useState<QuickStats | null>(null);
   const [dueByGroup, setDueByGroup] = useState<Record<string, DueGroup>>({});
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
-  const [practiceRounds, setPracticeRounds] = useState(3);
+  const [practiceRounds, setPracticeRounds] = useState(1);
+  const roundsInputRef = useRef<HTMLInputElement>(null);
+
+  // Focus and select the rounds input when the modal opens so keyboard users
+  // can type a count immediately.
+  useEffect(() => {
+    if (selectedGroup) {
+      const el = roundsInputRef.current;
+      if (el) { el.focus(); el.select(); }
+    }
+  }, [selectedGroup]);
 
   useEffect(() => {
     (async () => {
@@ -180,7 +190,7 @@ export function StudentDashboard({ profile, lastSyncedAt, onStartDailyReview, on
               <button
                 key={key}
                 style={s.dueBtn}
-                onClick={() => { setSelectedGroup(key); setPracticeRounds(3); }}
+                onClick={() => { setSelectedGroup(key); setPracticeRounds(1); }}
               >
                 <span style={s.dueIcon}>{icon}</span>
                 <span style={s.dueLabel}>{label}</span>
@@ -194,11 +204,6 @@ export function StudentDashboard({ profile, lastSyncedAt, onStartDailyReview, on
           Daily Review due (0)
         </button>
       )}
-
-      {/* Multiplication quiz */}
-      <button style={s.quizBtn} onClick={onStartQuiz}>
-        ✏️ Multiplication Quiz
-      </button>
 
       {/* Grade 3 Math Map */}
       {onOpenMasteryMap && (
@@ -219,6 +224,11 @@ export function StudentDashboard({ profile, lastSyncedAt, onStartDailyReview, on
         ))}
       </div>
 
+      {/* Multiplication quiz */}
+      <button style={s.quizBtn} onClick={onStartQuiz}>
+        ✏️ Multiplication Quiz
+      </button>
+
       <button style={s.statsBtn} onClick={onOpenStats}>
         📊 Stats &amp; History
       </button>
@@ -235,9 +245,24 @@ export function StudentDashboard({ profile, lastSyncedAt, onStartDailyReview, on
             </p>
             <p style={s.modalLabel}>How many rounds?</p>
             <div style={s.modalCountRow}>
-              <button style={s.adjBtn} onClick={() => setPracticeRounds(r => Math.max(1, r - 1))}>−</button>
-              <span style={s.modalCount}>{practiceRounds}</span>
-              <button style={s.adjBtn} onClick={() => setPracticeRounds(r => r + 1)}>+</button>
+              <button style={s.adjBtn} aria-label="Fewer rounds" onClick={() => setPracticeRounds(r => Math.max(1, r - 1))}>−</button>
+              <input
+                ref={roundsInputRef}
+                type="number"
+                min={1}
+                aria-label="Number of rounds"
+                style={s.modalCount}
+                value={practiceRounds}
+                onChange={e => {
+                  const n = parseInt(e.target.value, 10);
+                  setPracticeRounds(Number.isNaN(n) ? 1 : Math.max(1, n));
+                }}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') { e.preventDefault(); handleStartReview(); }
+                  else if (e.key === 'Escape') { e.preventDefault(); setSelectedGroup(null); }
+                }}
+              />
+              <button style={s.adjBtn} aria-label="More rounds" onClick={() => setPracticeRounds(r => r + 1)}>+</button>
             </div>
             <p style={s.modalTotal}>
               {dueByGroup[selectedGroup].ids.length} × {practiceRounds} ={' '}
@@ -297,7 +322,7 @@ const s: Record<string, CSSProperties> = {
   modalLabel: { fontSize: '14px', fontWeight: '600', color: '#374151', margin: '0 0 10px' },
   modalCountRow: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '16px', marginBottom: '10px' },
   adjBtn: { width: '38px', height: '38px', border: '2px solid #e5e7eb', borderRadius: '8px', background: '#fff', fontSize: '20px', cursor: 'pointer', fontWeight: '600', color: '#374151' },
-  modalCount: { fontSize: '34px', fontWeight: 'bold', color: '#1f2937', minWidth: '44px', display: 'inline-block' },
+  modalCount: { fontSize: '34px', fontWeight: 'bold', color: '#1f2937', width: '80px', textAlign: 'center', border: '2px solid #e5e7eb', borderRadius: '10px', padding: '2px 0', background: '#fff', fontFamily: 'inherit' },
   modalTotal: { fontSize: '13px', color: '#6b7280', margin: '0 0 18px' },
   modalStart: { width: '100%', padding: '13px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '16px', fontWeight: 'bold', cursor: 'pointer', marginBottom: '8px' },
   modalCancel: { width: '100%', padding: '8px', background: 'none', color: '#9ca3af', border: 'none', fontSize: '14px', cursor: 'pointer' },
