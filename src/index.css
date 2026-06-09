@@ -30,6 +30,27 @@ body {
 
 button { font-family: inherit; }
 
+/* ── Global button affordance ───────────────────────────────────────────── */
+/* Subtle, app-wide clickability cues layered on top of existing (often inline)
+   button styles. Kept gentle so transparent back/cancel/icon buttons stay fine.
+   Component-level :active transforms (e.g. .numpad-key scale) keep their own
+   look thanks to higher specificity. */
+button:not(:disabled) {
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: filter 0.12s ease, transform 0.08s ease, background 0.1s ease, box-shadow 0.12s ease;
+}
+@media (hover: hover) {
+  button:not(:disabled):hover { filter: brightness(0.97); }
+}
+button:active { transform: translateY(1px); }
+button:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  button:not(:disabled) { transition: none; }
+  button:active { transform: none; }
+}
+
 input[type='number']::-webkit-inner-spin-button,
 input[type='number']::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 input[type='number'] { -moz-appearance: textfield; }
