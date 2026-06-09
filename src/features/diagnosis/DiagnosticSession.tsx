@@ -9,7 +9,7 @@
  * Does not break existing practice or quiz flows.
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import type { PracticeItem, AttemptLog } from '../../types/math';
 import { buildDiagnosticPlan } from './diagnosticPlanner';
@@ -79,7 +79,7 @@ export function DiagnosticSession({ studentId, onComplete, onCancel }: Props) {
   // Cleanup timer on unmount
   useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
 
-  const handleSubmit = () => {
+  const handleSubmit = useCallback(() => {
     if (!currentItem || showFeedback || !input.trim()) return;
 
     const latencyMs = Math.round(performance.now() - startTimeRef.current);
@@ -187,7 +187,7 @@ export function DiagnosticSession({ studentId, onComplete, onCancel }: Props) {
         setIndex(i => i + 1);
       }
     }, FEEDBACK_MS);
-  };
+  }, [currentItem, showFeedback, input, studentId, sessionId, index, total]);
 
   // Keyboard support during active questions. Mirrors NumPad/touch behavior
   // without changing it: digits build the numeric answer, Backspace deletes,
