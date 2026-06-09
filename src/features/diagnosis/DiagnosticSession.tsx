@@ -189,6 +189,44 @@ export function DiagnosticSession({ studentId, onComplete, onCancel }: Props) {
     }, FEEDBACK_MS);
   };
 
+  // Keyboard support during active questions. Mirrors NumPad/touch behavior
+  // without changing it: digits build the numeric answer, Backspace deletes,
+  // number keys 1–N (or a matching single-character key) pick a choice, Enter
+  // submits a non-empty answer, and Escape exits. Disabled while feedback shows
+  // so a stray key can't submit the next question early.
+  useEffect(() => {
+    if (phase !== 'active' || showFeedback) return;
+    const item = currentItem;
+    if (!item) return;
+
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { e.preventDefault(); onCancel(); return; }
+      if (e.key === 'Enter') {
+        if (input.trim()) { e.preventDefault(); handleSubmit(); }
+        return;
+      }
+
+      if (item.answerInput === 'choice') {
+        const choices = item.choices ?? [];
+        if (/^[1-9]$/.test(e.key)) {
+          const idx = parseInt(e.key, 10) - 1;
+          if (idx >= 0 && idx < choices.length) { e.preventDefault(); setInput(String(choices[idx])); return; }
+        }
+        if (e.key.length === 1) {
+          const match = choices.find(c => String(c) === e.key);
+          if (match !== undefined) { e.preventDefault(); setInput(String(match)); }
+        }
+        return;
+      }
+
+      if (/^[0-9]$/.test(e.key)) { e.preventDefault(); setInput(v => v + e.key); }
+      else if (e.key === 'Backspace') { e.preventDefault(); setInput(v => v.slice(0, -1)); }
+    };
+
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [phase, showFeedback, currentItem, input, onCancel, handleSubmit]);
+
   // ── Intro screen ─────────────────────────────────────────────────────────────
 
   if (phase === 'intro') {

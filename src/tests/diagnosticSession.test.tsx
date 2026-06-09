@@ -151,6 +151,34 @@ describe('DiagnosticSession persistence', () => {
     expect(onComplete).toHaveBeenCalledTimes(1);
   });
 
+  it('accepts keyboard digit input and submits on Enter', async () => {
+    vi.mocked(recordDiagnosticAnswerWithRetry).mockResolvedValue(undefined);
+
+    render(<DiagnosticSession studentId="student-1" onComplete={vi.fn()} onCancel={() => {}} />);
+    fireEvent.click(screen.getByRole('button', { name: /let's go/i }));
+
+    // Type the answer with the keyboard, including a Backspace correction.
+    fireEvent.keyDown(window, { key: '9' });
+    fireEvent.keyDown(window, { key: 'Backspace' });
+    fireEvent.keyDown(window, { key: '8' });
+    fireEvent.keyDown(window, { key: 'Enter' });
+
+    await act(async () => { vi.advanceTimersByTime(1200); });
+
+    expect(screen.getByText(/great work/i)).toBeInTheDocument();
+    expect(vi.mocked(recordDiagnosticAnswerWithRetry)).toHaveBeenCalledTimes(1);
+  });
+
+  it('exits via Escape during an active question', () => {
+    const onCancel = vi.fn();
+
+    render(<DiagnosticSession studentId="student-1" onComplete={vi.fn()} onCancel={onCancel} />);
+    fireEvent.click(screen.getByRole('button', { name: /let's go/i }));
+    fireEvent.keyDown(window, { key: 'Escape' });
+
+    expect(onCancel).toHaveBeenCalledTimes(1);
+  });
+
   it('retries failed diagnostic writes when "Try again" is clicked', async () => {
     vi.mocked(recordDiagnosticAnswerWithRetry)
       .mockRejectedValueOnce(new Error('db unavailable'))
