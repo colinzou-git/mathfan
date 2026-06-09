@@ -12,7 +12,8 @@ import { VisualModel } from '../visuals/VisualModel';
 import { hasVisualModel } from '../visuals/visualModelUtils';
 import { getHint } from './hintEngine';
 
-const AUTO_ADVANCE_MS = 700;
+const AUTO_ADVANCE_MS = 700;     // visual-only pause when audio is off
+const POST_SPEECH_PAUSE_MS = 200; // short pause after answer speech finishes
 
 interface Props {
   studentId: string;
@@ -81,15 +82,30 @@ export function PracticeScreen({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.phase, state.currentItem?.id, state.retryKey]);
 
-  // Correct phase → focus for Enter-to-advance; optionally auto-advance
+  // Correct phase → focus for Enter-to-advance; optionally auto-advance.
+  // Auto-advance waits for the correct-answer speech to finish (variable duration
+  // across browsers/voices) before a short visual pause, so the next question's
+  // speech never cuts off the answer audio. A `cancelled` flag guards against the
+  // async flow advancing after unmount, phase change, or manual advance.
   useEffect(() => {
     if (state.phase === 'correct') {
       focusInput();
-      if (settings.audioEnabled && state.currentItem) speakFeedback(true, state.currentItem.answer);
-      if (settings.autoAdvance) {
-        autoTimer.current = setTimeout(() => nextQuestion(), AUTO_ADVANCE_MS);
-      }
-      return () => { if (autoTimer.current) clearTimeout(autoTimer.current); };
+      let cancelled = false;
+      const run = async () => {
+        const spoken = settings.audioEnabled && !!state.currentItem;
+        if (spoken) {
+          await speakFeedback(true, state.currentItem!.answer);
+        }
+        if (cancelled || !settings.autoAdvance) return;
+        const pauseMs = spoken ? POST_SPEECH_PAUSE_MS : AUTO_ADVANCE_MS;
+        await new Promise<void>(resolve => { autoTimer.current = setTimeout(resolve, pauseMs); });
+        if (!cancelled) nextQuestion();
+      };
+      run();
+      return () => {
+        cancelled = true;
+        if (autoTimer.current) clearTimeout(autoTimer.current);
+      };
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.phase]);

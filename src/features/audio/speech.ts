@@ -14,33 +14,41 @@ function ensureVoice() {
   if (!voice) voice = getBestVoice();
 }
 
-export function speak(text: string, rate = 0.9): void {
-  if (!('speechSynthesis' in window)) return;
+// Resolves when the utterance finishes (onend) or fails (onerror), so callers
+// can await speech completion before advancing. Cancels existing speech first,
+// preserving the interrupt-on-new-speech behavior used by manual repeat/advance.
+export function speak(text: string, rate = 0.9): Promise<void> {
+  if (!('speechSynthesis' in window)) return Promise.resolve();
   speechSynthesis.cancel();
   ensureVoice();
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.rate = rate;
   utterance.pitch = 1.05;
   if (voice) utterance.voice = voice;
-  speechSynthesis.speak(utterance);
+  return new Promise<void>(resolve => {
+    let settled = false;
+    const done = () => { if (!settled) { settled = true; resolve(); } };
+    utterance.onend = done;
+    utterance.onerror = done;
+    speechSynthesis.speak(utterance);
+  });
 }
 
-export function speakProblem(prompt: string, rate?: number): void {
+export function speakProblem(prompt: string, rate?: number): Promise<void> {
   // Replace math symbols with spoken words for natural speech
   const spoken = prompt
     .replace(/×/g, 'times')
     .replace(/÷/g, 'divided by')
     .replace(/−/g, 'minus')
     .replace(/\?/g, 'what');
-  speak(spoken, rate);
+  return speak(spoken, rate);
 }
 
-export function speakFeedback(isCorrect: boolean, answer: number | string): void {
+export function speakFeedback(isCorrect: boolean, answer: number | string): Promise<void> {
   if (isCorrect) {
-    speak(String(answer));
-  } else {
-    speak(`Not quite. The answer is ${answer}.`);
+    return speak(String(answer));
   }
+  return speak(`Not quite. The answer is ${answer}.`);
 }
 
 export function stopSpeech(): void {

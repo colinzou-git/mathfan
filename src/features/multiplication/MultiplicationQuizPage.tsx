@@ -29,7 +29,7 @@ type Phase = 'setup' | 'loading' | 'active' | 'feedback' | 'retry' | 'saving' | 
 
 const QUIZ_LENGTHS = [10, 20, 30, 50];
 const DEFAULT_LENGTH = 20;
-const FEEDBACK_MS = 800;
+const FEEDBACK_PAUSE_MS = 600; // visual pause after the answer speech finishes
 
 
 // ── Sub-components ─────────────────────────────────────────────────────────────
@@ -286,12 +286,17 @@ export function MultiplicationQuizPage({ studentId, settings, onDone, onStartPra
 
   const inputRef = useRef<HTMLInputElement>(null);
   const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Monotonic guard: every advance flow captures the current value; bumping it
+  // (skip, restart, unmount) invalidates any in-flight async advance so a stale
+  // speech/timer chain can't move to the next question after the user moved on.
+  const advanceSeq = useRef(0);
   const sessionId = useRef(generateId());
   const sessionStartedAt = useRef(appNow().toISOString());
   const questionStartTime = useRef(0);
 
   // Cleanup timer and speech on unmount
   useEffect(() => () => {
+    advanceSeq.current++;
     stopSpeech();
     if (feedbackTimer.current) clearTimeout(feedbackTimer.current);
   }, []);
@@ -313,6 +318,8 @@ export function MultiplicationQuizPage({ studentId, settings, onDone, onStartPra
   }, [phase, currentIndex]);
 
   const startQuiz = useCallback(async (length: number) => {
+    advanceSeq.current++;
+    if (feedbackTimer.current) clearTimeout(feedbackTimer.current);
     setPhase('loading');
     sessionId.current = generateId();
     sessionStartedAt.current = appNow().toISOString();
@@ -388,6 +395,35 @@ export function MultiplicationQuizPage({ studentId, settings, onDone, onStartPra
     setPhase('summary');
   }, [studentId]);
 
+  // Speak the correct answer (if audio is on), hold the visual feedback for a
+  // short beat, then advance — without the next question's speech cutting off
+  // the answer audio. Guarded by advanceSeq so it no-ops if superseded.
+  const scheduleAdvance = useCallback((
+    nextIndex: number,
+    logs: QuizAnswerLog[],
+    map: Map<MultiplicationFactKey, MultiplicationFactStats>,
+    totalQuestions: number,
+    answer: number,
+  ) => {
+    const seq = ++advanceSeq.current;
+    void (async () => {
+      if (settings.audioEnabled) await speakFeedback(true, answer);
+      if (seq !== advanceSeq.current) return;
+      await new Promise<void>(resolve => {
+        feedbackTimer.current = setTimeout(resolve, FEEDBACK_PAUSE_MS);
+      });
+      if (seq !== advanceSeq.current) return;
+      if (nextIndex >= totalQuestions) {
+        finishQuiz(logs, map, totalQuestions);
+      } else {
+        setCurrentIndex(nextIndex);
+        setInput('');
+        questionStartTime.current = Date.now();
+        setPhase('active');
+      }
+    })();
+  }, [settings.audioEnabled, finishQuiz]);
+
   const handleSubmit = useCallback(async () => {
     if (phase !== 'active' && phase !== 'retry') return;
     if (questions.length === 0) return;
@@ -425,21 +461,10 @@ export function MultiplicationQuizPage({ studentId, settings, onDone, onStartPra
 
       setLastIsCorrect(isCorrect);
       if (isCorrect) {
-        if (settings.audioEnabled) speakFeedback(true, q.answer);
         setPhase('feedback');
         setInput('');
-        const nextIndex = currentIndex + 1;
         if (feedbackTimer.current) clearTimeout(feedbackTimer.current);
-        feedbackTimer.current = setTimeout(() => {
-          if (nextIndex >= questions.length) {
-            finishQuiz(answerLogs, statsMap, questions.length);
-          } else {
-            setCurrentIndex(nextIndex);
-            setInput('');
-            questionStartTime.current = Date.now();
-            setPhase('active');
-          }
-        }, FEEDBACK_MS);
+        scheduleAdvance(currentIndex + 1, answerLogs, statsMap, questions.length, q.answer);
       } else {
         // Still wrong: clear input so the student can try again
         setInput('');
@@ -499,31 +524,20 @@ export function MultiplicationQuizPage({ studentId, settings, onDone, onStartPra
     }).catch(console.warn);
 
     if (isCorrect) {
-      if (settings.audioEnabled) speakFeedback(true, q.answer);
       setPhase('feedback');
-
-      const nextIndex = currentIndex + 1;
       if (feedbackTimer.current) clearTimeout(feedbackTimer.current);
-      feedbackTimer.current = setTimeout(() => {
-        if (nextIndex >= questions.length) {
-          finishQuiz(newLogs, newMap, questions.length);
-        } else {
-          setCurrentIndex(nextIndex);
-          setInput('');
-          questionStartTime.current = Date.now();
-          setPhase('active');
-        }
-      }, FEEDBACK_MS);
+      scheduleAdvance(currentIndex + 1, newLogs, newMap, questions.length, q.answer);
     } else {
       // Wrong on first attempt: enter retry mode (log already recorded as wrong)
       setPhase('retry');
       setInput('');
       questionStartTime.current = Date.now();
     }
-  }, [phase, questions, currentIndex, input, answerLogs, statsMap, studentId, finishQuiz]);
+  }, [phase, questions, currentIndex, input, answerLogs, statsMap, studentId, scheduleAdvance]);
 
   const handleSkip = useCallback(() => {
     if (phase !== 'retry') return;
+    advanceSeq.current++;
     if (feedbackTimer.current) clearTimeout(feedbackTimer.current);
     const nextIndex = currentIndex + 1;
     setInput('');
