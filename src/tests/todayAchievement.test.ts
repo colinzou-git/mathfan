@@ -44,6 +44,20 @@ function makeSession(id: string, mode: SessionMode): PracticeSession {
   };
 }
 
+describe('computeTodayAchievement — empty input', () => {
+  it('returns zero-count summaries for every tile when there are no events today', () => {
+    // The Today's Achievement section relies on this to render all six tiles at
+    // zero (instead of hiding) on a day with no activity.
+    const data = computeTodayAchievement([], [], []);
+
+    expect(data.questions).toHaveLength(0);
+    for (const filter of ['total', 'due', 'practice', 'quiz', 'improved', 'needsFocus'] as const) {
+      expect(data[filter].count).toBe(0);
+      expect(data[filter].accuracy).toBe(0);
+    }
+  });
+});
+
 describe('computeTodayAchievement — diagnostic classification', () => {
   it('classifies a diagnostic event as diagnostic, not practice', () => {
     // Diagnostic sessions are not persisted as PracticeSession rows, so sessionMode

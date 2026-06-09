@@ -9,7 +9,7 @@ interface Props {
 
 const FILTER_TITLES: Record<AchievementFilter, string> = {
   total:      'Total',
-  due:        'Due',
+  due:        'Reviewed',
   practice:   'Practice',
   quiz:       'Quiz',
   improved:   'Improved',

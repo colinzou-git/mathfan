@@ -21,7 +21,7 @@ interface TileConfig {
 
 const TILES: TileConfig[] = [
   { filter: 'total',      title: 'Total',      color: '#1f2937', bg: '#f9fafb', border: '#e5e7eb' },
-  { filter: 'due',        title: 'Due',         color: '#92400e', bg: '#fffbeb', border: '#fde68a' },
+  { filter: 'due',        title: 'Reviewed',    color: '#92400e', bg: '#fffbeb', border: '#fde68a' },
   { filter: 'practice',   title: 'Practice',    color: '#1e40af', bg: '#eff6ff', border: '#bfdbfe' },
   { filter: 'quiz',       title: 'Quiz',        color: '#166534', bg: '#f0fdf4', border: '#86efac' },
   { filter: 'improved',   title: 'Improved',    color: '#065f46', bg: '#ecfdf5', border: '#6ee7b7' },
@@ -64,7 +64,12 @@ export function TodayAchievementSection({ studentId, onOpenDetail, lastSyncedAt 
         sessionRepo.getAll(studentId),
       ]);
 
-      if (todayEvents.length === 0) { setData(null); return; }
+      // With no activity today, show all tiles at zero rather than hiding the
+      // section. computeTodayAchievement returns zero-count summaries for empty input.
+      if (todayEvents.length === 0) {
+        setData(computeTodayAchievement([], [], allSessions));
+        return;
+      }
 
       // Fetch all events before today to build prior-performance comparisons.
       // Uses the compound index [studentId+createdAt] for efficiency.
@@ -79,7 +84,7 @@ export function TodayAchievementSection({ studentId, onOpenDetail, lastSyncedAt 
     })();
   }, [studentId, lastSyncedAt]);
 
-  if (!data || data.total.count === 0) return null;
+  if (!data) return null;
 
   return (
     <div>
@@ -87,7 +92,6 @@ export function TodayAchievementSection({ studentId, onOpenDetail, lastSyncedAt 
       <div style={s.tilesRow}>
         {TILES.map(cfg => {
           const summary = data[cfg.filter];
-          if (summary.count === 0) return null;
           return (
             <AchievementTile
               key={cfg.filter}
