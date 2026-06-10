@@ -330,4 +330,26 @@ describe('usePracticeSession — adaptive selection', () => {
     }
     expect(seen).toEqual(new Set(ids));
   });
+
+  it('word_problem mode builds a problem around the student\'s weak/due multiplication fact', async () => {
+    // MUL_8x7 is due and still being learned — generation should target it
+    // rather than relying on a random pool happening to include 8 × 7.
+    vi.mocked(itemStateRepo.getForStudent).mockResolvedValue([{
+      studentId: STUDENT_ID, itemId: 'MUL_8x7', skillId: 'mul',
+      attemptCount: 4, correctCount: 1, lastCorrect: false, lastLatencyMs: 0,
+      medianLatencyMs: 0, ease: 2.5, stabilityDays: 0, difficulty: 0.3,
+      masteryLevel: 'learning' as const, nextDueAt: '2026-05-01T00:00:00Z', mistakePatterns: [],
+    }]);
+
+    const { result } = renderHook(() => usePracticeSession(STUDENT_ID));
+    await act(async () => {
+      await result.current.startSession({
+        mode: 'word_problem', sessionLength: 5, grade: 3, operandMin: 2, operandMax: 10,
+      });
+    });
+
+    const cur = result.current.state.currentItem;
+    expect(cur).not.toBeNull();
+    expect(cur!.factA === 8 && cur!.factB === 7).toBe(true);
+  });
 });

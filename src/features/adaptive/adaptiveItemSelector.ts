@@ -4,13 +4,31 @@ import { getRelatedItemIds } from './relatedItemMapping';
 /**
  * FSRS-informed selection for calculation-embedded higher-level practice.
  *
- * Instead of choosing items purely at random, score each candidate by the
- * student's existing item-state history — both for the item itself and for the
- * underlying calculation it embeds — and prefer the ones that most need
- * practice (due / weak / low-accuracy). Mastered, not-yet-due items are
- * deprioritised but never fully banned: when FSRS marks them due they jump back
- * to the top, and they remain selectable whenever the candidate pool is small.
+ * Each candidate is scored by the student's existing item-state history — both
+ * for the item itself and for the underlying calculation it embeds — and the
+ * queue is filled with a quota model so the session is dominated by the facts
+ * that most need practice, while still leaving room for new/variety content and
+ * occasional maintenance review of mastered facts.
+ *
+ * Two scoring rules keep new users from being skewed:
+ *   - Unseen *related* calculations contribute nothing (only existing states
+ *     that are due/weak/low-accuracy add a boost), so an item is never favoured
+ *     just for embedding many calculations it has no history for.
+ *   - Related boosts use the neediest related fact (max), not a sum, so a
+ *     rectilinear/line-plot item with several embedded facts does not dominate.
+ *
+ * Multiplication and addition lookups are commutative: AREA_RECT_8x7 consults
+ * whichever of MUL_8x7 / MUL_7x8 the student actually has a state for.
  */
+
+export interface AdaptiveQuotas {
+  /** Share of the session for due/weak/low-accuracy candidates. */
+  priority: number;
+  /** Share for new/unseen variety. */
+  variety: number;
+  /** Share reserved for mastered, not-yet-due maintenance review. */
+  maintenance: number;
+}
 
 export interface AdaptiveOptions {
   /**
@@ -19,34 +37,71 @@ export interface AdaptiveOptions {
    * history), without overriding real differences. 0 = fully deterministic.
    */
   jitter?: number;
+  /** Override the default 75/15/10 priority/variety/maintenance split. */
+  quotas?: AdaptiveQuotas;
 }
 
 const DEFAULT_JITTER = 0.5;
+const DEFAULT_QUOTAS: AdaptiveQuotas = { priority: 0.75, variety: 0.15, maintenance: 0.10 };
 
-/** Unseen items get a mild positive score so brand-new content still surfaces. */
-const UNSEEN_SCORE = 8;
+/** Unseen candidate items get a mild positive score so new content still surfaces. */
+const UNSEEN_OWN_SCORE = 10;
 
-/** Score a single item/related state: higher = needs practice more. */
-function stateScore(state: StudentItemState | undefined, nowStr: string): number {
-  if (!state) return UNSEEN_SCORE;
+type Tier = 'priority' | 'variety' | 'maintenance';
+
+// ── State helpers ───────────────────────────────────────────────────────────────
+
+function isDue(state: StudentItemState, nowStr: string): boolean {
+  return !!(state.nextDueAt && state.nextDueAt <= nowStr);
+}
+
+/**
+ * Look up an item's state, treating multiplication and addition as commutative
+ * so embedded facts match whichever order the student has practiced.
+ */
+export function lookupState(
+  stateMap: Map<string, StudentItemState>,
+  id: string,
+): StudentItemState | undefined {
+  const direct = stateMap.get(id);
+  if (direct) return direct;
+  let m: RegExpMatchArray | null;
+  if ((m = id.match(/^MUL_(\d+)x(\d+)$/))) return stateMap.get(`MUL_${m[2]}x${m[1]}`);
+  if ((m = id.match(/^ADD_(\d+)p(\d+)$/))) return stateMap.get(`ADD_${m[2]}p${m[1]}`);
+  return undefined;
+}
+
+/** True when a fact needs practice: due, still being learned, or low accuracy. */
+export function isNeedyState(state: StudentItemState, now: Date): boolean {
+  if (isDue(state, now.toISOString())) return true;
+  if (state.masteryLevel === 'learning' || state.masteryLevel === 'developing') return true;
+  const accuracy = state.attemptCount > 0 ? state.correctCount / state.attemptCount : 1;
+  return accuracy < 0.75;
+}
+
+/** How much a fact (own or related) wants to be practiced. Only called for existing states. */
+function needScore(state: StudentItemState, nowStr: string): number {
   let s = 0;
-  const due = !!(state.nextDueAt && state.nextDueAt <= nowStr);
+  const due = isDue(state, nowStr);
   if (due) s += 100;
   switch (state.masteryLevel) {
     case 'new': s += 15; break;
     case 'learning': s += 50; break;
     case 'developing': s += 30; break;
-    case 'strong': s += due ? 0 : -20; break;
-    case 'mastered': s += due ? 0 : -40; break;
+    case 'strong': s += due ? 0 : -10; break;
+    case 'mastered': s += due ? 0 : -25; break;
   }
   const accuracy = state.attemptCount > 0 ? state.correctCount / state.attemptCount : 1;
   s += (1 - accuracy) * 40;
   return s;
 }
 
+// ── Scoring ─────────────────────────────────────────────────────────────────────
+
 /**
- * Priority score for a candidate: its own state plus the neediest embedded
- * calculation (with a smaller contribution from any additional related facts).
+ * Priority score for a candidate: its own state (mild positive when unseen) plus
+ * the neediest embedded calculation it has history for. Unseen related facts add
+ * nothing.
  */
 export function scoreCandidateItem(
   item: PracticeItem,
@@ -54,20 +109,19 @@ export function scoreCandidateItem(
   now: Date,
 ): number {
   const nowStr = now.toISOString();
-  let score = stateScore(stateMap.get(item.id), nowStr);
+  const own = stateMap.get(item.id);
+  const score = own ? needScore(own, nowStr) : UNSEEN_OWN_SCORE;
 
-  const related = getRelatedItemIds(item);
-  if (related.length > 0) {
-    let best = -Infinity;
-    let sum = 0;
-    for (const rid of related) {
-      const v = stateScore(stateMap.get(rid), nowStr);
-      best = Math.max(best, v);
-      sum += v;
-    }
-    score += best + 0.3 * (sum - best);
+  let relatedBoost = 0;
+  let hasRelatedState = false;
+  for (const rid of getRelatedItemIds(item)) {
+    const st = lookupState(stateMap, rid);
+    if (!st) continue;
+    const v = needScore(st, nowStr);
+    relatedBoost = hasRelatedState ? Math.max(relatedBoost, v) : v;
+    hasRelatedState = true;
   }
-  return score;
+  return score + relatedBoost;
 }
 
 /** Candidates sorted by descending priority (with optional tie-break jitter). */
@@ -87,12 +141,32 @@ export function rankCandidateItems(
     .map(x => x.item);
 }
 
+// ── Tiering & selection ─────────────────────────────────────────────────────────
+
+/** Classify a candidate for quota allocation. */
+function itemTier(item: PracticeItem, stateMap: Map<string, StudentItemState>, now: Date): Tier {
+  const nowStr = now.toISOString();
+  const states: StudentItemState[] = [];
+  const own = stateMap.get(item.id);
+  if (own) states.push(own);
+  for (const rid of getRelatedItemIds(item)) {
+    const st = lookupState(stateMap, rid);
+    if (st) states.push(st);
+  }
+  if (states.length === 0) return 'variety'; // nothing known yet
+  if (states.some(st => isNeedyState(st, now))) return 'priority';
+  const allWellKnown = states.every(
+    st => (st.masteryLevel === 'mastered' || st.masteryLevel === 'strong') && !isDue(st, nowStr),
+  );
+  return allWellKnown ? 'maintenance' : 'variety';
+}
+
 /**
- * Build a queue of `count` item IDs from the candidate pool, ranked adaptively.
- * When the pool has at least `count` items the top `count` are taken (so well-
- * mastered items are left out unless they are due). When the pool is smaller the
- * ranked list is cycled to fill the queue, which keeps every candidate (mastered
- * included) selectable and spreads repeats out instead of clustering them.
+ * Build a queue of `count` item IDs from the candidate pool using a quota model:
+ * ~75% due/weak priority items, ~15% new/variety, ~10% mastered maintenance
+ * (when available). Each tier is ranked adaptively; shortfalls backfill from the
+ * remaining ranked candidates, and a pool smaller than `count` is cycled to fill
+ * the rest — so mastered items are never permanently excluded.
  */
 export function selectAdaptiveItems(
   items: PracticeItem[],
@@ -102,16 +176,55 @@ export function selectAdaptiveItems(
   options?: AdaptiveOptions,
 ): string[] {
   if (count <= 0 || items.length === 0) return [];
-  const ranked = rankCandidateItems(items, stateMap, now, options);
-  const queue: string[] = [];
-  if (count <= ranked.length) {
-    for (let i = 0; i < count; i++) queue.push(ranked[i].id);
-  } else {
+
+  const quotas = options?.quotas ?? DEFAULT_QUOTAS;
+
+  const buckets: Record<Tier, PracticeItem[]> = { priority: [], variety: [], maintenance: [] };
+  for (const it of items) buckets[itemTier(it, stateMap, now)].push(it);
+
+  const priority = rankCandidateItems(buckets.priority, stateMap, now, options);
+  const variety = rankCandidateItems(buckets.variety, stateMap, now, options);
+  const maintenance = rankCandidateItems(buckets.maintenance, stateMap, now, options);
+
+  const nMaint = Math.min(Math.round(count * quotas.maintenance), maintenance.length);
+  const nVariety = Math.min(Math.round(count * quotas.variety), variety.length);
+  const nPriority = count - nMaint - nVariety;
+
+  const selected: string[] = [];
+  const used = new Set<string>();
+  const take = (arr: PracticeItem[], n: number) => {
+    let taken = 0;
+    for (const it of arr) {
+      if (selected.length >= count || taken >= n) break;
+      if (used.has(it.id)) continue;
+      selected.push(it.id);
+      used.add(it.id);
+      taken++;
+    }
+  };
+  take(priority, nPriority);
+  take(variety, nVariety);
+  take(maintenance, nMaint);
+
+  // Backfill any remaining slots from whatever ranked candidates are left.
+  if (selected.length < count) {
+    for (const it of [...priority, ...variety, ...maintenance]) {
+      if (selected.length >= count) break;
+      if (used.has(it.id)) continue;
+      selected.push(it.id);
+      used.add(it.id);
+    }
+  }
+
+  // Pool smaller than the session: cycle the distinct selection to fill the rest.
+  if (selected.length > 0 && selected.length < count) {
+    const base = [...selected];
     let i = 0;
-    while (queue.length < count) {
-      queue.push(ranked[i % ranked.length].id);
+    while (selected.length < count) {
+      selected.push(base[i % base.length]);
       i++;
     }
   }
-  return queue;
+
+  return selected;
 }

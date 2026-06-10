@@ -14,9 +14,7 @@ import {
   generateAdditionItems, generateSubtractionItems, generateDivisionItemsRange,
 } from '../curriculum/arithmeticItems';
 import { generateFractionItems } from '../curriculum/fractionItems';
-import { generateWordProblemItems } from '../curriculum/wordProblemItems';
 import { generateRoundingItems } from '../curriculum/roundingItems';
-import { generateNumberTheoryItems } from '../curriculum/numberTheoryItems';
 import { generateDecimalItems } from '../curriculum/decimalItems';
 import { itemStateRepo, sessionRepo } from '../../db/repositories';
 import { db } from '../../db/dexie';
@@ -26,6 +24,7 @@ import { recordPracticeAnswer, type PracticeAnswerPayload } from '../learning/re
 import { detectMistakes } from '../mastery/misconceptionEngine';
 import { selectAdaptiveItems } from '../adaptive/adaptiveItemSelector';
 import { enrichRelatedMetadata } from '../adaptive/relatedItemMapping';
+import { buildWordProblemCandidates, buildFactorCandidates } from '../adaptive/candidatePools';
 import type { PracticeItem as PItem } from '../../types/math';
 
 // ── Public types ──────────────────────────────────────────────────────────────
@@ -211,17 +210,15 @@ export function usePracticeSession(studentId: string) {
       // operand range = numerator, operand2 range = denominator.
       queue = registerDynamic(generateFractionItems(fractionMode ?? 'equivalent', sessionLength, lo, hi, lo2, hi2));
     } else if (mode === 'word_problem') {
-      // Generate a larger pool, then adaptive-select around the multiplication /
-      // division facts the student most needs to practice.
-      const pool = generateWordProblemItems(g, candidatePoolSize(sessionLength), operandMin, operandMax)
-        .map(enrichRelatedMetadata);
+      // Build candidates around the student's weak/due ×/÷ facts first, then mix
+      // in variety, and adaptive-select from the combined pool.
+      const pool = buildWordProblemCandidates(g, sessionLength, stateMap, now, operandMin, operandMax);
       registerDynamic(pool);
       queue = selectAdaptiveItems(pool, stateMap, now, sessionLength);
     } else if (mode === 'rounding') {
       queue = registerDynamic(generateRoundingItems(g, sessionLength, operandMin, operandMax));
     } else if (mode === 'factors') {
-      const pool = generateNumberTheoryItems(g, candidatePoolSize(sessionLength), operandMin, operandMax)
-        .map(enrichRelatedMetadata);
+      const pool = buildFactorCandidates(g, sessionLength, stateMap, now, operandMin, operandMax);
       registerDynamic(pool);
       queue = selectAdaptiveItems(pool, stateMap, now, sessionLength);
     } else if (mode === 'decimals') {
@@ -496,13 +493,4 @@ function getStaticItem(id: string): PracticeItem {
   const item = ITEM_MAP.get(id);
   if (!item) throw new Error(`Item not found: ${id}`);
   return item;
-}
-
-/**
- * Size of the candidate pool to generate before adaptive selection for random
- * calculation-embedded modes — wider than the session so the selector has room
- * to favour the facts the student most needs to practice.
- */
-function candidatePoolSize(sessionLength: number): number {
-  return Math.max(sessionLength * 3, sessionLength + 12);
 }

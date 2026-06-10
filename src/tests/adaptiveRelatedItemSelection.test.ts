@@ -9,8 +9,9 @@ import {
   getRelatedItemIds, getRelatedSkillIds, enrichRelatedMetadata,
 } from '../features/adaptive/relatedItemMapping';
 import {
-  rankCandidateItems, selectAdaptiveItems,
+  scoreCandidateItem, rankCandidateItems, selectAdaptiveItems,
 } from '../features/adaptive/adaptiveItemSelector';
+import { buildWordProblemCandidates, buildFactorCandidates } from '../features/adaptive/candidatePools';
 import { makeItemFromId } from '../features/curriculum/makeItemFromId';
 
 const NOW = new Date('2026-06-09T00:00:00Z');
@@ -214,5 +215,82 @@ describe('selectAdaptiveItems', () => {
 
   it('returns an empty queue for an empty pool', () => {
     expect(selectAdaptiveItems([], new Map(), NOW, 5)).toEqual([]);
+  });
+
+  it('reserves a maintenance slot for mastered non-due facts when the pool is large', () => {
+    const stateMap = mapOf(
+      state('MUL_2x2', 'mastered', { due: FUTURE }),
+      state('MUL_3x3', 'mastered', { due: FUTURE }),
+    );
+    const priorityItems: PracticeItem[] = [];
+    for (const [a, b] of [[6, 7], [7, 8], [8, 9], [6, 8], [7, 9], [8, 7], [9, 6], [6, 9]] as const) {
+      stateMap.set(`MUL_${a}x${b}`, state(`MUL_${a}x${b}`, 'learning', { due: PAST, attempts: 4, correct: 1 }));
+      priorityItems.push(item(`WORD_eg_${a}_${b}`));
+    }
+    const pool = [...priorityItems, item('AREA_RECT_2x2'), item('AREA_RECT_3x3')];
+    const queue = selectAdaptiveItems(pool, stateMap, NOW, 10, { jitter: 0 });
+    expect(queue).toHaveLength(10);
+    const maintained = queue.filter(id => id === 'AREA_RECT_2x2' || id === 'AREA_RECT_3x3');
+    expect(maintained.length).toBeGreaterThanOrEqual(1);
+  });
+});
+
+// ── scoreCandidateItem — fairness rules ─────────────────────────────────────────
+
+describe('scoreCandidateItem', () => {
+  it('uses commutative MUL state: MUL_7x8 history informs AREA_RECT_8x7', () => {
+    // MUL_8x7 has no state; the commutative MUL_7x8 history must still count.
+    const stateMap = mapOf(state('MUL_7x8', 'learning', { due: PAST, attempts: 4, correct: 1 }));
+    const withHistory = scoreCandidateItem(item('AREA_RECT_8x7'), stateMap, NOW);
+    const noHistory = scoreCandidateItem(item('AREA_RECT_8x7'), new Map(), NOW);
+    expect(withHistory).toBeGreaterThan(noHistory + 100);
+  });
+
+  it('does not over-reward unseen related calculations for a new user', () => {
+    // Clock (no related), measurement-word (1 related), and rectilinear (3 related)
+    // must all score the same when the student has no history — embedding more
+    // calculations must not inflate priority on its own.
+    const empty = new Map();
+    const clck = scoreCandidateItem(item('CLCK_3_15'), empty, NOW);
+    const mwrd = scoreCandidateItem(item('MWRD_addg_5_3'), empty, NOW);
+    const recti = scoreCandidateItem(item('RECTI_3x4_2x2'), empty, NOW);
+    const area = scoreCandidateItem(item('AREA_RECT_8x7'), empty, NOW);
+    expect(clck).toBe(mwrd);
+    expect(recti).toBe(area);
+    expect(clck).toBe(area);
+  });
+});
+
+// ── candidatePools — state-first generation ─────────────────────────────────────
+
+describe('buildWordProblemCandidates', () => {
+  it('includes a word problem built around a weak/due MUL fact in range', () => {
+    const stateMap = mapOf(state('MUL_8x7', 'learning', { due: PAST, attempts: 4, correct: 1 }));
+    const pool = buildWordProblemCandidates(3, 10, stateMap, NOW, 2, 10);
+    const hit = pool.find(it => getRelatedItemIds(it).includes('MUL_8x7'));
+    expect(hit).toBeDefined();
+    expect(hit!.factA === 8 && hit!.factB === 7).toBe(true);
+  });
+
+  it('targets a weak/due DIV fact with a sharing word problem', () => {
+    const stateMap = mapOf(state('DIV_56d7', 'developing', { due: PAST, attempts: 4, correct: 2 }));
+    const pool = buildWordProblemCandidates(3, 10, stateMap, NOW, 2, 10);
+    expect(pool.some(it => getRelatedItemIds(it).includes('DIV_56d7'))).toBe(true);
+  });
+
+  it('still returns variety candidates when there is no history', () => {
+    expect(buildWordProblemCandidates(3, 8, new Map(), NOW, 2, 10).length).toBeGreaterThan(0);
+  });
+});
+
+describe('buildFactorCandidates', () => {
+  it('builds a factor question from a weak/due DIV fact', () => {
+    const stateMap = mapOf(state('DIV_12d3', 'learning', { due: PAST, attempts: 4, correct: 1 }));
+    const pool = buildFactorCandidates(3, 10, stateMap, NOW, 2, 30);
+    expect(pool.some(it => it.id === 'FACT_3_12')).toBe(true);
+  });
+
+  it('still returns variety candidates when there is no history', () => {
+    expect(buildFactorCandidates(3, 8, new Map(), NOW, 2, 30).length).toBeGreaterThan(0);
   });
 });
