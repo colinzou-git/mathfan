@@ -9,6 +9,7 @@ import { studentRepo } from '../../db/repositories';
 import { isDebugSpeed, enableDebugSpeed, disableDebugSpeed } from '../time/clock';
 import { getAiConfig, setAiKey, setAiModel, clearAiKey, DEFAULT_MODEL } from '../ai/aiConfig';
 import { askTutor, explainAiError, aiErrorDetail } from '../ai/gemini';
+import { checkForUpdate, type BuildInfo } from './updateCheck';
 
 interface Props {
   profile: StudentProfile;
@@ -63,46 +64,37 @@ export function SettingsPage({ profile, onUpdateProfile, onBack, onSwitchStudent
   const [nameDirty, setNameDirty] = useState(false);
   const [debugSpeed, setDebugSpeed] = useState(isDebugSpeed());
   const [updateState, setUpdateState] = useState<'idle' | 'checking' | 'available' | 'none' | 'error'>('idle');
+  const [serverBuild, setServerBuild] = useState<BuildInfo | null>(null);
 
+  // The build baked into this running bundle (substituted by Vite `define`).
+  const currentBuild: BuildInfo = { appVersion: __APP_VERSION__, gitSha: __GIT_SHA__, buildTime: __BUILD_TIME__ };
+
+  // Primary update detection: probe the deployed build-info.json over the
+  // network. This works even when `registration.waiting` is empty, which it
+  // always is under `skipWaiting: true`. A failed fetch surfaces a real error
+  // instead of pretending the app is up to date.
   const checkForUpdates = async () => {
-    if (!('serviceWorker' in navigator)) { setUpdateState('error'); return; }
     setUpdateState('checking');
-    try {
-      const reg = await navigator.serviceWorker.getRegistration();
-      if (!reg) { setUpdateState('none'); return; }
-      if (reg.waiting) { setUpdateState('available'); return; }
-
-      // Listen for updatefound before calling update() so we never miss it.
-      // When a new SW is found, wait for it to reach 'installed' (waiting) state.
-      // Falls back after 8 s in case the event never fires (e.g. already current).
-      await new Promise<void>(resolve => {
-        let settled = false;
-        const done = () => { if (!settled) { settled = true; resolve(); } };
-
-        const onUpdateFound = () => {
-          const sw = reg.installing;
-          if (!sw) { done(); return; }
-          sw.addEventListener('statechange', () => { if (sw.state === 'installed') done(); });
-        };
-
-        reg.addEventListener('updatefound', onUpdateFound);
-        setTimeout(done, 8000);
-        reg.update().catch(done);
-      });
-
-      const fresh = await navigator.serviceWorker.getRegistration();
-      setUpdateState(fresh?.waiting ? 'available' : 'none');
-    } catch {
-      setUpdateState('error');
-    }
+    const result = await checkForUpdate(currentBuild, import.meta.env.BASE_URL);
+    setServerBuild(result.server);
+    setUpdateState(result.state);
   };
 
+  // Secondary action: nudge the service worker to pick up the new build, then
+  // force a cache-busting reload. We don't rely on `registration.waiting`
+  // because skipWaiting means there may be no waiting worker to message.
   const applyUpdate = async () => {
-    const reg = await navigator.serviceWorker.getRegistration();
-    if (reg?.waiting) {
-      reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-      navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload());
+    try {
+      if ('serviceWorker' in navigator) {
+        const reg = await navigator.serviceWorker.getRegistration();
+        await reg?.update();
+      }
+    } catch {
+      // Ignore — the cache-busting reload below still pulls the new build.
     }
+    const url = new URL(window.location.href);
+    url.searchParams.set('fresh', String(Date.now()));
+    window.location.href = url.toString();
   };
 
   const toggleDebugSpeed = (on: boolean) => {
@@ -166,6 +158,16 @@ export function SettingsPage({ profile, onUpdateProfile, onBack, onSwitchStudent
     const d = new Date(iso);
     const p = (n: number) => String(n).padStart(2, '0');
     return `${d.getUTCFullYear()}${p(d.getUTCMonth() + 1)}${p(d.getUTCDate())}.${p(d.getUTCHours())}${p(d.getUTCMinutes())}`;
+  }
+
+  // Short git SHA for display; 'dev' for local/unversioned builds.
+  function shortSha(sha: string): string {
+    return sha && sha !== 'dev' ? sha.slice(0, 7) : 'dev';
+  }
+
+  // One-line label like "MathFan v1.2.0+20260605.2212 · a1b2c3d".
+  function buildLabel(b: BuildInfo): string {
+    return `MathFan v${b.appVersion}+${buildId(b.buildTime)} · ${shortSha(b.gitSha)}`;
   }
 
   function fmt(bytes: number): string {
@@ -428,11 +430,17 @@ export function SettingsPage({ profile, onUpdateProfile, onBack, onSwitchStudent
       {/* ── About ───────────────────────────────────────────────────── */}
       <Section title="About">
         <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: '13px', lineHeight: 1.9, color: '#374151' }}>
-          <div>MathFan v{__APP_VERSION__}+{buildId(__BUILD_TIME__)}</div>
+          <div data-testid="current-build">{buildLabel(currentBuild)}</div>
           <div style={{ color: '#9ca3af' }}>Built: {fmtBuildTime(__BUILD_TIME__)}</div>
+          {serverBuild && (
+            <div data-testid="server-build" style={{ color: '#9ca3af' }}>
+              Server: {buildLabel(serverBuild)}
+            </div>
+          )}
         </div>
         <div style={{ marginTop: '12px' }}>
           <button
+            data-testid="check-update-button"
             style={{
               ...s.syncBtn,
               opacity: updateState === 'checking' ? 0.5 : 1,
@@ -442,13 +450,23 @@ export function SettingsPage({ profile, onUpdateProfile, onBack, onSwitchStudent
             disabled={updateState === 'checking'}
           >
             {updateState === 'checking' ? 'Checking…' :
-             updateState === 'available' ? 'Update available — tap to install' :
-             updateState === 'none' ? 'Up to date ✓' :
+             updateState === 'available' ? 'Reload to update' :
              'Check for Updates'}
           </button>
-          {updateState === 'error' && (
-            <p style={{ color: '#9ca3af', fontSize: '12px', marginTop: '6px', margin: '6px 0 0' }}>
-              Service worker not available in this environment.
+          {updateState !== 'idle' && (
+            <p
+              data-testid="update-status"
+              style={{
+                fontSize: '13px', margin: '8px 0 0',
+                color: updateState === 'available' ? '#16a34a'
+                  : updateState === 'error' ? '#b91c1c'
+                  : '#6b7280',
+              }}
+            >
+              {updateState === 'checking' ? 'Checking for latest version…' :
+               updateState === 'available' ? 'New version available — tap to reload' :
+               updateState === 'none' ? 'You are on the latest version' :
+               'Could not check for updates. Please try again.'}
             </p>
           )}
         </div>

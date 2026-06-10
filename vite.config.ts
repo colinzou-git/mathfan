@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite'
+import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import { readFileSync } from 'node:fs'
@@ -8,14 +8,47 @@ import { readFileSync } from 'node:fs'
 const base = process.env.VITE_BASE_PATH ?? '/'
 const pkg: { version: string } = JSON.parse(readFileSync('./package.json', 'utf8'))
 
+// Computed once so the values baked into the bundle (via `define`) and the
+// values written to build-info.json are guaranteed to match. The update checker
+// in Settings compares these two to decide whether a newer build is deployed.
+const appVersion = pkg.version
+const gitSha = process.env.VITE_GIT_SHA ?? 'dev'
+const buildTime = new Date().toISOString()
+
+// Emits /build-info.json into dist and serves the same payload in dev, so the
+// "Check for Updates" button can probe the deployed build over the network.
+// build-info.json is intentionally NOT in the Workbox precache globs, so the
+// service worker never serves a stale copy — the fetch always hits the network.
+function buildInfoPlugin(): Plugin {
+  const payload = JSON.stringify({ appVersion, gitSha, buildTime }, null, 2)
+  return {
+    name: 'mathfan-build-info',
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        if (req.url && req.url.split('?')[0].endsWith('/build-info.json')) {
+          res.setHeader('Content-Type', 'application/json')
+          res.setHeader('Cache-Control', 'no-store')
+          res.end(payload)
+          return
+        }
+        next()
+      })
+    },
+    generateBundle() {
+      this.emitFile({ type: 'asset', fileName: 'build-info.json', source: payload })
+    },
+  }
+}
+
 export default defineConfig({
   base,
   define: {
-    __APP_VERSION__: JSON.stringify(pkg.version),
-    __GIT_SHA__: JSON.stringify(process.env.VITE_GIT_SHA ?? 'dev'),
-    __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
+    __APP_VERSION__: JSON.stringify(appVersion),
+    __GIT_SHA__: JSON.stringify(gitSha),
+    __BUILD_TIME__: JSON.stringify(buildTime),
   },
   plugins: [
+    buildInfoPlugin(),
     react(),
     VitePWA({
       registerType: 'prompt',

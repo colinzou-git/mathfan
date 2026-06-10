@@ -152,7 +152,7 @@ export function StudentDashboard({ profile, lastSyncedAt, onStartDailyReview, on
           <h1 style={s.name}>Hi, {profile.displayName}!</h1>
           <p style={s.grade}>Grade {profile.gradeLevel}</p>
         </div>
-        <button style={s.settingsBtn} onClick={onOpenSettings} title="Settings">⚙️</button>
+        <button data-testid="open-settings" style={s.settingsBtn} onClick={onOpenSettings} title="Settings">⚙️</button>
       </header>
 
       {/* Quick stats */}

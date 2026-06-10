@@ -1,54 +1,57 @@
-"""Automated smoke for the Check Update / Apply Update flow.
+"""Automated smoke for the Settings → About → "Check for Updates" flow.
 
-Covers three branches:
-  1. up-to-date: device and server APP_VERSION match. The status line must show
-     both versions side-by-side and the Apply Update button must be enabled so
-     the user can force-reload the shell.
-  2. update-available: server reports a newer APP_VERSION than the device.
-     Status must reflect the new version, Apply Update is enabled and
-     `pendingAppReloadUrl` is set.
-  3. check-error: server is unreachable for the version-probe fetch. Status
-     must surface the error clearly and not pretend it's up to date.
+This drives the real MathFan React app against a preview build and exercises the
+build-info.json probe added in SettingsPage. It replaces an older script that
+assumed a WordFan/WordLover global (`window.WordLoverApp`) and DOM ids that no
+longer exist.
 
-Network mocking is done via Playwright `page.route` so the test stays purely
-local and does not depend on Windows server state for the alternate-version
-branches.
+Branches:
+  1. up-to-date  — server build-info matches the running build → "latest".
+  2. available   — server build-info reports a different git SHA → "update
+                   available". This is the case the old `registration.waiting`
+                   check missed under `skipWaiting: true`.
+  3. error       — the build-info fetch fails → a real error, NOT "up to date".
+
+Network mocking uses Playwright `page.route` so the test is fully local. Service
+workers are blocked so route interception always sees the raw fetch.
+
+Run against a preview server:
+    npm run build && npm run preview -- --port 4173
+    python scripts/smoke-update-flow.py http://127.0.0.1:4173
 """
 from __future__ import annotations
 
-import re
+import json
 import sys
 import time
 
 from playwright.sync_api import Route, sync_playwright
 
 
-def drain_modals(page) -> None:
-    for _ in range(5):
-        try:
-            btn = page.query_selector('.modal-overlay button:has-text("Skip")')
-            if btn:
-                btn.click()
-                time.sleep(0.25)
-            else:
-                break
-        except Exception:
-            break
-    page.evaluate("() => document.querySelectorAll('.modal-overlay').forEach(el => el.remove())")
+def navigate_to_settings(page) -> None:
+    """Land on the dashboard (creating a profile on first run) and open Settings."""
+    # First-run profile setup, if shown.
+    name_input = page.query_selector('input[placeholder="e.g. Alex"]')
+    if name_input:
+        name_input.fill("SmokeTester")
+        page.click('button:has-text("Start Learning")')
+    page.wait_for_selector('[data-testid="open-settings"]', timeout=15000)
+    page.click('[data-testid="open-settings"]')
+    page.wait_for_selector('[data-testid="check-update-button"]', timeout=15000)
 
 
-def open_settings_and_check(page) -> dict:
-    page.click("#appMenuButton")
-    time.sleep(0.2)
-    result = page.evaluate("() => window.WordLoverApp.checkForAppUpdate()")
-    time.sleep(0.5)
-    status_text = page.evaluate("() => document.querySelector('#updateStatus').textContent")
-    apply_disabled = page.evaluate("() => document.querySelector('#applyUpdate').disabled")
-    return {
-        "result": result,
-        "status": status_text,
-        "applyDisabled": apply_disabled,
-    }
+def run_check(page) -> str:
+    """Click 'Check for Updates' and return the resulting status text."""
+    page.click('[data-testid="check-update-button"]')
+    # Wait until the status line settles out of the "Checking…" state.
+    page.wait_for_function(
+        """() => {
+            const el = document.querySelector('[data-testid="update-status"]');
+            return el && !/Checking for latest/.test(el.textContent || '');
+        }""",
+        timeout=15000,
+    )
+    return page.evaluate("() => document.querySelector('[data-testid=\"update-status\"]').textContent")
 
 
 def main() -> int:
@@ -58,81 +61,61 @@ def main() -> int:
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
 
-        # --- Branch 1: up-to-date ---
-        ctx = browser.new_context()
+        # Read the real deployed build-info so the "up-to-date" branch can echo
+        # the exact values the running bundle was built with.
+        api = browser.new_context()
+        real = api.request.get(f"{base}/build-info.json").json()
+        api.close()
+
+        # --- Branch 1: up-to-date (serve the real build-info back) ---
+        ctx = browser.new_context(service_workers="block")
         page = ctx.new_page()
         page.on("pageerror", lambda e: print(f"PAGEERROR: {e}", flush=True))
+        page.route("**/build-info.json**", lambda r: r.fulfill(
+            status=200, content_type="application/json", body=json.dumps(real)))
         page.goto(f"{base}/?fresh=update-smoke-1", wait_until="domcontentloaded")
-        page.wait_for_function("window.WordLoverApp != null", timeout=15000)
-        time.sleep(2.0)
-        drain_modals(page)
-
-        device_version = page.evaluate("() => document.querySelector('#appVersion').textContent")
-        outcome = open_settings_and_check(page)
-        result = outcome["result"]
-        if result.get("status") != "up-to-date":
-            failures.append(f"Branch 1 expected status=up-to-date, got {result}")
-        if device_version not in (outcome["status"] or ""):
-            failures.append(f"Branch 1 status missing device version {device_version!r}: {outcome['status']!r}")
-        if outcome["applyDisabled"]:
-            failures.append("Branch 1 expected Apply Update to be enabled for force-reload.")
+        navigate_to_settings(page)
+        status = run_check(page)
+        if "latest" not in (status or "").lower():
+            failures.append(f"Branch 1 (up-to-date) expected 'latest', got {status!r}")
         ctx.close()
 
-        # --- Branch 2: update-available (intercept /app.js?update-check= with a forged newer version) ---
-        # Block service workers so Playwright route intercepts the raw fetch.
+        # --- Branch 2: update available (forge a different git SHA) ---
+        forged = dict(real)
+        forged["gitSha"] = "deadbeefcafef00d"
+        forged["buildTime"] = "2099-12-31T23:59:00.000Z"
+        forged["appVersion"] = "9.9.9"
+
         ctx = browser.new_context(service_workers="block")
         page = ctx.new_page()
         page.on("pageerror", lambda e: print(f"PAGEERROR: {e}", flush=True))
-
-        forged_version = "0.6.2-product.20991231-vTEST"
-
-        def reroute(route: Route) -> None:
-            req = route.request
-            if "update-check=" in req.url:
-                body = f'const APP_VERSION = "{forged_version}";\n'
-                route.fulfill(status=200, content_type="application/javascript", body=body)
-                return
-            route.continue_()
-
-        page.route("**/app.js**", reroute)
+        page.route("**/build-info.json**", lambda r: r.fulfill(
+            status=200, content_type="application/json", body=json.dumps(forged)))
         page.goto(f"{base}/?fresh=update-smoke-2", wait_until="domcontentloaded")
-        page.wait_for_function("window.WordLoverApp != null", timeout=15000)
-        time.sleep(2.0)
-        drain_modals(page)
-        outcome = open_settings_and_check(page)
-        result = outcome["result"]
-        if result.get("status") not in {"update-available", "update-waiting", "no-registration"}:
-            failures.append(f"Branch 2 expected status update-available/update-waiting/no-registration, got {result}")
-        if result.get("serverVersion") != forged_version and result.get("status") != "no-registration":
-            failures.append(f"Branch 2 expected serverVersion={forged_version}, got {result.get('serverVersion')}")
+        navigate_to_settings(page)
+        status = run_check(page)
+        if "new version available" not in (status or "").lower():
+            failures.append(f"Branch 2 (available) expected 'new version available', got {status!r}")
+        server_build = page.query_selector('[data-testid="server-build"]')
+        if not server_build or "9.9.9" not in server_build.text_content():
+            failures.append("Branch 2 expected the forged server build (v9.9.9) to be displayed.")
         ctx.close()
 
-        # --- Branch 3: check-error (kill the update-check fetch) ---
+        # --- Branch 3: check-error (abort the build-info fetch) ---
+        def abort_build_info(route: Route) -> None:
+            route.abort()
+
         ctx = browser.new_context(service_workers="block")
         page = ctx.new_page()
         page.on("pageerror", lambda e: print(f"PAGEERROR: {e}", flush=True))
-
-        def fail_update_check(route: Route) -> None:
-            req = route.request
-            if "update-check=" in req.url:
-                route.abort()
-                return
-            route.continue_()
-
-        page.route("**/app.js**", fail_update_check)
+        page.route("**/build-info.json**", abort_build_info)
         page.goto(f"{base}/?fresh=update-smoke-3", wait_until="domcontentloaded")
-        page.wait_for_function("window.WordLoverApp != null", timeout=15000)
-        time.sleep(2.0)
-        drain_modals(page)
-        outcome = open_settings_and_check(page)
-        result = outcome["result"]
-        # If registration.update() also fails, we get network-error; if only the version-probe fetch fails,
-        # registration.update() may still succeed and yield up-to-date (since the SW byte content is unchanged).
-        # Either way, serverVersion must be null and the status must NOT be a deceptive "Up to date".
-        if result.get("serverVersion") is not None:
-            failures.append(f"Branch 3 expected serverVersion=null when probe fails, got {result.get('serverVersion')}")
-        if result.get("status") == "up-to-date":
-            failures.append("Branch 3 must not claim 'up-to-date' when the version probe fails.")
+        navigate_to_settings(page)
+        status = (run_check(page) or "").lower()
+        if "could not check" not in status:
+            failures.append(f"Branch 3 (error) expected 'could not check', got {status!r}")
+        if "latest" in status or "up to date" in status:
+            failures.append("Branch 3 must NOT claim the app is up to date when the probe fails.")
         ctx.close()
 
         browser.close()
