@@ -293,3 +293,41 @@ describe('usePracticeSession — measurement mode', () => {
     expect(result.current.state.currentItem?.id).toBe('MUL_7x8');
   });
 });
+
+// ── Adaptive selection ────────────────────────────────────────────────────────
+
+describe('usePracticeSession — adaptive selection', () => {
+  it('non-daily_review specificItemIds still produce a valid, reconstructable queue', async () => {
+    const { result } = renderHook(() => usePracticeSession(STUDENT_ID));
+    await act(async () => {
+      await result.current.startSession({
+        mode: 'area',
+        sessionLength: 4,
+        specificItemIds: ['AREA_RECT_3x4', 'AREA_RECT_5x6'],
+      });
+    });
+    expect(result.current.state.phase).toBe('active');
+    expect(result.current.state.totalPlanned).toBe(4);
+    const id = result.current.state.currentItem?.id;
+    expect(id).toBeDefined();
+    expect(makeItemFromId(id!)).not.toBeNull();
+  });
+
+  it('daily_review with due specificItemIds includes every due item', async () => {
+    const ids = ['MUL_2x3', 'MUL_4x5', 'MUL_6x7'];
+    const { result } = renderHook(() => usePracticeSession(STUDENT_ID));
+    await act(async () => {
+      await result.current.startSession({ mode: 'daily_review', sessionLength: 3, specificItemIds: ids });
+    });
+
+    const seen = new Set<string>();
+    for (let i = 0; i < 3; i++) {
+      const cur = result.current.state.currentItem;
+      expect(cur).not.toBeNull();
+      seen.add(cur!.id);
+      await act(async () => { await result.current.submitAnswer(String(cur!.answer)); });
+      await act(async () => { await result.current.nextQuestion(); });
+    }
+    expect(seen).toEqual(new Set(ids));
+  });
+});

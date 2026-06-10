@@ -112,6 +112,17 @@ export interface PracticeItem {
   difficulty: number;
   factA?: number;
   factB?: number;
+  /**
+   * IDs of the underlying calculation facts this item embeds (e.g. an area item
+   * AREA_RECT_8x7 embeds MUL_8x7). Used by the adaptive selector to consult the
+   * student's existing FSRS history for the embedded calculation. Optional and
+   * derivable from the item ID — see features/adaptive/relatedItemMapping.
+   */
+  relatedItemIds?: string[];
+  /** Grade-3 mastery skill IDs of the embedded calculation facts. */
+  relatedSkillIds?: string[];
+  /** Coarse structural template id (e.g. "word_eg") for variety/repetition control. */
+  schemaId?: string;
 }
 
 export interface StudentItemState {

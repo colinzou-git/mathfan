@@ -24,6 +24,8 @@ import { appNow } from '../time/clock';
 import { generateId } from '../../utils/id';
 import { recordPracticeAnswer, type PracticeAnswerPayload } from '../learning/recordAnswer';
 import { detectMistakes } from '../mastery/misconceptionEngine';
+import { selectAdaptiveItems } from '../adaptive/adaptiveItemSelector';
+import { enrichRelatedMetadata } from '../adaptive/relatedItemMapping';
 import type { PracticeItem as PItem } from '../../types/math';
 
 // ── Public types ──────────────────────────────────────────────────────────────
@@ -161,7 +163,7 @@ export function usePracticeSession(studentId: string) {
     };
 
     if (specificItemIds?.length) {
-      // Focused review: practice exactly the listed items, repeated to fill sessionLength.
+      // Focused review: practice exactly the listed items.
       // Reconstruct and register any item not already in the static ITEM_MAP.
       const validIds: string[] = [];
       for (const id of specificItemIds) {
@@ -171,13 +173,25 @@ export function usePracticeSession(studentId: string) {
         }
         if (ITEM_MAP.has(id) || dynamicItemsRef.current.has(id)) validIds.push(id);
       }
-      const shuffled = [...validIds].sort(() => Math.random() - 0.5);
-      queue = [];
-      while (queue.length < sessionLength && shuffled.length > 0) {
-        for (const id of shuffled) {
-          if (queue.length >= sessionLength) break;
-          queue.push(id);
+      if (mode === 'daily_review') {
+        // Today Plan / due-review: every listed item is already due, so keep them
+        // all — just shuffled and repeated to fill the session. Never demote a
+        // due review item below an adaptive score.
+        const shuffled = [...validIds].sort(() => Math.random() - 0.5);
+        queue = [];
+        while (queue.length < sessionLength && shuffled.length > 0) {
+          for (const id of shuffled) {
+            if (queue.length >= sessionLength) break;
+            queue.push(id);
+          }
         }
+      } else {
+        // FSRS-informed ordering: rank the listed pool by the student's own and
+        // embedded-calculation history before filling the queue. Falls back to
+        // near-random order when there is no history (tie-break jitter).
+        const candidates = validIds.map(id => enrichRelatedMetadata(resolveItem(id)));
+        for (const c of candidates) dynamicItemsRef.current.set(c.id, c);
+        queue = selectAdaptiveItems(candidates, stateMap, now, sessionLength);
       }
     } else if (mode === 'multiplication') {
       // First factor from [lo,hi], second from [lo2,hi2].
@@ -197,11 +211,19 @@ export function usePracticeSession(studentId: string) {
       // operand range = numerator, operand2 range = denominator.
       queue = registerDynamic(generateFractionItems(fractionMode ?? 'equivalent', sessionLength, lo, hi, lo2, hi2));
     } else if (mode === 'word_problem') {
-      queue = registerDynamic(generateWordProblemItems(g, sessionLength, operandMin, operandMax));
+      // Generate a larger pool, then adaptive-select around the multiplication /
+      // division facts the student most needs to practice.
+      const pool = generateWordProblemItems(g, candidatePoolSize(sessionLength), operandMin, operandMax)
+        .map(enrichRelatedMetadata);
+      registerDynamic(pool);
+      queue = selectAdaptiveItems(pool, stateMap, now, sessionLength);
     } else if (mode === 'rounding') {
       queue = registerDynamic(generateRoundingItems(g, sessionLength, operandMin, operandMax));
     } else if (mode === 'factors') {
-      queue = registerDynamic(generateNumberTheoryItems(g, sessionLength, operandMin, operandMax));
+      const pool = generateNumberTheoryItems(g, candidatePoolSize(sessionLength), operandMin, operandMax)
+        .map(enrichRelatedMetadata);
+      registerDynamic(pool);
+      queue = selectAdaptiveItems(pool, stateMap, now, sessionLength);
     } else if (mode === 'decimals') {
       queue = registerDynamic(generateDecimalItems(g, sessionLength, operandMin, operandMax));
     } else if (mode === 'measurement') {
@@ -221,14 +243,11 @@ export function usePracticeSession(studentId: string) {
           if (rebuilt) dynamicItemsRef.current.set(id, rebuilt);
         }
       }
-      const shuffled = [...pool].sort(() => Math.random() - 0.5);
-      queue = [];
-      while (queue.length < sessionLength) {
-        for (const id of shuffled) {
-          if (queue.length >= sessionLength) break;
-          queue.push(id);
-        }
-      }
+      const candidates = pool
+        .filter(id => dynamicItemsRef.current.has(id) || ITEM_MAP.has(id))
+        .map(id => enrichRelatedMetadata(resolveItem(id)));
+      for (const c of candidates) dynamicItemsRef.current.set(c.id, c);
+      queue = selectAdaptiveItems(candidates, stateMap, now, sessionLength);
     } else {
       const plan = planSession(ALL_ITEMS, stateMap, now, sessionLength);
       queue = [...plan.dueItems, ...plan.weakItems, ...plan.newItems];
@@ -477,4 +496,13 @@ function getStaticItem(id: string): PracticeItem {
   const item = ITEM_MAP.get(id);
   if (!item) throw new Error(`Item not found: ${id}`);
   return item;
+}
+
+/**
+ * Size of the candidate pool to generate before adaptive selection for random
+ * calculation-embedded modes — wider than the session so the selector has room
+ * to favour the facts the student most needs to practice.
+ */
+function candidatePoolSize(sessionLength: number): number {
+  return Math.max(sessionLength * 3, sessionLength + 12);
 }
