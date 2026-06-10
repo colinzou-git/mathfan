@@ -28,6 +28,7 @@ import { selectAdaptiveItems } from '../adaptive/adaptiveItemSelector';
 import { enrichRelatedMetadata } from '../adaptive/relatedItemMapping';
 import { buildWordProblemCandidates, buildFactorCandidates } from '../adaptive/candidatePools';
 import { allMeasurementItemIds, allDataItemIds } from '../../components/opSpecs';
+import { mulberry32, randomSeed, shuffled } from '../../utils/rng';
 import type { PracticeItem as PItem } from '../../types/math';
 
 // ── Public types ──────────────────────────────────────────────────────────────
@@ -157,6 +158,13 @@ export function usePracticeSession(studentId: string) {
     const hi2 = operand2Max ?? hi;
     const g = grade ?? 3;
 
+    // Seeded RNG for reproducible adaptive selection / shuffling. A supplied seed
+    // (tests, replay) is honoured; otherwise a fresh seed is generated and stored
+    // on the session so the ordering can be reconstructed later.
+    const seed = config.seed ?? randomSeed();
+    const rng = mulberry32(seed);
+    const selectOpts = { rng };
+
     // Reset & populate the dynamic item registry for generated modes
     dynamicItemsRef.current = new Map();
     const registerDynamic = (items: PItem[]): string[] => {
@@ -179,10 +187,10 @@ export function usePracticeSession(studentId: string) {
         // Today Plan / due-review: every listed item is already due, so keep them
         // all — just shuffled and repeated to fill the session. Never demote a
         // due review item below an adaptive score.
-        const shuffled = [...validIds].sort(() => Math.random() - 0.5);
+        const order = shuffled(validIds, rng);
         queue = [];
-        while (queue.length < sessionLength && shuffled.length > 0) {
-          for (const id of shuffled) {
+        while (queue.length < sessionLength && order.length > 0) {
+          for (const id of order) {
             if (queue.length >= sessionLength) break;
             queue.push(id);
           }
@@ -193,7 +201,7 @@ export function usePracticeSession(studentId: string) {
         // near-random order when there is no history (tie-break jitter).
         const candidates = validIds.map(id => enrichRelatedMetadata(resolveItem(id)));
         for (const c of candidates) dynamicItemsRef.current.set(c.id, c);
-        queue = selectAdaptiveItems(candidates, stateMap, now, sessionLength);
+        queue = selectAdaptiveItems(candidates, stateMap, now, sessionLength, selectOpts);
       }
     } else if (mode === 'multiplication') {
       // First factor from [lo,hi], second from [lo2,hi2].
@@ -217,13 +225,13 @@ export function usePracticeSession(studentId: string) {
       // in variety, and adaptive-select from the combined pool.
       const pool = buildWordProblemCandidates(g, sessionLength, stateMap, now, operandMin, operandMax);
       registerDynamic(pool);
-      queue = selectAdaptiveItems(pool, stateMap, now, sessionLength);
+      queue = selectAdaptiveItems(pool, stateMap, now, sessionLength, selectOpts);
     } else if (mode === 'rounding') {
       queue = registerDynamic(generateRoundingItems(g, sessionLength, operandMin, operandMax));
     } else if (mode === 'factors') {
       const pool = buildFactorCandidates(g, sessionLength, stateMap, now, operandMin, operandMax);
       registerDynamic(pool);
-      queue = selectAdaptiveItems(pool, stateMap, now, sessionLength);
+      queue = selectAdaptiveItems(pool, stateMap, now, sessionLength, selectOpts);
     } else if (mode === 'decimals') {
       queue = registerDynamic(generateDecimalItems(g, sessionLength, operandMin, operandMax));
     } else if (mode === 'measurement') {
@@ -241,7 +249,7 @@ export function usePracticeSession(studentId: string) {
         .filter(id => dynamicItemsRef.current.has(id) || ITEM_MAP.has(id))
         .map(id => enrichRelatedMetadata(resolveItem(id)));
       for (const c of candidates) dynamicItemsRef.current.set(c.id, c);
-      queue = selectAdaptiveItems(candidates, stateMap, now, sessionLength);
+      queue = selectAdaptiveItems(candidates, stateMap, now, sessionLength, selectOpts);
     } else {
       const plan = planSession(ALL_ITEMS, stateMap, now, sessionLength);
       queue = [...plan.dueItems, ...plan.weakItems, ...plan.newItems];
@@ -251,7 +259,7 @@ export function usePracticeSession(studentId: string) {
     await sessionRepo.save({
       id: sessionId, studentId,
       startedAt: now.toISOString(),
-      mode, tables,
+      mode, tables, seed,
       plannedQuestionCount: queue.length,
       completedQuestionCount: 0, correctCount: 0, averageLatencyMs: 0,
     });

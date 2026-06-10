@@ -13,6 +13,7 @@ import {
 } from '../features/adaptive/adaptiveItemSelector';
 import { buildWordProblemCandidates, buildFactorCandidates } from '../features/adaptive/candidatePools';
 import { makeItemFromId } from '../features/curriculum/makeItemFromId';
+import { mulberry32 } from '../utils/rng';
 
 const NOW = new Date('2026-06-09T00:00:00Z');
 const PAST = '2026-06-01T00:00:00Z';   // already due
@@ -185,6 +186,35 @@ describe('rankCandidateItems — weak/due embedded facts beat mastered non-due f
     // line plot
     expect(rankCandidateItems([item('LPLOT_1_1_1_1'), item('LPLOT_1_2_3_8')], stateMap, NOW, opts)[0].id)
       .toBe('LPLOT_1_2_3_8');
+  });
+});
+
+describe('seeded selection — reproducibility (Priority 5)', () => {
+  // A pool of unseen items all score the same, so the tie-break jitter (driven by
+  // the injected rng) fully determines the ordering — ideal for testing seeding.
+  const pool = ['AREA_RECT_8x7', 'AREA_RECT_2x2', 'AREA_RECT_3x3', 'WORD_eg_4_5', 'WORD_eg_6_7', 'BARG_5_8']
+    .map(id => item(id));
+
+  it('rankCandidateItems with the same seed yields identical ordering', () => {
+    const a = rankCandidateItems(pool, new Map(), NOW, { rng: mulberry32(2026) }).map(i => i.id);
+    const b = rankCandidateItems(pool, new Map(), NOW, { rng: mulberry32(2026) }).map(i => i.id);
+    expect(a).toEqual(b);
+  });
+
+  it('selectAdaptiveItems with the same seed yields the identical queue', () => {
+    const a = selectAdaptiveItems(pool, new Map(), NOW, 4, { rng: mulberry32(99) });
+    const b = selectAdaptiveItems(pool, new Map(), NOW, 4, { rng: mulberry32(99) });
+    expect(a).toEqual(b);
+  });
+
+  it('different seeds can produce different orderings (jitter is actually used)', () => {
+    // Across several seeds, at least one must differ from the seed-1 ordering —
+    // otherwise the jitter is not being driven by the rng at all.
+    const base = rankCandidateItems(pool, new Map(), NOW, { rng: mulberry32(1) }).map(i => i.id);
+    const anyDifferent = [2, 3, 4, 5, 6].some(
+      s => rankCandidateItems(pool, new Map(), NOW, { rng: mulberry32(s) }).map(i => i.id).join() !== base.join(),
+    );
+    expect(anyDifferent).toBe(true);
   });
 });
 

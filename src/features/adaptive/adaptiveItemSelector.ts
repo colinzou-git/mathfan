@@ -1,5 +1,6 @@
 import type { PracticeItem, StudentItemState } from '../../types/math';
 import { getRelatedItemIds } from './relatedItemMapping';
+import type { Rng } from '../../utils/rng';
 
 /**
  * FSRS-informed selection for calculation-embedded higher-level practice.
@@ -39,6 +40,11 @@ export interface AdaptiveOptions {
   jitter?: number;
   /** Override the default 75/15/10 priority/variety/maintenance split. */
   quotas?: AdaptiveQuotas;
+  /**
+   * Seeded random source for the tie-break jitter. Defaults to Math.random.
+   * Pass a seeded Rng (see utils/rng) to make selection ordering reproducible.
+   */
+  rng?: Rng;
 }
 
 const DEFAULT_JITTER = 0.5;
@@ -132,10 +138,11 @@ export function rankCandidateItems(
   options?: AdaptiveOptions,
 ): PracticeItem[] {
   const jitter = options?.jitter ?? DEFAULT_JITTER;
+  const rng = options?.rng ?? Math.random;
   return items
     .map(item => ({
       item,
-      score: scoreCandidateItem(item, stateMap, now) + (jitter ? (Math.random() - 0.5) * jitter : 0),
+      score: scoreCandidateItem(item, stateMap, now) + (jitter ? (rng() - 0.5) * jitter : 0),
     }))
     .sort((a, b) => b.score - a.score)
     .map(x => x.item);

@@ -192,6 +192,8 @@ export interface PracticeSession {
   attemptCount?: number;
   averageLatencyMs: number;
   fastestCorrectMs?: number;
+  /** Seed used for this session's adaptive selection ordering (reproducibility). */
+  seed?: number;
 }
 
 // ── Stats types ───────────────────────────────────────────────────────────────
@@ -255,6 +257,11 @@ export interface SessionConfig {
   operand2Max?: number;
   fractionMode?: FractionMode; // fraction
   grade?: GradeLevel;         // word_problem / rounding / factors / decimals
+  /**
+   * Optional seed for deterministic adaptive selection / shuffling. When omitted
+   * a fresh random seed is generated and stored on the PracticeSession.
+   */
+  seed?: number;
 }
 
 // ── Growth comparison (period over period) ─────────────────────────────────────
