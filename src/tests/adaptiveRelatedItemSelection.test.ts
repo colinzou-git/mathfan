@@ -281,6 +281,31 @@ describe('buildWordProblemCandidates', () => {
   it('still returns variety candidates when there is no history', () => {
     expect(buildWordProblemCandidates(3, 8, new Map(), NOW, 2, 10).length).toBeGreaterThan(0);
   });
+
+  it('collects every in-range weak/due MUL fact, not just the first sessionLength', () => {
+    const facts: [number, number][] = [[3, 4], [4, 5], [5, 6], [6, 7], [7, 8], [8, 9], [2, 9], [9, 3]];
+    const stateMap = new Map<string, StudentItemState>();
+    for (const [a, b] of facts) {
+      stateMap.set(`MUL_${a}x${b}`, state(`MUL_${a}x${b}`, 'learning', { due: PAST, attempts: 4, correct: 1 }));
+    }
+    // count 3 — far fewer than the 8 weak facts; all must still enter the pool.
+    const pool = buildWordProblemCandidates(3, 3, stateMap, NOW, 2, 10);
+    for (const [a, b] of facts) {
+      expect(pool.some(it => getRelatedItemIds(it).includes(`MUL_${a}x${b}`))).toBe(true);
+    }
+  });
+
+  it('includes a very urgent fact that appears last in stateMap order', () => {
+    const stateMap = new Map<string, StudentItemState>();
+    for (const [a, b] of [[2, 3], [3, 4], [4, 5], [5, 6], [6, 7], [7, 8]] as const) {
+      stateMap.set(`MUL_${a}x${b}`, state(`MUL_${a}x${b}`, 'learning', { due: PAST, attempts: 4, correct: 3 }));
+    }
+    // Inserted LAST and most urgent (due, 0% accuracy). The old early-break logic
+    // would never reach it with count 2.
+    stateMap.set('MUL_9x8', state('MUL_9x8', 'learning', { due: PAST, attempts: 5, correct: 0 }));
+    const pool = buildWordProblemCandidates(3, 2, stateMap, NOW, 2, 10);
+    expect(pool.some(it => getRelatedItemIds(it).includes('MUL_9x8'))).toBe(true);
+  });
 });
 
 describe('buildFactorCandidates', () => {
@@ -292,5 +317,27 @@ describe('buildFactorCandidates', () => {
 
   it('still returns variety candidates when there is no history', () => {
     expect(buildFactorCandidates(3, 8, new Map(), NOW, 2, 30).length).toBeGreaterThan(0);
+  });
+
+  it('collects every in-range weak/due DIV fact, not just the first sessionLength', () => {
+    const divs: [number, number][] = [[6, 2], [8, 2], [9, 3], [10, 5], [12, 3], [15, 5], [20, 4], [24, 6]];
+    const stateMap = new Map<string, StudentItemState>();
+    for (const [dd, dv] of divs) {
+      stateMap.set(`DIV_${dd}d${dv}`, state(`DIV_${dd}d${dv}`, 'learning', { due: PAST, attempts: 4, correct: 1 }));
+    }
+    const pool = buildFactorCandidates(3, 3, stateMap, NOW, 2, 30);
+    for (const [dd, dv] of divs) {
+      expect(pool.some(it => it.id === `FACT_${dv}_${dd}`)).toBe(true);
+    }
+  });
+
+  it('includes a very urgent DIV fact that appears last in stateMap order', () => {
+    const stateMap = new Map<string, StudentItemState>();
+    for (const [dd, dv] of [[6, 2], [8, 2], [9, 3], [10, 2], [12, 3], [15, 3]] as const) {
+      stateMap.set(`DIV_${dd}d${dv}`, state(`DIV_${dd}d${dv}`, 'learning', { due: PAST, attempts: 4, correct: 3 }));
+    }
+    stateMap.set('DIV_28d4', state('DIV_28d4', 'learning', { due: PAST, attempts: 5, correct: 0 }));
+    const pool = buildFactorCandidates(3, 2, stateMap, NOW, 2, 30);
+    expect(pool.some(it => it.id === 'FACT_4_28')).toBe(true);
   });
 });

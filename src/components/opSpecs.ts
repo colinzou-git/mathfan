@@ -10,7 +10,7 @@ import { apatId } from '../features/curriculum/patternItems';
 
 // ── Deterministic item ID sets for Grade 3 fixed-content operations ──────────
 
-function allAreaItemIds(): string[] {
+export function allAreaItemIds(): string[] {
   return [
     ...areaSquaresItemIds(),
     ...areaRectangleItemIds(),
@@ -22,7 +22,7 @@ function allAreaItemIds(): string[] {
   ];
 }
 
-function allMeasurementItemIds(): string[] {
+export function allMeasurementItemIds(): string[] {
   return [
     clckId(1, 0),  clckId(2, 15), clckId(3, 25), clckId(4, 30),
     clckId(5, 35), clckId(6, 40), clckId(7, 45), clckId(8, 50),
@@ -48,7 +48,7 @@ function allMeasurementItemIds(): string[] {
   ];
 }
 
-function allDataItemIds(): string[] {
+export function allDataItemIds(): string[] {
   return [
     bargId(5, 3),  bargId(5, 4),  bargId(5, 6),  bargId(5, 7),  bargId(5, 8),
     bargId(10, 2), bargId(10, 3), bargId(10, 4), bargId(10, 5), bargId(10, 7),

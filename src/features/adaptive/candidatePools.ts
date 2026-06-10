@@ -2,7 +2,16 @@ import type { GradeLevel, PracticeItem, StudentItemState } from '../../types/mat
 import { makeWordProblem, generateWordProblemItems, type Schema } from '../curriculum/wordProblemItems';
 import { makeFactorItem, generateNumberTheoryItems } from '../curriculum/numberTheoryItems';
 import { enrichRelatedMetadata } from './relatedItemMapping';
-import { isNeedyState } from './adaptiveItemSelector';
+import { isNeedyState, scoreCandidateItem } from './adaptiveItemSelector';
+
+/**
+ * Cap on how many targeted weak/due candidates to keep, as a multiple of the
+ * session length. We collect *every* matching weak/due fact in range first and
+ * rank by need, so an urgent fact never gets dropped just for appearing late in
+ * stateMap iteration order — only the lowest-need overflow beyond this cap is
+ * trimmed.
+ */
+const TARGET_CAP_FACTOR = 5;
 
 /**
  * State-first candidate pools for the random calculation-embedded modes.
@@ -37,6 +46,35 @@ export function buildWordProblemCandidates(
   const min = Math.max(0, Math.min(max, Math.floor(rangeMin ?? (grade === 3 ? 2 : 3))));
   const inRange = (n: number) => n >= min && n <= max;
 
+  // Targeted: build a word problem around EVERY weak/due ×/÷ fact in range, so
+  // ranking — not stateMap iteration order — decides which ones make the cut.
+  const targeted: PracticeItem[] = [];
+  const targetSeen = new Set<string>();
+  const addTargeted = (item: PracticeItem) => {
+    if (targetSeen.has(item.id)) return;
+    targetSeen.add(item.id);
+    targeted.push(item);
+  };
+  for (const [id, state] of stateMap) {
+    if (!isNeedyState(state, now)) continue;
+    let m: RegExpMatchArray | null;
+    if ((m = id.match(/^MUL_(\d+)x(\d+)$/))) {
+      const a = +m[1], b = +m[2];
+      if (inRange(a) && inRange(b)) {
+        addTargeted(makeWordProblem(WORD_MUL_SCHEMAS[(a + b) % WORD_MUL_SCHEMAS.length], a, b));
+      }
+    } else if ((m = id.match(/^DIV_(\d+)d(\d+)$/))) {
+      // WORD_dv_{groups}_{each} embeds DIV_{groups*each}d{groups}; map divisor→groups, quotient→each.
+      const dividend = +m[1], divisor = +m[2];
+      const quotient = divisor > 0 ? dividend / divisor : 0;
+      if (Number.isInteger(quotient) && divisor >= 1 && inRange(divisor) && inRange(quotient)) {
+        addTargeted(makeWordProblem('dv', divisor, quotient));
+      }
+    }
+  }
+  // Highest-need first, then trim the long tail.
+  targeted.sort((a, b) => scoreCandidateItem(b, stateMap, now) - scoreCandidateItem(a, stateMap, now));
+
   const out: PracticeItem[] = [];
   const seen = new Set<string>();
   const add = (item: PracticeItem) => {
@@ -44,32 +82,10 @@ export function buildWordProblemCandidates(
     seen.add(item.id);
     out.push(enrichRelatedMetadata(item));
   };
+  for (const item of targeted.slice(0, count * TARGET_CAP_FACTOR)) add(item);
 
-  // Targeted: build a word problem around each weak/due ×/÷ fact in range.
-  for (const [id, state] of stateMap) {
-    if (out.length >= count) break;
-    if (!isNeedyState(state, now)) continue;
-    let m: RegExpMatchArray | null;
-    if ((m = id.match(/^MUL_(\d+)x(\d+)$/))) {
-      const a = +m[1], b = +m[2];
-      if (inRange(a) && inRange(b)) {
-        add(makeWordProblem(WORD_MUL_SCHEMAS[(a + b) % WORD_MUL_SCHEMAS.length], a, b));
-      }
-    } else if ((m = id.match(/^DIV_(\d+)d(\d+)$/))) {
-      // WORD_dv_{groups}_{each} embeds DIV_{groups*each}d{groups}; map divisor→groups, quotient→each.
-      const dividend = +m[1], divisor = +m[2];
-      const quotient = divisor > 0 ? dividend / divisor : 0;
-      if (Number.isInteger(quotient) && divisor >= 1 && inRange(divisor) && inRange(quotient)) {
-        add(makeWordProblem('dv', divisor, quotient));
-      }
-    }
-  }
-
-  // Variety: fresh random word problems, capped so the targeted facts keep weight.
-  for (const item of generateWordProblemItems(grade, count, rangeMin, rangeMax)) {
-    if (out.length >= count * 2) break;
-    add(item);
-  }
+  // Variety: fresh random word problems mixed in alongside the targeted facts.
+  for (const item of generateWordProblemItems(grade, count, rangeMin, rangeMax)) add(item);
   return out;
 }
 
@@ -85,6 +101,33 @@ export function buildFactorCandidates(
   const hi = Math.max(3, Math.floor(rangeMax ?? factorsHi(grade)));
   const lo = Math.max(2, Math.min(hi, Math.floor(rangeMin ?? 2)));
 
+  // Targeted: "is X a factor of Y?" items where the divisor/factor relation is
+  // known to be true, built from EVERY weak/due division & multiplication fact.
+  const targeted: PracticeItem[] = [];
+  const targetSeen = new Set<string>();
+  const addTargeted = (item: PracticeItem) => {
+    if (targetSeen.has(item.id)) return;
+    targetSeen.add(item.id);
+    targeted.push(item);
+  };
+  for (const [id, state] of stateMap) {
+    if (!isNeedyState(state, now)) continue;
+    let m: RegExpMatchArray | null;
+    if ((m = id.match(/^DIV_(\d+)d(\d+)$/))) {
+      const dividend = +m[1], divisor = +m[2];
+      if (divisor >= 2 && dividend >= lo && dividend <= hi) {
+        addTargeted(makeFactorItem(divisor, dividend)); // divisor is a factor of dividend
+      }
+    } else if ((m = id.match(/^MUL_(\d+)x(\d+)$/))) {
+      const a = +m[1], b = +m[2], product = a * b;
+      if (a >= 2 && product >= lo && product <= hi) {
+        addTargeted(makeFactorItem(a, product));
+      }
+    }
+  }
+  // Highest-need first, then trim the long tail.
+  targeted.sort((a, b) => scoreCandidateItem(b, stateMap, now) - scoreCandidateItem(a, stateMap, now));
+
   const out: PracticeItem[] = [];
   const seen = new Set<string>();
   const add = (item: PracticeItem) => {
@@ -92,30 +135,9 @@ export function buildFactorCandidates(
     seen.add(item.id);
     out.push(enrichRelatedMetadata(item));
   };
-
-  // Targeted: "is X a factor of Y?" items where the divisor/factor relation is
-  // known to be true, built from weak/due division & multiplication facts.
-  for (const [id, state] of stateMap) {
-    if (out.length >= count) break;
-    if (!isNeedyState(state, now)) continue;
-    let m: RegExpMatchArray | null;
-    if ((m = id.match(/^DIV_(\d+)d(\d+)$/))) {
-      const dividend = +m[1], divisor = +m[2];
-      if (divisor >= 2 && dividend >= lo && dividend <= hi) {
-        add(makeFactorItem(divisor, dividend)); // divisor is a factor of dividend
-      }
-    } else if ((m = id.match(/^MUL_(\d+)x(\d+)$/))) {
-      const a = +m[1], b = +m[2], product = a * b;
-      if (a >= 2 && product >= lo && product <= hi) {
-        add(makeFactorItem(a, product));
-      }
-    }
-  }
+  for (const item of targeted.slice(0, count * TARGET_CAP_FACTOR)) add(item);
 
   // Variety: prime/composite + factor mix from the standard generator.
-  for (const item of generateNumberTheoryItems(grade, count, rangeMin, rangeMax)) {
-    if (out.length >= count * 2) break;
-    add(item);
-  }
+  for (const item of generateNumberTheoryItems(grade, count, rangeMin, rangeMax)) add(item);
   return out;
 }
