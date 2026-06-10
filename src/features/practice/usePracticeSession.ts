@@ -20,7 +20,9 @@ import { itemStateRepo, sessionRepo } from '../../db/repositories';
 import { db } from '../../db/dexie';
 import { appNow } from '../time/clock';
 import { generateId } from '../../utils/id';
-import { recordPracticeAnswer, type PracticeAnswerPayload } from '../learning/recordAnswer';
+import { recordPracticeAnswer, type PracticeAnswerPayload, type RelatedEvidenceWrite } from '../learning/recordAnswer';
+import { computeRelatedEvidence } from '../adaptive/relatedEvidence';
+import { RELATED_EVIDENCE_GRADE } from '../scheduler/scheduler';
 import { detectMistakes } from '../mastery/misconceptionEngine';
 import { selectAdaptiveItems } from '../adaptive/adaptiveItemSelector';
 import { enrichRelatedMetadata } from '../adaptive/relatedItemMapping';
@@ -325,6 +327,43 @@ export function usePracticeSession(studentId: string) {
       statesRef.current.set(item.id, updated);
     }
 
+    // Cross-skill evidence: a first-try-correct higher-level item gives a mild
+    // FSRS nudge to the calculation facts it embeds. Reinforce-only and FSRS-only
+    // (no attempt log, no accuracy/speed change) — see adaptive/relatedEvidence.
+    let relatedEvidence: RelatedEvidenceWrite[] | undefined;
+    if (isFirstAttempt && result.isCorrect) {
+      const updates = computeRelatedEvidence(item, statesRef.current, now);
+      if (updates.length > 0) {
+        relatedEvidence = updates.map(u => {
+          statesRef.current.set(u.itemId, u.after);
+          const factItem = makeItemFromId(u.itemId);
+          return {
+            state: u.after,
+            event: {
+              id: generateId(),
+              studentId,
+              sessionId: prev.sessionId!,
+              itemId: u.itemId,
+              mode: 'practice' as const,
+              promptShown: factItem?.prompt ?? u.itemId,
+              correctAnswer: factItem?.answer ?? 0,
+              studentAnswer: null,
+              isCorrect: true,
+              isRetry: false,
+              hintUsed: false,
+              latencyMs: 0,
+              reviewGrade: RELATED_EVIDENCE_GRADE,
+              factStatusBefore: u.before.masteryLevel,
+              factStatusAfter: u.after.masteryLevel,
+              relatedEvidence: true,
+              evidenceSourceItemId: item.id,
+              createdAt,
+            },
+          };
+        });
+      }
+    }
+
     const payload: PracticeAnswerPayload = {
       event: {
         id: generateId(),
@@ -346,6 +385,7 @@ export function usePracticeSession(studentId: string) {
       },
       // Retries do not change FSRS state — pass undefined to skip the itemStates write.
       updatedState: isFirstAttempt ? updated : undefined,
+      relatedEvidence,
       attempt: {
         id: generateId(),
         studentId,

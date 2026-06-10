@@ -10,7 +10,7 @@
  */
 import { db } from '../../db/dexie';
 import type { MathAnswerEvent } from './learningEvents';
-import { applyReview, createInitialState } from '../scheduler/scheduler';
+import { applyReview, applyRelatedEvidence, createInitialState } from '../scheduler/scheduler';
 import { makeItemFromId } from '../curriculum/makeItemFromId';
 import { detectMistakes } from '../mastery/misconceptionEngine';
 import { deriveMasteryFromEvents } from '../multiplication/masteryEngine';
@@ -104,11 +104,25 @@ export async function rebuildItemStatesFromEvents(
     if (!item) continue; // can't reconstruct item metadata — skip
 
     let state = createInitialState(studentId, item);
+    // Track whether the fact has any DIRECT evidence. Related-evidence events
+    // (indirect FSRS nudges) are reinforce-only: they apply only after a direct
+    // attempt exists, and a fact with nothing but related evidence is left
+    // untouched — matching the live write path and preserving legacy rows.
+    let sawDirect = false;
     for (const event of itemEvents) {
       // Skip retry events — they are logged for stats but don't update the
       // scheduler. Old events that pre-date isRetry may lack the field; treat
       // missing as false (first attempt) to preserve existing behaviour.
       if (event.isRetry) continue;
+
+      if (event.relatedEvidence) {
+        // Indirect nudge — FSRS-only, and only once the fact has direct history.
+        if (!sawDirect) continue;
+        state = applyRelatedEvidence(state, new Date(event.createdAt));
+        continue;
+      }
+
+      sawDirect = true;
       state = applyReview(
         state,
         gradeFromEvent(event),
@@ -131,6 +145,9 @@ export async function rebuildItemStatesFromEvents(
         }
       }
     }
+    // A fact reached only via related evidence has no direct state to rebuild —
+    // skip it so we never fabricate a 'new' row or clobber legacy data.
+    if (!sawDirect) continue;
     await db.itemStates.put(state);
     rebuilt.add(itemId);
   }

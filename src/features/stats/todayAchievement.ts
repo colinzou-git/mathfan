@@ -70,9 +70,14 @@ export function computeTodayAchievement(
 ): TodayAchievementData {
   const sessionMap = new Map(sessions.map(s => [s.id, s]));
 
+  // Indirect related-evidence events are FSRS-only — they must never appear as
+  // questions in the Today view or inflate any tile's count.
+  const directToday = todayEvents.filter(e => !e.relatedEvidence);
+  const directPrior = priorEvents.filter(e => !e.relatedEvidence);
+
   // Group today's events by (sessionId, itemId) — one group per question-in-session
   const todayGroupMap = new Map<string, MathAnswerEvent[]>();
-  for (const ev of todayEvents) {
+  for (const ev of directToday) {
     const k = `${ev.sessionId}~~${ev.itemId}`;
     const g = todayGroupMap.get(k) ?? [];
     g.push(ev);
@@ -82,7 +87,7 @@ export function computeTodayAchievement(
   // Build prior comparison lookup: itemId → stats from most-recent prior session
   // Group prior events by (sessionId, itemId)
   const priorGroupMap = new Map<string, MathAnswerEvent[]>();
-  for (const ev of priorEvents) {
+  for (const ev of directPrior) {
     const k = `${ev.sessionId}~~${ev.itemId}`;
     const g = priorGroupMap.get(k) ?? [];
     g.push(ev);

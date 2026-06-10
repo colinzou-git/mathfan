@@ -60,7 +60,9 @@ export function deriveGrade3SkillSummaries(
 ): StudentSkillSummary[] {
   const { studentId, items, mathAnswerEvents, itemStates, now } = args;
 
-  const studentEvents = mathAnswerEvents.filter(e => e.studentId === studentId);
+  // Exclude indirect related-evidence events — they nudge FSRS scheduling only
+  // and must not count toward a fact's attempt/accuracy in the mastery view.
+  const studentEvents = mathAnswerEvents.filter(e => e.studentId === studentId && !e.relatedEvidence);
   const studentStates = itemStates.filter(s => s.studentId === studentId);
 
   // Collect all item IDs seen in this student's events and states

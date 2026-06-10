@@ -94,6 +94,39 @@ export function applyReview(
   return updated;
 }
 
+/**
+ * Mild grade used for indirect (related-calculation) evidence. 'hard' is the
+ * weakest FSRS pass, so an embedded fact gets a small, conservative bump.
+ */
+export const RELATED_EVIDENCE_GRADE: ReviewGrade = 'hard';
+
+/**
+ * Apply mild positive evidence from a related higher-level item to a calculation
+ * fact's state (e.g. a first-try-correct AREA_RECT_8x7 reinforcing MUL_8x7).
+ *
+ * Updates ONLY the FSRS-owned scheduling fields and the derived masteryLevel.
+ * attemptCount, correctCount, latency, and personalBest are deliberately left
+ * untouched so the fact's displayed accuracy and speed reflect direct practice
+ * alone — the nudge moves the spaced-repetition schedule, not the stats.
+ */
+export function applyRelatedEvidence(state: StudentItemState, now: Date): StudentItemState {
+  const fsrsPatch = applyFsrsReview(state, RELATED_EVIDENCE_GRADE, now);
+  const updated: StudentItemState = {
+    ...state,
+    stabilityDays: fsrsPatch.stabilityDays,
+    fsrsDifficulty: fsrsPatch.fsrsDifficulty,
+    reps: fsrsPatch.reps,
+    lapses: fsrsPatch.lapses,
+    lastSeenAt: fsrsPatch.lastSeenAt,
+    nextDueAt: fsrsPatch.nextDueAt,
+    fsrsCardState: fsrsPatch.fsrsCardState,
+    fsrsScheduledDays: fsrsPatch.fsrsScheduledDays,
+    fsrsLearningSteps: fsrsPatch.fsrsLearningSteps,
+  };
+  updated.masteryLevel = updateMasteryLevel(updated);
+  return updated;
+}
+
 export function createInitialState(
   studentId: string,
   item: PracticeItem,

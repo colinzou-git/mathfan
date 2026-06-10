@@ -30,6 +30,15 @@ export interface MathAnswerEvent {
   reviewGrade?: ReviewGrade;
   factStatusBefore?: MathFactStatus;
   factStatusAfter?: MathFactStatus;
+  /**
+   * True when this event is INDIRECT evidence from a related higher-level item
+   * (e.g. solving AREA_RECT_8x7 reinforcing MUL_8x7), not a direct attempt at
+   * the fact itself. Such events nudge FSRS scheduling only and are excluded
+   * from accuracy/speed stats. See features/adaptive/relatedEvidence.
+   */
+  relatedEvidence?: boolean;
+  /** When relatedEvidence is true, the higher-level item ID that produced it. */
+  evidenceSourceItemId?: string;
   createdAt: string;
 }
 

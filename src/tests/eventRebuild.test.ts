@@ -191,6 +191,66 @@ describe('rebuildItemStatesFromEvents — misconception tags survive rebuild', (
   });
 });
 
+// ── Related-evidence events: reinforce-only + FSRS-only through a rebuild ──────
+
+describe('rebuildItemStatesFromEvents — related-evidence (cross-skill) events', () => {
+  it('applies an indirect nudge AFTER direct history without touching accuracy counts', async () => {
+    fakeDb.mathAnswerEvents.rows = [
+      makeEvent({ id: 'd1', mode: 'practice', itemId: 'MUL_8x7', isCorrect: true, reviewGrade: 'good', createdAt: '2026-06-01T10:00:00.000Z' }),
+      makeEvent({
+        id: 'r1', mode: 'practice', itemId: 'MUL_8x7',
+        relatedEvidence: true, evidenceSourceItemId: 'AREA_RECT_8x7',
+        reviewGrade: 'hard', studentAnswer: null, latencyMs: 0,
+        createdAt: '2026-06-02T10:00:00.000Z',
+      }),
+    ];
+
+    await rebuildItemStatesFromEvents(STUDENT);
+
+    const s = fakeDb.itemStates.rows.find(r => r.itemId === 'MUL_8x7')!;
+    expect(s).toBeDefined();
+    // FSRS advanced for both the direct review and the indirect nudge …
+    expect(s.reps).toBe(2);
+    // … but only the direct attempt counts toward accuracy/attempts.
+    expect(s.attemptCount).toBe(1);
+    expect(s.correctCount).toBe(1);
+  });
+
+  it('ignores a related-evidence event that has no prior direct history (reinforce-only)', async () => {
+    fakeDb.mathAnswerEvents.rows = [
+      makeEvent({
+        id: 'r1', mode: 'practice', itemId: 'MUL_8x7',
+        relatedEvidence: true, evidenceSourceItemId: 'AREA_RECT_8x7',
+        reviewGrade: 'hard', studentAnswer: null, createdAt: '2026-06-01T10:00:00.000Z',
+      }),
+    ];
+
+    await rebuildItemStatesFromEvents(STUDENT);
+
+    // No direct evidence → no fabricated state row.
+    expect(fakeDb.itemStates.rows.find(r => r.itemId === 'MUL_8x7')).toBeUndefined();
+  });
+
+  it('skips a related-evidence event that precedes the first direct attempt', async () => {
+    fakeDb.mathAnswerEvents.rows = [
+      makeEvent({
+        id: 'r1', mode: 'practice', itemId: 'MUL_8x7',
+        relatedEvidence: true, evidenceSourceItemId: 'AREA_RECT_8x7',
+        reviewGrade: 'hard', studentAnswer: null, createdAt: '2026-06-01T10:00:00.000Z',
+      }),
+      makeEvent({ id: 'd1', mode: 'practice', itemId: 'MUL_8x7', isCorrect: true, reviewGrade: 'good', createdAt: '2026-06-02T10:00:00.000Z' }),
+    ];
+
+    await rebuildItemStatesFromEvents(STUDENT);
+
+    const s = fakeDb.itemStates.rows.find(r => r.itemId === 'MUL_8x7')!;
+    expect(s).toBeDefined();
+    // The earlier related event was skipped; only the direct review applied.
+    expect(s.reps).toBe(1);
+    expect(s.attemptCount).toBe(1);
+  });
+});
+
 // ── Sync-style regression: merge + rebuild preserves diagnostic FSRS state ─────
 
 describe('rebuildItemStatesFromEvents — sync merge preserves diagnostic FSRS state', () => {
