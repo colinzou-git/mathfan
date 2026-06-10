@@ -1,0 +1,89 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Features + Tech Mapping</title><style>
+:root{
+  --bg:#f7f8ff; --ink:#172033; --muted:#68738a; --card:#ffffff; --line:#dce3f5;
+  --indigo:#4f46e5; --blue:#0284c7; --green:#16a34a; --yellow:#f59e0b; --red:#ef4444; --purple:#7c3aed; --pink:#db2777;
+  --shadow:0 20px 45px rgba(35,45,80,.12); --radius:22px;
+}
+*{box-sizing:border-box} body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:radial-gradient(circle at top left,#e0f2fe 0,#eef2ff 25%,#fff 58%,#fef3c7 100%);color:var(--ink);line-height:1.55}
+header.hero{padding:48px 24px 30px;background:linear-gradient(135deg,#312e81,#4f46e5 45%,#06b6d4);color:white;position:relative;overflow:hidden}
+header.hero:after{content:"";position:absolute;right:-90px;top:-90px;width:280px;height:280px;border-radius:999px;background:rgba(255,255,255,.18)}
+.wrap{max-width:1180px;margin:0 auto;padding:0 22px}.hero .wrap{position:relative;z-index:1}.eyebrow{letter-spacing:.14em;text-transform:uppercase;font-size:12px;font-weight:800;opacity:.9}.title{font-size:clamp(34px,6vw,70px);line-height:1.02;margin:10px 0 10px;font-weight:900}.subtitle{font-size:18px;max-width:860px;opacity:.94}.meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}.pill{border-radius:999px;padding:7px 12px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.28);font-size:13px;font-weight:700}.nav{position:sticky;top:0;z-index:5;background:rgba(255,255,255,.88);backdrop-filter:blur(10px);border-bottom:1px solid #e5e7eb}.nav .wrap{display:flex;gap:8px;flex-wrap:wrap;padding-top:10px;padding-bottom:10px}.nav a{color:#334155;text-decoration:none;font-weight:800;font-size:14px;border:1px solid #e5e7eb;border-radius:999px;padding:8px 12px;background:white}.nav a.active,.nav a:hover{background:#4f46e5;color:white;border-color:#4f46e5}.section{padding:28px 0}.grid{display:grid;gap:18px}.grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}.grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}.grid.four{grid-template-columns:repeat(4,minmax(0,1fr))}@media(max-width:850px){.grid.two,.grid.three,.grid.four{grid-template-columns:1fr}.hide-sm{display:none}}
+.card{background:var(--card);border:1px solid #e7ecf8;border-radius:var(--radius);box-shadow:var(--shadow);padding:22px}.card h2,.card h3{margin-top:0}.small{font-size:13px;color:var(--muted)}.big-number{font-size:42px;font-weight:900;line-height:1;color:#4f46e5}.tag{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:5px 10px;font-size:12px;font-weight:800;background:#eef2ff;color:#3730a3}.tag.green{background:#dcfce7;color:#166534}.tag.yellow{background:#fef3c7;color:#92400e}.tag.red{background:#fee2e2;color:#991b1b}.tag.blue{background:#e0f2fe;color:#075985}.tag.purple{background:#ede9fe;color:#5b21b6}.tag.pink{background:#fce7f3;color:#9d174d}.legend{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.lead{font-size:18px;color:#334155}.note{border-left:5px solid #4f46e5;background:#eef2ff;padding:14px 16px;border-radius:14px}.warn{border-left:5px solid #f59e0b;background:#fffbeb;padding:14px 16px;border-radius:14px}.danger{border-left:5px solid #ef4444;background:#fef2f2;padding:14px 16px;border-radius:14px}.ok{border-left:5px solid #16a34a;background:#f0fdf4;padding:14px 16px;border-radius:14px}
+table{border-collapse:separate;border-spacing:0;width:100%;font-size:14px;overflow:hidden;border-radius:16px;border:1px solid #e5e7eb;background:white}th{background:#111827;color:white;text-align:left}th,td{padding:12px;border-bottom:1px solid #eef2f7;vertical-align:top}tr:last-child td{border-bottom:0}td code,li code,p code{background:#f1f5f9;border:1px solid #e2e8f0;padding:1px 5px;border-radius:6px;color:#0f172a}.matrix td:nth-child(1){font-weight:800;color:#3730a3}.source{font-size:12px;color:#64748b;margin-top:8px}.diagram{width:100%;overflow:auto;background:#f8fafc;border:1px solid #e2e8f0;border-radius:18px;padding:12px}.flow{display:flex;gap:14px;align-items:stretch;flex-wrap:wrap}.node{min-width:145px;flex:1;background:white;border:2px solid #dbeafe;border-radius:16px;padding:13px;box-shadow:0 8px 18px rgba(15,23,42,.06)}.node .n-title{font-weight:900}.node .n-sub{font-size:12px;color:#64748b}.arrow{display:flex;align-items:center;justify-content:center;color:#64748b;font-weight:900;font-size:22px}.node.indigo{border-color:#818cf8;background:#eef2ff}.node.blue{border-color:#38bdf8;background:#e0f2fe}.node.green{border-color:#4ade80;background:#dcfce7}.node.yellow{border-color:#facc15;background:#fef9c3}.node.red{border-color:#f87171;background:#fee2e2}.node.purple{border-color:#a78bfa;background:#ede9fe}.node.pink{border-color:#f472b6;background:#fce7f3}.timeline{position:relative;padding-left:22px}.timeline:before{content:"";position:absolute;left:7px;top:0;bottom:0;width:3px;background:linear-gradient(#4f46e5,#06b6d4,#16a34a)}.step{position:relative;margin:0 0 16px;background:white;border:1px solid #e2e8f0;border-radius:16px;padding:14px}.step:before{content:"";position:absolute;left:-21px;top:17px;width:14px;height:14px;border-radius:999px;background:#4f46e5;border:3px solid white;box-shadow:0 0 0 2px #4f46e5}.footer{padding:24px;color:#64748b;font-size:12px;text-align:center}.svg-wrap{width:100%;overflow:auto}.callout-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}.mini-card{padding:14px;border:1px solid #e5e7eb;border-radius:16px;background:#fff}.mini-card b{display:block;margin-bottom:4px}.path{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;font-size:12px;color:#334155;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:8px;display:block;white-space:normal}.kbd{display:inline-block;font-family:ui-monospace,monospace;border:1px solid #cbd5e1;border-bottom-width:2px;border-radius:6px;padding:1px 6px;background:white;color:#334155}.heat{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}.heat div{border-radius:12px;padding:12px;text-align:center;font-weight:900;color:white}.toc{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}.toc a{display:block;text-decoration:none;color:inherit;background:white;border:1px solid #e7ecf8;border-radius:18px;padding:18px;box-shadow:var(--shadow)}.toc a:hover{transform:translateY(-2px);transition:.15s}.toc span{display:block;font-size:12px;font-weight:800;color:#4f46e5;text-transform:uppercase;letter-spacing:.08em}.toc b{display:block;font-size:20px;margin:4px 0}.muted{color:var(--muted)}
+</style></head><body>
+<header class="hero"><div class="wrap"><div class="eyebrow">MathFan architecture report</div><h1 class="title">Features + Tech Mapping</h1><p class="subtitle">A feature-by-feature view of what MathFan does, where it lives in code, and which third-party or browser APIs support each feature.</p><div class="meta"><span class="pill">Repo: colinzou-git/mathfan</span><span class="pill">Branch: main</span><span class="pill">Snapshot: 53cdf0f</span><span class="pill">Generated: 2026-06-09</span></div></div></header><nav class="nav"><div class="wrap"><a class="" href="index.html">Overview</a><a class="active" href="features.html">Features + tech map</a><a class="" href="data.html">Data + flows</a><a class="" href="decisions.html">Decisions + scale</a></div></nav>
+<main class="wrap">
+<section class="section grid two">
+  <div class="card">
+    <h2>Feature groups</h2>
+    <div class="heat">
+      <div style="background:#4f46e5">Practice</div><div style="background:#0284c7">Curriculum</div><div style="background:#16a34a">FSRS</div><div style="background:#f59e0b">Stats</div><div style="background:#7c3aed">Mastery Map</div><div style="background:#db2777">Sync</div><div style="background:#ef4444">AI + Audio</div>
+    </div>
+    <p class="small">The app is feature-folder driven. A feature usually owns its UI, model logic, tests, and helper functions.</p>
+  </div>
+  <div class="card">
+    <h2>Core student journey</h2>
+    <div class="flow"><div class="node indigo"><div class="n-title">Create profile</div><div class="n-sub">name + grade</div></div><div class="arrow">→</div><div class="node blue"><div class="n-title">Choose practice</div><div class="n-sub">range / daily / map / quiz</div></div><div class="arrow">→</div><div class="node green"><div class="n-title">Answer</div><div class="n-sub">numpad / keyboard / choice</div></div><div class="arrow">→</div><div class="node yellow"><div class="n-title">Persist + schedule</div><div class="n-sub">event log + FSRS</div></div></div>
+  </div>
+</section>
+<section class="section">
+  <div class="card">
+    <h2>Feature → code → stack matrix</h2>
+    <table class="matrix">
+      <thead><tr><th>Feature</th><th>Main code</th><th>Tech/API used</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>Profile setup/settings</td><td><code>ProfileSetup.tsx</code>, <code>SettingsPage.tsx</code>, <code>StudentProfile</code></td><td>React state, Dexie, localStorage for selected integrations</td><td>DB supports multiple profiles, but current startup selects the first profile unless sync refresh selects the event-rich profile.</td></tr>
+        <tr><td>Operation/range setup</td><td><code>RangeSetup.tsx</code>, <code>SessionSetup.tsx</code>, <code>opSpecs.ts</code></td><td>React UI + typed <code>SessionConfig</code></td><td>Unified range setup supports multiplication/division/addition/subtraction/fractions and one-range operations.</td></tr>
+        <tr><td>Practice session</td><td><code>PracticeScreen.tsx</code>, <code>usePracticeSession.ts</code>, <code>answerChecker.ts</code></td><td>React hooks, Dexie transactions, Web Speech API, optional Gemini overlay</td><td>First attempt updates FSRS; retries are logged but do not update long-term schedule.</td></tr>
+        <tr><td>Adaptive review</td><td><code>scheduler.ts</code>, <code>fsrsAdapter.ts</code></td><td><code>ts-fsrs</code></td><td>Planner uses due / weak / new split; FSRS adapter is the only direct import of <code>ts-fsrs</code>.</td></tr>
+        <tr><td>Curriculum generation</td><td><code>curriculum/*Items.ts</code>, <code>makeItemFromId.ts</code></td><td>TypeScript deterministic factories, <code>fraction.js</code> for misconception checks</td><td>Stable item IDs are essential for sync, history, stats, mastery, and reconstructing generated items.</td></tr>
+        <tr><td>Visual models</td><td><code>features/visuals/*</code></td><td>React SVG/CSS, <code>mafs</code>, <code>@dnd-kit</code></td><td>Array models, fraction bars, number lines, clocks, shape/area models, draggable equal groups.</td></tr>
+        <tr><td>Grade 3 mastery map</td><td><code>grade3MasteryMap.ts</code>, <code>Grade3MasteryMapPage.tsx</code>, <code>skillMasteryEngine.ts</code></td><td>Derived event/state summaries</td><td>Prerequisites are a soft advisory/ranking signal, not a hard lock.</td></tr>
+        <tr><td>Quick Check diagnostic</td><td><code>DiagnosticSession.tsx</code>, <code>diagnosticPlanner.ts</code>, <code>diagnosticPersistence.ts</code></td><td>QuestionRenderer, NumPad, Dexie, FSRS</td><td>Diagnostic answers are recorded into the same canonical event log and update item state through the same write path.</td></tr>
+        <tr><td>Stats/history/growth</td><td><code>features/stats/*</code>, <code>repositories.ts</code></td><td>Dexie date-range queries, React tables/charts</td><td>Stats should increasingly read from <code>mathAnswerEvents</code>; attempts remain a compatibility layer.</td></tr>
+        <tr><td>Google sync</td><td><code>googleAuth.ts</code>, <code>useSync.ts</code>, <code>driveSync.ts</code>, <code>snapshot.ts</code></td><td>Google Identity Services, Drive API appDataFolder</td><td>Snapshot merge unions canonical events and rebuilds derived caches after merge.</td></tr>
+        <tr><td>AI tutor</td><td><code>TutorChat.tsx</code>, <code>gemini.ts</code>, <code>aiConfig.ts</code></td><td>Gemini REST API, localStorage API key</td><td>Prompt rules instruct the tutor to guide without revealing final answers. Key is not included in Drive snapshot.</td></tr>
+        <tr><td>Audio</td><td><code>speech.ts</code>, <code>mathSpeech.ts</code></td><td>Web Speech API</td><td>Math-aware speech normalizes symbols and fractions before TTS.</td></tr>
+        <tr><td>PWA/deployment</td><td><code>vite.config.ts</code>, <code>main.tsx</code>, <code>deploy.yml</code></td><td>Vite, vite-plugin-pwa, Workbox, GitHub Actions/Pages</td><td>Service worker uses skipWaiting/clientsClaim and app reloads on controllerchange when an update activates.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+<section class="section grid two">
+  <div class="card"><h2>Practice flow</h2><div class="timeline">
+    <div class="step"><b>1. App chooses practice screen</b><p><code>App.tsx</code> saves return destination and sends <code>SessionConfig</code> to <code>PracticeScreen</code>.</p></div>
+    <div class="step"><b>2. Session queue is built</b><p><code>usePracticeSession</code> generates dynamic items or selects specific/daily-review items.</p></div>
+    <div class="step"><b>3. Student answers</b><p><code>answerChecker</code> validates input and maps correctness/latency to <code>again/hard/good/easy</code>.</p></div>
+    <div class="step"><b>4. First attempt schedules</b><p><code>applyReview</code> calls the FSRS adapter for durable item state and next due date.</p></div>
+    <div class="step"><b>5. Event is written</b><p><code>recordPracticeAnswer</code> stores answer event, item state, and compatibility attempt log in one Dexie transaction.</p></div>
+    <div class="step"><b>6. UI advances</b><p>Auto-advance waits for correct-answer speech to finish, preventing the next question from cutting off the answer audio.</p></div>
+  </div></div>
+  <div class="card"><h2>Mastery-map flow</h2><div class="timeline">
+    <div class="step"><b>1. Load events + states</b><p>Map page loads <code>mathAnswerEvents</code> and <code>itemStates</code>.</p></div>
+    <div class="step"><b>2. Reconstruct item metadata</b><p><code>makeItemFromId</code> resolves dynamic IDs into typed items.</p></div>
+    <div class="step"><b>3. Infer skill IDs</b><p><code>skillMapping</code> maps item types/tags to Grade 3 skill nodes.</p></div>
+    <div class="step"><b>4. Derive summaries</b><p><code>skillMasteryEngine</code> calculates attempts, accuracy, due count, status, and misconception tags.</p></div>
+    <div class="step"><b>5. Plan today</b><p><code>todayPlanEngine</code> picks warmup, focus, review, and prerequisite advisory.</p></div>
+  </div></div>
+</section>
+<section class="section">
+  <div class="card">
+    <h2>Third-party dependencies and why they are present</h2>
+    <table>
+      <thead><tr><th>Library</th><th>Used for</th><th>Why it fits</th><th>Watch-outs</th></tr></thead>
+      <tbody>
+        <tr><td><code>react</code>/<code>react-dom</code></td><td>All UI rendering</td><td>Strong fit for mobile PWA screens and component reuse.</td><td>Current app uses manual screen state instead of URL routes; future deep links may need router adoption.</td></tr>
+        <tr><td><code>vite</code> + <code>@vitejs/plugin-react</code></td><td>Dev/build pipeline</td><td>Fast, simple static build for GitHub Pages/PWA.</td><td>Base path must be correct for project pages vs custom domain.</td></tr>
+        <tr><td><code>vite-plugin-pwa</code></td><td>Manifest and service worker generation</td><td>Minimal PWA setup without custom service-worker complexity.</td><td>SW updates can confuse testing; version/build info helps confirm live bundle.</td></tr>
+        <tr><td><code>dexie</code></td><td>IndexedDB tables and transactions</td><td>Local-first storage with structured queries and schema versions.</td><td>Schema migration discipline matters as student data grows.</td></tr>
+        <tr><td><code>ts-fsrs</code></td><td>Official FSRS scheduling</td><td>Avoids maintaining custom spaced-repetition math.</td><td>Keep isolated in adapter so API changes affect one file.</td></tr>
+        <tr><td><code>mafs</code></td><td>Math visualizations such as fraction number lines</td><td>Cleaner than hand-rolled coordinate math for graph-like visuals.</td><td>Check mobile performance and bundle weight as visual count grows.</td></tr>
+        <tr><td><code>@dnd-kit/*</code></td><td>Drag/drop visual models</td><td>Modern accessible drag/drop for equal-group interactions.</td><td>Touch behavior on iPad must be device-tested.</td></tr>
+        <tr><td><code>fraction.js</code></td><td>Fraction misconception/normalization logic</td><td>Reduces edge-case risk in fraction comparison/simplification.</td><td>Prefer centralized usage; avoid mixed custom fraction logic.</td></tr>
+        <tr><td><code>vitest</code> + Testing Library</td><td>Unit/component tests</td><td>Matches Vite stack and supports JS DOM component tests.</td><td>Regression tests should cover every scheduling/sync/audio bug fix.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+</main>
+<div class="footer">Based on the main branch snapshot 53cdf0f86536… and source files fetched during analysis. This is a static report; it does not modify the repository.</div></body></html>

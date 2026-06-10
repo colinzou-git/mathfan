@@ -1,0 +1,83 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Data Model + Runtime Flows</title><style>
+:root{
+  --bg:#f7f8ff; --ink:#172033; --muted:#68738a; --card:#ffffff; --line:#dce3f5;
+  --indigo:#4f46e5; --blue:#0284c7; --green:#16a34a; --yellow:#f59e0b; --red:#ef4444; --purple:#7c3aed; --pink:#db2777;
+  --shadow:0 20px 45px rgba(35,45,80,.12); --radius:22px;
+}
+*{box-sizing:border-box} body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:radial-gradient(circle at top left,#e0f2fe 0,#eef2ff 25%,#fff 58%,#fef3c7 100%);color:var(--ink);line-height:1.55}
+header.hero{padding:48px 24px 30px;background:linear-gradient(135deg,#312e81,#4f46e5 45%,#06b6d4);color:white;position:relative;overflow:hidden}
+header.hero:after{content:"";position:absolute;right:-90px;top:-90px;width:280px;height:280px;border-radius:999px;background:rgba(255,255,255,.18)}
+.wrap{max-width:1180px;margin:0 auto;padding:0 22px}.hero .wrap{position:relative;z-index:1}.eyebrow{letter-spacing:.14em;text-transform:uppercase;font-size:12px;font-weight:800;opacity:.9}.title{font-size:clamp(34px,6vw,70px);line-height:1.02;margin:10px 0 10px;font-weight:900}.subtitle{font-size:18px;max-width:860px;opacity:.94}.meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}.pill{border-radius:999px;padding:7px 12px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.28);font-size:13px;font-weight:700}.nav{position:sticky;top:0;z-index:5;background:rgba(255,255,255,.88);backdrop-filter:blur(10px);border-bottom:1px solid #e5e7eb}.nav .wrap{display:flex;gap:8px;flex-wrap:wrap;padding-top:10px;padding-bottom:10px}.nav a{color:#334155;text-decoration:none;font-weight:800;font-size:14px;border:1px solid #e5e7eb;border-radius:999px;padding:8px 12px;background:white}.nav a.active,.nav a:hover{background:#4f46e5;color:white;border-color:#4f46e5}.section{padding:28px 0}.grid{display:grid;gap:18px}.grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}.grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}.grid.four{grid-template-columns:repeat(4,minmax(0,1fr))}@media(max-width:850px){.grid.two,.grid.three,.grid.four{grid-template-columns:1fr}.hide-sm{display:none}}
+.card{background:var(--card);border:1px solid #e7ecf8;border-radius:var(--radius);box-shadow:var(--shadow);padding:22px}.card h2,.card h3{margin-top:0}.small{font-size:13px;color:var(--muted)}.big-number{font-size:42px;font-weight:900;line-height:1;color:#4f46e5}.tag{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:5px 10px;font-size:12px;font-weight:800;background:#eef2ff;color:#3730a3}.tag.green{background:#dcfce7;color:#166534}.tag.yellow{background:#fef3c7;color:#92400e}.tag.red{background:#fee2e2;color:#991b1b}.tag.blue{background:#e0f2fe;color:#075985}.tag.purple{background:#ede9fe;color:#5b21b6}.tag.pink{background:#fce7f3;color:#9d174d}.legend{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.lead{font-size:18px;color:#334155}.note{border-left:5px solid #4f46e5;background:#eef2ff;padding:14px 16px;border-radius:14px}.warn{border-left:5px solid #f59e0b;background:#fffbeb;padding:14px 16px;border-radius:14px}.danger{border-left:5px solid #ef4444;background:#fef2f2;padding:14px 16px;border-radius:14px}.ok{border-left:5px solid #16a34a;background:#f0fdf4;padding:14px 16px;border-radius:14px}
+table{border-collapse:separate;border-spacing:0;width:100%;font-size:14px;overflow:hidden;border-radius:16px;border:1px solid #e5e7eb;background:white}th{background:#111827;color:white;text-align:left}th,td{padding:12px;border-bottom:1px solid #eef2f7;vertical-align:top}tr:last-child td{border-bottom:0}td code,li code,p code{background:#f1f5f9;border:1px solid #e2e8f0;padding:1px 5px;border-radius:6px;color:#0f172a}.matrix td:nth-child(1){font-weight:800;color:#3730a3}.source{font-size:12px;color:#64748b;margin-top:8px}.diagram{width:100%;overflow:auto;background:#f8fafc;border:1px solid #e2e8f0;border-radius:18px;padding:12px}.flow{display:flex;gap:14px;align-items:stretch;flex-wrap:wrap}.node{min-width:145px;flex:1;background:white;border:2px solid #dbeafe;border-radius:16px;padding:13px;box-shadow:0 8px 18px rgba(15,23,42,.06)}.node .n-title{font-weight:900}.node .n-sub{font-size:12px;color:#64748b}.arrow{display:flex;align-items:center;justify-content:center;color:#64748b;font-weight:900;font-size:22px}.node.indigo{border-color:#818cf8;background:#eef2ff}.node.blue{border-color:#38bdf8;background:#e0f2fe}.node.green{border-color:#4ade80;background:#dcfce7}.node.yellow{border-color:#facc15;background:#fef9c3}.node.red{border-color:#f87171;background:#fee2e2}.node.purple{border-color:#a78bfa;background:#ede9fe}.node.pink{border-color:#f472b6;background:#fce7f3}.timeline{position:relative;padding-left:22px}.timeline:before{content:"";position:absolute;left:7px;top:0;bottom:0;width:3px;background:linear-gradient(#4f46e5,#06b6d4,#16a34a)}.step{position:relative;margin:0 0 16px;background:white;border:1px solid #e2e8f0;border-radius:16px;padding:14px}.step:before{content:"";position:absolute;left:-21px;top:17px;width:14px;height:14px;border-radius:999px;background:#4f46e5;border:3px solid white;box-shadow:0 0 0 2px #4f46e5}.footer{padding:24px;color:#64748b;font-size:12px;text-align:center}.svg-wrap{width:100%;overflow:auto}.callout-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}.mini-card{padding:14px;border:1px solid #e5e7eb;border-radius:16px;background:#fff}.mini-card b{display:block;margin-bottom:4px}.path{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;font-size:12px;color:#334155;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:8px;display:block;white-space:normal}.kbd{display:inline-block;font-family:ui-monospace,monospace;border:1px solid #cbd5e1;border-bottom-width:2px;border-radius:6px;padding:1px 6px;background:white;color:#334155}.heat{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}.heat div{border-radius:12px;padding:12px;text-align:center;font-weight:900;color:white}.toc{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}.toc a{display:block;text-decoration:none;color:inherit;background:white;border:1px solid #e7ecf8;border-radius:18px;padding:18px;box-shadow:var(--shadow)}.toc a:hover{transform:translateY(-2px);transition:.15s}.toc span{display:block;font-size:12px;font-weight:800;color:#4f46e5;text-transform:uppercase;letter-spacing:.08em}.toc b{display:block;font-size:20px;margin:4px 0}.muted{color:var(--muted)}
+</style></head><body>
+<header class="hero"><div class="wrap"><div class="eyebrow">MathFan architecture report</div><h1 class="title">Data Model + Runtime Flows</h1><p class="subtitle">The important part of MathFan is not only the UI: it is how answers become durable learning history, schedules, mastery summaries, stats, and syncable state.</p><div class="meta"><span class="pill">Repo: colinzou-git/mathfan</span><span class="pill">Branch: main</span><span class="pill">Snapshot: 53cdf0f</span><span class="pill">Generated: 2026-06-09</span></div></div></header><nav class="nav"><div class="wrap"><a class="" href="index.html">Overview</a><a class="" href="features.html">Features + tech map</a><a class="active" href="data.html">Data + flows</a><a class="" href="decisions.html">Decisions + scale</a></div></nav>
+<main class="wrap">
+<section class="section grid two">
+  <div class="card">
+    <h2>Data philosophy</h2>
+    <p class="lead">The architecture is moving toward <b>event-sourced learning data</b>: <code>mathAnswerEvents</code> is the canonical record, while <code>itemStates</code>, <code>attempts</code>, <code>multFactStats</code>, and <code>quizSessions</code> are caches or compatibility views.</p>
+    <div class="ok"><b>Good design choice:</b> after sync, derived tables are rebuilt from the union of events, reducing stale aggregate conflicts across devices.</div>
+  </div>
+  <div class="card">
+    <h2>Tables</h2>
+    <table>
+      <thead><tr><th>Table</th><th>Purpose</th><th>Truth level</th></tr></thead>
+      <tbody>
+        <tr><td><code>students</code></td><td>Profile, grade, timezone, settings</td><td>Primary</td></tr>
+        <tr><td><code>mathAnswerEvents</code></td><td>Every quiz/practice/diagnostic answer</td><td><b>Canonical</b></td></tr>
+        <tr><td><code>itemStates</code></td><td>FSRS/card state, mastery level, due date, mistake patterns</td><td>Derived cache</td></tr>
+        <tr><td><code>attempts</code></td><td>Legacy per-answer compatibility log</td><td>Compatibility</td></tr>
+        <tr><td><code>sessions</code></td><td>Practice session summaries</td><td>Primary summary</td></tr>
+        <tr><td><code>multFactStats</code></td><td>Quiz fact mastery cache</td><td>Derived cache</td></tr>
+        <tr><td><code>quizSessions</code></td><td>Completed quiz summaries</td><td>Derived/summary</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+<section class="section">
+  <div class="card">
+    <h2>Answer write pipeline</h2>
+    <div class="diagram"><div class="flow"><div class="node blue"><div class="n-title">Student input</div><div class="n-sub">keyboard · NumPad · choice</div></div><div class="arrow">→</div><div class="node indigo"><div class="n-title">checkAnswer()</div><div class="n-sub">strict parse + latency grade</div></div><div class="arrow">→</div><div class="node green"><div class="n-title">applyReview()</div><div class="n-sub">first attempt only</div></div><div class="arrow">→</div><div class="node purple"><div class="n-title">recordPracticeAnswer()</div><div class="n-sub">Dexie transaction</div></div><div class="arrow">→</div><div class="node yellow"><div class="n-title">UI feedback</div><div class="n-sub">hint · speech · next</div></div></div></div>
+    <div class="grid three" style="margin-top:18px">
+      <div class="mini-card"><b>Wrong answer</b><p>Stored as <code>reviewGrade='again'</code>; retry stays on same question. First wrong attempt can add misconception tags.</p></div>
+      <div class="mini-card"><b>Slow correct</b><p>Correct answers can become <code>hard</code>, not <code>again</code>, so they do not become false FSRS failures.</p></div>
+      <div class="mini-card"><b>Retry</b><p>Retry events are saved for stats/history but do not update <code>itemStates</code> or FSRS.</p></div>
+    </div>
+  </div>
+</section>
+<section class="section grid two">
+  <div class="card">
+    <h2>FSRS state</h2>
+    <table>
+      <thead><tr><th>Field</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td><code>stabilityDays</code></td><td>How long memory is expected to last, in days.</td></tr>
+        <tr><td><code>fsrsDifficulty</code></td><td>Per-card difficulty from the FSRS model.</td></tr>
+        <tr><td><code>reps</code>, <code>lapses</code></td><td>Review and lapse counters.</td></tr>
+        <tr><td><code>lastSeenAt</code>, <code>nextDueAt</code></td><td>Last review and next scheduled review time.</td></tr>
+        <tr><td><code>fsrsCardState</code>, <code>fsrsScheduledDays</code>, <code>fsrsLearningSteps</code></td><td>Stored to reconstruct a <code>ts-fsrs</code> card later.</td></tr>
+      </tbody>
+    </table>
+    <p class="small">The adapter disables short-term learning steps and fuzz for deterministic behavior and predictable tests.</p>
+  </div>
+  <div class="card">
+    <h2>Mastery status layers</h2>
+    <div class="flow"><div class="node yellow"><div class="n-title">Item state</div><div class="n-sub">new → learning → developing → strong → mastered</div></div><div class="arrow">→</div><div class="node purple"><div class="n-title">Skill summary</div><div class="n-sub">new / needs practice / review due / strong / mastered</div></div></div>
+    <p>Item mastery comes from accuracy and FSRS stability. Skill mastery comes from first-attempt events, due item counts, number of distinct items, and thresholds.</p>
+    <div class="warn"><b>Important:</b> A skill should not be marked mastered from repeated drilling of a single item. The skill engine requires multiple distinct items for mastery.</div>
+  </div>
+</section>
+<section class="section">
+  <div class="card">
+    <h2>Sync architecture</h2>
+    <div class="svg-wrap"><svg width="1050" height="360" viewBox="0 0 1050 360" xmlns="http://www.w3.org/2000/svg"><defs><marker id="ar2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#64748b"/></marker></defs><rect x="20" y="40" width="210" height="110" rx="18" fill="#eef2ff" stroke="#4f46e5"/><text x="125" y="82" text-anchor="middle" font-size="18" font-weight="800">Local IndexedDB</text><text x="125" y="112" text-anchor="middle" font-size="13">Dexie tables</text><rect x="320" y="40" width="210" height="110" rx="18" fill="#e0f2fe" stroke="#0284c7"/><text x="425" y="82" text-anchor="middle" font-size="18" font-weight="800">Snapshot JSON</text><text x="425" y="112" text-anchor="middle" font-size="13">buildSnapshot()</text><rect x="620" y="40" width="210" height="110" rx="18" fill="#fce7f3" stroke="#db2777"/><text x="725" y="82" text-anchor="middle" font-size="18" font-weight="800">Google Drive</text><text x="725" y="112" text-anchor="middle" font-size="13">appDataFolder</text><rect x="320" y="220" width="210" height="100" rx="18" fill="#dcfce7" stroke="#16a34a"/><text x="425" y="260" text-anchor="middle" font-size="18" font-weight="800">Merge</text><text x="425" y="288" text-anchor="middle" font-size="13">union events by id</text><rect x="620" y="220" width="260" height="100" rx="18" fill="#fef3c7" stroke="#f59e0b"/><text x="750" y="260" text-anchor="middle" font-size="18" font-weight="800">Rebuild derived caches</text><text x="750" y="288" text-anchor="middle" font-size="13">itemStates + multFactStats</text><line x1="230" y1="95" x2="320" y2="95" stroke="#64748b" stroke-width="3" marker-end="url(#ar2)"/><line x1="530" y1="95" x2="620" y2="95" stroke="#64748b" stroke-width="3" marker-end="url(#ar2)"/><line x1="725" y1="150" x2="500" y2="220" stroke="#64748b" stroke-width="3" marker-end="url(#ar2)"/><line x1="530" y1="270" x2="620" y2="270" stroke="#64748b" stroke-width="3" marker-end="url(#ar2)"/><line x1="620" y1="302" x2="230" y2="132" stroke="#64748b" stroke-width="3" marker-end="url(#ar2)"/><text x="425" y="180" font-size="13" text-anchor="middle" fill="#64748b">syncBothWays(): pull/merge first, then push local</text></svg></div>
+    <div class="grid three" style="margin-top:18px"><div class="mini-card"><b>Auth</b><p>Google Identity Services token client is preloaded; tokens stay in memory only.</p></div><div class="mini-card"><b>Storage</b><p>Drive file name is <code>mathfan-data.json</code> in the private appDataFolder.</p></div><div class="mini-card"><b>Conflict model</b><p>Events are merged by ID; derived tables are recomputed after merge.</p></div></div>
+  </div>
+</section>
+<section class="section grid two">
+  <div class="card"><h2>PWA update flow</h2><p>Vite PWA is configured with Workbox precaching, <code>skipWaiting</code>, and <code>clientsClaim</code>. <code>main.tsx</code> listens for <code>controllerchange</code> and reloads after a new service worker activates, except on the first install.</p><div class="note"><b>Take care:</b> when debugging “old UI” issues, verify service worker state, app build version, base path, and cache update behavior.</div></div>
+  <div class="card"><h2>AI/audio state</h2><p>AI key and model live in localStorage, not the profile or sync snapshot. Audio uses browser speech synthesis and normalizes math expressions before speaking.</p><div class="danger"><b>Take care:</b> localStorage API keys are convenient but not high-security. A sign-in-gated serverless proxy is a better public-scale option.</div></div>
+</section>
+</main>
+<div class="footer">Based on the main branch snapshot 53cdf0f86536… and source files fetched during analysis. This is a static report; it does not modify the repository.</div></body></html>
