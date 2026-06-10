@@ -50,7 +50,10 @@ export function getHint(item: PracticeItem, wrongAttempts: number): HintResult |
       return subHint(a, b, wrongAttempts);
 
     case 'word_problem':
-      return wordHint(wrongAttempts);
+      return wordProblemHint(item, wrongAttempts);
+
+    case 'measurement_word':
+      return measurementWordHint(item, wrongAttempts);
 
     case 'fraction_equivalent':
       return fracEquivHint(wrongAttempts);
@@ -172,9 +175,76 @@ function subHint(a: number, b: number, attempt: number): HintResult {
   );
 }
 
-// ── Word problem ──────────────────────────────────────────────────────────────
+// ── Word problems (schema-specific) ─────────────────────────────────────────────
+//
+// Schema is parsed from the deterministic item ID (WORD_{schema}_{a}_{b} for
+// single-step, WRD2_{schema}_{a}_{b}_{c} for two-step). Single-step problems are
+// one operation, so the early rungs guide the strategy WITHOUT computing the
+// product/quotient (which is the final answer). Two-step problems may reveal the
+// FIRST step's result on rung 3 — that is an intermediate value, not the final
+// answer, and is the most useful nudge toward the second step.
 
-function wordHint(attempt: number): HintResult {
+function wordProblemHint(item: PracticeItem, attempt: number): HintResult {
+  const single = item.id.match(/^WORD_([a-z]+)_(\d+)_(\d+)$/);
+  if (single) return singleStepWordHint(single[1], +single[2], +single[3], attempt);
+  const two = item.id.match(/^WRD2_([a-z]+)_(\d+)_(\d+)_(\d+)$/);
+  if (two) return twoStepWordHint(two[1], +two[2], +two[3], +two[4], attempt);
+  return genericWordHint(attempt);
+}
+
+function singleStepWordHint(schema: string, a: number, b: number, attempt: number): HintResult {
+  switch (schema) {
+    case 'eg': // equal groups: a groups of b each
+      if (attempt === 1) return hint(`This is an equal-groups story: ${a} groups with ${b} in each group. To find the total, combine the equal groups.`);
+      if (attempt === 2) return hint(`Equal groups means multiply. Count ${b}, then count it ${a} times — or work out ${a} × ${b}.`);
+      return hint(`Set up the multiplication ${a} × ${b} and use your times tables.`);
+    case 'ar': // array: a rows of b
+      if (attempt === 1) return hint(`Picture an array: ${a} rows with ${b} in each row. How many altogether?`);
+      if (attempt === 2) return hint(`Rows × how-many-in-each-row gives the total. Multiply ${a} × ${b}.`);
+      return hint(`Skip-count by ${b}, ${a} times — or set up ${a} × ${b}.`);
+    case 'cmp': // comparison: a times as many as b
+      if (attempt === 1) return hint(`"Times as many" means equal groups: one amount is ${b}, the other is ${a} times that much.`);
+      if (attempt === 2) return hint(`To find "${a} times as many", multiply: ${a} × ${b}.`);
+      return hint(`Set up ${a} groups of ${b}: ${a} × ${b}. Use your times tables.`);
+    case 'dv': { // division: (a*b) shared equally into a groups → b each
+      const total = a * b;
+      if (attempt === 1) return hint(`This is sharing equally: ${total} shared into ${a} equal groups. How many go in each group?`);
+      if (attempt === 2) return hint(`Sharing equally means divide: ${total} ÷ ${a}.`);
+      return hint(`Think ${a} × ? = ${total}. Use your times tables to find how many are in each group.`);
+    }
+    default:
+      return genericWordHint(attempt);
+  }
+}
+
+function twoStepWordHint(schema: string, a: number, b: number, c: number, attempt: number): HintResult {
+  switch (schema) {
+    case 'muls': // (a × b) − c
+      if (attempt === 1) return hint(`Two steps. First find the total: ${a} groups of ${b}. Then take ${c} away.`);
+      if (attempt === 2) return hint(`Step 1: multiply ${a} × ${b}. Step 2: subtract ${c} from that product.`);
+      return hint(`First, ${a} × ${b} = ${a * b}. Now subtract ${c} from ${a * b}.`);
+    case 'mula': // (a × b) + c
+      if (attempt === 1) return hint(`Two steps. First find ${a} rows of ${b}. Then ${c} more are added.`);
+      if (attempt === 2) return hint(`Step 1: multiply ${a} × ${b}. Step 2: add ${c}.`);
+      return hint(`First, ${a} × ${b} = ${a * b}. Now add ${c} to ${a * b}.`);
+    case 'diva': { // (a ÷ b) + c
+      if (attempt === 1) return hint(`Two steps. First share ${a} equally among ${b}. Then each one gets ${c} more.`);
+      if (attempt === 2) return hint(`Step 1: divide ${a} ÷ ${b}. Step 2: add ${c} to each share.`);
+      const q = b ? a / b : 0;
+      return hint(`First, ${a} ÷ ${b} = ${q}. Now add ${c} to ${q}.`);
+    }
+    case 'divs': { // (a ÷ b) − c
+      if (attempt === 1) return hint(`Two steps. First share ${a} equally among ${b}. Then each one gives away ${c}.`);
+      if (attempt === 2) return hint(`Step 1: divide ${a} ÷ ${b}. Step 2: subtract ${c}.`);
+      const q = b ? a / b : 0;
+      return hint(`First, ${a} ÷ ${b} = ${q}. Now subtract ${c} from ${q}.`);
+    }
+    default:
+      return genericWordHint(attempt);
+  }
+}
+
+function genericWordHint(attempt: number): HintResult {
   if (attempt === 1) {
     return hint('Read the problem again slowly. What is it asking you to find?');
   }
@@ -182,6 +252,35 @@ function wordHint(attempt: number): HintResult {
     return hint('Look for clue words: "total" or "in all" → add; "left" or "difference" → subtract; "each group" → multiply; "shared equally" → divide.');
   }
   return hint('Write out the number sentence using the numbers from the problem. Fill in the operation.');
+}
+
+// ── Measurement word problems ───────────────────────────────────────────────────
+//
+// MWRD_{schema}_{a}_{b}: schema starts with "add" (combine, a + b) or "sub"
+// (remove, a − b). Early rungs name the operation and set it up without giving
+// the sum/difference.
+
+function measurementWordHint(item: PracticeItem, attempt: number): HintResult {
+  const m = item.id.match(/^MWRD_([a-z]+)_(\d+)_(\d+)$/);
+  const schema = m ? m[1] : '';
+  const a = item.factA ?? (m ? +m[2] : 0);
+  const b = item.factB ?? (m ? +m[3] : 0);
+  const isAdd = schema.startsWith('add');
+
+  if (attempt === 1) {
+    return hint(isAdd
+      ? 'This measurement story combines two amounts. Look for "in all" or "altogether".'
+      : 'This measurement story asks how much is left after removing some. Look for "remain" or "remove".');
+  }
+  if (attempt === 2) {
+    return hint(isAdd
+      ? `Combine the amounts by adding: ${a} + ${b}. Line the numbers up by place value.`
+      : `Subtract to find what remains: ${a} − ${b}. Line the numbers up by place value.`);
+  }
+  // attempt === 3
+  return hint(isAdd
+    ? `Add ${a} + ${b}: add the ones first, then the tens, then the hundreds.`
+    : `Subtract ${a} − ${b}: subtract the ones first, borrowing from the tens if needed.`);
 }
 
 // ── Fraction: equivalent ──────────────────────────────────────────────────────

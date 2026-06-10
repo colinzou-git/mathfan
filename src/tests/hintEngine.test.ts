@@ -14,6 +14,8 @@ import { makeMultiplicationItem, ITEM_MAP } from '../features/curriculum/multipl
 import { makeDivisionItem } from '../features/curriculum/arithmeticItems';
 import { makeAdditionItem, makeSubtractionItem } from '../features/curriculum/arithmeticItems';
 import { makeWordProblem } from '../features/curriculum/wordProblemItems';
+import { makeTwoStepWordProblem } from '../features/curriculum/twoStepItems';
+import { makeMeasurementWordProblem } from '../features/curriculum/measurementItems';
 import { makeFractionEquivalentItem, makeFractionCompareItem, makeFractionNumberLineItem } from '../features/curriculum/fractionItems';
 import { makeAreaUnitSquaresItem, makeAreaRectangleItem, makePerimeterRectangleItem } from '../features/curriculum/areaItems';
 
@@ -137,6 +139,94 @@ describe('getHint — word_problem', () => {
   it('attempt 1: does not contain the answer', () => {
     const item = makeWordProblem('eg', 3, 4); // answer 12
     expect(getHint(item, 1)!.text).not.toContain('12');
+  });
+});
+
+// ── word_problem — schema-specific (single-step) ───────────────────────────────
+
+describe('getHint — single-step word problems by schema', () => {
+  // [schema, a, b, finalAnswer] — a,b chosen so no rung accidentally contains the answer.
+  const cases: [Parameters<typeof makeWordProblem>[0], number, number, string][] = [
+    ['eg', 3, 4, '12'],
+    ['ar', 3, 4, '12'],
+    ['cmp', 3, 4, '12'],
+    ['dv', 3, 4, '4'], // (3*4)=12 shared into 3 → 4 each; answer is 4
+  ];
+
+  for (const [schema, a, b, answer] of cases) {
+    it(`${schema}: rungs 1–3 are non-empty and never reveal the final answer`, () => {
+      const item = makeWordProblem(schema, a, b);
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        const h = getHint(item, attempt)!;
+        expect(h).not.toBeNull();
+        expect(h.text.length).toBeGreaterThan(0);
+        expect(h.text).not.toContain(answer);
+      }
+    });
+  }
+
+  it('routes by schema: equal-groups vs division give different rung-1 hints', () => {
+    const eg = getHint(makeWordProblem('eg', 3, 4), 1)!.text;
+    const dv = getHint(makeWordProblem('dv', 3, 4), 1)!.text;
+    expect(eg).not.toBe(dv);
+    expect(dv.toLowerCase()).toContain('shar'); // sharing/shared
+  });
+});
+
+// ── word_problem — schema-specific (two-step WRD2) ─────────────────────────────
+
+describe('getHint — two-step word problems by schema', () => {
+  // [schema, a, b, c, finalAnswer] — values chosen so the final answer never
+  // appears in any rung (the first-step intermediate MAY appear on rung 3).
+  const cases: [Parameters<typeof makeTwoStepWordProblem>[0], number, number, number, string][] = [
+    ['muls', 3, 4, 5, '7'],  // 3×4−5 = 7
+    ['mula', 3, 4, 5, '17'], // 3×4+5 = 17
+    ['diva', 12, 3, 4, '8'], // 12÷3+4 = 8
+    ['divs', 20, 5, 1, '3'], // 20÷5−1 = 3
+  ];
+
+  for (const [schema, a, b, c, answer] of cases) {
+    it(`${schema}: rungs 1–3 are non-empty and never reveal the final answer`, () => {
+      const item = makeTwoStepWordProblem(schema, a, b, c);
+      expect(item.answer).toBe(Number(answer)); // guard the fixture
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        const h = getHint(item, attempt)!;
+        expect(h).not.toBeNull();
+        expect(h.text.length).toBeGreaterThan(0);
+        expect(h.text).not.toContain(answer);
+      }
+    });
+  }
+
+  it('rung 3 reveals the first-step result (intermediate, not final)', () => {
+    const item = makeTwoStepWordProblem('muls', 3, 4, 5); // 3×4=12, final 7
+    const text = getHint(item, 3)!.text;
+    expect(text).toContain('12'); // the intermediate product is allowed
+    expect(text).not.toContain('7');
+  });
+});
+
+// ── measurement_word (MWRD) ─────────────────────────────────────────────────────
+
+describe('getHint — measurement word problems', () => {
+  it('addition schema: rungs 1–3 name addition and never reveal the sum', () => {
+    const item = makeMeasurementWordProblem('addg', 250, 150); // 400
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      const h = getHint(item, attempt)!;
+      expect(h).not.toBeNull();
+      expect(h.text).not.toContain('400');
+    }
+    expect(getHint(item, 2)!.text).toContain('+');
+  });
+
+  it('subtraction schema: rungs 1–3 name subtraction and never reveal the difference', () => {
+    const item = makeMeasurementWordProblem('subg', 500, 150); // 350
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      const h = getHint(item, attempt)!;
+      expect(h).not.toBeNull();
+      expect(h.text).not.toContain('350');
+    }
+    expect(getHint(item, 2)!.text).toContain('−');
   });
 });
 
