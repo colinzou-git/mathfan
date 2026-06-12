@@ -1,0 +1,6293 @@
+{
+  "generated_at": "2026-06-11T06:05:29.938084+00:00",
+  "repo_root": "C:\\Users\\colin\\Documents\\mathFan",
+  "package": {
+    "name": "mathfan",
+    "version": "1.2.0",
+    "type": "module",
+    "scripts": {
+      "dev": "vite",
+      "build": "tsc -b && vite build",
+      "lint": "eslint .",
+      "preview": "vite preview",
+      "test": "vitest run",
+      "test:watch": "vitest",
+      "test:coverage": "vitest run --coverage",
+      "ci": "npm run lint && npm test && npm run build"
+    },
+    "dependencies": {
+      "@dnd-kit/core": "^6.3.1",
+      "@dnd-kit/sortable": "^10.0.0",
+      "dexie": "^4.4.3",
+      "fraction.js": "^5.3.4",
+      "mafs": "^0.21.0",
+      "react": "^19.2.6",
+      "react-dom": "^19.2.6",
+      "react-router-dom": "^7.16.0",
+      "ts-fsrs": "^5.4.1"
+    },
+    "devDependencies": {
+      "@eslint/js": "^10.0.1",
+      "@testing-library/jest-dom": "^6.9.1",
+      "@testing-library/react": "^16.3.2",
+      "@types/node": "^24.12.3",
+      "@types/react": "^19.2.14",
+      "@types/react-dom": "^19.2.3",
+      "@vitejs/plugin-react": "^6.0.1",
+      "@vitest/coverage-v8": "^4.1.7",
+      "eslint": "^10.3.0",
+      "eslint-plugin-react-hooks": "^7.1.1",
+      "eslint-plugin-react-refresh": "^0.5.2",
+      "globals": "^17.6.0",
+      "jsdom": "^29.1.1",
+      "typescript": "~6.0.2",
+      "typescript-eslint": "^8.59.2",
+      "vite": "^8.0.12",
+      "vite-plugin-pwa": "^1.3.0",
+      "vitest": "^4.1.7"
+    }
+  },
+  "files": [
+    {
+      "path": "CLAUDE.md",
+      "ext": ".md",
+      "bytes": 1534,
+      "lines": 44,
+      "sha1": "6221947c6956",
+      "imports": [],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Project file.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "docs/arch/data.html",
+      "ext": ".html",
+      "bytes": 16105,
+      "lines": 83,
+      "sha1": "0a4065c89c32",
+      "imports": [],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Local persistence/database layer.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "docs/arch/decisions.html",
+      "ext": ".html",
+      "bytes": 16691,
+      "lines": 101,
+      "sha1": "190a3921a1f3",
+      "imports": [],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Local persistence/database layer.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "docs/arch/features.html",
+      "ext": ".html",
+      "bytes": 17315,
+      "lines": 89,
+      "sha1": "f1d3a607034d",
+      "imports": [],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Local persistence/database layer.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "docs/arch/index.html",
+      "ext": ".html",
+      "bytes": 17314,
+      "lines": 84,
+      "sha1": "8075d9b6e96c",
+      "imports": [],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Local persistence/database layer.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "docs/grade3-mastery-map-roadmap.md",
+      "ext": ".md",
+      "bytes": 26112,
+      "lines": 735,
+      "sha1": "7b9cad37cd0c",
+      "imports": [],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Project file.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "docs/PRD.md",
+      "ext": ".md",
+      "bytes": 34746,
+      "lines": 440,
+      "sha1": "de80eda72495",
+      "imports": [],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Local persistence/database layer.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "eslint.config.js",
+      "ext": ".js",
+      "bytes": 591,
+      "lines": 23,
+      "sha1": "4e863d67d133",
+      "imports": [
+        "@eslint/js",
+        "eslint-plugin-react-hooks",
+        "eslint-plugin-react-refresh",
+        "eslint/config",
+        "globals",
+        "typescript-eslint"
+      ],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Linting configuration.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "index.html",
+      "ext": ".html",
+      "bytes": 633,
+      "lines": 18,
+      "sha1": "4d97f656b717",
+      "imports": [],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Project file.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "mathladder_prd_and_implementation_guide.md",
+      "ext": ".md",
+      "bytes": 34994,
+      "lines": 1549,
+      "sha1": "e2efe85919e3",
+      "imports": [],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Local persistence/database layer.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "package.json",
+      "ext": ".json",
+      "bytes": 1268,
+      "lines": 48,
+      "sha1": "8d59b93b90fa",
+      "imports": [],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [
+        "build",
+        "ci",
+        "dependencies",
+        "dev",
+        "devDependencies",
+        "dexie",
+        "eslint",
+        "eslint-plugin-react-hooks",
+        "eslint-plugin-react-refresh",
+        "fraction.js",
+        "globals",
+        "jsdom",
+        "lint",
+        "mafs",
+        "name",
+        "preview",
+        "private",
+        "react",
+        "react-dom",
+        "react-router-dom",
+        "scripts",
+        "test",
+        "test:coverage",
+        "test:watch",
+        "ts-fsrs",
+        "type",
+        "typescript",
+        "typescript-eslint",
+        "version",
+        "vite",
+        "vite-plugin-pwa",
+        "vitest"
+      ],
+      "purpose": "Project package metadata, scripts, dependencies, and dev tooling.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "README.md",
+      "ext": ".md",
+      "bytes": 9098,
+      "lines": 349,
+      "sha1": "cf732afaf197",
+      "imports": [],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Local persistence/database layer.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "scripts/build-icons.py",
+      "ext": ".py",
+      "bytes": 6790,
+      "lines": 171,
+      "sha1": "e507c44eaf56",
+      "imports": [
+        "__future__",
+        "math",
+        "pathlib",
+        "playwright.sync_api",
+        "sys"
+      ],
+      "exports": [
+        "_f",
+        "_pt",
+        "build_svg",
+        "main"
+      ],
+      "functions": [
+        "_f",
+        "_pt",
+        "build_svg",
+        "main"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Exports reusable code: _f, _pt, build_svg, main.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "scripts/bump-version.mjs",
+      "ext": ".mjs",
+      "bytes": 2208,
+      "lines": 65,
+      "sha1": "5757c60dfa68",
+      "imports": [
+        "node:fs",
+        "node:path",
+        "node:url"
+      ],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Support module that imports project/external dependencies.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "scripts/bump_version.py",
+      "ext": ".py",
+      "bytes": 2141,
+      "lines": 71,
+      "sha1": "9ba82eba25ee",
+      "imports": [
+        "__future__",
+        "pathlib",
+        "re",
+        "sys"
+      ],
+      "exports": [
+        "main"
+      ],
+      "functions": [
+        "main"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Exports reusable code: main.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "scripts/generate_code_map.py",
+      "ext": ".py",
+      "bytes": 1268,
+      "lines": 40,
+      "sha1": "0fdb4c6e9328",
+      "imports": [
+        "__future__",
+        "generate_code_maps",
+        "pathlib",
+        "sys"
+      ],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Support module that imports project/external dependencies.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "scripts/serve-https.py",
+      "ext": ".py",
+      "bytes": 5736,
+      "lines": 137,
+      "sha1": "d0d0c54b8f78",
+      "imports": [
+        "argparse",
+        "datetime",
+        "http.server",
+        "json",
+        "pathlib",
+        "ssl",
+        "urllib.parse"
+      ],
+      "exports": [
+        "_results_dir",
+        "_send_json",
+        "_send_latest_result",
+        "_send_result_index",
+        "do_GET",
+        "do_POST",
+        "end_headers",
+        "main",
+        "WordLoverHandler"
+      ],
+      "functions": [
+        "_results_dir",
+        "_send_json",
+        "_send_latest_result",
+        "_send_result_index",
+        "do_GET",
+        "do_POST",
+        "end_headers",
+        "main"
+      ],
+      "classes": [
+        "WordLoverHandler"
+      ],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Authentication integration.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "scripts/smoke-google-auth.py",
+      "ext": ".py",
+      "bytes": 11191,
+      "lines": 221,
+      "sha1": "1efa4a668521",
+      "imports": [
+        "__future__",
+        "playwright.sync_api",
+        "sys",
+        "time"
+      ],
+      "exports": [
+        "dismiss_gate",
+        "main"
+      ],
+      "functions": [
+        "dismiss_gate",
+        "main"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Cloud sync/auth/data transfer logic.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "scripts/smoke-https-headers.py",
+      "ext": ".py",
+      "bytes": 3157,
+      "lines": 96,
+      "sha1": "36b8f29a87ec",
+      "imports": [
+        "__future__",
+        "http.client",
+        "pathlib",
+        "socket",
+        "ssl",
+        "subprocess",
+        "sys",
+        "time"
+      ],
+      "exports": [
+        "free_port",
+        "main"
+      ],
+      "functions": [
+        "free_port",
+        "main"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Authentication integration.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "scripts/smoke-template.py",
+      "ext": ".py",
+      "bytes": 2227,
+      "lines": 62,
+      "sha1": "979a90e35de6",
+      "imports": [
+        "__future__",
+        "playwright.sync_api",
+        "sys",
+        "time"
+      ],
+      "exports": [
+        "main"
+      ],
+      "functions": [
+        "main"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Exports reusable code: main.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "scripts/smoke-update-flow.py",
+      "ext": ".py",
+      "bytes": 5681,
+      "lines": 133,
+      "sha1": "ad4a6ab12192",
+      "imports": [
+        "__future__",
+        "json",
+        "playwright.sync_api",
+        "sys",
+        "time"
+      ],
+      "exports": [
+        "abort_build_info",
+        "main",
+        "navigate_to_settings",
+        "run_check"
+      ],
+      "functions": [
+        "abort_build_info",
+        "main",
+        "navigate_to_settings",
+        "run_check"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Exports reusable code: abort_build_info, main, navigate_to_settings, run_check.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/App.tsx",
+      "ext": ".tsx",
+      "bytes": 9382,
+      "lines": 280,
+      "sha1": "073fb6217a3d",
+      "imports": [
+        "./components/opSpecs",
+        "./components/RangeSetup",
+        "./components/SessionSetup",
+        "./db/repositories",
+        "./features/audio/speech",
+        "./features/auth/googleAuth",
+        "./features/dashboard/ProfileSetup",
+        "./features/dashboard/StudentDashboard",
+        "./features/diagnosis/diagnosticCompletion",
+        "./features/diagnosis/DiagnosticSession",
+        "./features/mastery/Grade3MasteryMapPage",
+        "./features/multiplication/MultiplicationQuizPage",
+        "./features/practice/practiceNavigation",
+        "./features/practice/PracticeScreen",
+        "./features/settings/SettingsPage",
+        "./features/stats/StatsPage",
+        "./features/stats/todayAchievement",
+        "./features/stats/TodayAchievementDetail",
+        "./features/sync/driveSync",
+        "./features/sync/useSync",
+        "./features/theme/themes",
+        "./types/math",
+        "react"
+      ],
+      "exports": [],
+      "functions": [
+        "handleQuizDone",
+        "handleSessionDone",
+        "pickOperation",
+        "startPractice",
+        "updateProfile",
+        "updateSettings"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [
+        "Screen"
+      ],
+      "components": [
+        "App"
+      ],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Top-level React app shell: routes/screens, global state, and feature wiring.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/components/MasteryGrid.tsx",
+      "ext": ".tsx",
+      "bytes": 7665,
+      "lines": 175,
+      "sha1": "bcdf96847668",
+      "imports": [
+        "../db/repositories",
+        "../types/math",
+        "../utils/masteryColors",
+        "react"
+      ],
+      "exports": [
+        "MasteryGrid"
+      ],
+      "functions": [
+        "MasteryGrid",
+        "Stat"
+      ],
+      "classes": [],
+      "interfaces": [
+        "CellInfo",
+        "Props"
+      ],
+      "types": [],
+      "components": [
+        "Stat"
+      ],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "React UI component file: Stat.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/components/MiniCalendar.tsx",
+      "ext": ".tsx",
+      "bytes": 5892,
+      "lines": 172,
+      "sha1": "eee69439d7cc",
+      "imports": [
+        "react"
+      ],
+      "exports": [
+        "DateRange",
+        "MiniCalendar"
+      ],
+      "functions": [
+        "addMonths",
+        "handleDay",
+        "inRange",
+        "isEnd",
+        "isoToLocal",
+        "isStart",
+        "MiniCalendar",
+        "toYMD"
+      ],
+      "classes": [],
+      "interfaces": [
+        "DateRange",
+        "Props"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Exports reusable code: DateRange, MiniCalendar.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/components/NumPad.tsx",
+      "ext": ".tsx",
+      "bytes": 1579,
+      "lines": 53,
+      "sha1": "ff76c426dffe",
+      "imports": [],
+      "exports": [
+        "NumPad"
+      ],
+      "functions": [
+        "NumPad",
+        "press"
+      ],
+      "classes": [],
+      "interfaces": [
+        "Props"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Exports reusable code: NumPad.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/components/opSpecs.ts",
+      "ext": ".ts",
+      "bytes": 13984,
+      "lines": 358,
+      "sha1": "43370f880ff0",
+      "imports": [
+        "../features/curriculum/areaItems",
+        "../features/curriculum/geometryItems",
+        "../features/curriculum/measurementItems",
+        "../features/curriculum/patternItems",
+        "../features/dashboard/StudentDashboard",
+        "../types/math"
+      ],
+      "exports": [
+        "allAreaItemIds",
+        "allDataItemIds",
+        "allMeasurementItemIds",
+        "RangeFieldSpec",
+        "RangeSetupSpec",
+        "RangeVal",
+        "specFor",
+        "SubModeSpec"
+      ],
+      "functions": [
+        "allAreaItemIds",
+        "allDataItemIds",
+        "allMeasurementItemIds",
+        "allPatternItemIds",
+        "gradeDecimalHi",
+        "gradeFactorMax",
+        "gradeFactorsHi",
+        "gradeRoundHi",
+        "specFor"
+      ],
+      "classes": [],
+      "interfaces": [
+        "RangeFieldSpec",
+        "RangeSetupSpec",
+        "RangeVal",
+        "SubModeSpec"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Exports reusable code: allAreaItemIds, allDataItemIds, allMeasurementItemIds, RangeFieldSpec, RangeSetupSpec.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/components/RangeSetup.tsx",
+      "ext": ".tsx",
+      "bytes": 8446,
+      "lines": 182,
+      "sha1": "c82e2b285522",
+      "imports": [
+        "../types/math",
+        "./opSpecs",
+        "react"
+      ],
+      "exports": [
+        "RangeSetup"
+      ],
+      "functions": [
+        "clampCount",
+        "handleKeyDown",
+        "handleStart",
+        "RangeSetup",
+        "setField"
+      ],
+      "classes": [],
+      "interfaces": [
+        "Props"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Exports reusable code: RangeSetup.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/components/SessionSetup.tsx",
+      "ext": ".tsx",
+      "bytes": 4890,
+      "lines": 126,
+      "sha1": "50998e705f77",
+      "imports": [
+        "../types/math",
+        "react"
+      ],
+      "exports": [
+        "SessionSetup"
+      ],
+      "functions": [
+        "adjust",
+        "clamp",
+        "handleInput",
+        "handleKeyDown",
+        "handleStart",
+        "SessionSetup"
+      ],
+      "classes": [],
+      "interfaces": [
+        "Props"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Exports reusable code: SessionSetup.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/components/SessionSummary.tsx",
+      "ext": ".tsx",
+      "bytes": 9549,
+      "lines": 303,
+      "sha1": "a532e4b59990",
+      "imports": [
+        "react"
+      ],
+      "exports": [
+        "SessionSummary"
+      ],
+      "functions": [
+        "SessionSummary",
+        "StatBox"
+      ],
+      "classes": [],
+      "interfaces": [
+        "LastSession",
+        "Props"
+      ],
+      "types": [],
+      "components": [
+        "StatBox"
+      ],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "React UI component file: StatBox.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/components/SettingsOverlay.tsx",
+      "ext": ".tsx",
+      "bytes": 4435,
+      "lines": 135,
+      "sha1": "1248f0fe7126",
+      "imports": [
+        "../types/math",
+        "react"
+      ],
+      "exports": [
+        "SettingsOverlay"
+      ],
+      "functions": [
+        "onKey",
+        "SettingsOverlay",
+        "toggle",
+        "ToggleRow"
+      ],
+      "classes": [],
+      "interfaces": [
+        "Props"
+      ],
+      "types": [],
+      "components": [
+        "ToggleRow"
+      ],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "React UI component file: ToggleRow.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/components/StatsGraph.tsx",
+      "ext": ".tsx",
+      "bytes": 5519,
+      "lines": 168,
+      "sha1": "6b21056bc363",
+      "imports": [],
+      "exports": [
+        "DayPoint",
+        "StatsGraph"
+      ],
+      "functions": [
+        "StatsGraph",
+        "xLabel"
+      ],
+      "classes": [],
+      "interfaces": [
+        "DayPoint",
+        "Props"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Exports reusable code: DayPoint, StatsGraph.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/db/dexie.ts",
+      "ext": ".ts",
+      "bytes": 1546,
+      "lines": 45,
+      "sha1": "9939ddfdfdfd",
+      "imports": [
+        "../features/learning/learningEvents",
+        "../features/multiplication/types",
+        "../types/math",
+        "dexie"
+      ],
+      "exports": [
+        "db",
+        "MathFanDB"
+      ],
+      "functions": [],
+      "classes": [
+        "MathFanDB"
+      ],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Local persistence/database layer.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/db/repositories.ts",
+      "ext": ".ts",
+      "bytes": 8511,
+      "lines": 206,
+      "sha1": "34ca5b71df4f",
+      "imports": [
+        "../features/learning/learningEvents",
+        "../features/multiplication/types",
+        "../types/math",
+        "./dexie"
+      ],
+      "exports": [
+        "attemptRepo",
+        "itemStateRepo",
+        "mathAnswerEventRepo",
+        "quizStatsRepo",
+        "sessionRepo",
+        "studentRepo"
+      ],
+      "functions": [
+        "deriveSessionsFromEvents"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Local persistence/database layer.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/env.d.ts",
+      "ext": ".ts",
+      "bytes": 112,
+      "lines": 4,
+      "sha1": "f620273fdbe3",
+      "imports": [],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Project file.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/adaptive/adaptiveItemSelector.ts",
+      "ext": ".ts",
+      "bytes": 9214,
+      "lines": 238,
+      "sha1": "2248d2f66a5c",
+      "imports": [
+        "../../types/math",
+        "../../utils/rng",
+        "./relatedItemMapping"
+      ],
+      "exports": [
+        "AdaptiveOptions",
+        "AdaptiveQuotas",
+        "isNeedyState",
+        "lookupState",
+        "rankCandidateItems",
+        "scoreCandidateItem",
+        "selectAdaptiveItems"
+      ],
+      "functions": [
+        "isDue",
+        "isNeedyState",
+        "itemTier",
+        "lookupState",
+        "needScore",
+        "rankCandidateItems",
+        "scoreCandidateItem",
+        "selectAdaptiveItems",
+        "take"
+      ],
+      "classes": [],
+      "interfaces": [
+        "AdaptiveOptions",
+        "AdaptiveQuotas"
+      ],
+      "types": [
+        "Tier"
+      ],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Exports reusable code: AdaptiveOptions, AdaptiveQuotas, isNeedyState, lookupState, rankCandidateItems.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/adaptive/candidatePools.ts",
+      "ext": ".ts",
+      "bytes": 5868,
+      "lines": 144,
+      "sha1": "20e8459bacf1",
+      "imports": [
+        "../../types/math",
+        "../curriculum/numberTheoryItems",
+        "../curriculum/wordProblemItems",
+        "./adaptiveItemSelector",
+        "./relatedItemMapping"
+      ],
+      "exports": [
+        "buildFactorCandidates",
+        "buildWordProblemCandidates"
+      ],
+      "functions": [
+        "add",
+        "addTargeted",
+        "buildFactorCandidates",
+        "buildWordProblemCandidates",
+        "factorMax",
+        "factorsHi",
+        "inRange"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Exports reusable code: buildFactorCandidates, buildWordProblemCandidates.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/adaptive/relatedEvidence.ts",
+      "ext": ".ts",
+      "bytes": 2321,
+      "lines": 52,
+      "sha1": "04ab9545190a",
+      "imports": [
+        "../../types/math",
+        "../scheduler/scheduler",
+        "./adaptiveItemSelector",
+        "./relatedItemMapping"
+      ],
+      "exports": [
+        "computeRelatedEvidence",
+        "RelatedEvidenceUpdate"
+      ],
+      "functions": [
+        "computeRelatedEvidence"
+      ],
+      "classes": [],
+      "interfaces": [
+        "RelatedEvidenceUpdate"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Exports reusable code: computeRelatedEvidence, RelatedEvidenceUpdate.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/adaptive/relatedItemMapping.ts",
+      "ext": ".ts",
+      "bytes": 8862,
+      "lines": 199,
+      "sha1": "508ee97f853e",
+      "imports": [
+        "../../types/math",
+        "../mastery/skillMapping"
+      ],
+      "exports": [
+        "enrichRelatedMetadata",
+        "getRelatedItemIds",
+        "getRelatedSkillIds",
+        "schemaIdFor"
+      ],
+      "functions": [
+        "addId",
+        "additionChain",
+        "calcItem",
+        "computeRelatedItemIds",
+        "divId",
+        "enrichRelatedMetadata",
+        "getRelatedItemIds",
+        "getRelatedSkillIds",
+        "mulId",
+        "schemaIdFor",
+        "skillForCalcId",
+        "subId"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Exports reusable code: enrichRelatedMetadata, getRelatedItemIds, getRelatedSkillIds, schemaIdFor.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/ai/aiConfig.ts",
+      "ext": ".ts",
+      "bytes": 1365,
+      "lines": 46,
+      "sha1": "a3e4ee8d83d7",
+      "imports": [],
+      "exports": [
+        "AiConfig",
+        "clearAiKey",
+        "DEFAULT_MODEL",
+        "getAiConfig",
+        "isAiConfigured",
+        "setAiKey",
+        "setAiModel"
+      ],
+      "functions": [
+        "clearAiKey",
+        "getAiConfig",
+        "isAiConfigured",
+        "setAiKey",
+        "setAiModel"
+      ],
+      "classes": [],
+      "interfaces": [
+        "AiConfig"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Exports reusable code: AiConfig, clearAiKey, DEFAULT_MODEL, getAiConfig, isAiConfigured.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/ai/gemini.ts",
+      "ext": ".ts",
+      "bytes": 5683,
+      "lines": 135,
+      "sha1": "73d70c6c47b1",
+      "imports": [
+        "./aiConfig"
+      ],
+      "exports": [
+        "AiError",
+        "aiErrorDetail",
+        "ChatMessage",
+        "explainAiError",
+        "ProblemContext"
+      ],
+      "functions": [
+        "aiErrorDetail",
+        "askTutor",
+        "explainAiError",
+        "readErrorDetail",
+        "systemInstruction"
+      ],
+      "classes": [
+        "AiError"
+      ],
+      "interfaces": [
+        "ChatMessage",
+        "ProblemContext"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Exports reusable code: AiError, aiErrorDetail, ChatMessage, explainAiError, ProblemContext.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/ai/TutorChat.tsx",
+      "ext": ".tsx",
+      "bytes": 4778,
+      "lines": 128,
+      "sha1": "1ce547130afc",
+      "imports": [
+        "./aiConfig",
+        "./gemini",
+        "react"
+      ],
+      "exports": [
+        "TutorChat"
+      ],
+      "functions": [
+        "onKeyDown",
+        "TutorChat"
+      ],
+      "classes": [],
+      "interfaces": [
+        "Props"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Exports reusable code: TutorChat.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/audio/mathSpeech.ts",
+      "ext": ".ts",
+      "bytes": 3314,
+      "lines": 90,
+      "sha1": "6bf65f6c8dd7",
+      "imports": [],
+      "exports": [
+        "fractionToWords",
+        "normalizeMathForSpeech",
+        "numberToWords"
+      ],
+      "functions": [
+        "fractionToWords",
+        "normalizeMathForSpeech",
+        "numberToWords"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Speech/audio feedback utilities.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/audio/speech.ts",
+      "ext": ".ts",
+      "bytes": 2248,
+      "lines": 64,
+      "sha1": "d6dbb5ca8dcb",
+      "imports": [
+        "./mathSpeech"
+      ],
+      "exports": [
+        "preloadVoices",
+        "speak",
+        "speakFeedback",
+        "speakProblem",
+        "stopSpeech"
+      ],
+      "functions": [
+        "done",
+        "ensureVoice",
+        "getBestVoice",
+        "preloadVoices",
+        "speak",
+        "speakFeedback",
+        "speakProblem",
+        "stopSpeech"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Speech/audio feedback utilities.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/auth/googleAuth.ts",
+      "ext": ".ts",
+      "bytes": 8757,
+      "lines": 240,
+      "sha1": "dd2cd554b5ee",
+      "imports": [],
+      "exports": [
+        "AuthState",
+        "currentState",
+        "GoogleProfile",
+        "onChange",
+        "signOut"
+      ],
+      "functions": [
+        "clearPersisted",
+        "currentState",
+        "fetchProfile",
+        "getToken",
+        "initTokenClient",
+        "loadGisScript",
+        "loadPersisted",
+        "notify",
+        "onChange",
+        "preload",
+        "requestToken",
+        "savePersisted",
+        "signIn",
+        "signOut"
+      ],
+      "classes": [],
+      "interfaces": [
+        "AuthState",
+        "GoogleProfile"
+      ],
+      "types": [
+        "AuthListener"
+      ],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Authentication integration.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/curriculum/areaItems.ts",
+      "ext": ".ts",
+      "bytes": 11482,
+      "lines": 303,
+      "sha1": "282615339c23",
+      "imports": [
+        "../../types/math"
+      ],
+      "exports": [
+        "areaPerimCmpId",
+        "areaPerimCompareItemIds",
+        "AreaPerimVariant",
+        "areaRectangleItemIds",
+        "areaRectId",
+        "areaSquaresId",
+        "areaSquaresItemIds",
+        "makeAreaPerimCompareItem",
+        "makeAreaRectangleItem",
+        "makeAreaUnitSquaresItem",
+        "makePerimeterPolygonItem",
+        "makePerimeterRectangleItem",
+        "makePerimeterUnknownSideItem",
+        "makeRectilinearAreaItem",
+        "perimeterPolygonItemIds",
+        "perimeterRectangleItemIds",
+        "perimeterUnknownSideItemIds",
+        "perimPolygonId",
+        "perimRectId",
+        "perimUnknownSideId",
+        "rectiId",
+        "rectilinearAreaItemIds"
+      ],
+      "functions": [
+        "areaPerimCmpId",
+        "areaPerimCompareItemIds",
+        "areaRectangleItemIds",
+        "areaRectId",
+        "areaSquaresId",
+        "areaSquaresItemIds",
+        "difficulty",
+        "makeAreaPerimCompareItem",
+        "makeAreaRectangleItem",
+        "makeAreaUnitSquaresItem",
+        "makePerimeterPolygonItem",
+        "makePerimeterRectangleItem",
+        "makePerimeterUnknownSideItem",
+        "makeRectilinearAreaItem",
+        "perimeterPolygonItemIds",
+        "perimeterRectangleItemIds",
+        "perimeterUnknownSideItemIds",
+        "perimPolygonId",
+        "perimRectId",
+        "perimUnknownSideId",
+        "rectiId",
+        "rectilinearAreaItemIds"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [
+        "AreaPerimVariant"
+      ],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Practice item definitions and ID generators for a math curriculum topic.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/curriculum/arithmeticItems.ts",
+      "ext": ".ts",
+      "bytes": 6196,
+      "lines": 176,
+      "sha1": "ca2fb84ced34",
+      "imports": [
+        "../../types/math"
+      ],
+      "exports": [
+        "addId",
+        "divIdStd",
+        "generateAdditionItems",
+        "generateDivisionItemsRange",
+        "generateSubtractionItems",
+        "makeAdditionItem",
+        "makeDivisionItem",
+        "makeSubtractionItem",
+        "subId"
+      ],
+      "functions": [
+        "addId",
+        "arithDifficulty",
+        "clampRange",
+        "divIdStd",
+        "generateAdditionItems",
+        "generateDivisionItemsRange",
+        "generateSubtractionItems",
+        "makeAdditionItem",
+        "makeDivisionItem",
+        "makeSubtractionItem",
+        "randInt",
+        "subId"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Practice item definitions and ID generators for a math curriculum topic.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/curriculum/decimalItems.ts",
+      "ext": ".ts",
+      "bytes": 3070,
+      "lines": 85,
+      "sha1": "cb138e046574",
+      "imports": [
+        "../../types/math"
+      ],
+      "exports": [
+        "decAddId",
+        "decSubId",
+        "fmtDecimal",
+        "generateDecimalItems",
+        "makeDecimalAddItem",
+        "makeDecimalSubItem"
+      ],
+      "functions": [
+        "decAddId",
+        "decimalParams",
+        "decSubId",
+        "fmtDecimal",
+        "generateDecimalItems",
+        "makeDecimalAddItem",
+        "makeDecimalSubItem",
+        "randInt",
+        "round2",
+        "tok"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Practice item definitions and ID generators for a math curriculum topic.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/curriculum/describeItem.ts",
+      "ext": ".ts",
+      "bytes": 6932,
+      "lines": 151,
+      "sha1": "1d0a6870db06",
+      "imports": [
+        "../../types/math",
+        "./multiplicationItems"
+      ],
+      "exports": [
+        "describeItem",
+        "ItemDescription",
+        "itemPrompt"
+      ],
+      "functions": [
+        "describeItem",
+        "itemPrompt"
+      ],
+      "classes": [],
+      "interfaces": [
+        "ItemDescription"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Curriculum module: item definitions, skill mappings, or content utilities.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/curriculum/fractionItems.ts",
+      "ext": ".ts",
+      "bytes": 4966,
+      "lines": 138,
+      "sha1": "0b638d40ee02",
+      "imports": [
+        "../../types/math"
+      ],
+      "exports": [
+        "fracCmpId",
+        "fracEqId",
+        "fracNlId",
+        "generateFractionCompareItems",
+        "generateFractionEquivalentItems",
+        "generateFractionItems",
+        "makeFractionCompareItem",
+        "makeFractionEquivalentItem",
+        "makeFractionNumberLineItem"
+      ],
+      "functions": [
+        "fracCmpId",
+        "fracEqId",
+        "fracNlId",
+        "fracRanges",
+        "gcd",
+        "generateFractionCompareItems",
+        "generateFractionEquivalentItems",
+        "generateFractionItems",
+        "makeFractionCompareItem",
+        "makeFractionEquivalentItem",
+        "makeFractionNumberLineItem",
+        "randInt"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Practice item definitions and ID generators for a math curriculum topic.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/curriculum/geometryItems.ts",
+      "ext": ".ts",
+      "bytes": 3486,
+      "lines": 119,
+      "sha1": "534882cc2be8",
+      "imports": [
+        "../../types/math"
+      ],
+      "exports": [
+        "ALL_GEO_ITEMS",
+        "GEO_ITEM_MAP",
+        "geoItemIds"
+      ],
+      "functions": [
+        "geoItem",
+        "geoItemIds"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Practice item definitions and ID generators for a math curriculum topic.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/curriculum/makeItemFromId.ts",
+      "ext": ".ts",
+      "bytes": 6609,
+      "lines": 161,
+      "sha1": "7c6a9501ce4a",
+      "imports": [
+        "../../types/math",
+        "./areaItems",
+        "./arithmeticItems",
+        "./decimalItems",
+        "./fractionItems",
+        "./geometryItems",
+        "./measurementItems",
+        "./mulPropertiesItems",
+        "./multiplicationItems",
+        "./numberTheoryItems",
+        "./patternItems",
+        "./roundingItems",
+        "./twoStepItems",
+        "./wordProblemItems"
+      ],
+      "exports": [
+        "makeItemFromId"
+      ],
+      "functions": [
+        "makeItemFromId"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Curriculum module: item definitions, skill mappings, or content utilities.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/curriculum/measurementItems.ts",
+      "ext": ".ts",
+      "bytes": 5374,
+      "lines": 142,
+      "sha1": "f131c78a161e",
+      "imports": [
+        "../../types/math"
+      ],
+      "exports": [
+        "bargId",
+        "clckId",
+        "etimeId",
+        "lplotId",
+        "makeBarGraphItem",
+        "makeElapsedTimeItem",
+        "makeLinePlotItem",
+        "makeMeasurementWordProblem",
+        "makeTimeItem",
+        "MeasSchema",
+        "mwrdId"
+      ],
+      "functions": [
+        "bargId",
+        "clckId",
+        "etimeId",
+        "fmtTime",
+        "lplotId",
+        "makeBarGraphItem",
+        "makeElapsedTimeItem",
+        "makeLinePlotItem",
+        "makeMeasurementWordProblem",
+        "makeTimeItem",
+        "mwrdId",
+        "pad",
+        "wrapH",
+        "wrapM"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [
+        "MeasSchema"
+      ],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Practice item definitions and ID generators for a math curriculum topic.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/curriculum/mulPropertiesItems.ts",
+      "ext": ".ts",
+      "bytes": 4763,
+      "lines": 136,
+      "sha1": "7aad89f1dcf1",
+      "imports": [
+        "../../types/math"
+      ],
+      "exports": [
+        "makePropAssociativeItem",
+        "makePropCommutativityItem",
+        "makePropDistributiveItem",
+        "makePropIdentityItem",
+        "makePropZeroItem",
+        "mulPropertyItemIds",
+        "propAscId",
+        "propCmtId",
+        "propDistId",
+        "propIdtId",
+        "propZeroId"
+      ],
+      "functions": [
+        "makePropAssociativeItem",
+        "makePropCommutativityItem",
+        "makePropDistributiveItem",
+        "makePropIdentityItem",
+        "makePropZeroItem",
+        "mulPropertyItemIds",
+        "propAscId",
+        "propCmtId",
+        "propDistId",
+        "propIdtId",
+        "propZeroId"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Practice item definitions and ID generators for a math curriculum topic.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/curriculum/multiplicationItems.ts",
+      "ext": ".ts",
+      "bytes": 6539,
+      "lines": 210,
+      "sha1": "55801d4f46bc",
+      "imports": [
+        "../../types/math"
+      ],
+      "exports": [
+        "ALL_ITEMS",
+        "divId",
+        "generateDivisionItems",
+        "generateMultipleTablesItems",
+        "generateMultiplicationItems",
+        "generateMultiplicationRangeItems",
+        "generateSingleTableItems",
+        "generateUnknownFactorItems",
+        "ITEM_MAP",
+        "makeMultiplicationItem",
+        "mulId",
+        "sampleWithReplacement",
+        "TABLE_MAX",
+        "TABLE_MIN",
+        "tableFromItemId",
+        "unkId"
+      ],
+      "functions": [
+        "difficultyFor",
+        "divId",
+        "generateDivisionItems",
+        "generateMultipleTablesItems",
+        "generateMultiplicationItems",
+        "generateMultiplicationRangeItems",
+        "generateSingleTableItems",
+        "generateUnknownFactorItems",
+        "makeMultiplicationItem",
+        "mulId",
+        "randInt",
+        "sampleWithReplacement",
+        "tableFromItemId",
+        "unkId"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Practice item definitions and ID generators for a math curriculum topic.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/curriculum/numberTheoryItems.ts",
+      "ext": ".ts",
+      "bytes": 2402,
+      "lines": 83,
+      "sha1": "f7c952bd5d2e",
+      "imports": [
+        "../../types/math"
+      ],
+      "exports": [
+        "factorId",
+        "generateNumberTheoryItems",
+        "isPrime",
+        "makeFactorItem",
+        "makePrimeItem",
+        "primeId"
+      ],
+      "functions": [
+        "factorId",
+        "generateNumberTheoryItems",
+        "isPrime",
+        "makeFactorItem",
+        "makePrimeItem",
+        "maxN",
+        "primeId",
+        "randInt"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Practice item definitions and ID generators for a math curriculum topic.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/curriculum/patternItems.ts",
+      "ext": ".ts",
+      "bytes": 1059,
+      "lines": 37,
+      "sha1": "a8eacc6d37a9",
+      "imports": [
+        "../../types/math"
+      ],
+      "exports": [
+        "apatId",
+        "makeArithmeticPatternItem"
+      ],
+      "functions": [
+        "apatId",
+        "makeArithmeticPatternItem"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Practice item definitions and ID generators for a math curriculum topic.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/curriculum/roundingItems.ts",
+      "ext": ".ts",
+      "bytes": 2299,
+      "lines": 71,
+      "sha1": "8828b4e0211d",
+      "imports": [
+        "../../types/math"
+      ],
+      "exports": [
+        "generateRoundingItems",
+        "makeRoundingItem",
+        "roundId",
+        "roundToNearest"
+      ],
+      "functions": [
+        "generateRoundingItems",
+        "makeRoundingItem",
+        "placesFor",
+        "randInt",
+        "rangeFor",
+        "roundId",
+        "roundToNearest"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Practice item definitions and ID generators for a math curriculum topic.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/curriculum/twoStepItems.ts",
+      "ext": ".ts",
+      "bytes": 2124,
+      "lines": 58,
+      "sha1": "38bfdc532d21",
+      "imports": [
+        "../../types/math"
+      ],
+      "exports": [
+        "makeTwoStepWordProblem",
+        "TwoStepSchema",
+        "wrd2Id"
+      ],
+      "functions": [
+        "dn",
+        "makeTwoStepWordProblem",
+        "wrd2Id"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [
+        "TwoStepSchema"
+      ],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Practice item definitions and ID generators for a math curriculum topic.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/curriculum/wordProblemItems.ts",
+      "ext": ".ts",
+      "bytes": 3069,
+      "lines": 88,
+      "sha1": "d14490281146",
+      "imports": [
+        "../../types/math"
+      ],
+      "exports": [
+        "generateWordProblemItems",
+        "makeWordProblem",
+        "Schema",
+        "wordId"
+      ],
+      "functions": [
+        "factorMax",
+        "generateWordProblemItems",
+        "makeWordProblem",
+        "randInt",
+        "wordId"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [
+        "Schema"
+      ],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Practice item definitions and ID generators for a math curriculum topic.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/dashboard/ProfileSetup.tsx",
+      "ext": ".tsx",
+      "bytes": 4277,
+      "lines": 147,
+      "sha1": "a2531e013f19",
+      "imports": [
+        "../../db/repositories",
+        "../../types/math",
+        "../../utils/id",
+        "react"
+      ],
+      "exports": [
+        "ProfileSetup"
+      ],
+      "functions": [
+        "handleSubmit",
+        "ProfileSetup"
+      ],
+      "classes": [],
+      "interfaces": [
+        "Props"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Dashboard/profile setup/student navigation feature.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/dashboard/StudentDashboard.tsx",
+      "ext": ".tsx",
+      "bytes": 15839,
+      "lines": 330,
+      "sha1": "b10482043981",
+      "imports": [
+        "../../db/repositories",
+        "../../types/math",
+        "../curriculum/describeItem",
+        "../stats/statsEngine",
+        "../stats/todayAchievement",
+        "../stats/TodayAchievementSection",
+        "../time/clock",
+        "react"
+      ],
+      "exports": [
+        "PracticeOp",
+        "StudentDashboard"
+      ],
+      "functions": [
+        "Chip",
+        "handleStartReview",
+        "StudentDashboard"
+      ],
+      "classes": [],
+      "interfaces": [
+        "DueGroup",
+        "Props",
+        "QuickStats"
+      ],
+      "types": [
+        "PracticeOp"
+      ],
+      "components": [
+        "Chip"
+      ],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Dashboard/profile setup/student navigation feature.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/diagnosis/diagnosticCompletion.ts",
+      "ext": ".ts",
+      "bytes": 222,
+      "lines": 9,
+      "sha1": "84884bc11d9a",
+      "imports": [
+        "../sync/driveSync"
+      ],
+      "exports": [],
+      "functions": [
+        "syncDiagnosticCompletionIfSignedIn"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Support module that imports project/external dependencies.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/diagnosis/diagnosticPersistence.ts",
+      "ext": ".ts",
+      "bytes": 383,
+      "lines": 11,
+      "sha1": "f7290f9eb29f",
+      "imports": [
+        "../learning/recordAnswer"
+      ],
+      "exports": [],
+      "functions": [
+        "recordDiagnosticAnswerWithRetry"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Support module that imports project/external dependencies.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/diagnosis/diagnosticPlanner.ts",
+      "ext": ".ts",
+      "bytes": 3582,
+      "lines": 87,
+      "sha1": "19440e96b108",
+      "imports": [
+        "../../types/math",
+        "../curriculum/arithmeticItems",
+        "../curriculum/multiplicationItems",
+        "../curriculum/wordProblemItems"
+      ],
+      "exports": [
+        "buildDiagnosticPlan",
+        "diagnosticItemSkillId",
+        "DiagnosticPlan"
+      ],
+      "functions": [
+        "buildDiagnosticPlan",
+        "diagnosticItemSkillId"
+      ],
+      "classes": [],
+      "interfaces": [
+        "DiagnosticPlan"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Exports reusable code: buildDiagnosticPlan, diagnosticItemSkillId, DiagnosticPlan.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/diagnosis/DiagnosticSession.tsx",
+      "ext": ".tsx",
+      "bytes": 17708,
+      "lines": 558,
+      "sha1": "205e77e71da1",
+      "imports": [
+        "../../components/NumPad",
+        "../../db/repositories",
+        "../../types/math",
+        "../../utils/id",
+        "../learning/learningEvents",
+        "../mastery/misconceptionEngine",
+        "../practice/answerChecker",
+        "../practice/QuestionRenderer",
+        "../scheduler/scheduler",
+        "../time/clock",
+        "./diagnosticPersistence",
+        "./diagnosticPlanner",
+        "react"
+      ],
+      "exports": [
+        "DiagnosticSession"
+      ],
+      "functions": [
+        "complete",
+        "DiagnosticSession",
+        "onKey"
+      ],
+      "classes": [],
+      "interfaces": [
+        "Props",
+        "QuestionResult"
+      ],
+      "types": [
+        "DiagPhase",
+        "SaveState"
+      ],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Exports reusable code: DiagnosticSession.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/learning/eventRebuild.ts",
+      "ext": ".ts",
+      "bytes": 6674,
+      "lines": 162,
+      "sha1": "5e6f94d7714c",
+      "imports": [
+        "../../db/dexie",
+        "../../types/math",
+        "../curriculum/makeItemFromId",
+        "../mastery/misconceptionEngine",
+        "../multiplication/masteryEngine",
+        "../multiplication/types",
+        "../practice/answerChecker",
+        "../scheduler/scheduler",
+        "./learningEvents"
+      ],
+      "exports": [],
+      "functions": [
+        "gradeFromEvent",
+        "rebuildItemStatesFromEvents",
+        "rebuildMultFactStatsFromEvents"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Local persistence/database layer.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/learning/learningEvents.ts",
+      "ext": ".ts",
+      "bytes": 2844,
+      "lines": 78,
+      "sha1": "f4a2f695ba25",
+      "imports": [
+        "../../db/dexie",
+        "../../types/math",
+        "../multiplication/types"
+      ],
+      "exports": [
+        "canonicalStatusToLegacyMasteryLevel",
+        "canonicalStatusToMultiplicationState",
+        "MathAnswerEvent",
+        "MathEventMode",
+        "MathFactStatus",
+        "multiplicationStateToCanonicalStatus"
+      ],
+      "functions": [
+        "canonicalStatusToLegacyMasteryLevel",
+        "canonicalStatusToMultiplicationState",
+        "multiplicationStateToCanonicalStatus",
+        "recordAnswerEvent"
+      ],
+      "classes": [],
+      "interfaces": [
+        "MathAnswerEvent"
+      ],
+      "types": [
+        "MathEventMode",
+        "MathFactStatus"
+      ],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Local persistence/database layer.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/learning/recordAnswer.ts",
+      "ext": ".ts",
+      "bytes": 2588,
+      "lines": 62,
+      "sha1": "79ec8ce4d3c9",
+      "imports": [
+        "../../db/dexie",
+        "../../db/repositories",
+        "../../types/math",
+        "../multiplication/types",
+        "./learningEvents"
+      ],
+      "exports": [
+        "FinalizeQuizPayload",
+        "PracticeAnswerPayload",
+        "RelatedEvidenceWrite"
+      ],
+      "functions": [
+        "finalizeQuizSession",
+        "recordPracticeAnswer",
+        "recordQuizFirstAttempt",
+        "recordQuizRetry"
+      ],
+      "classes": [],
+      "interfaces": [
+        "FinalizeQuizPayload",
+        "PracticeAnswerPayload",
+        "RelatedEvidenceWrite"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Local persistence/database layer.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/mastery/grade3MasteryMap.ts",
+      "ext": ".ts",
+      "bytes": 10784,
+      "lines": 283,
+      "sha1": "831ce659fd85",
+      "imports": [],
+      "exports": [
+        "getGrade3Skill",
+        "getGrade3SkillsByDomain",
+        "GRADE3_MASTERY_MAP",
+        "Grade3Domain",
+        "isGrade3SkillId",
+        "MasterySkillNode",
+        "SkillStatus"
+      ],
+      "functions": [
+        "getGrade3Skill",
+        "getGrade3SkillsByDomain",
+        "isGrade3SkillId"
+      ],
+      "classes": [],
+      "interfaces": [
+        "MasterySkillNode"
+      ],
+      "types": [
+        "Grade3Domain",
+        "SkillStatus"
+      ],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Grade 3 mastery map: skill definitions, prerequisites, and item-to-skill mapping.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/mastery/Grade3MasteryMapPage.tsx",
+      "ext": ".tsx",
+      "bytes": 12154,
+      "lines": 365,
+      "sha1": "9a04fc742a3a",
+      "imports": [
+        "../../db/repositories",
+        "../../types/math",
+        "../curriculum/makeItemFromId",
+        "../time/clock",
+        "./grade3MasteryMap",
+        "./ParentNextActionCard",
+        "./SkillDetailPanel",
+        "./skillMapping",
+        "./skillMasteryEngine",
+        "./skillPracticePlanner",
+        "./SkillTile",
+        "./todayPlanEngine",
+        "react"
+      ],
+      "exports": [
+        "Grade3MasteryMapPage"
+      ],
+      "functions": [
+        "buildCompleteSummaries",
+        "computeUnmetPrereqNames",
+        "Grade3MasteryMapPage",
+        "LegendItem"
+      ],
+      "classes": [],
+      "interfaces": [
+        "Props"
+      ],
+      "types": [
+        "SkillSummaryStatus"
+      ],
+      "components": [
+        "LegendItem"
+      ],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Grade 3 mastery map UI: skill display, detail panels, and parent action cards.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/mastery/misconceptionEngine.ts",
+      "ext": ".ts",
+      "bytes": 7002,
+      "lines": 192,
+      "sha1": "f49ae6435219",
+      "imports": [
+        "../../types/math",
+        "fraction.js"
+      ],
+      "exports": [
+        "detectMistakes"
+      ],
+      "functions": [
+        "detectDivision",
+        "detectFractionCompare",
+        "detectFractionEquivalent",
+        "detectMistakes",
+        "detectMultiplication"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Misconception detection engine: identifies common mistake patterns in student answers.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/mastery/ParentNextActionCard.tsx",
+      "ext": ".tsx",
+      "bytes": 8179,
+      "lines": 272,
+      "sha1": "693832234bf4",
+      "imports": [
+        "../../types/math",
+        "./grade3MasteryMap",
+        "./skillMasteryEngine",
+        "./todayPlanEngine",
+        "react"
+      ],
+      "exports": [
+        "ParentNextActionCard"
+      ],
+      "functions": [
+        "parentActionText",
+        "ParentNextActionCard",
+        "skillTitle"
+      ],
+      "classes": [],
+      "interfaces": [
+        "Props"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Grade 3 mastery map UI: skill display, detail panels, and parent action cards.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/mastery/SkillDetailPanel.tsx",
+      "ext": ".tsx",
+      "bytes": 7483,
+      "lines": 291,
+      "sha1": "352a13a785d3",
+      "imports": [
+        "./grade3MasteryMap",
+        "./skillMasteryEngine",
+        "react"
+      ],
+      "exports": [
+        "SkillDetailPanel"
+      ],
+      "functions": [
+        "formatPattern",
+        "SkillDetailPanel"
+      ],
+      "classes": [],
+      "interfaces": [
+        "Props"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Grade 3 mastery map UI: skill display, detail panels, and parent action cards.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/mastery/skillMapping.ts",
+      "ext": ".ts",
+      "bytes": 6944,
+      "lines": 119,
+      "sha1": "eb33a73d953f",
+      "imports": [
+        "../../types/math"
+      ],
+      "exports": [
+        "inferGrade3SkillId"
+      ],
+      "functions": [
+        "inferGrade3SkillId",
+        "isMultOf10",
+        "isSingleDigit"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Grade 3 skill-to-item mapping: links curriculum items to mastery skill IDs.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/mastery/skillMasteryEngine.ts",
+      "ext": ".ts",
+      "bytes": 4990,
+      "lines": 141,
+      "sha1": "76acc3b500f3",
+      "imports": [
+        "../../types/math",
+        "../learning/learningEvents",
+        "./skillMapping"
+      ],
+      "exports": [
+        "deriveGrade3SkillSummaries",
+        "DeriveGrade3SkillSummariesArgs",
+        "SkillSummaryStatus",
+        "StudentSkillSummary"
+      ],
+      "functions": [
+        "classifyStatus",
+        "deriveGrade3SkillSummaries"
+      ],
+      "classes": [],
+      "interfaces": [
+        "DeriveGrade3SkillSummariesArgs",
+        "StudentSkillSummary"
+      ],
+      "types": [
+        "SkillSummaryStatus"
+      ],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Grade 3 skill mastery engine: derives per-skill summaries from events and item states.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/mastery/skillPracticePlanner.ts",
+      "ext": ".ts",
+      "bytes": 25710,
+      "lines": 702,
+      "sha1": "a79e91066b1b",
+      "imports": [
+        "../../types/math",
+        "../curriculum/areaItems",
+        "../curriculum/arithmeticItems",
+        "../curriculum/fractionItems",
+        "../curriculum/geometryItems",
+        "../curriculum/measurementItems",
+        "../curriculum/mulPropertiesItems",
+        "../curriculum/multiplicationItems",
+        "../curriculum/patternItems",
+        "../curriculum/roundingItems",
+        "../curriculum/twoStepItems",
+        "../curriculum/wordProblemItems"
+      ],
+      "exports": [
+        "PlanOptions",
+        "planPracticeForSkill"
+      ],
+      "functions": [
+        "add2DigitRegroupingItemIds",
+        "add3DigitRegroupingItemIds",
+        "arithmeticPatternItemIds",
+        "divisionWordItemIds",
+        "divItemIds",
+        "elapsedTimeItemIds",
+        "equalGroupsWordItemIds",
+        "fracCmpItemIds",
+        "fracEquivItemIds",
+        "fracNumberLineItemIds",
+        "fracUnitItemIds",
+        "grade3AdvancedMulItemIds",
+        "grade3BasicMulItemIds",
+        "linePlotItemIds",
+        "measurementWordItemIds",
+        "mulItemIds",
+        "mulMultipleOf10ItemIds",
+        "planPracticeForSkill",
+        "roundNearest10or100ItemIds",
+        "scaledBarGraphItemIds",
+        "sub2DigitBorrowingItemIds",
+        "sub3DigitBorrowingItemIds",
+        "timeToMinuteItemIds",
+        "twoStepItemIds"
+      ],
+      "classes": [],
+      "interfaces": [
+        "PlanOptions"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Grade 3 skill practice planner: maps skill IDs to SessionConfig for the mastery map.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/mastery/SkillTile.tsx",
+      "ext": ".tsx",
+      "bytes": 3478,
+      "lines": 115,
+      "sha1": "bb55a0949a11",
+      "imports": [
+        "./grade3MasteryMap",
+        "./skillMasteryEngine",
+        "react"
+      ],
+      "exports": [
+        "SkillTile"
+      ],
+      "functions": [
+        "SkillTile"
+      ],
+      "classes": [],
+      "interfaces": [
+        "Props"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Grade 3 mastery map UI: skill display, detail panels, and parent action cards.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/mastery/todayPlanEngine.ts",
+      "ext": ".ts",
+      "bytes": 7086,
+      "lines": 191,
+      "sha1": "e0921cdb9c26",
+      "imports": [
+        "../../types/math",
+        "../curriculum/makeItemFromId",
+        "./grade3MasteryMap",
+        "./skillMapping",
+        "./skillMasteryEngine",
+        "./skillPracticePlanner"
+      ],
+      "exports": [
+        "planToday",
+        "PlanTodayArgs",
+        "TodayPlan"
+      ],
+      "functions": [
+        "buildReview",
+        "buildWarmup",
+        "estimateMinutes",
+        "pickFocusSkill",
+        "planToday",
+        "prerequisitesSatisfied",
+        "unmetPrereqNames"
+      ],
+      "classes": [],
+      "interfaces": [
+        "PlanTodayArgs",
+        "TodayPlan"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Today's plan engine: determines which skills to review/practice based on mastery summaries.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/multiplication/masteryEngine.ts",
+      "ext": ".ts",
+      "bytes": 4049,
+      "lines": 116,
+      "sha1": "f12b6d8d5a5f",
+      "imports": [
+        "../learning/learningEvents",
+        "./multiplicationFacts",
+        "./types"
+      ],
+      "exports": [
+        "applyAnswerToStats",
+        "computeMasteryState",
+        "deriveMasteryFromEvents",
+        "FAST_MS",
+        "NORMAL_MS",
+        "scoreDelta",
+        "SLOW_MS"
+      ],
+      "functions": [
+        "applyAnswerToStats",
+        "computeMasteryState",
+        "deriveMasteryFromEvents",
+        "scoreDelta"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Exports reusable code: applyAnswerToStats, computeMasteryState, deriveMasteryFromEvents, FAST_MS, NORMAL_MS.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/multiplication/multiplicationFacts.ts",
+      "ext": ".ts",
+      "bytes": 2043,
+      "lines": 69,
+      "sha1": "ebfd65ddf346",
+      "imports": [
+        "./types"
+      ],
+      "exports": [
+        "ALL_FACT_KEYS",
+        "createInitialFactStats",
+        "FACT_MAX",
+        "FACT_MIN",
+        "factKey",
+        "getAllFactKeys",
+        "getRelatedFacts",
+        "parseFactKey"
+      ],
+      "functions": [
+        "createInitialFactStats",
+        "factKey",
+        "getAllFactKeys",
+        "getRelatedFacts",
+        "parseFactKey"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Exports reusable code: ALL_FACT_KEYS, createInitialFactStats, FACT_MAX, FACT_MIN, factKey.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/multiplication/MultiplicationMasteryGrid.tsx",
+      "ext": ".tsx",
+      "bytes": 3714,
+      "lines": 83,
+      "sha1": "47b9ff457c7e",
+      "imports": [
+        "./multiplicationFacts",
+        "./types"
+      ],
+      "exports": [
+        "MultiplicationMasteryGrid"
+      ],
+      "functions": [
+        "MultiplicationMasteryGrid"
+      ],
+      "classes": [],
+      "interfaces": [
+        "Props"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Exports reusable code: MultiplicationMasteryGrid.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/multiplication/MultiplicationQuizPage.tsx",
+      "ext": ".tsx",
+      "bytes": 30119,
+      "lines": 845,
+      "sha1": "1214311663df",
+      "imports": [
+        "../../db/dexie",
+        "../../types/math",
+        "../../utils/id",
+        "../audio/speech",
+        "../learning/recordAnswer",
+        "../time/clock",
+        "./masteryEngine",
+        "./multiplicationFacts",
+        "./MultiplicationMasteryGrid",
+        "./practiceRecommendation",
+        "./quizQuestionSelector",
+        "./types",
+        "react"
+      ],
+      "exports": [
+        "MultiplicationQuizPage"
+      ],
+      "functions": [
+        "FactChip",
+        "MultiplicationQuizPage",
+        "recommendedPracticeConfig",
+        "SetupScreen",
+        "StatBox",
+        "SummaryScreen"
+      ],
+      "classes": [],
+      "interfaces": [
+        "Props"
+      ],
+      "types": [
+        "Phase"
+      ],
+      "components": [
+        "FactChip",
+        "SetupScreen",
+        "StatBox",
+        "SummaryScreen"
+      ],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Local persistence/database layer.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/multiplication/practiceRecommendation.ts",
+      "ext": ".ts",
+      "bytes": 2639,
+      "lines": 75,
+      "sha1": "7ed566ef05b8",
+      "imports": [
+        "./masteryEngine",
+        "./multiplicationFacts",
+        "./types"
+      ],
+      "exports": [
+        "generateRecommendations"
+      ],
+      "functions": [
+        "generateRecommendations"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Exports reusable code: generateRecommendations.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/multiplication/quizQuestionSelector.ts",
+      "ext": ".ts",
+      "bytes": 4017,
+      "lines": 124,
+      "sha1": "caef362f3062",
+      "imports": [
+        "./multiplicationFacts",
+        "./types"
+      ],
+      "exports": [
+        "selectQuizQuestions"
+      ],
+      "functions": [
+        "balancedSample",
+        "daysSince",
+        "isDueForReview",
+        "isMaintenance",
+        "isStaleOrNew",
+        "isWeak",
+        "selectQuizQuestions",
+        "take"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Exports reusable code: selectQuizQuestions.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/multiplication/types.ts",
+      "ext": ".ts",
+      "bytes": 1749,
+      "lines": 68,
+      "sha1": "9fa6e35d6a59",
+      "imports": [],
+      "exports": [
+        "MasteryState",
+        "MultiplicationFactKey",
+        "MultiplicationFactStats",
+        "QuizAnswerLog",
+        "QuizQuestion",
+        "QuizSession"
+      ],
+      "functions": [],
+      "classes": [],
+      "interfaces": [
+        "MultiplicationFactStats",
+        "QuizAnswerLog",
+        "QuizQuestion",
+        "QuizSession"
+      ],
+      "types": [
+        "MasteryState",
+        "MultiplicationFactKey"
+      ],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Exports reusable code: MasteryState, MultiplicationFactKey, MultiplicationFactStats, QuizAnswerLog, QuizQuestion.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/practice/answerChecker.ts",
+      "ext": ".ts",
+      "bytes": 2473,
+      "lines": 72,
+      "sha1": "6e0b5c4ef636",
+      "imports": [
+        "../../types/math"
+      ],
+      "exports": [
+        "checkAnswer",
+        "CheckResult",
+        "classifyResponse",
+        "FAST_MS",
+        "NORMAL_MS"
+      ],
+      "functions": [
+        "checkAnswer",
+        "classifyResponse"
+      ],
+      "classes": [],
+      "interfaces": [
+        "CheckResult"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Practice session UI and/or quiz interaction logic.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/practice/hintEngine.ts",
+      "ext": ".ts",
+      "bytes": 18068,
+      "lines": 373,
+      "sha1": "e9b10f66fedf",
+      "imports": [
+        "../../types/math"
+      ],
+      "exports": [
+        "getHint",
+        "HintResult"
+      ],
+      "functions": [
+        "addHint",
+        "areaRectHint",
+        "areaSquaresHint",
+        "divHint",
+        "fracCmpHint",
+        "fracEquivHint",
+        "fracNlHint",
+        "genericHint",
+        "genericWordHint",
+        "getHint",
+        "hint",
+        "measurementWordHint",
+        "mulHint",
+        "perimHint",
+        "singleStepWordHint",
+        "subHint",
+        "twoStepWordHint",
+        "unknownFactorHint",
+        "wordProblemHint"
+      ],
+      "classes": [],
+      "interfaces": [
+        "HintResult"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Practice session UI and/or quiz interaction logic.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/practice/metrics.ts",
+      "ext": ".ts",
+      "bytes": 3213,
+      "lines": 91,
+      "sha1": "42dc424796c9",
+      "imports": [
+        "../../types/math"
+      ],
+      "exports": [
+        "AttemptOutcome",
+        "classifyAttempts",
+        "derivePracticeMetrics",
+        "PracticeMetrics"
+      ],
+      "functions": [
+        "classifyAttempts",
+        "derivePracticeMetrics"
+      ],
+      "classes": [],
+      "interfaces": [
+        "PracticeMetrics"
+      ],
+      "types": [
+        "AttemptOutcome"
+      ],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Practice session UI and/or quiz interaction logic.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/practice/practiceNavigation.ts",
+      "ext": ".ts",
+      "bytes": 290,
+      "lines": 8,
+      "sha1": "36ee3e6094ad",
+      "imports": [],
+      "exports": [
+        "PracticeDoneDestination",
+        "resolvePracticeDoneDestination"
+      ],
+      "functions": [
+        "resolvePracticeDoneDestination"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [
+        "PracticeDoneDestination"
+      ],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Practice session UI and/or quiz interaction logic.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/practice/PracticeScreen.tsx",
+      "ext": ".tsx",
+      "bytes": 23681,
+      "lines": 552,
+      "sha1": "0c88eb79dc04",
+      "imports": [
+        "../../components/NumPad",
+        "../../components/SessionSummary",
+        "../../components/SettingsOverlay",
+        "../../db/dexie",
+        "../../types/math",
+        "../ai/TutorChat",
+        "../audio/speech",
+        "../visuals/MathPrompt",
+        "../visuals/VisualModel",
+        "../visuals/visualModelUtils",
+        "./hintEngine",
+        "./usePracticeSession",
+        "react"
+      ],
+      "exports": [
+        "PracticeScreen"
+      ],
+      "functions": [
+        "KbChip",
+        "onKey",
+        "PracticeScreen",
+        "run",
+        "submitChoice"
+      ],
+      "classes": [],
+      "interfaces": [
+        "Props"
+      ],
+      "types": [],
+      "components": [
+        "KbChip"
+      ],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Local persistence/database layer.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/practice/QuestionRenderer.tsx",
+      "ext": ".tsx",
+      "bytes": 2873,
+      "lines": 106,
+      "sha1": "5d70749f10f0",
+      "imports": [
+        "../../types/math",
+        "../visuals/VisualModel",
+        "react"
+      ],
+      "exports": [
+        "LearningRenderMode",
+        "QuestionRenderer"
+      ],
+      "functions": [
+        "QuestionRenderer"
+      ],
+      "classes": [],
+      "interfaces": [
+        "Props"
+      ],
+      "types": [
+        "LearningRenderMode"
+      ],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Practice session UI and/or quiz interaction logic.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/practice/usePracticeSession.ts",
+      "ext": ".ts",
+      "bytes": 22945,
+      "lines": 540,
+      "sha1": "b699462b274f",
+      "imports": [
+        "../../components/opSpecs",
+        "../../db/dexie",
+        "../../db/repositories",
+        "../../types/math",
+        "../../utils/id",
+        "../../utils/rng",
+        "../adaptive/adaptiveItemSelector",
+        "../adaptive/candidatePools",
+        "../adaptive/relatedEvidence",
+        "../adaptive/relatedItemMapping",
+        "../curriculum/arithmeticItems",
+        "../curriculum/decimalItems",
+        "../curriculum/fractionItems",
+        "../curriculum/makeItemFromId",
+        "../curriculum/multiplicationItems",
+        "../curriculum/roundingItems",
+        "../learning/recordAnswer",
+        "../mastery/misconceptionEngine",
+        "../scheduler/scheduler",
+        "../time/clock",
+        "./answerChecker",
+        "./metrics",
+        "react"
+      ],
+      "exports": [
+        "CorrectResult",
+        "LastSessionSummary",
+        "SessionState",
+        "usePracticeSession"
+      ],
+      "functions": [
+        "getStaticItem",
+        "usePracticeSession"
+      ],
+      "classes": [],
+      "interfaces": [
+        "CorrectResult",
+        "LastSessionSummary",
+        "SessionState"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [
+        "usePracticeSession"
+      ],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Local persistence/database layer.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/scheduler/fsrsAdapter.ts",
+      "ext": ".ts",
+      "bytes": 4144,
+      "lines": 114,
+      "sha1": "943fb8fbf61e",
+      "imports": [
+        "../../types/math",
+        "ts-fsrs"
+      ],
+      "exports": [
+        "applyFsrsReview",
+        "FsrsStatePatch"
+      ],
+      "functions": [
+        "applyFsrsReview",
+        "stateToCard"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [
+        "FsrsStatePatch"
+      ],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "FSRS spaced-repetition scheduler: session planning and card state updates.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/scheduler/scheduler.ts",
+      "ext": ".ts",
+      "bytes": 9558,
+      "lines": 262,
+      "sha1": "0dcf451c3609",
+      "imports": [
+        "../../types/math",
+        "./fsrsAdapter"
+      ],
+      "exports": [
+        "applyRelatedEvidence",
+        "applyReview",
+        "ApplyReviewOptions",
+        "createInitialState",
+        "fsrsInterval",
+        "fsrsRetrievability",
+        "planSession",
+        "planTableSession",
+        "RELATED_EVIDENCE_GRADE",
+        "SessionPlan",
+        "TARGET_RETENTION",
+        "updateMasteryLevel"
+      ],
+      "functions": [
+        "applyRelatedEvidence",
+        "applyReview",
+        "createInitialState",
+        "fsrsInterval",
+        "fsrsRetrievability",
+        "planSession",
+        "planTableSession",
+        "rollingMedian",
+        "updateMasteryLevel"
+      ],
+      "classes": [],
+      "interfaces": [
+        "ApplyReviewOptions",
+        "SessionPlan"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "FSRS spaced-repetition scheduler: session planning and card state updates.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/settings/SettingsPage.tsx",
+      "ext": ".tsx",
+      "bytes": 25536,
+      "lines": 516,
+      "sha1": "6f6f57162aee",
+      "imports": [
+        "../../db/repositories",
+        "../../types/math",
+        "../ai/aiConfig",
+        "../ai/gemini",
+        "../auth/googleAuth",
+        "../sync/driveSync",
+        "../theme/themes",
+        "../time/clock",
+        "./updateCheck",
+        "react"
+      ],
+      "exports": [
+        "SettingsPage"
+      ],
+      "functions": [
+        "applyUpdate",
+        "buildId",
+        "buildLabel",
+        "checkForUpdates",
+        "fmt",
+        "fmtBuildTime",
+        "p",
+        "removeAi",
+        "save",
+        "saveAi",
+        "saveName",
+        "Section",
+        "SettingsPage",
+        "shortSha",
+        "SyncRow",
+        "syncTimeLabel",
+        "testAi",
+        "toggleDebugSpeed",
+        "ToggleRow"
+      ],
+      "classes": [],
+      "interfaces": [
+        "Props"
+      ],
+      "types": [],
+      "components": [
+        "Section",
+        "SyncRow",
+        "ToggleRow"
+      ],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Student/app settings UI or persistence.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/settings/updateCheck.ts",
+      "ext": ".ts",
+      "bytes": 2895,
+      "lines": 71,
+      "sha1": "503b43240c21",
+      "imports": [],
+      "exports": [
+        "BuildInfo",
+        "CheckResult",
+        "compareBuilds"
+      ],
+      "functions": [
+        "checkForUpdate",
+        "compareBuilds",
+        "fetchServerBuildInfo",
+        "hasRealSha"
+      ],
+      "classes": [],
+      "interfaces": [
+        "BuildInfo"
+      ],
+      "types": [
+        "CheckResult"
+      ],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Student/app settings UI or persistence.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/stats/DrillHistory.tsx",
+      "ext": ".tsx",
+      "bytes": 11048,
+      "lines": 238,
+      "sha1": "ddab7dad5c92",
+      "imports": [
+        "../../components/MiniCalendar",
+        "../../db/repositories",
+        "../../types/math",
+        "../practice/metrics",
+        "../stats/statsEngine",
+        "../time/clock",
+        "react"
+      ],
+      "exports": [
+        "DrillHistory"
+      ],
+      "functions": [
+        "AttemptDetail",
+        "dateLabel",
+        "DrillHistory",
+        "durationLabel",
+        "loadAttempts",
+        "MetricChip",
+        "modeLabel",
+        "Pill"
+      ],
+      "classes": [],
+      "interfaces": [
+        "Props",
+        "SessionRow"
+      ],
+      "types": [],
+      "components": [
+        "AttemptDetail",
+        "MetricChip",
+        "Pill"
+      ],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Progress/statistics screens or calculations.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/stats/FactStatsTable.tsx",
+      "ext": ".tsx",
+      "bytes": 18207,
+      "lines": 402,
+      "sha1": "7ee75bca3e61",
+      "imports": [
+        "../../db/dexie",
+        "../../db/repositories",
+        "../../types/math",
+        "../../utils/masteryColors",
+        "../curriculum/describeItem",
+        "../curriculum/multiplicationItems",
+        "../learning/learningEvents",
+        "react"
+      ],
+      "exports": [
+        "FactStatsTable"
+      ],
+      "functions": [
+        "bucketOf",
+        "FactStatsTable",
+        "SortBtn",
+        "startPractice",
+        "SummaryStat",
+        "toggleSort",
+        "toggleStatus"
+      ],
+      "classes": [],
+      "interfaces": [
+        "Props"
+      ],
+      "types": [
+        "SortKey",
+        "TypeFilter"
+      ],
+      "components": [
+        "SortBtn",
+        "SummaryStat"
+      ],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Local persistence/database layer.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/stats/GrowthView.tsx",
+      "ext": ".tsx",
+      "bytes": 7090,
+      "lines": 179,
+      "sha1": "80a85d8e2d29",
+      "imports": [
+        "../../db/repositories",
+        "../../types/math",
+        "../time/clock",
+        "./statsEngine",
+        "react"
+      ],
+      "exports": [
+        "GrowthView"
+      ],
+      "functions": [
+        "chipTitle",
+        "Counter",
+        "FactChip",
+        "GrowthGroup",
+        "GrowthView"
+      ],
+      "classes": [],
+      "interfaces": [
+        "Props"
+      ],
+      "types": [],
+      "components": [
+        "Counter",
+        "FactChip",
+        "GrowthGroup"
+      ],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Progress/statistics screens or calculations.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/stats/QuizStatsView.tsx",
+      "ext": ".tsx",
+      "bytes": 5970,
+      "lines": 135,
+      "sha1": "98ba64a795f6",
+      "imports": [
+        "../../components/MiniCalendar",
+        "../../db/repositories",
+        "../multiplication/MultiplicationMasteryGrid",
+        "../multiplication/types",
+        "react"
+      ],
+      "exports": [
+        "QuizStatsView"
+      ],
+      "functions": [
+        "avgSecStr",
+        "FactGroup",
+        "fmt",
+        "QuizStatsView"
+      ],
+      "classes": [],
+      "interfaces": [
+        "Props"
+      ],
+      "types": [],
+      "components": [
+        "FactGroup"
+      ],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Progress/statistics screens or calculations.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/stats/statsEngine.ts",
+      "ext": ".ts",
+      "bytes": 14885,
+      "lines": 395,
+      "sha1": "b93e06926ea3",
+      "imports": [
+        "../../types/math",
+        "../curriculum/describeItem",
+        "../curriculum/multiplicationItems",
+        "../learning/learningEvents"
+      ],
+      "exports": [
+        "addDays",
+        "computeDailyHistory",
+        "computeDayStats",
+        "computeFactGrowth",
+        "computePeriodComparison",
+        "computePeriodStats",
+        "computePerTableStats",
+        "computeStreak",
+        "computeTodayStats",
+        "eventsToAttemptLogs",
+        "eventToAttemptLog",
+        "factTrend",
+        "GrowthPeriod",
+        "growthWindows",
+        "localDateStr",
+        "startOfLocalDay",
+        "startOfMonth",
+        "startOfWeek",
+        "Trend"
+      ],
+      "functions": [
+        "addDays",
+        "classifyGrowth",
+        "computeDailyHistory",
+        "computeDayStats",
+        "computeFactGrowth",
+        "computePeriodComparison",
+        "computePeriodStats",
+        "computePerTableStats",
+        "computeStreak",
+        "computeTodayStats",
+        "eventsToAttemptLogs",
+        "eventToAttemptLog",
+        "factTrend",
+        "factWindowStats",
+        "filterAttempts",
+        "growthWindows",
+        "localDateStr",
+        "sessionMinutes",
+        "startOfLocalDay",
+        "startOfMonth",
+        "startOfWeek"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [
+        "GrowthPeriod",
+        "Trend"
+      ],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Progress/statistics screens or calculations.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/stats/StatsPage.tsx",
+      "ext": ".tsx",
+      "bytes": 9936,
+      "lines": 246,
+      "sha1": "b726365517b7",
+      "imports": [
+        "../../components/MasteryGrid",
+        "../../components/MiniCalendar",
+        "../../components/StatsGraph",
+        "../../db/repositories",
+        "../../types/math",
+        "../stats/statsEngine",
+        "../time/clock",
+        "./DrillHistory",
+        "./FactStatsTable",
+        "./GrowthView",
+        "./QuizStatsView",
+        "react"
+      ],
+      "exports": [
+        "StatsPage"
+      ],
+      "functions": [
+        "buildRange",
+        "daysBetween",
+        "StatsPage",
+        "SummaryPill",
+        "toYMD"
+      ],
+      "classes": [],
+      "interfaces": [
+        "Props"
+      ],
+      "types": [
+        "DetailTab",
+        "PeriodPreset"
+      ],
+      "components": [
+        "SummaryPill"
+      ],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Progress/statistics screens or calculations.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/stats/todayAchievement.ts",
+      "ext": ".ts",
+      "bytes": 7448,
+      "lines": 199,
+      "sha1": "92a8536e5504",
+      "imports": [
+        "../../types/math",
+        "../curriculum/describeItem",
+        "../learning/learningEvents"
+      ],
+      "exports": [
+        "AchievementFilter",
+        "computeTodayAchievement",
+        "filterTodayQuestions",
+        "TodayAchievementData",
+        "TodayQuestionDetail",
+        "TodaySummary"
+      ],
+      "functions": [
+        "computeTodayAchievement",
+        "filterTodayQuestions",
+        "makeSummary"
+      ],
+      "classes": [],
+      "interfaces": [
+        "TodayAchievementData",
+        "TodayQuestionDetail",
+        "TodaySummary"
+      ],
+      "types": [
+        "AchievementFilter"
+      ],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Progress/statistics screens or calculations.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/stats/TodayAchievementDetail.tsx",
+      "ext": ".tsx",
+      "bytes": 6078,
+      "lines": 181,
+      "sha1": "783ae3d54310",
+      "imports": [
+        "./todayAchievement"
+      ],
+      "exports": [
+        "TodayAchievementDetail"
+      ],
+      "functions": [
+        "fmtSec",
+        "normalizeGroup",
+        "QuestionRow",
+        "TodayAchievementDetail"
+      ],
+      "classes": [],
+      "interfaces": [
+        "Props"
+      ],
+      "types": [],
+      "components": [
+        "QuestionRow"
+      ],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Progress/statistics screens or calculations.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/stats/TodayAchievementSection.tsx",
+      "ext": ".tsx",
+      "bytes": 4378,
+      "lines": 125,
+      "sha1": "245c8f6e0a0e",
+      "imports": [
+        "../../db/repositories",
+        "../time/clock",
+        "./statsEngine",
+        "./todayAchievement",
+        "react"
+      ],
+      "exports": [
+        "TodayAchievementSection"
+      ],
+      "functions": [
+        "AchievementTile",
+        "TodayAchievementSection"
+      ],
+      "classes": [],
+      "interfaces": [
+        "Props",
+        "TileConfig"
+      ],
+      "types": [],
+      "components": [
+        "AchievementTile"
+      ],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Progress/statistics screens or calculations.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/sync/driveSync.ts",
+      "ext": ".ts",
+      "bytes": 4889,
+      "lines": 151,
+      "sha1": "88de0a7f321f",
+      "imports": [
+        "../auth/googleAuth",
+        "./snapshot"
+      ],
+      "exports": [
+        "DriveFileInfo",
+        "SyncResult",
+        "SyncStatus"
+      ],
+      "functions": [
+        "authFetch",
+        "downloadSnapshot",
+        "findSyncFile",
+        "getDriveFileInfo",
+        "pullAndMerge",
+        "pushLocal",
+        "syncBothWays",
+        "uploadSnapshot"
+      ],
+      "classes": [],
+      "interfaces": [
+        "DriveFileInfo",
+        "SyncResult"
+      ],
+      "types": [
+        "SyncStatus"
+      ],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Cloud sync/auth/data transfer logic.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/sync/snapshot.ts",
+      "ext": ".ts",
+      "bytes": 6433,
+      "lines": 139,
+      "sha1": "01a7f5e7428a",
+      "imports": [
+        "../../db/dexie",
+        "../../types/math",
+        "../learning/eventRebuild",
+        "../learning/learningEvents",
+        "../multiplication/types"
+      ],
+      "exports": [
+        "AppSnapshot",
+        "validateSnapshot"
+      ],
+      "functions": [
+        "buildSnapshot",
+        "mergeSnapshot",
+        "validateSnapshot"
+      ],
+      "classes": [],
+      "interfaces": [
+        "AppSnapshot"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Local persistence/database layer.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/sync/SyncWidget.tsx",
+      "ext": ".tsx",
+      "bytes": 7639,
+      "lines": 156,
+      "sha1": "65b64beb79ff",
+      "imports": [
+        "../auth/googleAuth",
+        "./driveSync"
+      ],
+      "exports": [
+        "SyncWidget"
+      ],
+      "functions": [
+        "friendlyError",
+        "GoogleIcon",
+        "initials",
+        "SyncWidget",
+        "timeSince"
+      ],
+      "classes": [],
+      "interfaces": [
+        "Props"
+      ],
+      "types": [],
+      "components": [
+        "GoogleIcon"
+      ],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Cloud sync/auth/data transfer logic.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/sync/useSync.ts",
+      "ext": ".ts",
+      "bytes": 3127,
+      "lines": 99,
+      "sha1": "dd7aff8af9e3",
+      "imports": [
+        "../auth/googleAuth",
+        "./driveSync",
+        "react"
+      ],
+      "exports": [
+        "initAuth",
+        "SyncState",
+        "useSync"
+      ],
+      "functions": [
+        "recordSync",
+        "useSync"
+      ],
+      "classes": [],
+      "interfaces": [
+        "SyncState"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [
+        "useSync"
+      ],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Cloud sync/auth/data transfer logic.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/theme/themes.ts",
+      "ext": ".ts",
+      "bytes": 1720,
+      "lines": 42,
+      "sha1": "0a0261827d2b",
+      "imports": [],
+      "exports": [
+        "applyTheme",
+        "DEFAULT_THEME",
+        "getTheme",
+        "ThemeConfig",
+        "ThemeName",
+        "THEMES"
+      ],
+      "functions": [
+        "applyTheme",
+        "getTheme"
+      ],
+      "classes": [],
+      "interfaces": [
+        "ThemeConfig"
+      ],
+      "types": [
+        "ThemeName"
+      ],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Exports reusable code: applyTheme, DEFAULT_THEME, getTheme, ThemeConfig, ThemeName.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/time/clock.ts",
+      "ext": ".ts",
+      "bytes": 2899,
+      "lines": 92,
+      "sha1": "2bcd39310c4f",
+      "imports": [],
+      "exports": [
+        "_resetClock",
+        "appNow",
+        "appNowMs",
+        "DEBUG_SCALE",
+        "disableDebugSpeed",
+        "enableDebugSpeed",
+        "getScale",
+        "isDebugSpeed",
+        "MS_PER_DAY",
+        "NORMAL_SCALE"
+      ],
+      "functions": [
+        "_resetClock",
+        "appNow",
+        "appNowMs",
+        "disableDebugSpeed",
+        "enableDebugSpeed",
+        "getScale",
+        "isDebugSpeed",
+        "load",
+        "save",
+        "setScale"
+      ],
+      "classes": [],
+      "interfaces": [
+        "ClockState"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Exports reusable code: _resetClock, appNow, appNowMs, DEBUG_SCALE, disableDebugSpeed.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/visuals/AreaGrid.tsx",
+      "ext": ".tsx",
+      "bytes": 3951,
+      "lines": 95,
+      "sha1": "48b58c2b97bd",
+      "imports": [],
+      "exports": [
+        "AreaGrid"
+      ],
+      "functions": [
+        "AreaGrid"
+      ],
+      "classes": [],
+      "interfaces": [
+        "Props"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Reusable SVG visual model components (area grids, shape diagrams, fraction bars, arrays).",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/visuals/ArrayModel.tsx",
+      "ext": ".tsx",
+      "bytes": 1958,
+      "lines": 76,
+      "sha1": "d13f2f79de31",
+      "imports": [],
+      "exports": [
+        "ArrayModel"
+      ],
+      "functions": [
+        "ArrayModel"
+      ],
+      "classes": [],
+      "interfaces": [
+        "Props"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Reusable SVG visual model components (area grids, shape diagrams, fraction bars, arrays).",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/visuals/ClockModel.tsx",
+      "ext": ".tsx",
+      "bytes": 2894,
+      "lines": 105,
+      "sha1": "c62cdb2c7c75",
+      "imports": [],
+      "exports": [
+        "ClockModel"
+      ],
+      "functions": [
+        "ClockModel"
+      ],
+      "classes": [],
+      "interfaces": [
+        "Props"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Reusable SVG visual model components (area grids, shape diagrams, fraction bars, arrays).",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/visuals/DraggableEqualGroups.tsx",
+      "ext": ".tsx",
+      "bytes": 7563,
+      "lines": 230,
+      "sha1": "dbad444f2725",
+      "imports": [
+        "@dnd-kit/core",
+        "@dnd-kit/sortable",
+        "react"
+      ],
+      "exports": [
+        "DraggableEqualGroups"
+      ],
+      "functions": [
+        "checkEqualGroups",
+        "DraggableEqualGroups",
+        "DraggableObject",
+        "DropZone",
+        "handleDragEnd"
+      ],
+      "classes": [],
+      "interfaces": [
+        "DraggableObject",
+        "Props"
+      ],
+      "types": [],
+      "components": [
+        "DraggableObject",
+        "DropZone"
+      ],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Reusable SVG visual model components (area grids, shape diagrams, fraction bars, arrays).",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/visuals/EqualGroupsModel.tsx",
+      "ext": ".tsx",
+      "bytes": 2212,
+      "lines": 86,
+      "sha1": "8db6a7c09062",
+      "imports": [],
+      "exports": [
+        "EqualGroupsModel"
+      ],
+      "functions": [
+        "EqualGroupsModel"
+      ],
+      "classes": [],
+      "interfaces": [
+        "Props"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Reusable SVG visual model components (area grids, shape diagrams, fraction bars, arrays).",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/visuals/equalGroupsUtils.ts",
+      "ext": ".ts",
+      "bytes": 764,
+      "lines": 24,
+      "sha1": "63c52fe1df40",
+      "imports": [],
+      "exports": [
+        "checkEqualGroups"
+      ],
+      "functions": [
+        "checkEqualGroups"
+      ],
+      "classes": [],
+      "interfaces": [
+        "DraggableObject"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Reusable SVG visual model components (area grids, shape diagrams, fraction bars, arrays).",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/visuals/FractionBar.tsx",
+      "ext": ".tsx",
+      "bytes": 2275,
+      "lines": 92,
+      "sha1": "ece2b10668ff",
+      "imports": [
+        "../audio/mathSpeech",
+        "./FractionText"
+      ],
+      "exports": [
+        "FractionBar"
+      ],
+      "functions": [
+        "FractionBar"
+      ],
+      "classes": [],
+      "interfaces": [
+        "Props"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Reusable SVG visual model components (area grids, shape diagrams, fraction bars, arrays).",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/visuals/FractionNumberLine.tsx",
+      "ext": ".tsx",
+      "bytes": 3571,
+      "lines": 128,
+      "sha1": "6bc74aaf46f8",
+      "imports": [
+        "./FractionText",
+        "mafs"
+      ],
+      "exports": [
+        "FractionNumberLine"
+      ],
+      "functions": [
+        "FractionNumberLine",
+        "xAt"
+      ],
+      "classes": [],
+      "interfaces": [
+        "Props"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Reusable SVG visual model components (area grids, shape diagrams, fraction bars, arrays).",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/visuals/FractionText.tsx",
+      "ext": ".tsx",
+      "bytes": 1488,
+      "lines": 48,
+      "sha1": "6cd58f482ce0",
+      "imports": [
+        "../audio/mathSpeech"
+      ],
+      "exports": [
+        "FractionText"
+      ],
+      "functions": [
+        "FractionText"
+      ],
+      "classes": [],
+      "interfaces": [
+        "Props"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Reusable SVG visual model components (area grids, shape diagrams, fraction bars, arrays).",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/visuals/MathPrompt.tsx",
+      "ext": ".tsx",
+      "bytes": 1177,
+      "lines": 41,
+      "sha1": "81b54ff3854b",
+      "imports": [
+        "./FractionText",
+        "./visualModelUtils",
+        "react"
+      ],
+      "exports": [
+        "MathPrompt"
+      ],
+      "functions": [
+        "MathPrompt"
+      ],
+      "classes": [],
+      "interfaces": [
+        "Props"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Reusable SVG visual model components (area grids, shape diagrams, fraction bars, arrays).",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/visuals/RectilinearAreaModel.tsx",
+      "ext": ".tsx",
+      "bytes": 3702,
+      "lines": 91,
+      "sha1": "8001bb5f07a2",
+      "imports": [],
+      "exports": [
+        "RectilinearAreaModel"
+      ],
+      "functions": [
+        "RectilinearAreaModel"
+      ],
+      "classes": [],
+      "interfaces": [
+        "Props"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Reusable SVG visual model components (area grids, shape diagrams, fraction bars, arrays).",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/visuals/ShapeModel.tsx",
+      "ext": ".tsx",
+      "bytes": 4903,
+      "lines": 137,
+      "sha1": "c575692cc6ab",
+      "imports": [
+        "react"
+      ],
+      "exports": [
+        "ShapeModel",
+        "ShapeName"
+      ],
+      "functions": [
+        "pts",
+        "regularPoly",
+        "rightAnglePath",
+        "ShapeModel",
+        "SVGWrap"
+      ],
+      "classes": [],
+      "interfaces": [
+        "Props"
+      ],
+      "types": [
+        "ShapeName"
+      ],
+      "components": [
+        "SVGWrap"
+      ],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Reusable SVG visual model components (area grids, shape diagrams, fraction bars, arrays).",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/visuals/VisualModel.tsx",
+      "ext": ".tsx",
+      "bytes": 6069,
+      "lines": 153,
+      "sha1": "1cb32d2b3003",
+      "imports": [
+        "../../types/math",
+        "./AreaGrid",
+        "./ArrayModel",
+        "./ClockModel",
+        "./EqualGroupsModel",
+        "./FractionBar",
+        "./FractionNumberLine",
+        "./RectilinearAreaModel",
+        "./ShapeModel",
+        "./visualModelUtils"
+      ],
+      "exports": [
+        "VisualModel"
+      ],
+      "functions": [
+        "parseEqualGroupsFromId",
+        "VisualModel"
+      ],
+      "classes": [],
+      "interfaces": [
+        "Props"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Reusable SVG visual model components (area grids, shape diagrams, fraction bars, arrays).",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/visuals/visualModelUtils.ts",
+      "ext": ".ts",
+      "bytes": 3120,
+      "lines": 81,
+      "sha1": "3d2498f0e754",
+      "imports": [
+        "../../types/math",
+        "./ShapeModel"
+      ],
+      "exports": [
+        "findFractionsInText",
+        "FractionToken",
+        "geoShapeFromItemId",
+        "hasVisualModel",
+        "parseFractionFromPrompt"
+      ],
+      "functions": [
+        "findFractionsInText",
+        "geoShapeFromItemId",
+        "hasVisualModel",
+        "parseFractionFromPrompt"
+      ],
+      "classes": [],
+      "interfaces": [
+        "FractionToken"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Reusable SVG visual model components (area grids, shape diagrams, fraction bars, arrays).",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/index.css",
+      "ext": ".css",
+      "bytes": 6720,
+      "lines": 132,
+      "sha1": "72a09b7dfcf3",
+      "imports": [],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [
+        "drill-card",
+        "drill-container",
+        "drill-k",
+        "drill-q",
+        "numpad",
+        "numpad-check",
+        "numpad-del",
+        "numpad-grid",
+        "numpad-key",
+        "tutor-backdrop",
+        "tutor-chip",
+        "tutor-context",
+        "tutor-cta",
+        "tutor-empty",
+        "tutor-error",
+        "tutor-head",
+        "tutor-input",
+        "tutor-inputrow",
+        "tutor-model",
+        "tutor-msg",
+        "tutor-panel",
+        "tutor-quick",
+        "tutor-scroll",
+        "tutor-send",
+        "tutor-sub",
+        "tutor-title",
+        "tutor-typing",
+        "tutor-user",
+        "tutor-x"
+      ],
+      "json_keys": [],
+      "purpose": "Styling rules.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/main.tsx",
+      "ext": ".tsx",
+      "bytes": 671,
+      "lines": 21,
+      "sha1": "fb3eb0a9eece",
+      "imports": [
+        "./App.tsx",
+        "react",
+        "react-dom/client"
+      ],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "React entry point that mounts the app.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/adaptiveRelatedItemSelection.test.ts",
+      "ext": ".ts",
+      "bytes": 17573,
+      "lines": 374,
+      "sha1": "a52a700beb1e",
+      "imports": [
+        "../features/adaptive/adaptiveItemSelector",
+        "../features/adaptive/candidatePools",
+        "../features/adaptive/relatedItemMapping",
+        "../features/curriculum/makeItemFromId",
+        "../types/math",
+        "../utils/rng",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [
+        "item",
+        "mapOf",
+        "state"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/ai.test.ts",
+      "ext": ".ts",
+      "bytes": 2053,
+      "lines": 52,
+      "sha1": "a284b05bc9e1",
+      "imports": [
+        "../features/ai/aiConfig",
+        "../features/ai/gemini",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/answerChecker.test.ts",
+      "ext": ".ts",
+      "bytes": 3621,
+      "lines": 98,
+      "sha1": "21962c5b5486",
+      "imports": [
+        "../features/practice/answerChecker",
+        "../types/math",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/appDiagnosticCompletion.test.ts",
+      "ext": ".ts",
+      "bytes": 520,
+      "lines": 15,
+      "sha1": "dfda093f5a1e",
+      "imports": [
+        "../features/diagnosis/diagnosticCompletion",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/arithmeticItems.test.ts",
+      "ext": ".ts",
+      "bytes": 2113,
+      "lines": 64,
+      "sha1": "9b165e0c5bf6",
+      "imports": [
+        "../features/curriculum/arithmeticItems",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/clock.test.ts",
+      "ext": ".ts",
+      "bytes": 1553,
+      "lines": 47,
+      "sha1": "7c18e8863308",
+      "imports": [
+        "../features/time/clock",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/components.test.tsx",
+      "ext": ".tsx",
+      "bytes": 12887,
+      "lines": 368,
+      "sha1": "89fadf10b280",
+      "imports": [
+        "../components/NumPad",
+        "../components/SessionSummary",
+        "../db/repositories",
+        "../features/ai/TutorChat",
+        "../features/mastery/grade3MasteryMap",
+        "../features/mastery/Grade3MasteryMapPage",
+        "../features/mastery/ParentNextActionCard",
+        "../features/mastery/SkillDetailPanel",
+        "../features/mastery/SkillTile",
+        "../features/mastery/todayPlanEngine",
+        "../types/math",
+        "@testing-library/react",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/describeItem.test.ts",
+      "ext": ".ts",
+      "bytes": 4493,
+      "lines": 114,
+      "sha1": "6a7e24f75892",
+      "imports": [
+        "../features/curriculum/describeItem",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/diagnosticPlanner.test.ts",
+      "ext": ".ts",
+      "bytes": 6431,
+      "lines": 169,
+      "sha1": "017fcb111869",
+      "imports": [
+        "../features/diagnosis/diagnosticPlanner",
+        "../features/practice/answerChecker",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/diagnosticSession.test.tsx",
+      "ext": ".tsx",
+      "bytes": 8140,
+      "lines": 203,
+      "sha1": "ef997ce5ff83",
+      "imports": [
+        "../db/repositories",
+        "../features/diagnosis/diagnosticPersistence",
+        "../features/diagnosis/DiagnosticSession",
+        "@testing-library/react",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [
+        "answerOnlyQuestion"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/eventRebuild.test.ts",
+      "ext": ".ts",
+      "bytes": 11014,
+      "lines": 279,
+      "sha1": "f4f678a4c0ba",
+      "imports": [
+        "../features/learning/eventRebuild",
+        "../features/learning/learningEvents",
+        "../types/math",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [
+        "makeEvent"
+      ],
+      "classes": [
+        "FakeQuery",
+        "FakeTable"
+      ],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Local persistence/database layer.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/fractionItems.test.ts",
+      "ext": ".ts",
+      "bytes": 1552,
+      "lines": 49,
+      "sha1": "be49591f8b2d",
+      "imports": [
+        "../features/curriculum/fractionItems",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/grade3AddSubRegrouping.test.ts",
+      "ext": ".ts",
+      "bytes": 10319,
+      "lines": 257,
+      "sha1": "0f4aa44cf748",
+      "imports": [
+        "../features/curriculum/makeItemFromId",
+        "../features/mastery/grade3MasteryMap",
+        "../features/mastery/skillMapping",
+        "../features/mastery/skillMasteryEngine",
+        "../features/mastery/skillPracticePlanner",
+        "../features/mastery/todayPlanEngine",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/grade3AreaPerimeter.test.ts",
+      "ext": ".ts",
+      "bytes": 10905,
+      "lines": 272,
+      "sha1": "3f89e35b709a",
+      "imports": [
+        "../features/curriculum/areaItems",
+        "../features/curriculum/makeItemFromId",
+        "../features/mastery/grade3MasteryMap",
+        "../features/mastery/skillMapping",
+        "../features/mastery/skillPracticePlanner",
+        "../features/visuals/VisualModel",
+        "../features/visuals/visualModelUtils",
+        "@testing-library/react",
+        "react",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/grade3MasteryMap.test.ts",
+      "ext": ".ts",
+      "bytes": 5193,
+      "lines": 132,
+      "sha1": "d53c01258416",
+      "imports": [
+        "../features/mastery/grade3MasteryMap",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/grade3MasteryMapRegression.test.ts",
+      "ext": ".ts",
+      "bytes": 9737,
+      "lines": 236,
+      "sha1": "c5d1e090f22e",
+      "imports": [
+        "../features/curriculum/makeItemFromId",
+        "../features/diagnosis/diagnosticPlanner",
+        "../features/mastery/grade3MasteryMap",
+        "../features/mastery/skillMapping",
+        "../features/mastery/skillMasteryEngine",
+        "../features/mastery/skillPracticePlanner",
+        "../features/mastery/todayPlanEngine",
+        "../features/practice/answerChecker",
+        "../features/practice/practiceNavigation",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [
+        "allNewSummaries"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/grade3MulProperties.test.ts",
+      "ext": ".ts",
+      "bytes": 5910,
+      "lines": 156,
+      "sha1": "160133fc398f",
+      "imports": [
+        "../features/curriculum/makeItemFromId",
+        "../features/curriculum/mulPropertiesItems",
+        "../features/mastery/skillMapping",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/grade3NewSkills.test.ts",
+      "ext": ".ts",
+      "bytes": 10965,
+      "lines": 282,
+      "sha1": "7767ae6763e5",
+      "imports": [
+        "../features/curriculum/makeItemFromId",
+        "../features/mastery/grade3MasteryMap",
+        "../features/mastery/skillMapping",
+        "../features/mastery/skillPracticePlanner",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [
+        "isMultOf10",
+        "isSingle"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/grade3TwoStepAndPatterns.test.ts",
+      "ext": ".ts",
+      "bytes": 10667,
+      "lines": 270,
+      "sha1": "46d3c10b05f6",
+      "imports": [
+        "../features/curriculum/makeItemFromId",
+        "../features/mastery/grade3MasteryMap",
+        "../features/mastery/skillMapping",
+        "../features/mastery/skillPracticePlanner",
+        "../features/practice/answerChecker",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/growth.test.ts",
+      "ext": ".ts",
+      "bytes": 5119,
+      "lines": 114,
+      "sha1": "f14a1f839d4f",
+      "imports": [
+        "../features/stats/statsEngine",
+        "../types/math",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [
+        "attempt"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/hintEngine.test.ts",
+      "ext": ".ts",
+      "bytes": 18174,
+      "lines": 433,
+      "sha1": "aeb7dd081de0",
+      "imports": [
+        "../features/curriculum/areaItems",
+        "../features/curriculum/arithmeticItems",
+        "../features/curriculum/fractionItems",
+        "../features/curriculum/measurementItems",
+        "../features/curriculum/multiplicationItems",
+        "../features/curriculum/twoStepItems",
+        "../features/curriculum/wordProblemItems",
+        "../features/practice/hintEngine",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [
+        "answerStr"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/learningEvents.test.ts",
+      "ext": ".ts",
+      "bytes": 17038,
+      "lines": 378,
+      "sha1": "6ee60fd45d46",
+      "imports": [
+        "../features/learning/learningEvents",
+        "../features/multiplication/masteryEngine",
+        "../features/stats/statsEngine",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [
+        "makeEvent"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Local persistence/database layer.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/makeItemFromId.test.ts",
+      "ext": ".ts",
+      "bytes": 14875,
+      "lines": 401,
+      "sha1": "31b23fde0597",
+      "imports": [
+        "../features/curriculum/makeItemFromId",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/mathPrompt.test.tsx",
+      "ext": ".tsx",
+      "bytes": 1900,
+      "lines": 46,
+      "sha1": "d715fb406375",
+      "imports": [
+        "../features/visuals/FractionText",
+        "../features/visuals/MathPrompt",
+        "@testing-library/react",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/misconceptionEngine.test.ts",
+      "ext": ".ts",
+      "bytes": 13069,
+      "lines": 279,
+      "sha1": "b786582d64a0",
+      "imports": [
+        "../features/curriculum/fractionItems",
+        "../features/curriculum/multiplicationItems",
+        "../features/mastery/misconceptionEngine",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [
+        "divItem",
+        "unkItem"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/multiplicationQuiz.test.ts",
+      "ext": ".ts",
+      "bytes": 11996,
+      "lines": 331,
+      "sha1": "babfab16f1e6",
+      "imports": [
+        "../features/multiplication/masteryEngine",
+        "../features/multiplication/multiplicationFacts",
+        "../features/multiplication/practiceRecommendation",
+        "../features/multiplication/quizQuestionSelector",
+        "../features/multiplication/types",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [
+        "makeLog",
+        "makeStats"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/newCurriculum.test.ts",
+      "ext": ".ts",
+      "bytes": 4551,
+      "lines": 126,
+      "sha1": "72d9c3a234de",
+      "imports": [
+        "../features/curriculum/decimalItems",
+        "../features/curriculum/describeItem",
+        "../features/curriculum/numberTheoryItems",
+        "../features/curriculum/roundingItems",
+        "../features/curriculum/wordProblemItems",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/practiceMetrics.test.ts",
+      "ext": ".ts",
+      "bytes": 4078,
+      "lines": 123,
+      "sha1": "9d6da39df7e0",
+      "imports": [
+        "../features/practice/metrics",
+        "../types/math",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [
+        "attempt",
+        "solvedIn"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/practiceNavigation.test.ts",
+      "ext": ".ts",
+      "bytes": 3602,
+      "lines": 100,
+      "sha1": "3a44563f7aad",
+      "imports": [
+        "../features/practice/practiceNavigation",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [
+        "makeAppNav",
+        "sessionDone",
+        "startPracticeFrom"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [
+        "Screen"
+      ],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/practiceSession.test.ts",
+      "ext": ".ts",
+      "bytes": 14259,
+      "lines": 356,
+      "sha1": "75c1ccdcda78",
+      "imports": [
+        "../db/repositories",
+        "../features/curriculum/makeItemFromId",
+        "../features/learning/recordAnswer",
+        "../features/practice/usePracticeSession",
+        "../features/time/clock",
+        "../types/math",
+        "../utils/id",
+        "@testing-library/react",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Local persistence/database layer.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/questionGenerator.test.ts",
+      "ext": ".ts",
+      "bytes": 4688,
+      "lines": 152,
+      "sha1": "9e39d8c7e019",
+      "imports": [
+        "../features/curriculum/multiplicationItems",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/quizAutoAdvance.test.tsx",
+      "ext": ".tsx",
+      "bytes": 3067,
+      "lines": 76,
+      "sha1": "d913db2ffa88",
+      "imports": [
+        "../features/audio/speech",
+        "../features/multiplication/MultiplicationQuizPage",
+        "../types/math",
+        "@testing-library/react",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [
+        "sleep",
+        "startAndAnswerFirst"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Local persistence/database layer.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/rangeSelection.test.ts",
+      "ext": ".ts",
+      "bytes": 6588,
+      "lines": 155,
+      "sha1": "4cb74418069d",
+      "imports": [
+        "../components/opSpecs",
+        "../features/curriculum/arithmeticItems",
+        "../features/curriculum/fractionItems",
+        "../features/curriculum/multiplicationItems",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/relatedEvidence.test.ts",
+      "ext": ".ts",
+      "bytes": 5158,
+      "lines": 116,
+      "sha1": "437d37d456d8",
+      "imports": [
+        "../features/adaptive/relatedEvidence",
+        "../features/curriculum/makeItemFromId",
+        "../features/learning/learningEvents",
+        "../features/stats/todayAchievement",
+        "../types/math",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [
+        "ev",
+        "item",
+        "state"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/rng.test.ts",
+      "ext": ".ts",
+      "bytes": 1589,
+      "lines": 51,
+      "sha1": "5e2813951ac7",
+      "imports": [
+        "../utils/rng",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/scheduler.test.ts",
+      "ext": ".ts",
+      "bytes": 24623,
+      "lines": 496,
+      "sha1": "ac58c43a0c65",
+      "imports": [
+        "../features/curriculum/multiplicationItems",
+        "../features/scheduler/scheduler",
+        "../types/math",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [
+        "days",
+        "fresh"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "FSRS spaced-repetition scheduler: session planning and card state updates.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/setup.ts",
+      "ext": ".ts",
+      "bytes": 36,
+      "lines": 2,
+      "sha1": "d1b8863dae64",
+      "imports": [
+        "@testing-library/jest-dom"
+      ],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Support module that imports project/external dependencies.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/skillMapping.test.ts",
+      "ext": ".ts",
+      "bytes": 10687,
+      "lines": 246,
+      "sha1": "a6e8e67ce35b",
+      "imports": [
+        "../features/curriculum/fractionItems",
+        "../features/curriculum/multiplicationItems",
+        "../features/curriculum/wordProblemItems",
+        "../features/mastery/grade3MasteryMap",
+        "../features/mastery/skillMapping",
+        "../types/math",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [
+        "makeDivFact"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/skillMasteryEngine.test.ts",
+      "ext": ".ts",
+      "bytes": 15272,
+      "lines": 442,
+      "sha1": "fc268a9b0885",
+      "imports": [
+        "../features/curriculum/multiplicationItems",
+        "../features/learning/learningEvents",
+        "../features/mastery/skillMasteryEngine",
+        "../types/math",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [
+        "makeEvent",
+        "makeState",
+        "resolver"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/skillPracticePlanner.test.ts",
+      "ext": ".ts",
+      "bytes": 15482,
+      "lines": 361,
+      "sha1": "bd1d8ae2c430",
+      "imports": [
+        "../features/curriculum/makeItemFromId",
+        "../features/mastery/grade3MasteryMap",
+        "../features/mastery/skillMapping",
+        "../features/mastery/skillPracticePlanner",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/snapshotValidation.test.ts",
+      "ext": ".ts",
+      "bytes": 4969,
+      "lines": 138,
+      "sha1": "c5f7df7deca6",
+      "imports": [
+        "../features/sync/snapshot",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [
+        "validSnapshot",
+        "without"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/speech.test.ts",
+      "ext": ".ts",
+      "bytes": 4810,
+      "lines": 148,
+      "sha1": "7af63886ec00",
+      "imports": [
+        "../features/audio/speech",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [
+        "flush",
+        "installSpeechMock",
+        "spokenTextFor"
+      ],
+      "classes": [
+        "MockSpeechSynthesisUtterance"
+      ],
+      "interfaces": [
+        "MockUtterance"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Speech/audio feedback utilities.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/statsEngine.test.ts",
+      "ext": ".ts",
+      "bytes": 12780,
+      "lines": 313,
+      "sha1": "f4c36b087adc",
+      "imports": [
+        "../features/stats/statsEngine",
+        "../types/math",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [
+        "attempt",
+        "session"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/todayAchievement.test.ts",
+      "ext": ".ts",
+      "bytes": 4236,
+      "lines": 117,
+      "sha1": "b441ba3d8fd4",
+      "imports": [
+        "../features/learning/learningEvents",
+        "../features/stats/todayAchievement",
+        "../types/math",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [
+        "makeEvent",
+        "makeSession"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/todayPlanEngine.test.ts",
+      "ext": ".ts",
+      "bytes": 18989,
+      "lines": 433,
+      "sha1": "cf7ffe6d7b39",
+      "imports": [
+        "../features/mastery/grade3MasteryMap",
+        "../features/mastery/skillMasteryEngine",
+        "../features/mastery/todayPlanEngine",
+        "../types/math",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [
+        "buildCompleteSummaries",
+        "makeItemState",
+        "makeSummary"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/updateCheck.test.ts",
+      "ext": ".ts",
+      "bytes": 3635,
+      "lines": 86,
+      "sha1": "32f46c3a50aa",
+      "imports": [
+        "../features/settings/updateCheck",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [
+        "fetchImpl",
+        "jsonResponse"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/visualModel.test.ts",
+      "ext": ".ts",
+      "bytes": 6999,
+      "lines": 167,
+      "sha1": "77b5e70aef6c",
+      "imports": [
+        "../features/curriculum/areaItems",
+        "../features/curriculum/fractionItems",
+        "../features/curriculum/makeItemFromId",
+        "../features/curriculum/multiplicationItems",
+        "../features/curriculum/wordProblemItems",
+        "../features/visuals/VisualModel",
+        "../features/visuals/visualModelUtils",
+        "@testing-library/react",
+        "react",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/types/google.d.ts",
+      "ext": ".ts",
+      "bytes": 888,
+      "lines": 35,
+      "sha1": "8c21248920ee",
+      "imports": [],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [
+        "TokenClient",
+        "TokenClientConfig",
+        "TokenResponse",
+        "Window"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Authentication integration.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/types/math.ts",
+      "ext": ".ts",
+      "bytes": 8861,
+      "lines": 294,
+      "sha1": "b964560c5a85",
+      "imports": [],
+      "exports": [
+        "AnswerInput",
+        "AttemptLog",
+        "DayStats",
+        "FactGrowth",
+        "FactWindowStats",
+        "FractionMode",
+        "GradeLevel",
+        "GrowthDirection",
+        "GrowthSummary",
+        "ItemType",
+        "MasteryLevel",
+        "PeriodComparison",
+        "PeriodStats",
+        "PerTableStats",
+        "PracticeItem",
+        "PracticeSession",
+        "ReviewGrade",
+        "SessionConfig",
+        "SessionLength",
+        "SessionMode",
+        "Skill",
+        "StudentItemState",
+        "StudentProfile",
+        "StudentSettings",
+        "ThemeName"
+      ],
+      "functions": [],
+      "classes": [],
+      "interfaces": [
+        "AttemptLog",
+        "DayStats",
+        "FactGrowth",
+        "FactWindowStats",
+        "GrowthSummary",
+        "PeriodComparison",
+        "PeriodStats",
+        "PerTableStats",
+        "PracticeItem",
+        "PracticeSession",
+        "SessionConfig",
+        "Skill",
+        "StudentItemState",
+        "StudentProfile",
+        "StudentSettings"
+      ],
+      "types": [
+        "AnswerInput",
+        "FractionMode",
+        "GradeLevel",
+        "GrowthDirection",
+        "ItemType",
+        "MasteryLevel",
+        "ReviewGrade",
+        "SessionLength",
+        "SessionMode",
+        "ThemeName"
+      ],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Exports reusable code: AnswerInput, AttemptLog, DayStats, FactGrowth, FactWindowStats.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/utils/id.ts",
+      "ext": ".ts",
+      "bytes": 122,
+      "lines": 4,
+      "sha1": "41d4aa2d4a6f",
+      "imports": [],
+      "exports": [
+        "generateId"
+      ],
+      "functions": [
+        "generateId"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Exports reusable code: generateId.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/utils/masteryColors.ts",
+      "ext": ".ts",
+      "bytes": 1505,
+      "lines": 32,
+      "sha1": "05a993ded193",
+      "imports": [
+        "../features/learning/learningEvents",
+        "../types/math"
+      ],
+      "exports": [
+        "FACT_STATUS_COLORS",
+        "MASTERY_COLORS",
+        "MasteryColor"
+      ],
+      "functions": [],
+      "classes": [],
+      "interfaces": [
+        "MasteryColor"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Exports reusable code: FACT_STATUS_COLORS, MASTERY_COLORS, MasteryColor.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/utils/rng.ts",
+      "ext": ".ts",
+      "bytes": 1252,
+      "lines": 37,
+      "sha1": "1e821a8f49e5",
+      "imports": [],
+      "exports": [
+        "mulberry32",
+        "randomSeed",
+        "Rng",
+        "shuffled"
+      ],
+      "functions": [
+        "mulberry32",
+        "randomSeed"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [
+        "Rng"
+      ],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Exports reusable code: mulberry32, randomSeed, Rng, shuffled.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "tools/generate_code_maps.py",
+      "ext": ".py",
+      "bytes": 26610,
+      "lines": 693,
+      "sha1": "9cccb921ff29",
+      "imports": [
+        "__future__",
+        "argparse",
+        "ast",
+        "dataclasses",
+        "datetime",
+        "hashlib",
+        "json",
+        "os",
+        "pathlib",
+        "re",
+        "sys",
+        "typing"
+      ],
+      "exports": [
+        "analyze_file",
+        "build_tree",
+        "esc",
+        "extract_export_list",
+        "extract_python_symbols",
+        "file_import_kind",
+        "FileInfo",
+        "generate_claude_start",
+        "generate_dependencies",
+        "generate_json",
+        "generate_overview",
+        "generate_symbols",
+        "guess_purpose",
+        "important_score",
+        "is_hidden",
+        "iter_files",
+        "load_package_json",
+        "main",
+        "md_table",
+        "parse_args",
+        "pick_important_files",
+        "read_snippet",
+        "read_text",
+        "relpath",
+        "should_scan_file",
+        "should_skip_dir",
+        "unique_sorted",
+        "walk",
+        "write_file"
+      ],
+      "functions": [
+        "analyze_file",
+        "build_tree",
+        "esc",
+        "extract_export_list",
+        "extract_python_symbols",
+        "file_import_kind",
+        "generate_claude_start",
+        "generate_dependencies",
+        "generate_json",
+        "generate_overview",
+        "generate_symbols",
+        "guess_purpose",
+        "important_score",
+        "is_hidden",
+        "iter_files",
+        "load_package_json",
+        "main",
+        "md_table",
+        "parse_args",
+        "pick_important_files",
+        "read_snippet",
+        "read_text",
+        "relpath",
+        "should_scan_file",
+        "should_skip_dir",
+        "unique_sorted",
+        "walk",
+        "write_file"
+      ],
+      "classes": [
+        "FileInfo"
+      ],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Local persistence/database layer.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "tsconfig.app.json",
+      "ext": ".json",
+      "bytes": 617,
+      "lines": 26,
+      "sha1": "e213093ffc7e",
+      "imports": [],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [
+        "allowImportingTsExtensions",
+        "compilerOptions",
+        "erasableSyntaxOnly",
+        "include",
+        "jsx",
+        "lib",
+        "module",
+        "moduleDetection",
+        "moduleResolution",
+        "noEmit",
+        "noFallthroughCasesInSwitch",
+        "noUnusedLocals",
+        "noUnusedParameters",
+        "skipLibCheck",
+        "target",
+        "tsBuildInfoFile",
+        "types",
+        "verbatimModuleSyntax"
+      ],
+      "purpose": "Project file.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "tsconfig.json",
+      "ext": ".json",
+      "bytes": 119,
+      "lines": 8,
+      "sha1": "916168243c07",
+      "imports": [],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [
+        "files",
+        "path",
+        "references"
+      ],
+      "purpose": "TypeScript compiler configuration.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "tsconfig.node.json",
+      "ext": ".json",
+      "bytes": 591,
+      "lines": 25,
+      "sha1": "67721cb381c7",
+      "imports": [],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [
+        "allowImportingTsExtensions",
+        "compilerOptions",
+        "erasableSyntaxOnly",
+        "include",
+        "lib",
+        "module",
+        "moduleDetection",
+        "moduleResolution",
+        "noEmit",
+        "noFallthroughCasesInSwitch",
+        "noUnusedLocals",
+        "noUnusedParameters",
+        "skipLibCheck",
+        "target",
+        "tsBuildInfoFile",
+        "types",
+        "verbatimModuleSyntax"
+      ],
+      "purpose": "Project file.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "vite.config.ts",
+      "ext": ".ts",
+      "bytes": 3075,
+      "lines": 82,
+      "sha1": "503b6033a028",
+      "imports": [
+        "@vitejs/plugin-react",
+        "node:fs",
+        "vite",
+        "vite-plugin-pwa"
+      ],
+      "exports": [],
+      "functions": [
+        "buildInfoPlugin"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Vite build/PWA configuration.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "vitest.config.ts",
+      "ext": ".ts",
+      "bytes": 414,
+      "lines": 17,
+      "sha1": "9285dad81544",
+      "imports": [
+        "@vitejs/plugin-react",
+        "vitest/config"
+      ],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Support module that imports project/external dependencies.",
+      "too_large": false,
+      "read_error": null
+    }
+  ]
+}
