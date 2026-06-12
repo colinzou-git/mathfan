@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-11T06:05:29.938084+00:00",
+  "generated_at": "2026-06-12T19:37:54.663527+00:00",
   "repo_root": "C:\\Users\\colin\\Documents\\mathFan",
   "package": {
     "name": "mathfan",
@@ -145,6 +145,26 @@
       "css_classes": [],
       "json_keys": [],
       "purpose": "Local persistence/database layer.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "docs/CLOUD_DEVELOPMENT.md",
+      "ext": ".md",
+      "bytes": 4667,
+      "lines": 115,
+      "sha1": "8ce5ca6cf56f",
+      "imports": [],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Project file.",
       "too_large": false,
       "read_error": null
     },
@@ -1340,9 +1360,9 @@
     {
       "path": "src/features/audio/mathSpeech.ts",
       "ext": ".ts",
-      "bytes": 3314,
-      "lines": 90,
-      "sha1": "6bf65f6c8dd7",
+      "bytes": 3610,
+      "lines": 93,
+      "sha1": "5025f1c0b2e4",
       "imports": [],
       "exports": [
         "fractionToWords",
@@ -5693,9 +5713,9 @@
     {
       "path": "src/tests/speech.test.ts",
       "ext": ".ts",
-      "bytes": 4810,
-      "lines": 148,
-      "sha1": "7af63886ec00",
+      "bytes": 5656,
+      "lines": 170,
+      "sha1": "a170793670ac",
       "imports": [
         "../features/audio/speech",
         "vitest"

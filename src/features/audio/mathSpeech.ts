@@ -83,7 +83,10 @@ export function normalizeMathForSpeech(text: string): string {
     .replace(/÷/g, ' divided by ')
     .replace(/−/g, ' minus ')
     .replace(/▢/g, ' blank ')
-    .replace(/\?/g, ' what ')
+    // A '?' is the unknown in an equation ("6 × 7 = ?" → "what"), but a '?'
+    // ending a word-problem sentence is punctuation — keep it (a letter precedes
+    // it) so TTS uses natural question intonation instead of saying "what".
+    .replace(/([A-Za-z])\?|\?/g, (_m, letter) => (letter ? `${letter}?` : ' what '))
     .replace(/\s+/g, ' ')
     .trim();
 }

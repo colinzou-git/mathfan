@@ -145,3 +145,25 @@ describe('speakProblem speaks fractions naturally (never "slash")', () => {
     expect(text).toContain('what number over six');
   });
 });
+
+describe('speakProblem does not pronounce a sentence-ending "?" as "what"', () => {
+  const spokenTextFor = (prompt: string) => {
+    speakProblem(prompt);
+    return utterances.at(-1)?.text ?? '';
+  };
+
+  it('keeps a word-problem question mark as punctuation, not the word "what"', () => {
+    expect(spokenTextFor('How many apples in all?')).toBe('How many apples in all?');
+  });
+
+  it('does not say "what" for a multi-sentence word problem', () => {
+    const text = spokenTextFor('There are 3 boxes. Each one has 4 apples. How many apples in all?');
+    expect(text.toLowerCase()).not.toContain('what');
+  });
+
+  it('still speaks an equation placeholder "?" as "what" while keeping a sentence "?"', () => {
+    expect(spokenTextFor('If 6 × ? = 12, how many groups?')).toBe(
+      'If 6 times what = 12, how many groups?',
+    );
+  });
+});
