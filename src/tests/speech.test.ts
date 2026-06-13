@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { speak, speakProblem, speakFeedback } from '../features/audio/speech';
+import { speak, speakProblem, speakFeedback, stopSpeech } from '../features/audio/speech';
 
 // Minimal controllable mock of the Web Speech API. The mock utterance does NOT
 // auto-fire onend, so we can assert the returned promise stays pending until we
@@ -9,6 +9,8 @@ interface MockUtterance {
   text: string;
   rate: number;
   pitch: number;
+  volume: number;
+  lang: string;
   voice: SpeechSynthesisVoice | null;
   onend: (() => void) | null;
   onerror: (() => void) | null;
@@ -17,16 +19,20 @@ interface MockUtterance {
 let utterances: MockUtterance[] = [];
 let speakSpy: ReturnType<typeof vi.fn>;
 let cancelSpy: ReturnType<typeof vi.fn>;
+let resumeSpy: ReturnType<typeof vi.fn>;
 
 function installSpeechMock() {
   utterances = [];
   speakSpy = vi.fn();
   cancelSpy = vi.fn();
+  resumeSpy = vi.fn();
 
   class MockSpeechSynthesisUtterance {
     text: string;
     rate = 1;
     pitch = 1;
+    volume = 1;
+    lang = '';
     voice: SpeechSynthesisVoice | null = null;
     onend: (() => void) | null = null;
     onerror: (() => void) | null = null;
@@ -39,6 +45,10 @@ function installSpeechMock() {
   (window as unknown as { speechSynthesis: unknown }).speechSynthesis = {
     speak: speakSpy,
     cancel: cancelSpy,
+    resume: resumeSpy,
+    speaking: false,
+    pending: false,
+    paused: false,
     getVoices: () => [],
     addEventListener: () => {},
   };
@@ -52,15 +62,39 @@ const flush = () => new Promise(r => setTimeout(r, 0));
 
 beforeEach(installSpeechMock);
 afterEach(() => {
+  stopSpeech();
+  vi.useRealTimers();
   vi.restoreAllMocks();
   delete (window as unknown as { speechSynthesis?: unknown }).speechSynthesis;
 });
 
 describe('speech promise timing', () => {
-  it('cancels any in-flight speech before starting a new utterance', () => {
+  it('starts the first utterance without an unnecessary cancel', () => {
     speak('hello');
+    expect(cancelSpy).not.toHaveBeenCalled();
+    expect(speakSpy).toHaveBeenCalledOnce();
+    expect(utterances.at(-1)?.lang).toBe('en-US');
+  });
+
+  it('waits briefly after cancelling before speaking a replacement utterance', async () => {
+    vi.useFakeTimers();
+
+    const first = speak('first');
+    const second = speak('second');
+
+    await first; // interrupted callers resolve even if Android emits no end event
     expect(cancelSpy).toHaveBeenCalledOnce();
     expect(speakSpy).toHaveBeenCalledOnce();
+
+    await vi.advanceTimersByTimeAsync(49);
+    expect(speakSpy).toHaveBeenCalledOnce();
+
+    await vi.advanceTimersByTimeAsync(1);
+    expect(speakSpy).toHaveBeenCalledTimes(2);
+    expect(utterances.at(-1)?.text).toBe('second');
+
+    utterances.at(-1)!.onend?.();
+    await second;
   });
 
   it('speakFeedback resolves only after the utterance fires onend', async () => {
