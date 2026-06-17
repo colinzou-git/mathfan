@@ -4,9 +4,9 @@
 
 | Package | Import count |
 | --- | --- |
-| vitest | 54 |
-| react | 34 |
-| @testing-library/react | 9 |
+| vitest | 56 |
+| react | 35 |
+| @testing-library/react | 11 |
 | __future__ | 8 |
 | sys | 8 |
 | pathlib | 6 |
@@ -64,6 +64,7 @@
 | src/App.tsx | ./features/dashboard/StudentDashboard |
 | src/App.tsx | ./features/diagnosis/diagnosticCompletion |
 | src/App.tsx | ./features/diagnosis/DiagnosticSession |
+| src/App.tsx | ./features/goals/GoalEvaluationSession |
 | src/App.tsx | ./features/goals/GoalsPage |
 | src/App.tsx | ./features/mastery/Grade3MasteryMapPage |
 | src/App.tsx | ./features/multiplication/MultiplicationQuizPage |
@@ -187,6 +188,32 @@
 | src/features/goals/goalEvaluationEngine.ts | ../mastery/grade3MasteryMap |
 | src/features/goals/goalEvaluationEngine.ts | ../mastery/skillMapping |
 | src/features/goals/goalEvaluationEngine.ts | ../mastery/skillPracticePlanner |
+| src/features/goals/goalEvaluationPersistence.ts | ../../db/dexie |
+| src/features/goals/goalEvaluationPersistence.ts | ../../db/repositories |
+| src/features/goals/goalEvaluationPersistence.ts | ../../types/math |
+| src/features/goals/goalEvaluationPersistence.ts | ../../utils/id |
+| src/features/goals/goalEvaluationPersistence.ts | ../../utils/rng |
+| src/features/goals/goalEvaluationPersistence.ts | ../learning/learningEvents |
+| src/features/goals/goalEvaluationPersistence.ts | ./types |
+| src/features/goals/GoalEvaluationSession.tsx | ../../components/NumPad |
+| src/features/goals/GoalEvaluationSession.tsx | ../../db/repositories |
+| src/features/goals/GoalEvaluationSession.tsx | ../../types/math |
+| src/features/goals/GoalEvaluationSession.tsx | ../../utils/id |
+| src/features/goals/GoalEvaluationSession.tsx | ../auth/googleAuth |
+| src/features/goals/GoalEvaluationSession.tsx | ../curriculum/makeItemFromId |
+| src/features/goals/GoalEvaluationSession.tsx | ../learning/learningEvents |
+| src/features/goals/GoalEvaluationSession.tsx | ../mastery/grade3MasteryMap |
+| src/features/goals/GoalEvaluationSession.tsx | ../mastery/misconceptionEngine |
+| src/features/goals/GoalEvaluationSession.tsx | ../mastery/skillMapping |
+| src/features/goals/GoalEvaluationSession.tsx | ../mastery/skillPracticePlanner |
+| src/features/goals/GoalEvaluationSession.tsx | ../practice/answerChecker |
+| src/features/goals/GoalEvaluationSession.tsx | ../practice/QuestionRenderer |
+| src/features/goals/GoalEvaluationSession.tsx | ../scheduler/scheduler |
+| src/features/goals/GoalEvaluationSession.tsx | ../sync/driveSync |
+| src/features/goals/GoalEvaluationSession.tsx | ../time/clock |
+| src/features/goals/GoalEvaluationSession.tsx | ./goalEvaluationEngine |
+| src/features/goals/GoalEvaluationSession.tsx | ./goalEvaluationPersistence |
+| src/features/goals/GoalEvaluationSession.tsx | ./types |
 | src/features/goals/goalLifecycleService.ts | ../../db/repositories |
 | src/features/goals/goalLifecycleService.ts | ../../utils/id |
 | src/features/goals/goalLifecycleService.ts | ./goalEngine |
@@ -209,6 +236,7 @@
 | src/features/goals/GoalsPage.tsx | ./goalLifecycleService |
 | src/features/goals/GoalsPage.tsx | ./goalRecommendationEngine |
 | src/features/goals/GoalsPage.tsx | ./types |
+| src/features/goals/types.ts | ../../types/math |
 | src/features/goals/types.ts | ../learning/learningEvents |
 | src/features/goals/types.ts | ../mastery/skillMasteryEngine |
 | src/features/learning/eventRebuild.ts | ../../db/dexie |
@@ -431,6 +459,8 @@
 | src/tests/answerChecker.test.ts | ../features/practice/answerChecker |
 | src/tests/answerChecker.test.ts | ../types/math |
 | src/tests/appDiagnosticCompletion.test.ts | ../features/diagnosis/diagnosticCompletion |
+| src/tests/appGoalEvaluationNavigation.test.tsx | ../App |
+| src/tests/appGoalEvaluationNavigation.test.tsx | ../types/math |
 | src/tests/arithmeticItems.test.ts | ../features/curriculum/arithmeticItems |
 | src/tests/clock.test.ts | ../features/time/clock |
 | src/tests/components.test.tsx | ../components/NumPad |
@@ -468,6 +498,13 @@
 | src/tests/goalEvaluationEngine.test.tsx | ../features/practice/answerChecker |
 | src/tests/goalEvaluationEngine.test.tsx | ../features/practice/QuestionRenderer |
 | src/tests/goalEvaluationEngine.test.tsx | ../types/math |
+| src/tests/goalEvaluationSession.test.tsx | ../db/repositories |
+| src/tests/goalEvaluationSession.test.tsx | ../features/goals/goalEvaluationPersistence |
+| src/tests/goalEvaluationSession.test.tsx | ../features/goals/GoalEvaluationSession |
+| src/tests/goalEvaluationSession.test.tsx | ../features/goals/types |
+| src/tests/goalEvaluationSession.test.tsx | ../features/learning/learningEvents |
+| src/tests/goalEvaluationSession.test.tsx | ../features/sync/driveSync |
+| src/tests/goalEvaluationSession.test.tsx | ../types/math |
 | src/tests/goalRecommendationEngine.test.ts | ../features/goals/goalRecommendationEngine |
 | src/tests/goalRecommendationEngine.test.ts | ../features/goals/types |
 | src/tests/goalRecommendationEngine.test.ts | ../features/learning/learningEvents |

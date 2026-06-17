@@ -43,6 +43,8 @@ import {
 interface Props {
   profile: StudentProfile;
   lastSyncedAt?: string | null;
+  initialGoalSkillIds?: string[] | null;
+  onInitialGoalSkillsHandled?: () => void;
   onBack: () => void;
   onStartEvaluation: () => void;
 }
@@ -65,7 +67,9 @@ interface GoalView {
   progress: GoalProgress;
 }
 
-type WizardMode = { kind: 'create' } | { kind: 'edit'; goal: LearningGoal };
+type WizardMode =
+  | { kind: 'create'; initialSkillIds?: string[]; initialStep?: 1 | 2 | 3; initialTitle?: string }
+  | { kind: 'edit'; goal: LearningGoal };
 type ConfirmAction = { kind: 'end' | 'cancel'; goal: LearningGoal } | null;
 
 const DEFAULT_DURATION_DAYS = 7;
@@ -100,6 +104,16 @@ function percent(value: number): string {
 
 function skillTitle(skillId: string): string {
   return getGrade3Skill(skillId)?.title ?? skillId;
+}
+
+function initialWizardFromSkills(skillIds?: string[] | null): WizardMode | null {
+  if (!skillIds || skillIds.length === 0) return null;
+  return {
+    kind: 'create',
+    initialSkillIds: skillIds,
+    initialStep: 3,
+    initialTitle: skillIds.length === 1 ? `${skillTitle(skillIds[0])} Goal` : 'Evaluation Goal',
+  };
 }
 
 function reasonForSummary(summary?: StudentSkillSummary): GoalTargetReason {
@@ -303,10 +317,10 @@ function GoalCard({
   );
 }
 
-export function GoalsPage({ profile, lastSyncedAt, onBack, onStartEvaluation }: Props) {
+export function GoalsPage({ profile, lastSyncedAt, initialGoalSkillIds, onInitialGoalSkillsHandled, onBack, onStartEvaluation }: Props) {
   const [page, setPage] = useState<PageState>({ status: 'loading' });
   const [refreshKey, setRefreshKey] = useState(0);
-  const [wizard, setWizard] = useState<WizardMode | null>(null);
+  const [wizard, setWizard] = useState<WizardMode | null>(() => initialWizardFromSkills(initialGoalSkillIds));
   const [confirmAction, setConfirmAction] = useState<ConfirmAction>(null);
 
   const refresh = () => {
@@ -341,6 +355,11 @@ export function GoalsPage({ profile, lastSyncedAt, onBack, onStartEvaluation }: 
 
   const ready = page.status === 'ready' ? page.data : null;
   const views = useMemo(() => ready ? sectionedViews(ready, profile) : null, [ready, profile]);
+
+  useEffect(() => {
+    if (!initialGoalSkillIds || initialGoalSkillIds.length === 0) return;
+    onInitialGoalSkillsHandled?.();
+  }, [initialGoalSkillIds, onInitialGoalSkillsHandled]);
 
   const handleTransition = async (goal: LearningGoal, action: 'pause' | 'resume' | 'end' | 'cancel') => {
     const now = appNow().toISOString();
@@ -529,13 +548,15 @@ function GoalWizard({
   const dialogRef = useRef<HTMLDivElement>(null);
   const nowDate = data.now.slice(0, 10);
   const editing = mode.kind === 'edit' ? mode.goal : null;
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(mode.kind === 'create' ? mode.initialStep ?? 1 : 1);
   const [durationDays, setDurationDays] = useState(editing?.durationDays ?? DEFAULT_DURATION_DAYS);
   const [startDate, setStartDate] = useState(editing?.startDate ?? nowDate);
-  const [title, setTitle] = useState(editing?.title ?? '');
+  const [title, setTitle] = useState(editing?.title ?? (mode.kind === 'create' ? mode.initialTitle ?? '' : ''));
   const [selectedRecommendation, setSelectedRecommendation] = useState<GoalRecommendation | null>(null);
   const [browseAll, setBrowseAll] = useState(Boolean(editing));
-  const [selectedSkillIds, setSelectedSkillIds] = useState<string[]>(editing?.targets.map(target => target.skillId) ?? []);
+  const [selectedSkillIds, setSelectedSkillIds] = useState<string[]>(
+    editing?.targets.map(target => target.skillId) ?? (mode.kind === 'create' ? mode.initialSkillIds ?? [] : []),
+  );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -825,11 +846,11 @@ function GoalWizard({
         {error && <p role="alert" style={s.errorText}>{error}</p>}
 
         <div style={s.actions}>
-          <button style={s.secondaryBtn} onClick={step === 1 ? onClose : () => setStep(step - 1)}>
+          <button style={s.secondaryBtn} onClick={step === 1 ? onClose : () => setStep(current => Math.max(1, current - 1) as 1 | 2 | 3)}>
             {step === 1 ? 'Cancel' : 'Back'}
           </button>
           {step < 3 ? (
-            <button style={s.primaryBtn} onClick={() => setStep(step + 1)}>Next</button>
+            <button style={s.primaryBtn} onClick={() => setStep(current => Math.min(3, current + 1) as 1 | 2 | 3)}>Next</button>
           ) : (
             <button style={s.primaryBtn} disabled={saving} onClick={save}>
               {saving ? 'Saving...' : 'Save Goal'}

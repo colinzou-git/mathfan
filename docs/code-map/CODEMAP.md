@@ -1,6 +1,6 @@
 # Code Map Overview
 
-Generated: 2026-06-17 16:30:37 UTC
+Generated: 2026-06-17 16:54:25 UTC
 
 Repo root: `C:\Users\colin\Documents\mathFan`  
 Output folder: `C:\Users\colin\Documents\mathFan\docs\code-map`
@@ -14,9 +14,9 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 - Package name: `mathfan`
 - Version: `1.2.0`
 - Module type: `module`
-- Scanned files: **200**
-- Scanned lines: **38,441**
-- Scanned bytes: **1,513,571**
+- Scanned files: **204**
+- Scanned lines: **39,672**
+- Scanned bytes: **1,563,341**
 
 ## NPM scripts
 
@@ -67,7 +67,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 
 | File | Lines | Likely purpose | Key symbols |
 | --- | --- | --- | --- |
-| src/App.tsx | 293 | Top-level React app shell: routes/screens, global state, and feature wiring. | App, handleQuizDone, handleSessionDone, pickOperation, startPractice, updateProfile, updateSettings |
+| src/App.tsx | 312 | Top-level React app shell: routes/screens, global state, and feature wiring. | App, handleQuizDone, handleSessionDone, pickOperation, startPractice, updateProfile, updateSettings |
 | src/features/sync/SyncWidget.tsx | 156 | Cloud sync/auth/data transfer logic. | GoogleIcon, SyncWidget, friendlyError, GoogleIcon, initials, SyncWidget, timeSince |
 | src/features/sync/snapshot.ts | 210 | Local persistence/database layer. | AppSnapshot, validateSnapshot, buildSnapshot, mergeSnapshot, remoteHasNewerUpdatedAt, validateSnapshot, validTimeMs |
 | vite.config.ts | 82 | Vite build/PWA configuration. | buildInfoPlugin |
@@ -75,7 +75,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 | src/main.tsx | 21 | React entry point that mounts the app. |  |
 | src/features/sync/driveSync.ts | 151 | Cloud sync/auth/data transfer logic. | DriveFileInfo, SyncResult, SyncStatus, authFetch, downloadSnapshot, findSyncFile, getDriveFileInfo, pullAndMerge |
 | src/features/sync/useSync.ts | 99 | Cloud sync/auth/data transfer logic. | useSync, initAuth, SyncState, useSync, recordSync, useSync |
-| src/features/goals/GoalsPage.tsx | 902 | React UI component file: ConfirmDialog, EmptyState, GoalCard, GoalWizard. | ConfirmDialog, EmptyState, GoalCard, GoalWizard, ProgressBar, SummaryCard, GoalsPage, activeLearningDays |
+| src/features/goals/GoalsPage.tsx | 923 | React UI component file: ConfirmDialog, EmptyState, GoalCard, GoalWizard. | ConfirmDialog, EmptyState, GoalCard, GoalWizard, ProgressBar, SummaryCard, GoalsPage, activeLearningDays |
 | src/features/multiplication/MultiplicationQuizPage.tsx | 845 | Local persistence/database layer. | FactChip, SetupScreen, StatBox, SummaryScreen, MultiplicationQuizPage, FactChip, MultiplicationQuizPage, recommendedPracticeConfig |
 | src/features/practice/PracticeScreen.tsx | 552 | Local persistence/database layer. | KbChip, PracticeScreen, KbChip, onKey, PracticeScreen, run, submitChoice |
 | src/features/settings/SettingsPage.tsx | 516 | Student/app settings UI or persistence. | Section, SyncRow, ToggleRow, SettingsPage, applyUpdate, buildId, buildLabel, checkForUpdates |
@@ -91,12 +91,12 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 | src/features/stats/QuizStatsView.tsx | 135 | Progress/statistics screens or calculations. | FactGroup, QuizStatsView, avgSecStr, FactGroup, fmt, QuizStatsView |
 | src/features/stats/TodayAchievementSection.tsx | 125 | Progress/statistics screens or calculations. | AchievementTile, TodayAchievementSection, AchievementTile, TodayAchievementSection |
 | src/features/mastery/skillPracticePlanner.ts | 702 | Grade 3 skill practice planner: maps skill IDs to SessionConfig for the mastery map. | PlanOptions, planPracticeForSkill, add2DigitRegroupingItemIds, add3DigitRegroupingItemIds, arithmeticPatternItemIds, divisionWordItemIds, divItemIds, elapsedTimeItemIds |
+| src/features/goals/GoalEvaluationSession.tsx | 624 | Exports reusable code: GoalEvaluationSession. | GoalEvaluationSession, buildNewLearningCandidates, buildReviewFindings, buildUpdatedState, confirmCancel, continueNext, evaluationArgs, GoalEvaluationSession |
 | src/features/goals/goalEvaluationEngine.ts | 575 | Exports reusable code: ADAPTIVE_GOAL_EVALUATION_CONFIRMATION_COUNT, ADAPTIVE_GOAL_EVALUATION_HISTORICAL_PRIOR_CAP, ADAPTIVE_GOAL_EVALUATION_QUESTION_COUNT, AdaptiveGoalEvaluationArgs, AdaptiveGoalEvaluationItem. | ADAPTIVE_GOAL_EVALUATION_CONFIRMATION_COUNT, ADAPTIVE_GOAL_EVALUATION_HISTORICAL_PRIOR_CAP, ADAPTIVE_GOAL_EVALUATION_QUESTION_COUNT, AdaptiveGoalEvaluationArgs, AdaptiveGoalEvaluationItem, AdaptiveGoalEvaluationPhase, AdaptiveGoalEvaluationResponse, AdaptiveGoalEvaluationResult |
 | src/features/diagnosis/DiagnosticSession.tsx | 558 | Exports reusable code: DiagnosticSession. | DiagnosticSession, complete, DiagnosticSession, onKey |
 | src/features/practice/usePracticeSession.ts | 552 | Local persistence/database layer. | usePracticeSession, CorrectResult, LastSessionSummary, SessionState, usePracticeSession, getStaticItem, usePracticeSession |
 | src/features/goals/goalEngine.ts | 524 | Exports reusable code: applyGoalTargetEdits, buildGoalSkillTarget, calculateGoalProgress, calculateTargetProgress, captureGoalBaseline. | applyGoalTargetEdits, buildGoalSkillTarget, calculateGoalProgress, calculateTargetProgress, captureGoalBaseline, defaultSkillIdForItem, evaluateGoalLifecycle, GoalEvidenceInput |
 | src/features/goals/goalRecommendationEngine.ts | 494 | Exports reusable code: CandidateFeatures, estimateGoalWorkload, GoalRecommendation, GoalRecommendationArgs, GoalRecommendationCandidate. | CandidateFeatures, estimateGoalWorkload, GoalRecommendation, GoalRecommendationArgs, GoalRecommendationCandidate, GoalRecommendationResult, GoalRecommendationTarget, RecommendationReasonLabel |
-| src/features/stats/statsEngine.ts | 395 | Progress/statistics screens or calculations. | addDays, computeDailyHistory, computeDayStats, computeFactGrowth, computePeriodComparison, computePeriodStats, computePerTableStats, computeStreak |
 
 ## Repository tree, filtered
 
@@ -176,6 +176,8 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   ├── goals
 │   │   │   ├── goalEngine.ts
 │   │   │   ├── goalEvaluationEngine.ts
+│   │   │   ├── goalEvaluationPersistence.ts
+│   │   │   ├── GoalEvaluationSession.tsx
 │   │   │   ├── goalLifecycleService.ts
 │   │   │   ├── goalRecommendationEngine.ts
 │   │   │   ├── GoalsPage.tsx
@@ -256,6 +258,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   ├── ai.test.ts
 │   │   ├── answerChecker.test.ts
 │   │   ├── appDiagnosticCompletion.test.ts
+│   │   ├── appGoalEvaluationNavigation.test.tsx
 │   │   ├── arithmeticItems.test.ts
 │   │   ├── clock.test.ts
 │   │   ├── components.test.tsx
@@ -267,6 +270,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   ├── goalDexieSchema.test.ts
 │   │   ├── goalEngine.test.ts
 │   │   ├── goalEvaluationEngine.test.tsx
+│   │   ├── goalEvaluationSession.test.tsx
 │   │   ├── goalRecommendationEngine.test.ts
 │   │   ├── goalRepositories.test.ts
 │   │   ├── goalSnapshot.test.ts
@@ -359,50 +363,50 @@ Purpose: Top-level React app shell: routes/screens, global state, and feature wi
   15: import { Grade3MasteryMapPage } from './features/mastery/Grade3MasteryMapPage';
   16: import { DiagnosticSession } from './features/diagnosis/DiagnosticSession';
   17: import { GoalsPage } from './features/goals/GoalsPage';
-  18: import { preloadVoices } from './features/audio/speech';
-  19: import { useSync, initAuth } from './features/sync/useSync';
-  20: import { pushLocal } from './features/sync/driveSync';
-  21: import { currentState as authState } from './features/auth/googleAuth';
-  22: import { applyTheme } from './features/theme/themes';
-  23: import { syncDiagnosticCompletionIfSignedIn } from './features/diagnosis/diagnosticCompletion';
-  24: import { resolvePracticeDoneDestination } from './features/practice/practiceNavigation';
-  25: 
-  26: type Screen =
-  27:   | 'loading' | 'setup' | 'dashboard'
-  28:   | 'daily-setup' | 'range-setup' | 'practice'
-  29:   | 'stats' | 'settings' | 'quiz' | 'today-detail' | 'mastery-map' | 'diagnostic' | 'goals';
-  30: 
-  31: export default function App() {
-  32:   const [screen, setScreen] = useState<Screen>('loading');
-  33:   const [profile, setProfile] = useState<StudentProfile | null>(null);
-  34:   const [sessionConfig, setSessionConfig] = useState<SessionConfig | null>(null);
-  35:   const [selectedOp, setSelectedOp] = useState<PracticeOp>('multiplication');
-  36:   const [achievementFilter, setAchievementFilter] = useState<AchievementFilter>('total');
-  37:   const [achievementData, setAchievementData] = useState<TodayAchievementData | null>(null);
-  38:   const { auth, syncStatus, lastSyncedAt, syncError, handleSignIn, handleSignOut, manualSync } = useSync();
-  39:   const [practiceReturn, setPracticeReturn] = useState<Screen>('dashboard');
-  40: 
-  41:   // After a successful sync, refresh the profile from DB.
-  42:   // This handles the case where Drive data was merged back onto a fresh install:
-  43:   // the local empty student and the Drive student have different IDs, so we pick
-  44:   // the student with the most events (i.e. the restored Drive profile).
-  45:   const syncRefreshGuard = useRef(true);
-  46:   useEffect(() => {
-  47:     if (syncRefreshGuard.current) { syncRefreshGuard.current = false; return; }
-  48:     if (!lastSyncedAt) return;
-  49:     studentRepo.getAll().then(async all => {
-  50:       if (all.length === 0) return;
-  51:       let best = all[0];
-  52:       if (all.length > 1) {
-  53:         const counts = await Promise.all(all.map(s => mathAnswerEventRepo.getAll(s.id).then(ev => ev.length)));
-  54:         best = all[counts.indexOf(Math.max(...counts))];
-  55:       }
-  56:       setProfile(best);
-  57:       applyTheme(best.settings.theme ?? 'indigo');
-  58:       setScreen(s => (s === 'setup' || s === 'loading') ? 'dashboard' : s);
-  59:     });
-  60:   // eslint-disable-next-line react-hooks/exhaustive-deps
-... (232 more lines)
+  18: import { GoalEvaluationSession } from './features/goals/GoalEvaluationSession';
+  19: import { preloadVoices } from './features/audio/speech';
+  20: import { useSync, initAuth } from './features/sync/useSync';
+  21: import { pushLocal } from './features/sync/driveSync';
+  22: import { currentState as authState } from './features/auth/googleAuth';
+  23: import { applyTheme } from './features/theme/themes';
+  24: import { syncDiagnosticCompletionIfSignedIn } from './features/diagnosis/diagnosticCompletion';
+  25: import { resolvePracticeDoneDestination } from './features/practice/practiceNavigation';
+  26: 
+  27: type Screen =
+  28:   | 'loading' | 'setup' | 'dashboard'
+  29:   | 'daily-setup' | 'range-setup' | 'practice'
+  30:   | 'stats' | 'settings' | 'quiz' | 'today-detail' | 'mastery-map' | 'diagnostic' | 'goals' | 'goal-evaluation';
+  31: 
+  32: export default function App() {
+  33:   const [screen, setScreen] = useState<Screen>('loading');
+  34:   const [profile, setProfile] = useState<StudentProfile | null>(null);
+  35:   const [sessionConfig, setSessionConfig] = useState<SessionConfig | null>(null);
+  36:   const [selectedOp, setSelectedOp] = useState<PracticeOp>('multiplication');
+  37:   const [achievementFilter, setAchievementFilter] = useState<AchievementFilter>('total');
+  38:   const [achievementData, setAchievementData] = useState<TodayAchievementData | null>(null);
+  39:   const { auth, syncStatus, lastSyncedAt, syncError, handleSignIn, handleSignOut, manualSync } = useSync();
+  40:   const [practiceReturn, setPracticeReturn] = useState<Screen>('dashboard');
+  41:   const [initialGoalSkillIds, setInitialGoalSkillIds] = useState<string[] | null>(null);
+  42: 
+  43:   // After a successful sync, refresh the profile from DB.
+  44:   // This handles the case where Drive data was merged back onto a fresh install:
+  45:   // the local empty student and the Drive student have different IDs, so we pick
+  46:   // the student with the most events (i.e. the restored Drive profile).
+  47:   const syncRefreshGuard = useRef(true);
+  48:   useEffect(() => {
+  49:     if (syncRefreshGuard.current) { syncRefreshGuard.current = false; return; }
+  50:     if (!lastSyncedAt) return;
+  51:     studentRepo.getAll().then(async all => {
+  52:       if (all.length === 0) return;
+  53:       let best = all[0];
+  54:       if (all.length > 1) {
+  55:         const counts = await Promise.all(all.map(s => mathAnswerEventRepo.getAll(s.id).then(ev => ev.length)));
+  56:         best = all[counts.indexOf(Math.max(...counts))];
+  57:       }
+  58:       setProfile(best);
+  59:       applyTheme(best.settings.theme ?? 'indigo');
+  60:       setScreen(s => (s === 'setup' || s === 'loading') ? 'dashboard' : s);
+... (251 more lines)
 ```
 
 ### `src/features/sync/SyncWidget.tsx`
@@ -876,22 +880,22 @@ Purpose: React UI component file: ConfirmDialog, EmptyState, GoalCard, GoalWizar
   43: interface Props {
   44:   profile: StudentProfile;
   45:   lastSyncedAt?: string | null;
-  46:   onBack: () => void;
-  47:   onStartEvaluation: () => void;
-  48: }
-  49: 
-  50: type PageState =
-  51:   | { status: 'loading' }
-  52:   | { status: 'error'; message: string }
-  53:   | { status: 'ready'; data: GoalsData };
-  54: 
-  55: interface GoalsData {
-  56:   goals: LearningGoal[];
-  57:   events: MathAnswerEvent[];
-  58:   itemStates: StudentItemState[];
-  59:   skillSummaries: StudentSkillSummary[];
-  60:   now: string;
-... (841 more lines)
+  46:   initialGoalSkillIds?: string[] | null;
+  47:   onInitialGoalSkillsHandled?: () => void;
+  48:   onBack: () => void;
+  49:   onStartEvaluation: () => void;
+  50: }
+  51: 
+  52: type PageState =
+  53:   | { status: 'loading' }
+  54:   | { status: 'error'; message: string }
+  55:   | { status: 'ready'; data: GoalsData };
+  56: 
+  57: interface GoalsData {
+  58:   goals: LearningGoal[];
+  59:   events: MathAnswerEvent[];
+  60:   itemStates: StudentItemState[];
+... (862 more lines)
 ```
 
 ### `src/features/multiplication/MultiplicationQuizPage.tsx`

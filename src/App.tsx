@@ -15,6 +15,7 @@ import type { AchievementFilter, TodayAchievementData } from './features/stats/t
 import { Grade3MasteryMapPage } from './features/mastery/Grade3MasteryMapPage';
 import { DiagnosticSession } from './features/diagnosis/DiagnosticSession';
 import { GoalsPage } from './features/goals/GoalsPage';
+import { GoalEvaluationSession } from './features/goals/GoalEvaluationSession';
 import { preloadVoices } from './features/audio/speech';
 import { useSync, initAuth } from './features/sync/useSync';
 import { pushLocal } from './features/sync/driveSync';
@@ -26,7 +27,7 @@ import { resolvePracticeDoneDestination } from './features/practice/practiceNavi
 type Screen =
   | 'loading' | 'setup' | 'dashboard'
   | 'daily-setup' | 'range-setup' | 'practice'
-  | 'stats' | 'settings' | 'quiz' | 'today-detail' | 'mastery-map' | 'diagnostic' | 'goals';
+  | 'stats' | 'settings' | 'quiz' | 'today-detail' | 'mastery-map' | 'diagnostic' | 'goals' | 'goal-evaluation';
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('loading');
@@ -37,6 +38,7 @@ export default function App() {
   const [achievementData, setAchievementData] = useState<TodayAchievementData | null>(null);
   const { auth, syncStatus, lastSyncedAt, syncError, handleSignIn, handleSignOut, manualSync } = useSync();
   const [practiceReturn, setPracticeReturn] = useState<Screen>('dashboard');
+  const [initialGoalSkillIds, setInitialGoalSkillIds] = useState<string[] | null>(null);
 
   // After a successful sync, refresh the profile from DB.
   // This handles the case where Drive data was merged back onto a fresh install:
@@ -260,13 +262,30 @@ export default function App() {
     );
   }
 
+  if (screen === 'goal-evaluation') {
+    return (
+      <GoalEvaluationSession
+        studentId={profile.id}
+        onCancel={() => setScreen('goals')}
+        onReturnToGoals={() => setScreen('goals')}
+        onSelectGoalSkills={skillIds => {
+          setInitialGoalSkillIds(skillIds);
+          setScreen('goals');
+        }}
+        onGoToDailyReview={() => setScreen('dashboard')}
+      />
+    );
+  }
+
   if (screen === 'goals') {
     return (
       <GoalsPage
         profile={profile}
         lastSyncedAt={lastSyncedAt}
+        initialGoalSkillIds={initialGoalSkillIds}
+        onInitialGoalSkillsHandled={() => setInitialGoalSkillIds(null)}
         onBack={() => setScreen('dashboard')}
-        onStartEvaluation={() => setScreen('diagnostic')}
+        onStartEvaluation={() => setScreen('goal-evaluation')}
       />
     );
   }

@@ -1,5 +1,6 @@
 import type { SkillSummaryStatus } from '../mastery/skillMasteryEngine';
 import type { MathAnswerEvent } from '../learning/learningEvents';
+import type { ReviewGrade } from '../../types/math';
 
 export type LearningGoalStatus = 'active' | 'paused' | 'completed' | 'ended' | 'cancelled';
 export type GoalSource = 'recommended' | 'evaluation' | 'manual';
@@ -82,10 +83,15 @@ export type GoalEvaluationStatus = 'not_started' | 'in_progress' | 'completed' |
 
 export interface GoalEvaluationAnswer {
   eventId: string;
+  attemptId?: string;
   targetId?: string;
   itemId: string;
+  skillId?: string;
   answeredAt: string;
   isCorrect: boolean;
+  studentAnswer?: string | number | null;
+  latencyMs?: number;
+  reviewGrade?: ReviewGrade;
 }
 
 export interface GoalEvaluation {
@@ -99,6 +105,7 @@ export interface GoalEvaluation {
   completedAt?: string;
   cancelledAt?: string;
   goalId?: string;
+  seed?: number;
   currentQuestionIndex: number;
   plannedQuestionCount: number;
   itemIds: string[];

@@ -143,6 +143,20 @@ function renderGoals(onStartEvaluation = vi.fn()) {
   return onStartEvaluation;
 }
 
+function renderGoalsWithInitialSkills(skillIds: string[]) {
+  const handled = vi.fn();
+  render(
+    <GoalsPage
+      profile={profile()}
+      initialGoalSkillIds={skillIds}
+      onInitialGoalSkillsHandled={handled}
+      onBack={() => {}}
+      onStartEvaluation={() => {}}
+    />,
+  );
+  return handled;
+}
+
 async function openWizardToStep(step: 1 | 2 | 3) {
   fireEvent.click(await screen.findByRole('button', { name: /add goal/i }));
   if (step >= 2) fireEvent.click(screen.getByRole('button', { name: 'Next' }));
@@ -258,6 +272,16 @@ describe('GoalsPage', () => {
     fireEvent.click(screen.getByRole('button', { name: /save goal/i }));
     await waitFor(() => expect(store.goals).toHaveLength(2));
     expect(await screen.findByText('2')).toBeInTheDocument();
+  });
+
+  it('opens Add Goal review with evaluation-selected skills without auto-creating a goal', async () => {
+    const handled = renderGoalsWithInitialSkills(['g3-mul-meaning']);
+
+    expect(await screen.findByText(/Step 3 of 3/i)).toBeInTheDocument();
+    expect(screen.getByDisplayValue(/Meaning of Multiplication Goal/i)).toBeInTheDocument();
+    expect(screen.getByText(/Selected skills: Meaning of Multiplication/i)).toBeInTheDocument();
+    expect(handled).toHaveBeenCalledTimes(1);
+    expect(store.goals).toHaveLength(0);
   });
 
   it('edits a goal without replacing an unchanged target baseline', async () => {

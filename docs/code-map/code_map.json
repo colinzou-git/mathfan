@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-17T16:30:37.014108+00:00",
+  "generated_at": "2026-06-17T16:54:25.714691+00:00",
   "repo_root": "C:\\Users\\colin\\Documents\\mathFan",
   "package": {
     "name": "mathfan",
@@ -665,9 +665,9 @@
     {
       "path": "src/App.tsx",
       "ext": ".tsx",
-      "bytes": 9738,
-      "lines": 293,
-      "sha1": "6cbed07433cd",
+      "bytes": 10465,
+      "lines": 312,
+      "sha1": "fe34c5be86e4",
       "imports": [
         "./components/opSpecs",
         "./components/RangeSetup",
@@ -679,6 +679,7 @@
         "./features/dashboard/StudentDashboard",
         "./features/diagnosis/diagnosticCompletion",
         "./features/diagnosis/DiagnosticSession",
+        "./features/goals/GoalEvaluationSession",
         "./features/goals/GoalsPage",
         "./features/mastery/Grade3MasteryMapPage",
         "./features/multiplication/MultiplicationQuizPage",
@@ -2496,6 +2497,108 @@
       "read_error": null
     },
     {
+      "path": "src/features/goals/goalEvaluationPersistence.ts",
+      "ext": ".ts",
+      "bytes": 1914,
+      "lines": 53,
+      "sha1": "aa45135de533",
+      "imports": [
+        "../../db/dexie",
+        "../../db/repositories",
+        "../../types/math",
+        "../../utils/id",
+        "../../utils/rng",
+        "../learning/learningEvents",
+        "./types"
+      ],
+      "exports": [
+        "GoalEvaluationAnswerWrite"
+      ],
+      "functions": [
+        "createGoalEvaluation",
+        "loadLatestResumableGoalEvaluation",
+        "recordGoalEvaluationAnswer"
+      ],
+      "classes": [],
+      "interfaces": [
+        "GoalEvaluationAnswerWrite"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Local persistence/database layer.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/goals/GoalEvaluationSession.tsx",
+      "ext": ".tsx",
+      "bytes": 28591,
+      "lines": 624,
+      "sha1": "89f4f3c15c2c",
+      "imports": [
+        "../../components/NumPad",
+        "../../db/repositories",
+        "../../types/math",
+        "../../utils/id",
+        "../auth/googleAuth",
+        "../curriculum/makeItemFromId",
+        "../learning/learningEvents",
+        "../mastery/grade3MasteryMap",
+        "../mastery/misconceptionEngine",
+        "../mastery/skillMapping",
+        "../mastery/skillPracticePlanner",
+        "../practice/answerChecker",
+        "../practice/QuestionRenderer",
+        "../scheduler/scheduler",
+        "../sync/driveSync",
+        "../time/clock",
+        "./goalEvaluationEngine",
+        "./goalEvaluationPersistence",
+        "./types",
+        "react"
+      ],
+      "exports": [
+        "GoalEvaluationSession"
+      ],
+      "functions": [
+        "buildNewLearningCandidates",
+        "buildReviewFindings",
+        "buildUpdatedState",
+        "confirmCancel",
+        "continueNext",
+        "evaluationArgs",
+        "GoalEvaluationSession",
+        "onKey",
+        "responsesFromEvaluation",
+        "resume",
+        "retrySave",
+        "skillItemIds",
+        "skillTitle",
+        "startNew"
+      ],
+      "classes": [],
+      "interfaces": [
+        "NewLearningCandidate",
+        "PendingWrite",
+        "Props",
+        "ReviewFinding"
+      ],
+      "types": [
+        "Feedback",
+        "Phase"
+      ],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Exports reusable code: GoalEvaluationSession.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/features/goals/goalLifecycleService.ts",
       "ext": ".ts",
       "bytes": 1854,
@@ -2610,9 +2713,9 @@
     {
       "path": "src/features/goals/GoalsPage.tsx",
       "ext": ".tsx",
-      "bytes": 37085,
-      "lines": 902,
-      "sha1": "5d0ca5be367d",
+      "bytes": 38105,
+      "lines": 923,
+      "sha1": "cbf71a02b2bc",
       "imports": [
         "../../db/repositories",
         "../../types/math",
@@ -2645,6 +2748,7 @@
         "GoalsPage",
         "GoalWizard",
         "handleTransition",
+        "initialWizardFromSkills",
         "loadGoalsData",
         "onKeyDown",
         "percent",
@@ -2687,10 +2791,11 @@
     {
       "path": "src/features/goals/types.ts",
       "ext": ".ts",
-      "bytes": 2488,
-      "lines": 110,
-      "sha1": "8536dda5cb01",
+      "bytes": 2693,
+      "lines": 117,
+      "sha1": "a45618dc10ea",
       "imports": [
+        "../../types/math",
         "../learning/learningEvents",
         "../mastery/skillMasteryEngine"
       ],
@@ -5153,6 +5258,31 @@
       "read_error": null
     },
     {
+      "path": "src/tests/appGoalEvaluationNavigation.test.tsx",
+      "ext": ".tsx",
+      "bytes": 4411,
+      "lines": 146,
+      "sha1": "5581cff25285",
+      "imports": [
+        "../App",
+        "../types/math",
+        "@testing-library/react",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/tests/arithmeticItems.test.ts",
       "ext": ".ts",
       "bytes": 2113,
@@ -5459,6 +5589,41 @@
       "read_error": null
     },
     {
+      "path": "src/tests/goalEvaluationSession.test.tsx",
+      "ext": ".tsx",
+      "bytes": 12058,
+      "lines": 337,
+      "sha1": "83b05ccc2774",
+      "imports": [
+        "../db/repositories",
+        "../features/goals/goalEvaluationPersistence",
+        "../features/goals/GoalEvaluationSession",
+        "../features/goals/types",
+        "../features/learning/learningEvents",
+        "../features/sync/driveSync",
+        "../types/math",
+        "@testing-library/react",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [
+        "answerCurrent",
+        "evaluation",
+        "renderEvaluation",
+        "startEvaluation"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/tests/goalRecommendationEngine.test.ts",
       "ext": ".ts",
       "bytes": 11871,
@@ -5559,9 +5724,9 @@
     {
       "path": "src/tests/goalsPage.test.tsx",
       "ext": ".tsx",
-      "bytes": 10068,
-      "lines": 301,
-      "sha1": "39412cefba6d",
+      "bytes": 10912,
+      "lines": 325,
+      "sha1": "df6c442073a2",
       "imports": [
         "../db/repositories",
         "../features/dashboard/StudentDashboard",
@@ -5578,6 +5743,7 @@
         "openWizardToStep",
         "profile",
         "renderGoals",
+        "renderGoalsWithInitialSkills",
         "target"
       ],
       "classes": [],
