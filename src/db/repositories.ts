@@ -2,6 +2,7 @@ import { db } from './dexie';
 import type { StudentProfile, StudentItemState, AttemptLog, PracticeSession } from '../types/math';
 import type { MathAnswerEvent } from '../features/learning/learningEvents';
 import type { QuizSession, MultiplicationFactStats, MultiplicationFactKey } from '../features/multiplication/types';
+import type { GoalEvaluation, GoalEvent, LearningGoal, LearningGoalStatus } from '../features/goals/types';
 
 export const studentRepo = {
   async getAll(): Promise<StudentProfile[]> {
@@ -201,5 +202,112 @@ export const sessionRepo = {
       .toArray();
     await db.sessions.bulkDelete(empties.map(s => s.id));
     return empties.length;
+  },
+};
+
+const HISTORICAL_GOAL_STATUSES: LearningGoalStatus[] = ['completed', 'ended', 'cancelled'];
+
+function withUpdatedAt<T extends { updatedAt: string }>(record: T, at: string): T {
+  return { ...record, updatedAt: at };
+}
+
+function nowIso(): string {
+  return new Date().toISOString();
+}
+
+export const learningGoalRepo = {
+  async create(goal: LearningGoal, at = nowIso()): Promise<void> {
+    await db.learningGoals.add(withUpdatedAt(goal, at));
+  },
+  async update(id: string, changes: Partial<Omit<LearningGoal, 'id' | 'studentId' | 'createdAt'>>, at = nowIso()): Promise<LearningGoal | undefined> {
+    const existing = await db.learningGoals.get(id);
+    if (!existing) return undefined;
+    const next = withUpdatedAt({ ...existing, ...changes }, at);
+    await db.learningGoals.put(next);
+    return next;
+  },
+  async get(id: string): Promise<LearningGoal | undefined> {
+    return db.learningGoals.get(id);
+  },
+  async list(studentId: string): Promise<LearningGoal[]> {
+    return db.learningGoals.where('studentId').equals(studentId).toArray();
+  },
+  async listActive(studentId: string): Promise<LearningGoal[]> {
+    return db.learningGoals.where('[studentId+status]').equals([studentId, 'active']).toArray();
+  },
+  async listPaused(studentId: string): Promise<LearningGoal[]> {
+    return db.learningGoals.where('[studentId+status]').equals([studentId, 'paused']).toArray();
+  },
+  async listHistorical(studentId: string): Promise<LearningGoal[]> {
+    return db.learningGoals
+      .where('studentId').equals(studentId)
+      .and(goal => HISTORICAL_GOAL_STATUSES.includes(goal.status))
+      .toArray();
+  },
+  async pause(id: string, at = nowIso()): Promise<LearningGoal | undefined> {
+    return learningGoalRepo.update(id, { status: 'paused' }, at);
+  },
+  async resume(id: string, at = nowIso()): Promise<LearningGoal | undefined> {
+    return learningGoalRepo.update(id, { status: 'active' }, at);
+  },
+  async end(id: string, at = nowIso()): Promise<LearningGoal | undefined> {
+    return learningGoalRepo.update(id, { status: 'ended', endedAt: at }, at);
+  },
+  async cancel(id: string, at = nowIso()): Promise<LearningGoal | undefined> {
+    return learningGoalRepo.update(id, { status: 'cancelled', endedAt: at }, at);
+  },
+  async complete(id: string, at = nowIso()): Promise<LearningGoal | undefined> {
+    return learningGoalRepo.update(id, { status: 'completed', completedAt: at }, at);
+  },
+};
+
+export const goalEventRepo = {
+  async append(event: GoalEvent): Promise<void> {
+    await db.goalEvents.add(event);
+  },
+  async getForGoal(goalId: string): Promise<GoalEvent[]> {
+    return db.goalEvents.where('goalId').equals(goalId).toArray();
+  },
+  async getForStudent(studentId: string): Promise<GoalEvent[]> {
+    return db.goalEvents.where('studentId').equals(studentId).toArray();
+  },
+  async getForDateRange(studentId: string, start: Date, end: Date): Promise<GoalEvent[]> {
+    return db.goalEvents
+      .where('[studentId+createdAt]')
+      .between([studentId, start.toISOString()], [studentId, end.toISOString()])
+      .toArray();
+  },
+};
+
+export const goalEvaluationRepo = {
+  async save(evaluation: GoalEvaluation, at = nowIso()): Promise<void> {
+    await db.goalEvaluations.put(withUpdatedAt(evaluation, at));
+  },
+  async load(id: string): Promise<GoalEvaluation | undefined> {
+    return db.goalEvaluations.get(id);
+  },
+  async listForStudent(studentId: string): Promise<GoalEvaluation[]> {
+    return db.goalEvaluations.where('studentId').equals(studentId).toArray();
+  },
+  async resume(id: string, at = nowIso()): Promise<GoalEvaluation | undefined> {
+    const existing = await db.goalEvaluations.get(id);
+    if (!existing) return undefined;
+    const next = withUpdatedAt({ ...existing, status: 'in_progress' as const, startedAt: existing.startedAt ?? at }, at);
+    await db.goalEvaluations.put(next);
+    return next;
+  },
+  async complete(id: string, changes: Partial<Pick<GoalEvaluation, 'answers' | 'answerEvents' | 'resultGoalId' | 'currentQuestionIndex'>> = {}, at = nowIso()): Promise<GoalEvaluation | undefined> {
+    const existing = await db.goalEvaluations.get(id);
+    if (!existing) return undefined;
+    const next = withUpdatedAt({ ...existing, ...changes, status: 'completed' as const, completedAt: at }, at);
+    await db.goalEvaluations.put(next);
+    return next;
+  },
+  async cancel(id: string, at = nowIso()): Promise<GoalEvaluation | undefined> {
+    const existing = await db.goalEvaluations.get(id);
+    if (!existing) return undefined;
+    const next = withUpdatedAt({ ...existing, status: 'cancelled' as const, cancelledAt: at }, at);
+    await db.goalEvaluations.put(next);
+    return next;
   },
 };

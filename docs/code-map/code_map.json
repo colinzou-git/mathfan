@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-12T19:37:54.663527+00:00",
+  "generated_at": "2026-06-17T06:53:37.621219+00:00",
   "repo_root": "C:\\Users\\colin\\Documents\\mathFan",
   "package": {
     "name": "mathfan",
@@ -48,6 +48,26 @@
     }
   },
   "files": [
+    {
+      "path": "AGENTS.md",
+      "ext": ".md",
+      "bytes": 1533,
+      "lines": 44,
+      "sha1": "20498e45bea0",
+      "imports": [],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Project file.",
+      "too_large": false,
+      "read_error": null
+    },
     {
       "path": "CLAUDE.md",
       "ext": ".md",
@@ -1013,10 +1033,11 @@
     {
       "path": "src/db/dexie.ts",
       "ext": ".ts",
-      "bytes": 1546,
-      "lines": 45,
-      "sha1": "9939ddfdfdfd",
+      "bytes": 2071,
+      "lines": 55,
+      "sha1": "cae29a060a68",
       "imports": [
+        "../features/goals/types",
         "../features/learning/learningEvents",
         "../features/multiplication/types",
         "../types/math",
@@ -1043,10 +1064,11 @@
     {
       "path": "src/db/repositories.ts",
       "ext": ".ts",
-      "bytes": 8511,
-      "lines": 206,
-      "sha1": "34ca5b71df4f",
+      "bytes": 13240,
+      "lines": 314,
+      "sha1": "4e04ee31971b",
       "imports": [
+        "../features/goals/types",
         "../features/learning/learningEvents",
         "../features/multiplication/types",
         "../types/math",
@@ -1054,14 +1076,18 @@
       ],
       "exports": [
         "attemptRepo",
+        "goalEvaluationRepo",
+        "goalEventRepo",
         "itemStateRepo",
+        "learningGoalRepo",
         "mathAnswerEventRepo",
         "quizStatsRepo",
         "sessionRepo",
         "studentRepo"
       ],
       "functions": [
-        "deriveSessionsFromEvents"
+        "deriveSessionsFromEvents",
+        "nowIso"
       ],
       "classes": [],
       "interfaces": [],
@@ -2292,11 +2318,59 @@
       "read_error": null
     },
     {
+      "path": "src/features/goals/types.ts",
+      "ext": ".ts",
+      "bytes": 2465,
+      "lines": 109,
+      "sha1": "9408631f3230",
+      "imports": [
+        "../learning/learningEvents",
+        "../mastery/skillMasteryEngine"
+      ],
+      "exports": [
+        "GoalBaseline",
+        "GoalEvaluation",
+        "GoalEvaluationAnswer",
+        "GoalEvaluationStatus",
+        "GoalEvent",
+        "GoalEventType",
+        "GoalSkillTarget",
+        "GoalSource",
+        "GoalTargetReason",
+        "LearningGoal",
+        "LearningGoalStatus"
+      ],
+      "functions": [],
+      "classes": [],
+      "interfaces": [
+        "GoalBaseline",
+        "GoalEvaluation",
+        "GoalEvaluationAnswer",
+        "GoalEvent",
+        "GoalSkillTarget",
+        "LearningGoal"
+      ],
+      "types": [
+        "GoalEvaluationStatus",
+        "GoalEventType",
+        "GoalSource",
+        "GoalTargetReason",
+        "LearningGoalStatus"
+      ],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Exports reusable code: GoalBaseline, GoalEvaluation, GoalEvaluationAnswer, GoalEvaluationStatus, GoalEvent.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/features/learning/eventRebuild.ts",
       "ext": ".ts",
-      "bytes": 6674,
+      "bytes": 6706,
       "lines": 162,
-      "sha1": "5e6f94d7714c",
+      "sha1": "1f4a97788df3",
       "imports": [
         "../../db/dexie",
         "../../types/math",
@@ -2328,9 +2402,9 @@
     {
       "path": "src/features/learning/learningEvents.ts",
       "ext": ".ts",
-      "bytes": 2844,
-      "lines": 78,
-      "sha1": "f4a2f695ba25",
+      "bytes": 2951,
+      "lines": 81,
+      "sha1": "1bba5221fabf",
       "imports": [
         "../../db/dexie",
         "../../types/math",
@@ -3260,9 +3334,9 @@
     {
       "path": "src/features/practice/usePracticeSession.ts",
       "ext": ".ts",
-      "bytes": 22945,
-      "lines": 540,
-      "sha1": "b699462b274f",
+      "bytes": 23485,
+      "lines": 552,
+      "sha1": "9dbb1e7fb8b5",
       "imports": [
         "../../components/opSpecs",
         "../../db/dexie",
@@ -3929,12 +4003,13 @@
     {
       "path": "src/features/sync/snapshot.ts",
       "ext": ".ts",
-      "bytes": 6433,
-      "lines": 139,
-      "sha1": "01a7f5e7428a",
+      "bytes": 8339,
+      "lines": 210,
+      "sha1": "8b8757211830",
       "imports": [
         "../../db/dexie",
         "../../types/math",
+        "../goals/types",
         "../learning/eventRebuild",
         "../learning/learningEvents",
         "../multiplication/types"
@@ -3946,7 +4021,9 @@
       "functions": [
         "buildSnapshot",
         "mergeSnapshot",
-        "validateSnapshot"
+        "remoteHasNewerUpdatedAt",
+        "validateSnapshot",
+        "validTimeMs"
       ],
       "classes": [],
       "interfaces": [
@@ -4917,6 +4994,92 @@
       "read_error": null
     },
     {
+      "path": "src/tests/goalDexieSchema.test.ts",
+      "ext": ".ts",
+      "bytes": 458,
+      "lines": 16,
+      "sha1": "80ebc02d23be",
+      "imports": [
+        "../db/dexie",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Local persistence/database layer.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/goalRepositories.test.ts",
+      "ext": ".ts",
+      "bytes": 5631,
+      "lines": 166,
+      "sha1": "f254ad596f1a",
+      "imports": [
+        "../db/repositories",
+        "../features/goals/types",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [
+        "evaluation",
+        "event",
+        "goal",
+        "matches"
+      ],
+      "classes": [
+        "MemoryTable"
+      ],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Local persistence/database layer.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/goalSnapshot.test.ts",
+      "ext": ".ts",
+      "bytes": 8033,
+      "lines": 257,
+      "sha1": "3f18862cd914",
+      "imports": [
+        "../features/goals/types",
+        "../features/learning/learningEvents",
+        "../features/sync/snapshot",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [
+        "answerEvent",
+        "baseSnapshot",
+        "evaluation",
+        "goal"
+      ],
+      "classes": [
+        "MemoryTable"
+      ],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Local persistence/database layer.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/tests/grade3AddSubRegrouping.test.ts",
       "ext": ".ts",
       "bytes": 10319,
@@ -5687,9 +5850,9 @@
     {
       "path": "src/tests/snapshotValidation.test.ts",
       "ext": ".ts",
-      "bytes": 4969,
-      "lines": 138,
-      "sha1": "c5f7df7deca6",
+      "bytes": 5356,
+      "lines": 151,
+      "sha1": "e7ce6e0b05d5",
       "imports": [
         "../features/sync/snapshot",
         "vitest"
@@ -5911,9 +6074,9 @@
     {
       "path": "src/types/math.ts",
       "ext": ".ts",
-      "bytes": 8861,
-      "lines": 294,
-      "sha1": "b964560c5a85",
+      "bytes": 9147,
+      "lines": 304,
+      "sha1": "7607328ae9ff",
       "imports": [],
       "exports": [
         "AnswerInput",
@@ -5931,6 +6094,7 @@
         "PeriodStats",
         "PerTableStats",
         "PracticeItem",
+        "PracticeOrigin",
         "PracticeSession",
         "ReviewGrade",
         "SessionConfig",
@@ -5968,6 +6132,7 @@
         "GrowthDirection",
         "ItemType",
         "MasteryLevel",
+        "PracticeOrigin",
         "ReviewGrade",
         "SessionLength",
         "SessionMode",

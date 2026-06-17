@@ -31,11 +31,11 @@ python tools/generate_code_maps.py
 
 - `src/App.tsx` — Top-level React app shell: routes/screens, global state, and feature wiring.
 - `src/features/sync/SyncWidget.tsx` — Cloud sync/auth/data transfer logic.
+- `src/features/sync/snapshot.ts` — Local persistence/database layer.
 - `vite.config.ts` — Vite build/PWA configuration.
 - `package.json` — Project package metadata, scripts, dependencies, and dev tooling.
 - `src/main.tsx` — React entry point that mounts the app.
 - `src/features/sync/driveSync.ts` — Cloud sync/auth/data transfer logic.
-- `src/features/sync/snapshot.ts` — Local persistence/database layer.
 - `src/features/sync/useSync.ts` — Cloud sync/auth/data transfer logic.
 - `src/features/multiplication/MultiplicationQuizPage.tsx` — Local persistence/database layer.
 - `src/features/practice/PracticeScreen.tsx` — Local persistence/database layer.

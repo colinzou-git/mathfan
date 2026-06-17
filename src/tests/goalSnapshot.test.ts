@@ -1,0 +1,256 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { AppSnapshot } from '../features/sync/snapshot';
+import type { GoalEvaluation, GoalEvent, LearningGoal } from '../features/goals/types';
+import type { MathAnswerEvent } from '../features/learning/learningEvents';
+
+type KeyFn<T> = (row: T) => unknown;
+
+const mockDb = vi.hoisted(() => {
+  class MemoryTable<T> {
+    rows: T[] = [];
+    private keyFn: KeyFn<T>;
+
+    constructor(keyFn: KeyFn<T>) {
+      this.keyFn = keyFn;
+    }
+
+    async toArray(): Promise<T[]> {
+      return [...this.rows];
+    }
+
+    async add(row: T): Promise<void> {
+      const key = this.keyFn(row);
+      if (this.rows.some(r => this.keyFn(r) === key)) throw new Error('ConstraintError');
+      this.rows.push(row);
+    }
+
+    async put(row: T): Promise<void> {
+      const key = this.keyFn(row);
+      const idx = this.rows.findIndex(r => this.keyFn(r) === key);
+      if (idx >= 0) this.rows[idx] = row;
+      else this.rows.push(row);
+    }
+
+    async bulkPut(rows: T[]): Promise<void> {
+      for (const row of rows) await this.put(row);
+    }
+
+    async get(key: unknown): Promise<T | undefined> {
+      const normalized = Array.isArray(key) ? key.join('|') : key;
+      return this.rows.find(r => this.keyFn(r) === normalized);
+    }
+  }
+
+  const byId = <T extends { id: string }>(row: T) => row.id;
+  return {
+    students: new MemoryTable<{ id: string }>(byId),
+    itemStates: new MemoryTable<{ studentId: string; itemId: string; attemptCount: number }>(
+      row => `${row.studentId}|${row.itemId}`,
+    ),
+    attempts: new MemoryTable<{ id: string }>(byId),
+    sessions: new MemoryTable<{ id: string }>(byId),
+    multFactStats: new MemoryTable<{ studentId: string; key: string; totalAttempts: number }>(
+      row => `${row.studentId}|${row.key}`,
+    ),
+    quizSessions: new MemoryTable<{ id: string }>(byId),
+    mathAnswerEvents: new MemoryTable<MathAnswerEvent>(byId),
+    learningGoals: new MemoryTable<LearningGoal>(byId),
+    goalEvents: new MemoryTable<GoalEvent>(byId),
+    goalEvaluations: new MemoryTable<GoalEvaluation>(byId),
+    async transaction(_mode: string, _tables: unknown[], callback: () => Promise<void>) {
+      await callback();
+    },
+  };
+});
+
+const rebuilds = vi.hoisted(() => ({
+  rebuildMultFactStatsFromEvents: vi.fn(),
+  rebuildItemStatesFromEvents: vi.fn(),
+}));
+
+vi.mock('../db/dexie', () => ({ db: mockDb }));
+vi.mock('../features/learning/eventRebuild', () => rebuilds);
+
+import { buildSnapshot, mergeSnapshot, validateSnapshot } from '../features/sync/snapshot';
+
+function baseSnapshot(overrides: Partial<AppSnapshot> = {}): AppSnapshot {
+  return {
+    appId: 'mathfan',
+    snapshotVersion: 2,
+    snapshotAt: '2026-06-01T00:00:00.000Z',
+    students: [],
+    itemStates: [],
+    attempts: [],
+    sessions: [],
+    multFactStats: [],
+    quizSessions: [],
+    mathAnswerEvents: [],
+    learningGoals: [],
+    goalEvents: [],
+    goalEvaluations: [],
+    ...overrides,
+  };
+}
+
+function goal(overrides: Partial<LearningGoal> = {}): LearningGoal {
+  return {
+    id: 'goal-1',
+    studentId: 'student-1',
+    title: 'Goal',
+    source: 'manual',
+    status: 'active',
+    durationDays: 14,
+    startDate: '2026-06-01',
+    targetDate: '2026-06-15',
+    targets: [],
+    createdAt: '2026-06-01T00:00:00.000Z',
+    updatedAt: '2026-06-01T00:00:00.000Z',
+    ...overrides,
+  };
+}
+
+function evaluation(overrides: Partial<GoalEvaluation> = {}): GoalEvaluation {
+  return {
+    id: 'eval-1',
+    studentId: 'student-1',
+    status: 'in_progress',
+    source: 'evaluation',
+    createdAt: '2026-06-01T00:00:00.000Z',
+    updatedAt: '2026-06-01T00:00:00.000Z',
+    currentQuestionIndex: 1,
+    plannedQuestionCount: 30,
+    itemIds: [],
+    targetSkillIds: [],
+    answers: [],
+    ...overrides,
+  };
+}
+
+function answerEvent(overrides: Partial<MathAnswerEvent> = {}): MathAnswerEvent {
+  return {
+    id: 'answer-1',
+    studentId: 'student-1',
+    sessionId: 'session-1',
+    itemId: 'MUL_2x3',
+    mode: 'practice',
+    promptShown: '2 x 3',
+    correctAnswer: 6,
+    studentAnswer: 6,
+    isCorrect: true,
+    isRetry: false,
+    hintUsed: false,
+    latencyMs: 1000,
+    createdAt: '2026-06-01T00:00:00.000Z',
+    ...overrides,
+  };
+}
+
+beforeEach(() => {
+  for (const table of [
+    mockDb.students,
+    mockDb.itemStates,
+    mockDb.attempts,
+    mockDb.sessions,
+    mockDb.multFactStats,
+    mockDb.quizSessions,
+    mockDb.mathAnswerEvents,
+    mockDb.learningGoals,
+    mockDb.goalEvents,
+    mockDb.goalEvaluations,
+  ]) {
+    table.rows = [];
+  }
+  vi.clearAllMocks();
+});
+
+describe('goal snapshot v2', () => {
+  it('builds and validates a version-2 snapshot with goal arrays', async () => {
+    mockDb.learningGoals.rows = [goal()];
+    mockDb.goalEvents.rows = [{
+      id: 'event-1',
+      studentId: 'student-1',
+      goalId: 'goal-1',
+      type: 'created',
+      createdAt: '2026-06-01T00:00:00.000Z',
+    }];
+    mockDb.goalEvaluations.rows = [evaluation()];
+
+    const snapshot = await buildSnapshot();
+
+    expect(snapshot.snapshotVersion).toBe(2);
+    expect(snapshot.learningGoals).toHaveLength(1);
+    expect(snapshot.goalEvents).toHaveLength(1);
+    expect(snapshot.goalEvaluations).toHaveLength(1);
+    expect(validateSnapshot(snapshot)).toBe(true);
+  });
+
+  it('merges goals and evaluations by latest valid updatedAt', async () => {
+    mockDb.learningGoals.rows = [
+      goal({ id: 'goal-1', title: 'Local old', updatedAt: '2026-06-01T00:00:00.000Z' }),
+      goal({ id: 'goal-2', title: 'Local valid', updatedAt: '2026-06-10T00:00:00.000Z' }),
+    ];
+    mockDb.goalEvaluations.rows = [
+      evaluation({ id: 'eval-1', currentQuestionIndex: 1, updatedAt: '2026-06-01T00:00:00.000Z' }),
+      evaluation({ id: 'eval-2', currentQuestionIndex: 2, updatedAt: '2026-06-10T00:00:00.000Z' }),
+    ];
+
+    await mergeSnapshot(baseSnapshot({
+      learningGoals: [
+        goal({ id: 'goal-1', title: 'Remote newer', updatedAt: '2026-06-11T00:00:00.000Z' }),
+        goal({ id: 'goal-2', title: 'Remote invalid', updatedAt: 'not-a-date' }),
+      ],
+      goalEvaluations: [
+        evaluation({ id: 'eval-1', currentQuestionIndex: 9, updatedAt: '2026-06-11T00:00:00.000Z' }),
+        evaluation({ id: 'eval-2', currentQuestionIndex: 99, updatedAt: 'not-a-date' }),
+      ],
+    }));
+
+    expect((await mockDb.learningGoals.get('goal-1'))?.title).toBe('Remote newer');
+    expect((await mockDb.learningGoals.get('goal-2'))?.title).toBe('Local valid');
+    expect((await mockDb.goalEvaluations.get('eval-1'))?.currentQuestionIndex).toBe(9);
+    expect((await mockDb.goalEvaluations.get('eval-2'))?.currentQuestionIndex).toBe(2);
+  });
+
+  it('unions goal events by ID without replacing existing local events', async () => {
+    mockDb.goalEvents.rows = [{
+      id: 'event-1',
+      studentId: 'student-1',
+      goalId: 'goal-1',
+      type: 'created',
+      createdAt: '2026-06-01T00:00:00.000Z',
+    }];
+
+    await mergeSnapshot(baseSnapshot({
+      goalEvents: [
+        {
+          id: 'event-1',
+          studentId: 'student-1',
+          goalId: 'goal-1',
+          type: 'paused',
+          createdAt: '2026-06-02T00:00:00.000Z',
+        },
+        {
+          id: 'event-2',
+          studentId: 'student-1',
+          goalId: 'goal-1',
+          type: 'resumed',
+          createdAt: '2026-06-03T00:00:00.000Z',
+        },
+      ],
+    }));
+
+    expect(mockDb.goalEvents.rows).toHaveLength(2);
+    expect((await mockDb.goalEvents.get('event-1'))?.type).toBe('created');
+    expect((await mockDb.goalEvents.get('event-2'))?.type).toBe('resumed');
+  });
+
+  it('preserves answer-event merge and derived-cache rebuild after snapshot merge', async () => {
+    await mergeSnapshot(baseSnapshot({
+      mathAnswerEvents: [answerEvent({ studentId: 'student-1' })],
+    }));
+
+    expect(mockDb.mathAnswerEvents.rows).toHaveLength(1);
+    expect(rebuilds.rebuildMultFactStatsFromEvents).toHaveBeenCalledWith('student-1');
+    expect(rebuilds.rebuildItemStatesFromEvents).toHaveBeenCalledWith('student-1');
+  });
+});

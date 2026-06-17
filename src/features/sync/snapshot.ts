@@ -3,10 +3,11 @@ import type { MultiplicationFactStats, QuizSession } from '../multiplication/typ
 import type { MathAnswerEvent } from '../learning/learningEvents';
 import { rebuildMultFactStatsFromEvents, rebuildItemStatesFromEvents } from '../learning/eventRebuild';
 import { db } from '../../db/dexie';
+import type { GoalEvaluation, GoalEvent, LearningGoal } from '../goals/types';
 
 export interface AppSnapshot {
   appId: 'mathfan';
-  snapshotVersion: 1;
+  snapshotVersion: 1 | 2;
   snapshotAt: string;
   students: StudentProfile[];
   itemStates: StudentItemState[];
@@ -17,12 +18,26 @@ export interface AppSnapshot {
   quizSessions?: QuizSession[];
   // Added with canonical event log — absent in older snapshots; treat missing as []
   mathAnswerEvents?: MathAnswerEvent[];
+  learningGoals?: LearningGoal[];
+  goalEvents?: GoalEvent[];
+  goalEvaluations?: GoalEvaluation[];
 }
 
 // ── Build ─────────────────────────────────────────────────────────────────────
 
 export async function buildSnapshot(): Promise<AppSnapshot> {
-  const [students, itemStates, attempts, sessions, multFactStats, quizSessions, mathAnswerEvents] = await Promise.all([
+  const [
+    students,
+    itemStates,
+    attempts,
+    sessions,
+    multFactStats,
+    quizSessions,
+    mathAnswerEvents,
+    learningGoals,
+    goalEvents,
+    goalEvaluations,
+  ] = await Promise.all([
     db.students.toArray(),
     db.itemStates.toArray(),
     db.attempts.toArray(),
@@ -30,10 +45,13 @@ export async function buildSnapshot(): Promise<AppSnapshot> {
     db.multFactStats.toArray(),
     db.quizSessions.toArray(),
     db.mathAnswerEvents.toArray(),
+    db.learningGoals.toArray(),
+    db.goalEvents.toArray(),
+    db.goalEvaluations.toArray(),
   ]);
   return {
     appId: 'mathfan',
-    snapshotVersion: 1,
+    snapshotVersion: 2,
     snapshotAt: new Date().toISOString(),
     students,
     itemStates,
@@ -42,6 +60,9 @@ export async function buildSnapshot(): Promise<AppSnapshot> {
     multFactStats,
     quizSessions,
     mathAnswerEvents,
+    learningGoals,
+    goalEvents,
+    goalEvaluations,
   };
 }
 
@@ -61,6 +82,19 @@ export async function buildSnapshot(): Promise<AppSnapshot> {
  * This ensures that cross-device conflicts in derived caches are resolved from events,
  * not from stale computed aggregates.
  */
+function validTimeMs(value: string | undefined): number | null {
+  if (!value) return null;
+  const ms = Date.parse(value);
+  return Number.isFinite(ms) ? ms : null;
+}
+
+function remoteHasNewerUpdatedAt(remoteUpdatedAt: string, localUpdatedAt: string | undefined): boolean {
+  const remoteMs = validTimeMs(remoteUpdatedAt);
+  if (remoteMs === null) return false;
+  const localMs = validTimeMs(localUpdatedAt);
+  return localMs === null || remoteMs >= localMs;
+}
+
 export async function mergeSnapshot(remote: AppSnapshot): Promise<void> {
   // Collect affected student IDs so we know who to rebuild after the transaction.
   const affectedStudentIds = new Set<string>([
@@ -70,7 +104,18 @@ export async function mergeSnapshot(remote: AppSnapshot): Promise<void> {
 
   await db.transaction(
     'rw',
-    [db.students, db.itemStates, db.attempts, db.sessions, db.multFactStats, db.quizSessions, db.mathAnswerEvents],
+    [
+      db.students,
+      db.itemStates,
+      db.attempts,
+      db.sessions,
+      db.multFactStats,
+      db.quizSessions,
+      db.mathAnswerEvents,
+      db.learningGoals,
+      db.goalEvents,
+      db.goalEvaluations,
+    ],
     async () => {
       // ── 1. Events first — source of truth ─────────────────────────────────
       if (remote.mathAnswerEvents?.length) {
@@ -96,6 +141,25 @@ export async function mergeSnapshot(remote: AppSnapshot): Promise<void> {
       // ── 6. ItemStates — fallback for items without events ──────────────────
       // Prefer the record with more attempts. Will be overwritten by event-rebuild
       // for any item that has events in the merged set.
+      for (const event of remote.goalEvents ?? []) {
+        const localEvent = await db.goalEvents.get(event.id);
+        if (!localEvent) await db.goalEvents.add(event);
+      }
+
+      for (const goal of remote.learningGoals ?? []) {
+        const localGoal = await db.learningGoals.get(goal.id);
+        if (remoteHasNewerUpdatedAt(goal.updatedAt, localGoal?.updatedAt)) {
+          await db.learningGoals.put(goal);
+        }
+      }
+
+      for (const evaluation of remote.goalEvaluations ?? []) {
+        const localEvaluation = await db.goalEvaluations.get(evaluation.id);
+        if (remoteHasNewerUpdatedAt(evaluation.updatedAt, localEvaluation?.updatedAt)) {
+          await db.goalEvaluations.put(evaluation);
+        }
+      }
+
       for (const remoteState of remote.itemStates) {
         const localState = await db.itemStates.get([remoteState.studentId, remoteState.itemId]);
         if (!localState || remoteState.attemptCount > localState.attemptCount) {
@@ -126,13 +190,20 @@ export async function mergeSnapshot(remote: AppSnapshot): Promise<void> {
 export function validateSnapshot(raw: unknown): raw is AppSnapshot {
   if (!raw || typeof raw !== 'object') return false;
   const s = raw as Record<string, unknown>;
-  return (
+  const hasBaseShape =
     s.appId === 'mathfan' &&
-    s.snapshotVersion === 1 &&
+    (s.snapshotVersion === 1 || s.snapshotVersion === 2) &&
     Array.isArray(s.students) &&
     Array.isArray(s.itemStates) &&
     Array.isArray(s.attempts) &&
-    Array.isArray(s.sessions)
-    // multFactStats and quizSessions are optional (absent in pre-quiz snapshots)
+    Array.isArray(s.sessions);
+
+  if (!hasBaseShape) return false;
+  if (s.snapshotVersion === 1) return true;
+
+  return (
+    Array.isArray(s.learningGoals) &&
+    Array.isArray(s.goalEvents) &&
+    Array.isArray(s.goalEvaluations)
   );
 }

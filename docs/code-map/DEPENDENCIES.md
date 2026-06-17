@@ -4,7 +4,7 @@
 
 | Package | Import count |
 | --- | --- |
-| vitest | 47 |
+| vitest | 50 |
 | react | 33 |
 | __future__ | 8 |
 | sys | 8 |
@@ -89,9 +89,11 @@
 | src/components/RangeSetup.tsx | ./opSpecs |
 | src/components/SessionSetup.tsx | ../types/math |
 | src/components/SettingsOverlay.tsx | ../types/math |
+| src/db/dexie.ts | ../features/goals/types |
 | src/db/dexie.ts | ../features/learning/learningEvents |
 | src/db/dexie.ts | ../features/multiplication/types |
 | src/db/dexie.ts | ../types/math |
+| src/db/repositories.ts | ../features/goals/types |
 | src/db/repositories.ts | ../features/learning/learningEvents |
 | src/db/repositories.ts | ../features/multiplication/types |
 | src/db/repositories.ts | ../types/math |
@@ -171,6 +173,8 @@
 | src/features/diagnosis/DiagnosticSession.tsx | ../time/clock |
 | src/features/diagnosis/DiagnosticSession.tsx | ./diagnosticPersistence |
 | src/features/diagnosis/DiagnosticSession.tsx | ./diagnosticPlanner |
+| src/features/goals/types.ts | ../learning/learningEvents |
+| src/features/goals/types.ts | ../mastery/skillMasteryEngine |
 | src/features/learning/eventRebuild.ts | ../../db/dexie |
 | src/features/learning/eventRebuild.ts | ../../types/math |
 | src/features/learning/eventRebuild.ts | ../curriculum/makeItemFromId |
@@ -353,6 +357,7 @@
 | src/features/sync/driveSync.ts | ./snapshot |
 | src/features/sync/snapshot.ts | ../../db/dexie |
 | src/features/sync/snapshot.ts | ../../types/math |
+| src/features/sync/snapshot.ts | ../goals/types |
 | src/features/sync/snapshot.ts | ../learning/eventRebuild |
 | src/features/sync/snapshot.ts | ../learning/learningEvents |
 | src/features/sync/snapshot.ts | ../multiplication/types |
@@ -413,6 +418,12 @@
 | src/tests/eventRebuild.test.ts | ../features/learning/learningEvents |
 | src/tests/eventRebuild.test.ts | ../types/math |
 | src/tests/fractionItems.test.ts | ../features/curriculum/fractionItems |
+| src/tests/goalDexieSchema.test.ts | ../db/dexie |
+| src/tests/goalRepositories.test.ts | ../db/repositories |
+| src/tests/goalRepositories.test.ts | ../features/goals/types |
+| src/tests/goalSnapshot.test.ts | ../features/goals/types |
+| src/tests/goalSnapshot.test.ts | ../features/learning/learningEvents |
+| src/tests/goalSnapshot.test.ts | ../features/sync/snapshot |
 | src/tests/grade3AddSubRegrouping.test.ts | ../features/curriculum/makeItemFromId |
 | src/tests/grade3AddSubRegrouping.test.ts | ../features/mastery/grade3MasteryMap |
 | src/tests/grade3AddSubRegrouping.test.ts | ../features/mastery/skillMapping |
