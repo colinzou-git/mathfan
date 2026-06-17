@@ -61,6 +61,7 @@ export type GoalEventType =
   | 'completed'
   | 'ended'
   | 'cancelled'
+  | 'target_completed'
   | 'target_progress'
   | 'evaluation_started'
   | 'evaluation_completed';
