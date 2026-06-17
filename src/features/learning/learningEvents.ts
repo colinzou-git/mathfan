@@ -1,8 +1,8 @@
-import type { ReviewGrade, MasteryLevel } from '../../types/math';
+import type { ReviewGrade, MasteryLevel, PracticeOrigin } from '../../types/math';
 import type { MasteryState } from '../multiplication/types';
 import { db } from '../../db/dexie';
 
-export type MathEventMode = 'quiz' | 'practice' | 'diagnostic';
+export type MathEventMode = 'quiz' | 'practice' | 'diagnostic' | 'goal_evaluation';
 
 export type MathFactStatus =
   | 'new'
@@ -30,6 +30,9 @@ export interface MathAnswerEvent {
   reviewGrade?: ReviewGrade;
   factStatusBefore?: MathFactStatus;
   factStatusAfter?: MathFactStatus;
+  origin?: PracticeOrigin;
+  goalId?: string;
+  goalTargetId?: string;
   /**
    * True when this event is INDIRECT evidence from a related higher-level item
    * (e.g. solving AREA_RECT_8x7 reinforcing MUL_8x7), not a direct attempt at

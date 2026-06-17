@@ -2,6 +2,7 @@ export type GradeLevel = 3 | 4 | 5;
 export type ReviewGrade = 'again' | 'hard' | 'good' | 'easy';
 export type MasteryLevel = 'new' | 'learning' | 'developing' | 'strong' | 'mastered';
 export type SessionLength = number; // any positive integer
+export type PracticeOrigin = 'daily_recommended_learning' | 'goal_page';
 
 export type ItemType =
   | 'multiplication_fact'
@@ -171,6 +172,9 @@ export interface AttemptLog {
   isCorrect: boolean;
   latencyMs: number;
   reviewGrade: ReviewGrade;
+  origin?: PracticeOrigin;
+  goalId?: string;
+  goalTargetId?: string;
   createdAt: string;
 }
 
@@ -194,6 +198,9 @@ export interface PracticeSession {
   fastestCorrectMs?: number;
   /** Seed used for this session's adaptive selection ordering (reproducibility). */
   seed?: number;
+  origin?: PracticeOrigin;
+  goalId?: string;
+  goalTargetId?: string;
 }
 
 // ── Stats types ───────────────────────────────────────────────────────────────
@@ -262,6 +269,9 @@ export interface SessionConfig {
    * a fresh random seed is generated and stored on the PracticeSession.
    */
   seed?: number;
+  origin?: PracticeOrigin;
+  goalId?: string;
+  goalTargetId?: string;
 }
 
 // ── Growth comparison (period over period) ─────────────────────────────────────

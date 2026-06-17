@@ -79,7 +79,7 @@ export async function rebuildItemStatesFromEvents(
 ): Promise<void> {
   const events = await db.mathAnswerEvents
     .where('studentId').equals(studentId)
-    .and(e => e.mode === 'practice' || e.mode === 'diagnostic')
+    .and(e => e.mode === 'practice' || e.mode === 'diagnostic' || e.mode === 'goal_evaluation')
     .toArray();
 
   if (events.length === 0) {

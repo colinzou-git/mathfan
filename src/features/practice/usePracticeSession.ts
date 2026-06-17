@@ -262,6 +262,9 @@ export function usePracticeSession(studentId: string) {
       mode, tables, seed,
       plannedQuestionCount: queue.length,
       completedQuestionCount: 0, correctCount: 0, averageLatencyMs: 0,
+      origin: config.origin,
+      goalId: config.goalId,
+      goalTargetId: config.goalTargetId,
     });
 
     queueRef.current = queue;
@@ -365,6 +368,9 @@ export function usePracticeSession(studentId: string) {
               factStatusAfter: u.after.masteryLevel,
               relatedEvidence: true,
               evidenceSourceItemId: item.id,
+              origin: configRef.current?.origin,
+              goalId: configRef.current?.goalId,
+              goalTargetId: configRef.current?.goalTargetId,
               createdAt,
             },
           };
@@ -389,6 +395,9 @@ export function usePracticeSession(studentId: string) {
         reviewGrade: result.reviewGrade,
         factStatusBefore: existing.masteryLevel,
         factStatusAfter: updated.masteryLevel,
+        origin: configRef.current?.origin,
+        goalId: configRef.current?.goalId,
+        goalTargetId: configRef.current?.goalTargetId,
         createdAt,
       },
       // Retries do not change FSRS state — pass undefined to skip the itemStates write.
@@ -406,6 +415,9 @@ export function usePracticeSession(studentId: string) {
         isCorrect: result.isCorrect,
         latencyMs,
         reviewGrade: result.reviewGrade,
+        origin: configRef.current?.origin,
+        goalId: configRef.current?.goalId,
+        goalTargetId: configRef.current?.goalTargetId,
         createdAt,
       },
     };

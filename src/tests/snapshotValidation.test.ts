@@ -55,8 +55,13 @@ describe('validateSnapshot — wrong appId', () => {
 });
 
 describe('validateSnapshot — wrong snapshotVersion', () => {
-  it('rejects version 2', () => {
-    expect(validateSnapshot(validSnapshot({ snapshotVersion: 2 as never }))).toBe(false);
+  it('accepts version 2 when goal arrays are present', () => {
+    expect(validateSnapshot(validSnapshot({
+      snapshotVersion: 2,
+      learningGoals: [],
+      goalEvents: [],
+      goalEvaluations: [],
+    }))).toBe(true);
   });
 
   it('rejects version 0', () => {
@@ -133,5 +138,13 @@ describe('validateSnapshot — optional fields absent', () => {
 
   it('accepts snapshot without mathAnswerEvents', () => {
     expect(validateSnapshot(without(validSnapshot(), 'mathAnswerEvents'))).toBe(true);
+  });
+
+  it('accepts version 1 without goal arrays', () => {
+    expect(validateSnapshot(validSnapshot({ snapshotVersion: 1 }))).toBe(true);
+  });
+
+  it('rejects version 2 without goal arrays', () => {
+    expect(validateSnapshot(validSnapshot({ snapshotVersion: 2 }))).toBe(false);
   });
 });
