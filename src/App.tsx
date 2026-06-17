@@ -14,6 +14,7 @@ import { TodayAchievementDetail } from './features/stats/TodayAchievementDetail'
 import type { AchievementFilter, TodayAchievementData } from './features/stats/todayAchievement';
 import { Grade3MasteryMapPage } from './features/mastery/Grade3MasteryMapPage';
 import { DiagnosticSession } from './features/diagnosis/DiagnosticSession';
+import { GoalsPage } from './features/goals/GoalsPage';
 import { preloadVoices } from './features/audio/speech';
 import { useSync, initAuth } from './features/sync/useSync';
 import { pushLocal } from './features/sync/driveSync';
@@ -25,7 +26,7 @@ import { resolvePracticeDoneDestination } from './features/practice/practiceNavi
 type Screen =
   | 'loading' | 'setup' | 'dashboard'
   | 'daily-setup' | 'range-setup' | 'practice'
-  | 'stats' | 'settings' | 'quiz' | 'today-detail' | 'mastery-map' | 'diagnostic';
+  | 'stats' | 'settings' | 'quiz' | 'today-detail' | 'mastery-map' | 'diagnostic' | 'goals';
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('loading');
@@ -259,6 +260,17 @@ export default function App() {
     );
   }
 
+  if (screen === 'goals') {
+    return (
+      <GoalsPage
+        profile={profile}
+        lastSyncedAt={lastSyncedAt}
+        onBack={() => setScreen('dashboard')}
+        onStartEvaluation={() => setScreen('diagnostic')}
+      />
+    );
+  }
+
   return (
     <StudentDashboard
       profile={profile}
@@ -274,6 +286,7 @@ export default function App() {
         setScreen('today-detail');
       }}
       onOpenMasteryMap={() => setScreen('mastery-map')}
+      onOpenGoals={() => setScreen('goals')}
     />
   );
 }

@@ -4,11 +4,11 @@
 
 | Package | Import count |
 | --- | --- |
-| vitest | 52 |
-| react | 33 |
+| vitest | 53 |
+| react | 34 |
+| @testing-library/react | 8 |
 | __future__ | 8 |
 | sys | 8 |
-| @testing-library/react | 7 |
 | pathlib | 6 |
 | playwright.sync_api | 4 |
 | time | 4 |
@@ -64,6 +64,7 @@
 | src/App.tsx | ./features/dashboard/StudentDashboard |
 | src/App.tsx | ./features/diagnosis/diagnosticCompletion |
 | src/App.tsx | ./features/diagnosis/DiagnosticSession |
+| src/App.tsx | ./features/goals/GoalsPage |
 | src/App.tsx | ./features/mastery/Grade3MasteryMapPage |
 | src/App.tsx | ./features/multiplication/MultiplicationQuizPage |
 | src/App.tsx | ./features/practice/practiceNavigation |
@@ -189,6 +190,18 @@
 | src/features/goals/goalRecommendationEngine.ts | ../mastery/skillMasteryEngine |
 | src/features/goals/goalRecommendationEngine.ts | ./goalEngine |
 | src/features/goals/goalRecommendationEngine.ts | ./types |
+| src/features/goals/GoalsPage.tsx | ../../db/repositories |
+| src/features/goals/GoalsPage.tsx | ../../types/math |
+| src/features/goals/GoalsPage.tsx | ../../utils/id |
+| src/features/goals/GoalsPage.tsx | ../curriculum/makeItemFromId |
+| src/features/goals/GoalsPage.tsx | ../learning/learningEvents |
+| src/features/goals/GoalsPage.tsx | ../mastery/grade3MasteryMap |
+| src/features/goals/GoalsPage.tsx | ../mastery/skillMasteryEngine |
+| src/features/goals/GoalsPage.tsx | ../time/clock |
+| src/features/goals/GoalsPage.tsx | ./goalEngine |
+| src/features/goals/GoalsPage.tsx | ./goalLifecycleService |
+| src/features/goals/GoalsPage.tsx | ./goalRecommendationEngine |
+| src/features/goals/GoalsPage.tsx | ./types |
 | src/features/goals/types.ts | ../learning/learningEvents |
 | src/features/goals/types.ts | ../mastery/skillMasteryEngine |
 | src/features/learning/eventRebuild.ts | ../../db/dexie |
@@ -450,6 +463,12 @@
 | src/tests/goalSnapshot.test.ts | ../features/goals/types |
 | src/tests/goalSnapshot.test.ts | ../features/learning/learningEvents |
 | src/tests/goalSnapshot.test.ts | ../features/sync/snapshot |
+| src/tests/goalsPage.test.tsx | ../db/repositories |
+| src/tests/goalsPage.test.tsx | ../features/dashboard/StudentDashboard |
+| src/tests/goalsPage.test.tsx | ../features/goals/GoalsPage |
+| src/tests/goalsPage.test.tsx | ../features/goals/types |
+| src/tests/goalsPage.test.tsx | ../features/learning/learningEvents |
+| src/tests/goalsPage.test.tsx | ../types/math |
 | src/tests/grade3AddSubRegrouping.test.ts | ../features/curriculum/makeItemFromId |
 | src/tests/grade3AddSubRegrouping.test.ts | ../features/mastery/grade3MasteryMap |
 | src/tests/grade3AddSubRegrouping.test.ts | ../features/mastery/skillMapping |

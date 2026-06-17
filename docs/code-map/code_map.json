@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-17T07:46:03.522892+00:00",
+  "generated_at": "2026-06-17T08:09:52.520096+00:00",
   "repo_root": "C:\\Users\\colin\\Documents\\mathFan",
   "package": {
     "name": "mathfan",
@@ -665,9 +665,9 @@
     {
       "path": "src/App.tsx",
       "ext": ".tsx",
-      "bytes": 9382,
-      "lines": 280,
-      "sha1": "073fb6217a3d",
+      "bytes": 9738,
+      "lines": 293,
+      "sha1": "6cbed07433cd",
       "imports": [
         "./components/opSpecs",
         "./components/RangeSetup",
@@ -679,6 +679,7 @@
         "./features/dashboard/StudentDashboard",
         "./features/diagnosis/diagnosticCompletion",
         "./features/diagnosis/DiagnosticSession",
+        "./features/goals/GoalsPage",
         "./features/mastery/Grade3MasteryMapPage",
         "./features/multiplication/MultiplicationQuizPage",
         "./features/practice/practiceNavigation",
@@ -2158,9 +2159,9 @@
     {
       "path": "src/features/dashboard/StudentDashboard.tsx",
       "ext": ".tsx",
-      "bytes": 15839,
-      "lines": 330,
-      "sha1": "b10482043981",
+      "bytes": 16512,
+      "lines": 341,
+      "sha1": "caeec303a7cf",
       "imports": [
         "../../db/repositories",
         "../../types/math",
@@ -2521,6 +2522,83 @@
       "css_classes": [],
       "json_keys": [],
       "purpose": "Exports reusable code: CandidateFeatures, estimateGoalWorkload, GoalRecommendation, GoalRecommendationArgs, GoalRecommendationCandidate.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/goals/GoalsPage.tsx",
+      "ext": ".tsx",
+      "bytes": 37085,
+      "lines": 902,
+      "sha1": "5d0ca5be367d",
+      "imports": [
+        "../../db/repositories",
+        "../../types/math",
+        "../../utils/id",
+        "../curriculum/makeItemFromId",
+        "../learning/learningEvents",
+        "../mastery/grade3MasteryMap",
+        "../mastery/skillMasteryEngine",
+        "../time/clock",
+        "./goalEngine",
+        "./goalLifecycleService",
+        "./goalRecommendationEngine",
+        "./types",
+        "react"
+      ],
+      "exports": [
+        "GoalsPage"
+      ],
+      "functions": [
+        "activeLearningDays",
+        "addDays",
+        "buildCompleteSummaries",
+        "clampDuration",
+        "ConfirmDialog",
+        "directFirstAttempts",
+        "EmptyState",
+        "evidenceInput",
+        "GoalCard",
+        "goalPracticeEvents",
+        "GoalsPage",
+        "GoalWizard",
+        "handleTransition",
+        "loadGoalsData",
+        "onKeyDown",
+        "percent",
+        "ProgressBar",
+        "reasonForSummary",
+        "refresh",
+        "save",
+        "sectionedViews",
+        "skillTitle",
+        "SummaryCard",
+        "targetDateFor",
+        "toggleSkill"
+      ],
+      "classes": [],
+      "interfaces": [
+        "GoalsData",
+        "GoalView",
+        "Props"
+      ],
+      "types": [
+        "ConfirmAction",
+        "PageState",
+        "WizardMode"
+      ],
+      "components": [
+        "ConfirmDialog",
+        "EmptyState",
+        "GoalCard",
+        "GoalWizard",
+        "ProgressBar",
+        "SummaryCard"
+      ],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "React UI component file: ConfirmDialog, EmptyState, GoalCard, GoalWizard.",
       "too_large": false,
       "read_error": null
     },
@@ -5355,6 +5433,41 @@
       "css_classes": [],
       "json_keys": [],
       "purpose": "Local persistence/database layer.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/goalsPage.test.tsx",
+      "ext": ".tsx",
+      "bytes": 10068,
+      "lines": 301,
+      "sha1": "39412cefba6d",
+      "imports": [
+        "../db/repositories",
+        "../features/dashboard/StudentDashboard",
+        "../features/goals/GoalsPage",
+        "../features/goals/types",
+        "../features/learning/learningEvents",
+        "../types/math",
+        "@testing-library/react",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [
+        "goal",
+        "openWizardToStep",
+        "profile",
+        "renderGoals",
+        "target"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
       "too_large": false,
       "read_error": null
     },

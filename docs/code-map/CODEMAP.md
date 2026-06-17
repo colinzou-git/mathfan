@@ -1,8 +1,8 @@
-﻿# Code Map Overview
+# Code Map Overview
 
-Generated: 2026-06-17 07:46:03 UTC
+Generated: 2026-06-17 08:09:52 UTC
 
-Repo root: `C:\Users\colin\Documents\mathFan`
+Repo root: `C:\Users\colin\Documents\mathFan`  
 Output folder: `C:\Users\colin\Documents\mathFan\docs\code-map`
 
 ## What this is for
@@ -14,9 +14,9 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 - Package name: `mathfan`
 - Version: `1.2.0`
 - Module type: `module`
-- Scanned files: **196**
-- Scanned lines: **36,381**
-- Scanned bytes: **1,432,996**
+- Scanned files: **198**
+- Scanned lines: **37,608**
+- Scanned bytes: **1,481,178**
 
 ## NPM scripts
 
@@ -67,7 +67,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 
 | File | Lines | Likely purpose | Key symbols |
 | --- | --- | --- | --- |
-| src/App.tsx | 280 | Top-level React app shell: routes/screens, global state, and feature wiring. | App, handleQuizDone, handleSessionDone, pickOperation, startPractice, updateProfile, updateSettings |
+| src/App.tsx | 293 | Top-level React app shell: routes/screens, global state, and feature wiring. | App, handleQuizDone, handleSessionDone, pickOperation, startPractice, updateProfile, updateSettings |
 | src/features/sync/SyncWidget.tsx | 156 | Cloud sync/auth/data transfer logic. | GoogleIcon, SyncWidget, friendlyError, GoogleIcon, initials, SyncWidget, timeSince |
 | src/features/sync/snapshot.ts | 210 | Local persistence/database layer. | AppSnapshot, validateSnapshot, buildSnapshot, mergeSnapshot, remoteHasNewerUpdatedAt, validateSnapshot, validTimeMs |
 | vite.config.ts | 82 | Vite build/PWA configuration. | buildInfoPlugin |
@@ -75,12 +75,13 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 | src/main.tsx | 21 | React entry point that mounts the app. |  |
 | src/features/sync/driveSync.ts | 151 | Cloud sync/auth/data transfer logic. | DriveFileInfo, SyncResult, SyncStatus, authFetch, downloadSnapshot, findSyncFile, getDriveFileInfo, pullAndMerge |
 | src/features/sync/useSync.ts | 99 | Cloud sync/auth/data transfer logic. | useSync, initAuth, SyncState, useSync, recordSync, useSync |
+| src/features/goals/GoalsPage.tsx | 902 | React UI component file: ConfirmDialog, EmptyState, GoalCard, GoalWizard. | ConfirmDialog, EmptyState, GoalCard, GoalWizard, ProgressBar, SummaryCard, GoalsPage, activeLearningDays |
 | src/features/multiplication/MultiplicationQuizPage.tsx | 845 | Local persistence/database layer. | FactChip, SetupScreen, StatBox, SummaryScreen, MultiplicationQuizPage, FactChip, MultiplicationQuizPage, recommendedPracticeConfig |
 | src/features/practice/PracticeScreen.tsx | 552 | Local persistence/database layer. | KbChip, PracticeScreen, KbChip, onKey, PracticeScreen, run, submitChoice |
 | src/features/settings/SettingsPage.tsx | 516 | Student/app settings UI or persistence. | Section, SyncRow, ToggleRow, SettingsPage, applyUpdate, buildId, buildLabel, checkForUpdates |
 | src/features/stats/FactStatsTable.tsx | 402 | Local persistence/database layer. | SortBtn, SummaryStat, FactStatsTable, bucketOf, FactStatsTable, SortBtn, startPractice, SummaryStat |
 | src/features/mastery/Grade3MasteryMapPage.tsx | 365 | Grade 3 mastery map UI: skill display, detail panels, and parent action cards. | LegendItem, Grade3MasteryMapPage, buildCompleteSummaries, computeUnmetPrereqNames, Grade3MasteryMapPage, LegendItem |
-| src/features/dashboard/StudentDashboard.tsx | 330 | Dashboard/profile setup/student navigation feature. | Chip, PracticeOp, StudentDashboard, Chip, handleStartReview, StudentDashboard |
+| src/features/dashboard/StudentDashboard.tsx | 341 | Dashboard/profile setup/student navigation feature. | Chip, PracticeOp, StudentDashboard, Chip, handleStartReview, StudentDashboard |
 | src/features/stats/StatsPage.tsx | 246 | Progress/statistics screens or calculations. | SummaryPill, StatsPage, buildRange, daysBetween, StatsPage, SummaryPill, toYMD |
 | src/features/stats/DrillHistory.tsx | 238 | Progress/statistics screens or calculations. | AttemptDetail, MetricChip, Pill, DrillHistory, AttemptDetail, dateLabel, DrillHistory, durationLabel |
 | src/features/visuals/DraggableEqualGroups.tsx | 230 | Reusable SVG visual model components (area grids, shape diagrams, fraction bars, arrays). | DraggableObject, DropZone, DraggableEqualGroups, checkEqualGroups, DraggableEqualGroups, DraggableObject, DropZone, handleDragEnd |
@@ -96,237 +97,238 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 | src/features/goals/goalRecommendationEngine.ts | 494 | Exports reusable code: CandidateFeatures, estimateGoalWorkload, GoalRecommendation, GoalRecommendationArgs, GoalRecommendationCandidate. | CandidateFeatures, estimateGoalWorkload, GoalRecommendation, GoalRecommendationArgs, GoalRecommendationCandidate, GoalRecommendationResult, GoalRecommendationTarget, RecommendationReasonLabel |
 | src/features/stats/statsEngine.ts | 395 | Progress/statistics screens or calculations. | addDays, computeDailyHistory, computeDayStats, computeFactGrowth, computePeriodComparison, computePeriodStats, computePerTableStats, computeStreak |
 | src/features/practice/hintEngine.ts | 373 | Practice session UI and/or quiz interaction logic. | getHint, HintResult, addHint, areaRectHint, areaSquaresHint, divHint, fracCmpHint, fracEquivHint |
-| src/features/curriculum/areaItems.ts | 303 | Practice item definitions and ID generators for a math curriculum topic. | areaPerimCmpId, areaPerimCompareItemIds, AreaPerimVariant, areaRectangleItemIds, areaRectId, areaSquaresId, areaSquaresItemIds, makeAreaPerimCompareItem |
 
 ## Repository tree, filtered
 
 ```text
-â”œâ”€â”€ docs
-â”‚   â”œâ”€â”€ arch
-â”‚   â”‚   â”œâ”€â”€ data.html
-â”‚   â”‚   â”œâ”€â”€ decisions.html
-â”‚   â”‚   â”œâ”€â”€ features.html
-â”‚   â”‚   â””â”€â”€ index.html
-â”‚   â”œâ”€â”€ CLOUD_DEVELOPMENT.md
-â”‚   â”œâ”€â”€ grade3-mastery-map-roadmap.md
-â”‚   â””â”€â”€ PRD.md
-â”œâ”€â”€ scripts
-â”‚   â”œâ”€â”€ build-icons.py
-â”‚   â”œâ”€â”€ bump-version.mjs
-â”‚   â”œâ”€â”€ bump_version.py
-â”‚   â”œâ”€â”€ generate_code_map.py
-â”‚   â”œâ”€â”€ serve-https.py
-â”‚   â”œâ”€â”€ smoke-google-auth.py
-â”‚   â”œâ”€â”€ smoke-https-headers.py
-â”‚   â”œâ”€â”€ smoke-template.py
-â”‚   â””â”€â”€ smoke-update-flow.py
-â”œâ”€â”€ src
-â”‚   â”œâ”€â”€ components
-â”‚   â”‚   â”œâ”€â”€ MasteryGrid.tsx
-â”‚   â”‚   â”œâ”€â”€ MiniCalendar.tsx
-â”‚   â”‚   â”œâ”€â”€ NumPad.tsx
-â”‚   â”‚   â”œâ”€â”€ opSpecs.ts
-â”‚   â”‚   â”œâ”€â”€ RangeSetup.tsx
-â”‚   â”‚   â”œâ”€â”€ SessionSetup.tsx
-â”‚   â”‚   â”œâ”€â”€ SessionSummary.tsx
-â”‚   â”‚   â”œâ”€â”€ SettingsOverlay.tsx
-â”‚   â”‚   â””â”€â”€ StatsGraph.tsx
-â”‚   â”œâ”€â”€ db
-â”‚   â”‚   â”œâ”€â”€ dexie.ts
-â”‚   â”‚   â””â”€â”€ repositories.ts
-â”‚   â”œâ”€â”€ features
-â”‚   â”‚   â”œâ”€â”€ adaptive
-â”‚   â”‚   â”‚   â”œâ”€â”€ adaptiveItemSelector.ts
-â”‚   â”‚   â”‚   â”œâ”€â”€ candidatePools.ts
-â”‚   â”‚   â”‚   â”œâ”€â”€ relatedEvidence.ts
-â”‚   â”‚   â”‚   â””â”€â”€ relatedItemMapping.ts
-â”‚   â”‚   â”œâ”€â”€ ai
-â”‚   â”‚   â”‚   â”œâ”€â”€ aiConfig.ts
-â”‚   â”‚   â”‚   â”œâ”€â”€ gemini.ts
-â”‚   â”‚   â”‚   â””â”€â”€ TutorChat.tsx
-â”‚   â”‚   â”œâ”€â”€ audio
-â”‚   â”‚   â”‚   â”œâ”€â”€ mathSpeech.ts
-â”‚   â”‚   â”‚   â””â”€â”€ speech.ts
-â”‚   â”‚   â”œâ”€â”€ auth
-â”‚   â”‚   â”‚   â””â”€â”€ googleAuth.ts
-â”‚   â”‚   â”œâ”€â”€ curriculum
-â”‚   â”‚   â”‚   â”œâ”€â”€ areaItems.ts
-â”‚   â”‚   â”‚   â”œâ”€â”€ arithmeticItems.ts
-â”‚   â”‚   â”‚   â”œâ”€â”€ decimalItems.ts
-â”‚   â”‚   â”‚   â”œâ”€â”€ describeItem.ts
-â”‚   â”‚   â”‚   â”œâ”€â”€ fractionItems.ts
-â”‚   â”‚   â”‚   â”œâ”€â”€ geometryItems.ts
-â”‚   â”‚   â”‚   â”œâ”€â”€ makeItemFromId.ts
-â”‚   â”‚   â”‚   â”œâ”€â”€ measurementItems.ts
-â”‚   â”‚   â”‚   â”œâ”€â”€ mulPropertiesItems.ts
-â”‚   â”‚   â”‚   â”œâ”€â”€ multiplicationItems.ts
-â”‚   â”‚   â”‚   â”œâ”€â”€ numberTheoryItems.ts
-â”‚   â”‚   â”‚   â”œâ”€â”€ patternItems.ts
-â”‚   â”‚   â”‚   â”œâ”€â”€ roundingItems.ts
-â”‚   â”‚   â”‚   â”œâ”€â”€ twoStepItems.ts
-â”‚   â”‚   â”‚   â””â”€â”€ wordProblemItems.ts
-â”‚   â”‚   â”œâ”€â”€ dashboard
-â”‚   â”‚   â”‚   â”œâ”€â”€ ProfileSetup.tsx
-â”‚   â”‚   â”‚   â””â”€â”€ StudentDashboard.tsx
-â”‚   â”‚   â”œâ”€â”€ diagnosis
-â”‚   â”‚   â”‚   â”œâ”€â”€ diagnosticCompletion.ts
-â”‚   â”‚   â”‚   â”œâ”€â”€ diagnosticPersistence.ts
-â”‚   â”‚   â”‚   â”œâ”€â”€ diagnosticPlanner.ts
-â”‚   â”‚   â”‚   â””â”€â”€ DiagnosticSession.tsx
-â”‚   â”‚   â”œâ”€â”€ goals
-â”‚   â”‚   â”‚   â”œâ”€â”€ goalEngine.ts
-â”‚   â”‚   â”‚   â”œâ”€â”€ goalLifecycleService.ts
-â”‚   â”‚   â”‚   â”œâ”€â”€ goalRecommendationEngine.ts
-â”‚   â”‚   â”‚   â””â”€â”€ types.ts
-â”‚   â”‚   â”œâ”€â”€ learning
-â”‚   â”‚   â”‚   â”œâ”€â”€ eventRebuild.ts
-â”‚   â”‚   â”‚   â”œâ”€â”€ learningEvents.ts
-â”‚   â”‚   â”‚   â””â”€â”€ recordAnswer.ts
-â”‚   â”‚   â”œâ”€â”€ mastery
-â”‚   â”‚   â”‚   â”œâ”€â”€ grade3MasteryMap.ts
-â”‚   â”‚   â”‚   â”œâ”€â”€ Grade3MasteryMapPage.tsx
-â”‚   â”‚   â”‚   â”œâ”€â”€ misconceptionEngine.ts
-â”‚   â”‚   â”‚   â”œâ”€â”€ ParentNextActionCard.tsx
-â”‚   â”‚   â”‚   â”œâ”€â”€ SkillDetailPanel.tsx
-â”‚   â”‚   â”‚   â”œâ”€â”€ skillMapping.ts
-â”‚   â”‚   â”‚   â”œâ”€â”€ skillMasteryEngine.ts
-â”‚   â”‚   â”‚   â”œâ”€â”€ skillPracticePlanner.ts
-â”‚   â”‚   â”‚   â”œâ”€â”€ SkillTile.tsx
-â”‚   â”‚   â”‚   â””â”€â”€ todayPlanEngine.ts
-â”‚   â”‚   â”œâ”€â”€ multiplication
-â”‚   â”‚   â”‚   â”œâ”€â”€ masteryEngine.ts
-â”‚   â”‚   â”‚   â”œâ”€â”€ multiplicationFacts.ts
-â”‚   â”‚   â”‚   â”œâ”€â”€ MultiplicationMasteryGrid.tsx
-â”‚   â”‚   â”‚   â”œâ”€â”€ MultiplicationQuizPage.tsx
-â”‚   â”‚   â”‚   â”œâ”€â”€ practiceRecommendation.ts
-â”‚   â”‚   â”‚   â”œâ”€â”€ quizQuestionSelector.ts
-â”‚   â”‚   â”‚   â””â”€â”€ types.ts
-â”‚   â”‚   â”œâ”€â”€ practice
-â”‚   â”‚   â”‚   â”œâ”€â”€ answerChecker.ts
-â”‚   â”‚   â”‚   â”œâ”€â”€ hintEngine.ts
-â”‚   â”‚   â”‚   â”œâ”€â”€ metrics.ts
-â”‚   â”‚   â”‚   â”œâ”€â”€ practiceNavigation.ts
-â”‚   â”‚   â”‚   â”œâ”€â”€ PracticeScreen.tsx
-â”‚   â”‚   â”‚   â”œâ”€â”€ QuestionRenderer.tsx
-â”‚   â”‚   â”‚   â””â”€â”€ usePracticeSession.ts
-â”‚   â”‚   â”œâ”€â”€ scheduler
-â”‚   â”‚   â”‚   â”œâ”€â”€ fsrsAdapter.ts
-â”‚   â”‚   â”‚   â””â”€â”€ scheduler.ts
-â”‚   â”‚   â”œâ”€â”€ settings
-â”‚   â”‚   â”‚   â”œâ”€â”€ SettingsPage.tsx
-â”‚   â”‚   â”‚   â””â”€â”€ updateCheck.ts
-â”‚   â”‚   â”œâ”€â”€ stats
-â”‚   â”‚   â”‚   â”œâ”€â”€ DrillHistory.tsx
-â”‚   â”‚   â”‚   â”œâ”€â”€ FactStatsTable.tsx
-â”‚   â”‚   â”‚   â”œâ”€â”€ GrowthView.tsx
-â”‚   â”‚   â”‚   â”œâ”€â”€ QuizStatsView.tsx
-â”‚   â”‚   â”‚   â”œâ”€â”€ statsEngine.ts
-â”‚   â”‚   â”‚   â”œâ”€â”€ StatsPage.tsx
-â”‚   â”‚   â”‚   â”œâ”€â”€ todayAchievement.ts
-â”‚   â”‚   â”‚   â”œâ”€â”€ TodayAchievementDetail.tsx
-â”‚   â”‚   â”‚   â””â”€â”€ TodayAchievementSection.tsx
-â”‚   â”‚   â”œâ”€â”€ sync
-â”‚   â”‚   â”‚   â”œâ”€â”€ driveSync.ts
-â”‚   â”‚   â”‚   â”œâ”€â”€ snapshot.ts
-â”‚   â”‚   â”‚   â”œâ”€â”€ SyncWidget.tsx
-â”‚   â”‚   â”‚   â””â”€â”€ useSync.ts
-â”‚   â”‚   â”œâ”€â”€ theme
-â”‚   â”‚   â”‚   â””â”€â”€ themes.ts
-â”‚   â”‚   â”œâ”€â”€ time
-â”‚   â”‚   â”‚   â””â”€â”€ clock.ts
-â”‚   â”‚   â””â”€â”€ visuals
-â”‚   â”‚       â”œâ”€â”€ AreaGrid.tsx
-â”‚   â”‚       â”œâ”€â”€ ArrayModel.tsx
-â”‚   â”‚       â”œâ”€â”€ ClockModel.tsx
-â”‚   â”‚       â”œâ”€â”€ DraggableEqualGroups.tsx
-â”‚   â”‚       â”œâ”€â”€ EqualGroupsModel.tsx
-â”‚   â”‚       â”œâ”€â”€ equalGroupsUtils.ts
-â”‚   â”‚       â”œâ”€â”€ FractionBar.tsx
-â”‚   â”‚       â”œâ”€â”€ FractionNumberLine.tsx
-â”‚   â”‚       â”œâ”€â”€ FractionText.tsx
-â”‚   â”‚       â”œâ”€â”€ MathPrompt.tsx
-â”‚   â”‚       â”œâ”€â”€ RectilinearAreaModel.tsx
-â”‚   â”‚       â”œâ”€â”€ ShapeModel.tsx
-â”‚   â”‚       â”œâ”€â”€ VisualModel.tsx
-â”‚   â”‚       â””â”€â”€ visualModelUtils.ts
-â”‚   â”œâ”€â”€ tests
-â”‚   â”‚   â”œâ”€â”€ adaptiveRelatedItemSelection.test.ts
-â”‚   â”‚   â”œâ”€â”€ ai.test.ts
-â”‚   â”‚   â”œâ”€â”€ answerChecker.test.ts
-â”‚   â”‚   â”œâ”€â”€ appDiagnosticCompletion.test.ts
-â”‚   â”‚   â”œâ”€â”€ arithmeticItems.test.ts
-â”‚   â”‚   â”œâ”€â”€ clock.test.ts
-â”‚   â”‚   â”œâ”€â”€ components.test.tsx
-â”‚   â”‚   â”œâ”€â”€ describeItem.test.ts
-â”‚   â”‚   â”œâ”€â”€ diagnosticPlanner.test.ts
-â”‚   â”‚   â”œâ”€â”€ diagnosticSession.test.tsx
-â”‚   â”‚   â”œâ”€â”€ eventRebuild.test.ts
-â”‚   â”‚   â”œâ”€â”€ fractionItems.test.ts
-â”‚   â”‚   â”œâ”€â”€ goalDexieSchema.test.ts
-â”‚   â”‚   â”œâ”€â”€ goalEngine.test.ts
-â”‚   â”‚   â”œâ”€â”€ goalRecommendationEngine.test.ts
-â”‚   â”‚   â”œâ”€â”€ goalRepositories.test.ts
-â”‚   â”‚   â”œâ”€â”€ goalSnapshot.test.ts
-â”‚   â”‚   â”œâ”€â”€ grade3AddSubRegrouping.test.ts
-â”‚   â”‚   â”œâ”€â”€ grade3AreaPerimeter.test.ts
-â”‚   â”‚   â”œâ”€â”€ grade3MasteryMap.test.ts
-â”‚   â”‚   â”œâ”€â”€ grade3MasteryMapRegression.test.ts
-â”‚   â”‚   â”œâ”€â”€ grade3MulProperties.test.ts
-â”‚   â”‚   â”œâ”€â”€ grade3NewSkills.test.ts
-â”‚   â”‚   â”œâ”€â”€ grade3TwoStepAndPatterns.test.ts
-â”‚   â”‚   â”œâ”€â”€ growth.test.ts
-â”‚   â”‚   â”œâ”€â”€ hintEngine.test.ts
-â”‚   â”‚   â”œâ”€â”€ learningEvents.test.ts
-â”‚   â”‚   â”œâ”€â”€ makeItemFromId.test.ts
-â”‚   â”‚   â”œâ”€â”€ mathPrompt.test.tsx
-â”‚   â”‚   â”œâ”€â”€ misconceptionEngine.test.ts
-â”‚   â”‚   â”œâ”€â”€ multiplicationQuiz.test.ts
-â”‚   â”‚   â”œâ”€â”€ newCurriculum.test.ts
-â”‚   â”‚   â”œâ”€â”€ practiceMetrics.test.ts
-â”‚   â”‚   â”œâ”€â”€ practiceNavigation.test.ts
-â”‚   â”‚   â”œâ”€â”€ practiceSession.test.ts
-â”‚   â”‚   â”œâ”€â”€ questionGenerator.test.ts
-â”‚   â”‚   â”œâ”€â”€ quizAutoAdvance.test.tsx
-â”‚   â”‚   â”œâ”€â”€ rangeSelection.test.ts
-â”‚   â”‚   â”œâ”€â”€ relatedEvidence.test.ts
-â”‚   â”‚   â”œâ”€â”€ rng.test.ts
-â”‚   â”‚   â”œâ”€â”€ scheduler.test.ts
-â”‚   â”‚   â”œâ”€â”€ setup.ts
-â”‚   â”‚   â”œâ”€â”€ skillMapping.test.ts
-â”‚   â”‚   â”œâ”€â”€ skillMasteryEngine.test.ts
-â”‚   â”‚   â”œâ”€â”€ skillPracticePlanner.test.ts
-â”‚   â”‚   â”œâ”€â”€ snapshotValidation.test.ts
-â”‚   â”‚   â”œâ”€â”€ speech.test.ts
-â”‚   â”‚   â”œâ”€â”€ statsEngine.test.ts
-â”‚   â”‚   â”œâ”€â”€ todayAchievement.test.ts
-â”‚   â”‚   â”œâ”€â”€ todayPlanEngine.test.ts
-â”‚   â”‚   â”œâ”€â”€ updateCheck.test.ts
-â”‚   â”‚   â””â”€â”€ visualModel.test.ts
-â”‚   â”œâ”€â”€ types
-â”‚   â”‚   â”œâ”€â”€ google.d.ts
-â”‚   â”‚   â””â”€â”€ math.ts
-â”‚   â”œâ”€â”€ utils
-â”‚   â”‚   â”œâ”€â”€ id.ts
-â”‚   â”‚   â”œâ”€â”€ masteryColors.ts
-â”‚   â”‚   â””â”€â”€ rng.ts
-â”‚   â”œâ”€â”€ App.tsx
-â”‚   â”œâ”€â”€ env.d.ts
-â”‚   â”œâ”€â”€ index.css
-â”‚   â””â”€â”€ main.tsx
-â”œâ”€â”€ tools
-â”‚   â””â”€â”€ generate_code_maps.py
-â”œâ”€â”€ AGENTS.md
-â”œâ”€â”€ CLAUDE.md
-â”œâ”€â”€ eslint.config.js
-â”œâ”€â”€ index.html
-â”œâ”€â”€ mathladder_prd_and_implementation_guide.md
-â”œâ”€â”€ package.json
-â”œâ”€â”€ README.md
-â”œâ”€â”€ tsconfig.app.json
-â”œâ”€â”€ tsconfig.json
-â”œâ”€â”€ tsconfig.node.json
-â”œâ”€â”€ vite.config.ts
-â””â”€â”€ vitest.config.ts
+├── docs
+│   ├── arch
+│   │   ├── data.html
+│   │   ├── decisions.html
+│   │   ├── features.html
+│   │   └── index.html
+│   ├── CLOUD_DEVELOPMENT.md
+│   ├── grade3-mastery-map-roadmap.md
+│   └── PRD.md
+├── scripts
+│   ├── build-icons.py
+│   ├── bump-version.mjs
+│   ├── bump_version.py
+│   ├── generate_code_map.py
+│   ├── serve-https.py
+│   ├── smoke-google-auth.py
+│   ├── smoke-https-headers.py
+│   ├── smoke-template.py
+│   └── smoke-update-flow.py
+├── src
+│   ├── components
+│   │   ├── MasteryGrid.tsx
+│   │   ├── MiniCalendar.tsx
+│   │   ├── NumPad.tsx
+│   │   ├── opSpecs.ts
+│   │   ├── RangeSetup.tsx
+│   │   ├── SessionSetup.tsx
+│   │   ├── SessionSummary.tsx
+│   │   ├── SettingsOverlay.tsx
+│   │   └── StatsGraph.tsx
+│   ├── db
+│   │   ├── dexie.ts
+│   │   └── repositories.ts
+│   ├── features
+│   │   ├── adaptive
+│   │   │   ├── adaptiveItemSelector.ts
+│   │   │   ├── candidatePools.ts
+│   │   │   ├── relatedEvidence.ts
+│   │   │   └── relatedItemMapping.ts
+│   │   ├── ai
+│   │   │   ├── aiConfig.ts
+│   │   │   ├── gemini.ts
+│   │   │   └── TutorChat.tsx
+│   │   ├── audio
+│   │   │   ├── mathSpeech.ts
+│   │   │   └── speech.ts
+│   │   ├── auth
+│   │   │   └── googleAuth.ts
+│   │   ├── curriculum
+│   │   │   ├── areaItems.ts
+│   │   │   ├── arithmeticItems.ts
+│   │   │   ├── decimalItems.ts
+│   │   │   ├── describeItem.ts
+│   │   │   ├── fractionItems.ts
+│   │   │   ├── geometryItems.ts
+│   │   │   ├── makeItemFromId.ts
+│   │   │   ├── measurementItems.ts
+│   │   │   ├── mulPropertiesItems.ts
+│   │   │   ├── multiplicationItems.ts
+│   │   │   ├── numberTheoryItems.ts
+│   │   │   ├── patternItems.ts
+│   │   │   ├── roundingItems.ts
+│   │   │   ├── twoStepItems.ts
+│   │   │   └── wordProblemItems.ts
+│   │   ├── dashboard
+│   │   │   ├── ProfileSetup.tsx
+│   │   │   └── StudentDashboard.tsx
+│   │   ├── diagnosis
+│   │   │   ├── diagnosticCompletion.ts
+│   │   │   ├── diagnosticPersistence.ts
+│   │   │   ├── diagnosticPlanner.ts
+│   │   │   └── DiagnosticSession.tsx
+│   │   ├── goals
+│   │   │   ├── goalEngine.ts
+│   │   │   ├── goalLifecycleService.ts
+│   │   │   ├── goalRecommendationEngine.ts
+│   │   │   ├── GoalsPage.tsx
+│   │   │   └── types.ts
+│   │   ├── learning
+│   │   │   ├── eventRebuild.ts
+│   │   │   ├── learningEvents.ts
+│   │   │   └── recordAnswer.ts
+│   │   ├── mastery
+│   │   │   ├── grade3MasteryMap.ts
+│   │   │   ├── Grade3MasteryMapPage.tsx
+│   │   │   ├── misconceptionEngine.ts
+│   │   │   ├── ParentNextActionCard.tsx
+│   │   │   ├── SkillDetailPanel.tsx
+│   │   │   ├── skillMapping.ts
+│   │   │   ├── skillMasteryEngine.ts
+│   │   │   ├── skillPracticePlanner.ts
+│   │   │   ├── SkillTile.tsx
+│   │   │   └── todayPlanEngine.ts
+│   │   ├── multiplication
+│   │   │   ├── masteryEngine.ts
+│   │   │   ├── multiplicationFacts.ts
+│   │   │   ├── MultiplicationMasteryGrid.tsx
+│   │   │   ├── MultiplicationQuizPage.tsx
+│   │   │   ├── practiceRecommendation.ts
+│   │   │   ├── quizQuestionSelector.ts
+│   │   │   └── types.ts
+│   │   ├── practice
+│   │   │   ├── answerChecker.ts
+│   │   │   ├── hintEngine.ts
+│   │   │   ├── metrics.ts
+│   │   │   ├── practiceNavigation.ts
+│   │   │   ├── PracticeScreen.tsx
+│   │   │   ├── QuestionRenderer.tsx
+│   │   │   └── usePracticeSession.ts
+│   │   ├── scheduler
+│   │   │   ├── fsrsAdapter.ts
+│   │   │   └── scheduler.ts
+│   │   ├── settings
+│   │   │   ├── SettingsPage.tsx
+│   │   │   └── updateCheck.ts
+│   │   ├── stats
+│   │   │   ├── DrillHistory.tsx
+│   │   │   ├── FactStatsTable.tsx
+│   │   │   ├── GrowthView.tsx
+│   │   │   ├── QuizStatsView.tsx
+│   │   │   ├── statsEngine.ts
+│   │   │   ├── StatsPage.tsx
+│   │   │   ├── todayAchievement.ts
+│   │   │   ├── TodayAchievementDetail.tsx
+│   │   │   └── TodayAchievementSection.tsx
+│   │   ├── sync
+│   │   │   ├── driveSync.ts
+│   │   │   ├── snapshot.ts
+│   │   │   ├── SyncWidget.tsx
+│   │   │   └── useSync.ts
+│   │   ├── theme
+│   │   │   └── themes.ts
+│   │   ├── time
+│   │   │   └── clock.ts
+│   │   └── visuals
+│   │       ├── AreaGrid.tsx
+│   │       ├── ArrayModel.tsx
+│   │       ├── ClockModel.tsx
+│   │       ├── DraggableEqualGroups.tsx
+│   │       ├── EqualGroupsModel.tsx
+│   │       ├── equalGroupsUtils.ts
+│   │       ├── FractionBar.tsx
+│   │       ├── FractionNumberLine.tsx
+│   │       ├── FractionText.tsx
+│   │       ├── MathPrompt.tsx
+│   │       ├── RectilinearAreaModel.tsx
+│   │       ├── ShapeModel.tsx
+│   │       ├── VisualModel.tsx
+│   │       └── visualModelUtils.ts
+│   ├── tests
+│   │   ├── adaptiveRelatedItemSelection.test.ts
+│   │   ├── ai.test.ts
+│   │   ├── answerChecker.test.ts
+│   │   ├── appDiagnosticCompletion.test.ts
+│   │   ├── arithmeticItems.test.ts
+│   │   ├── clock.test.ts
+│   │   ├── components.test.tsx
+│   │   ├── describeItem.test.ts
+│   │   ├── diagnosticPlanner.test.ts
+│   │   ├── diagnosticSession.test.tsx
+│   │   ├── eventRebuild.test.ts
+│   │   ├── fractionItems.test.ts
+│   │   ├── goalDexieSchema.test.ts
+│   │   ├── goalEngine.test.ts
+│   │   ├── goalRecommendationEngine.test.ts
+│   │   ├── goalRepositories.test.ts
+│   │   ├── goalSnapshot.test.ts
+│   │   ├── goalsPage.test.tsx
+│   │   ├── grade3AddSubRegrouping.test.ts
+│   │   ├── grade3AreaPerimeter.test.ts
+│   │   ├── grade3MasteryMap.test.ts
+│   │   ├── grade3MasteryMapRegression.test.ts
+│   │   ├── grade3MulProperties.test.ts
+│   │   ├── grade3NewSkills.test.ts
+│   │   ├── grade3TwoStepAndPatterns.test.ts
+│   │   ├── growth.test.ts
+│   │   ├── hintEngine.test.ts
+│   │   ├── learningEvents.test.ts
+│   │   ├── makeItemFromId.test.ts
+│   │   ├── mathPrompt.test.tsx
+│   │   ├── misconceptionEngine.test.ts
+│   │   ├── multiplicationQuiz.test.ts
+│   │   ├── newCurriculum.test.ts
+│   │   ├── practiceMetrics.test.ts
+│   │   ├── practiceNavigation.test.ts
+│   │   ├── practiceSession.test.ts
+│   │   ├── questionGenerator.test.ts
+│   │   ├── quizAutoAdvance.test.tsx
+│   │   ├── rangeSelection.test.ts
+│   │   ├── relatedEvidence.test.ts
+│   │   ├── rng.test.ts
+│   │   ├── scheduler.test.ts
+│   │   ├── setup.ts
+│   │   ├── skillMapping.test.ts
+│   │   ├── skillMasteryEngine.test.ts
+│   │   ├── skillPracticePlanner.test.ts
+│   │   ├── snapshotValidation.test.ts
+│   │   ├── speech.test.ts
+│   │   ├── statsEngine.test.ts
+│   │   ├── todayAchievement.test.ts
+│   │   ├── todayPlanEngine.test.ts
+│   │   ├── updateCheck.test.ts
+│   │   └── visualModel.test.ts
+│   ├── types
+│   │   ├── google.d.ts
+│   │   └── math.ts
+│   ├── utils
+│   │   ├── id.ts
+│   │   ├── masteryColors.ts
+│   │   └── rng.ts
+│   ├── App.tsx
+│   ├── env.d.ts
+│   ├── index.css
+│   └── main.tsx
+├── tools
+│   └── generate_code_maps.py
+├── AGENTS.md
+├── CLAUDE.md
+├── eslint.config.js
+├── index.html
+├── mathladder_prd_and_implementation_guide.md
+├── package.json
+├── README.md
+├── tsconfig.app.json
+├── tsconfig.json
+├── tsconfig.node.json
+├── vite.config.ts
+└── vitest.config.ts
 ```
 
 ## Important-file snippets
@@ -354,51 +356,51 @@ Purpose: Top-level React app shell: routes/screens, global state, and feature wi
   14: import type { AchievementFilter, TodayAchievementData } from './features/stats/todayAchievement';
   15: import { Grade3MasteryMapPage } from './features/mastery/Grade3MasteryMapPage';
   16: import { DiagnosticSession } from './features/diagnosis/DiagnosticSession';
-  17: import { preloadVoices } from './features/audio/speech';
-  18: import { useSync, initAuth } from './features/sync/useSync';
-  19: import { pushLocal } from './features/sync/driveSync';
-  20: import { currentState as authState } from './features/auth/googleAuth';
-  21: import { applyTheme } from './features/theme/themes';
-  22: import { syncDiagnosticCompletionIfSignedIn } from './features/diagnosis/diagnosticCompletion';
-  23: import { resolvePracticeDoneDestination } from './features/practice/practiceNavigation';
-  24:
-  25: type Screen =
-  26:   | 'loading' | 'setup' | 'dashboard'
-  27:   | 'daily-setup' | 'range-setup' | 'practice'
-  28:   | 'stats' | 'settings' | 'quiz' | 'today-detail' | 'mastery-map' | 'diagnostic';
-  29:
-  30: export default function App() {
-  31:   const [screen, setScreen] = useState<Screen>('loading');
-  32:   const [profile, setProfile] = useState<StudentProfile | null>(null);
-  33:   const [sessionConfig, setSessionConfig] = useState<SessionConfig | null>(null);
-  34:   const [selectedOp, setSelectedOp] = useState<PracticeOp>('multiplication');
-  35:   const [achievementFilter, setAchievementFilter] = useState<AchievementFilter>('total');
-  36:   const [achievementData, setAchievementData] = useState<TodayAchievementData | null>(null);
-  37:   const { auth, syncStatus, lastSyncedAt, syncError, handleSignIn, handleSignOut, manualSync } = useSync();
-  38:   const [practiceReturn, setPracticeReturn] = useState<Screen>('dashboard');
-  39:
-  40:   // After a successful sync, refresh the profile from DB.
-  41:   // This handles the case where Drive data was merged back onto a fresh install:
-  42:   // the local empty student and the Drive student have different IDs, so we pick
-  43:   // the student with the most events (i.e. the restored Drive profile).
-  44:   const syncRefreshGuard = useRef(true);
-  45:   useEffect(() => {
-  46:     if (syncRefreshGuard.current) { syncRefreshGuard.current = false; return; }
-  47:     if (!lastSyncedAt) return;
-  48:     studentRepo.getAll().then(async all => {
-  49:       if (all.length === 0) return;
-  50:       let best = all[0];
-  51:       if (all.length > 1) {
-  52:         const counts = await Promise.all(all.map(s => mathAnswerEventRepo.getAll(s.id).then(ev => ev.length)));
-  53:         best = all[counts.indexOf(Math.max(...counts))];
-  54:       }
-  55:       setProfile(best);
-  56:       applyTheme(best.settings.theme ?? 'indigo');
-  57:       setScreen(s => (s === 'setup' || s === 'loading') ? 'dashboard' : s);
-  58:     });
-  59:   // eslint-disable-next-line react-hooks/exhaustive-deps
-  60:   }, [lastSyncedAt]);
-... (219 more lines)
+  17: import { GoalsPage } from './features/goals/GoalsPage';
+  18: import { preloadVoices } from './features/audio/speech';
+  19: import { useSync, initAuth } from './features/sync/useSync';
+  20: import { pushLocal } from './features/sync/driveSync';
+  21: import { currentState as authState } from './features/auth/googleAuth';
+  22: import { applyTheme } from './features/theme/themes';
+  23: import { syncDiagnosticCompletionIfSignedIn } from './features/diagnosis/diagnosticCompletion';
+  24: import { resolvePracticeDoneDestination } from './features/practice/practiceNavigation';
+  25: 
+  26: type Screen =
+  27:   | 'loading' | 'setup' | 'dashboard'
+  28:   | 'daily-setup' | 'range-setup' | 'practice'
+  29:   | 'stats' | 'settings' | 'quiz' | 'today-detail' | 'mastery-map' | 'diagnostic' | 'goals';
+  30: 
+  31: export default function App() {
+  32:   const [screen, setScreen] = useState<Screen>('loading');
+  33:   const [profile, setProfile] = useState<StudentProfile | null>(null);
+  34:   const [sessionConfig, setSessionConfig] = useState<SessionConfig | null>(null);
+  35:   const [selectedOp, setSelectedOp] = useState<PracticeOp>('multiplication');
+  36:   const [achievementFilter, setAchievementFilter] = useState<AchievementFilter>('total');
+  37:   const [achievementData, setAchievementData] = useState<TodayAchievementData | null>(null);
+  38:   const { auth, syncStatus, lastSyncedAt, syncError, handleSignIn, handleSignOut, manualSync } = useSync();
+  39:   const [practiceReturn, setPracticeReturn] = useState<Screen>('dashboard');
+  40: 
+  41:   // After a successful sync, refresh the profile from DB.
+  42:   // This handles the case where Drive data was merged back onto a fresh install:
+  43:   // the local empty student and the Drive student have different IDs, so we pick
+  44:   // the student with the most events (i.e. the restored Drive profile).
+  45:   const syncRefreshGuard = useRef(true);
+  46:   useEffect(() => {
+  47:     if (syncRefreshGuard.current) { syncRefreshGuard.current = false; return; }
+  48:     if (!lastSyncedAt) return;
+  49:     studentRepo.getAll().then(async all => {
+  50:       if (all.length === 0) return;
+  51:       let best = all[0];
+  52:       if (all.length > 1) {
+  53:         const counts = await Promise.all(all.map(s => mathAnswerEventRepo.getAll(s.id).then(ev => ev.length)));
+  54:         best = all[counts.indexOf(Math.max(...counts))];
+  55:       }
+  56:       setProfile(best);
+  57:       applyTheme(best.settings.theme ?? 'indigo');
+  58:       setScreen(s => (s === 'setup' || s === 'loading') ? 'dashboard' : s);
+  59:     });
+  60:   // eslint-disable-next-line react-hooks/exhaustive-deps
+... (232 more lines)
 ```
 
 ### `src/features/sync/SyncWidget.tsx`
@@ -408,9 +410,9 @@ Purpose: Cloud sync/auth/data transfer logic.
 ```text
    1: import type { SyncStatus } from './driveSync';
    2: import type { AuthState } from '../auth/googleAuth';
-   3:
+   3: 
    4: const HAS_GOOGLE_CONFIG = !!import.meta.env.VITE_GOOGLE_CLIENT_ID;
-   5:
+   5: 
    6: interface Props {
    7:   auth: AuthState;
    8:   syncStatus: SyncStatus;
@@ -420,26 +422,26 @@ Purpose: Cloud sync/auth/data transfer logic.
   12:   onSignOut: () => void;
   13:   onSync: () => void;
   14: }
-  15:
+  15: 
   16: export function SyncWidget({ auth, syncStatus, lastSyncedAt, syncError, onSignIn, onSignOut, onSync }: Props) {
   17:   const isSyncing = syncStatus === 'syncing';
-  18:
-  19:   // â”€â”€ Not configured â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  18: 
+  19:   // ── Not configured ────────────────────────────────────────────────────────
   20:   if (!HAS_GOOGLE_CONFIG) {
   21:     return (
   22:       <div style={{ ...s.box, borderColor: '#fcd34d', background: '#fffbeb' }}>
   23:         <p style={{ fontSize: '14px', fontWeight: '600', color: '#92400e', margin: '0 0 4px' }}>
-  24:           âš  Google sync not configured
+  24:           ⚠ Google sync not configured
   25:         </p>
   26:         <p style={{ fontSize: '12px', color: '#78350f', margin: 0, lineHeight: 1.5 }}>
   27:           Create a <code style={s.code}>.env</code> file in the project root with{' '}
-  28:           <code style={s.code}>VITE_GOOGLE_CLIENT_ID=â€¦</code>, then restart the dev server.
+  28:           <code style={s.code}>VITE_GOOGLE_CLIENT_ID=…</code>, then restart the dev server.
   29:         </p>
   30:       </div>
   31:     );
   32:   }
-  33:
-  34:   // â”€â”€ Signed out â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  33: 
+  34:   // ── Signed out ────────────────────────────────────────────────────────────
   35:   if (!auth.signedIn) {
   36:     return (
   37:       <div style={s.box}>
@@ -454,17 +456,17 @@ Purpose: Cloud sync/auth/data transfer logic.
   46:             disabled={isSyncing}
   47:           >
   48:             {isSyncing ? (
-  49:               <span style={s.spinner}>â³</span>
+  49:               <span style={s.spinner}>⏳</span>
   50:             ) : (
   51:               <GoogleIcon />
   52:             )}
-  53:             {isSyncing ? 'Signing inâ€¦' : 'Sign in'}
+  53:             {isSyncing ? 'Signing in…' : 'Sign in'}
   54:           </button>
   55:         </div>
-  56:
+  56: 
   57:         {/* Show errors even before sign-in completes */}
   58:         {syncStatus === 'error' && syncError && (
-  59:           <p style={s.errorMsg}>âš  {friendlyError(syncError)}</p>
+  59:           <p style={s.errorMsg}>⚠ {friendlyError(syncError)}</p>
   60:         )}
 ... (95 more lines)
 ```
@@ -480,7 +482,7 @@ Purpose: Local persistence/database layer.
    4: import { rebuildMultFactStatsFromEvents, rebuildItemStatesFromEvents } from '../learning/eventRebuild';
    5: import { db } from '../../db/dexie';
    6: import type { GoalEvaluation, GoalEvent, LearningGoal } from '../goals/types';
-   7:
+   7: 
    8: export interface AppSnapshot {
    9:   appId: 'mathfan';
   10:   snapshotVersion: 1 | 2;
@@ -489,18 +491,18 @@ Purpose: Local persistence/database layer.
   13:   itemStates: StudentItemState[];
   14:   attempts: AttemptLog[];
   15:   sessions: PracticeSession[];
-  16:   // Added in quiz feature â€” absent in older snapshots; treat missing as []
+  16:   // Added in quiz feature — absent in older snapshots; treat missing as []
   17:   multFactStats?: MultiplicationFactStats[];
   18:   quizSessions?: QuizSession[];
-  19:   // Added with canonical event log â€” absent in older snapshots; treat missing as []
+  19:   // Added with canonical event log — absent in older snapshots; treat missing as []
   20:   mathAnswerEvents?: MathAnswerEvent[];
   21:   learningGoals?: LearningGoal[];
   22:   goalEvents?: GoalEvent[];
   23:   goalEvaluations?: GoalEvaluation[];
   24: }
-  25:
-  26: // â”€â”€ Build â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  27:
+  25: 
+  26: // ── Build ─────────────────────────────────────────────────────────────────────
+  27: 
   28: export async function buildSnapshot(): Promise<AppSnapshot> {
   29:   const [
   30:     students,
@@ -546,23 +548,23 @@ Purpose: Vite build/PWA configuration.
    2: import react from '@vitejs/plugin-react'
    3: import { VitePWA } from 'vite-plugin-pwa'
    4: import { readFileSync } from 'node:fs'
-   5:
+   5: 
    6: // VITE_BASE_PATH: set to /mathfan/ when deploying to GitHub Pages project site,
    7: // leave unset (defaults to /) for custom domain or local dev.
    8: const base = process.env.VITE_BASE_PATH ?? '/'
    9: const pkg: { version: string } = JSON.parse(readFileSync('./package.json', 'utf8'))
-  10:
+  10: 
   11: // Computed once so the values baked into the bundle (via `define`) and the
   12: // values written to build-info.json are guaranteed to match. The update checker
   13: // in Settings compares these two to decide whether a newer build is deployed.
   14: const appVersion = pkg.version
   15: const gitSha = process.env.VITE_GIT_SHA ?? 'dev'
   16: const buildTime = new Date().toISOString()
-  17:
+  17: 
   18: // Emits /build-info.json into dist and serves the same payload in dev, so the
   19: // "Check for Updates" button can probe the deployed build over the network.
   20: // build-info.json is intentionally NOT in the Workbox precache globs, so the
-  21: // service worker never serves a stale copy â€” the fetch always hits the network.
+  21: // service worker never serves a stale copy — the fetch always hits the network.
   22: function buildInfoPlugin(): Plugin {
   23:   const payload = JSON.stringify({ appVersion, gitSha, buildTime }, null, 2)
   24:   return {
@@ -583,7 +585,7 @@ Purpose: Vite build/PWA configuration.
   39:     },
   40:   }
   41: }
-  42:
+  42: 
   43: export default defineConfig({
   44:   base,
   45:   define: {
@@ -600,7 +602,7 @@ Purpose: Vite build/PWA configuration.
   56:       manifest: {
   57:         name: 'MathFan',
   58:         short_name: 'MathFan',
-  59:         description: 'Adaptive math practice for grades 3â€“5',
+  59:         description: 'Adaptive math practice for grades 3–5',
   60:         theme_color: '#4f46e5',
 ... (21 more lines)
 ```
@@ -668,7 +670,7 @@ Purpose: React entry point that mounts the app.
    2: import { createRoot } from 'react-dom/client'
    3: import './index.css'
    4: import App from './App.tsx'
-   5:
+   5: 
    6: // When a new service worker activates (skipWaiting fires), reload so the fresh
    7: // bundle is served. Guard with hadController so the very first SW install on a
    8: // brand-new visit doesn't trigger a spurious reload.
@@ -678,7 +680,7 @@ Purpose: React entry point that mounts the app.
   12:     if (hadController) window.location.reload();
   13:   });
   14: }
-  15:
+  15: 
   16: createRoot(document.getElementById('root')!).render(
   17:   <StrictMode>
   18:     <App />
@@ -694,20 +696,20 @@ Purpose: Cloud sync/auth/data transfer logic.
    1: import type { AppSnapshot } from './snapshot';
    2: import { buildSnapshot, mergeSnapshot, validateSnapshot } from './snapshot';
    3: import { getToken } from '../auth/googleAuth';
-   4:
+   4: 
    5: const FILE_NAME = 'mathfan-data.json';
    6: const LIST_URL = `https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&fields=files(id,name,size,modifiedTime)&q=name='${FILE_NAME}'`;
    7: const FILES_URL = 'https://www.googleapis.com/drive/v3/files';
    8: const UPLOAD_URL = 'https://www.googleapis.com/upload/drive/v3/files';
-   9:
+   9: 
   10: export type SyncStatus = 'idle' | 'syncing' | 'synced' | 'error';
-  11:
+  11: 
   12: export interface SyncResult {
   13:   ok: boolean;
   14:   error?: string;
   15:   syncedAt?: string;
   16: }
-  17:
+  17: 
   18: async function authFetch(url: string, options: RequestInit = {}): Promise<Response> {
   19:   const token = await getToken();
   20:   if (!token) throw new Error('Not signed in');
@@ -719,17 +721,17 @@ Purpose: Cloud sync/auth/data transfer logic.
   26:     },
   27:   });
   28: }
-  29:
+  29: 
   30: async function findSyncFile(): Promise<string | null> {
   31:   const res = await authFetch(LIST_URL);
   32:   if (!res.ok) return null;
   33:   const data = await res.json();
   34:   return (data.files as { id: string }[])?.[0]?.id ?? null;
   35: }
-  36:
+  36: 
   37: async function uploadSnapshot(snapshot: AppSnapshot, existingId?: string): Promise<void> {
   38:   const body = JSON.stringify(snapshot);
-  39:
+  39: 
   40:   if (existingId) {
   41:     // Update existing file (media-only PATCH)
   42:     const res = await authFetch(
@@ -764,16 +766,16 @@ Purpose: Cloud sync/auth/data transfer logic.
    3: import { pullAndMerge, pushLocal, syncBothWays } from './driveSync';
    4: import type { AuthState } from '../auth/googleAuth';
    5: import type { SyncStatus } from './driveSync';
-   6:
+   6: 
    7: export interface SyncState {
    8:   auth: AuthState;
    9:   syncStatus: SyncStatus;
   10:   lastSyncedAt: string | null;
   11:   syncError: string | null;
   12: }
-  13:
+  13: 
   14: const SYNC_AT_KEY = 'mathfan_last_synced';
-  15:
+  15: 
   16: export function useSync() {
   17:   const [auth, setAuth] = useState<AuthState>(currentState);
   18:   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
@@ -781,17 +783,17 @@ Purpose: Cloud sync/auth/data transfer logic.
   20:     () => localStorage.getItem(SYNC_AT_KEY)
   21:   );
   22:   const [syncError, setSyncError] = useState<string | null>(null);
-  23:
+  23: 
   24:   // Subscribe to auth changes
   25:   useEffect(() => {
   26:     return onChange(setAuth);
   27:   }, []);
-  28:
+  28: 
   29:   const recordSync = (at: string) => {
   30:     setLastSyncedAt(at);
   31:     localStorage.setItem(SYNC_AT_KEY, at);
   32:   };
-  33:
+  33: 
   34:   const handleSignIn = useCallback(async () => {
   35:     setSyncStatus('syncing');
   36:     setSyncError(null);
@@ -807,19 +809,87 @@ Purpose: Cloud sync/auth/data transfer logic.
   46:       setSyncError(err instanceof Error ? err.message : 'Sign-in failed');
   47:     }
   48:   }, []);
-  49:
+  49: 
   50:   const handleSignOut = useCallback(() => {
   51:     signOut();
   52:     setSyncStatus('idle');
   53:     setSyncError(null);
   54:   }, []);
-  55:
+  55: 
   56:   /** Push local data to Drive. Call after a session completes. */
   57:   const pushAfterSession = useCallback(async () => {
   58:     if (!currentState().signedIn) return;
   59:     const result = await pushLocal();
   60:     if (result.ok && result.syncedAt) recordSync(result.syncedAt);
 ... (38 more lines)
+```
+
+### `src/features/goals/GoalsPage.tsx`
+
+Purpose: React UI component file: ConfirmDialog, EmptyState, GoalCard, GoalWizard.
+
+```text
+   1: import { useEffect, useMemo, useRef, useState } from 'react';
+   2: import type { CSSProperties, KeyboardEvent, ReactNode } from 'react';
+   3: import type { StudentProfile, StudentItemState } from '../../types/math';
+   4: import type { MathAnswerEvent } from '../learning/learningEvents';
+   5: import type { StudentSkillSummary } from '../mastery/skillMasteryEngine';
+   6: import type { GoalRecommendation } from './goalRecommendationEngine';
+   7: import type { GoalSkillTarget, GoalTargetReason, LearningGoal } from './types';
+   8: import {
+   9:   goalEventRepo,
+  10:   itemStateRepo,
+  11:   learningGoalRepo,
+  12:   mathAnswerEventRepo,
+  13: } from '../../db/repositories';
+  14: import { generateId } from '../../utils/id';
+  15: import { makeItemFromId } from '../curriculum/makeItemFromId';
+  16: import { GRADE3_MASTERY_MAP, getGrade3Skill } from '../mastery/grade3MasteryMap';
+  17: import { deriveGrade3SkillSummaries } from '../mastery/skillMasteryEngine';
+  18: import { appNow } from '../time/clock';
+  19: import {
+  20:   applyGoalTargetEdits,
+  21:   buildGoalSkillTarget,
+  22:   calculateGoalProgress,
+  23:   captureGoalBaseline,
+  24:   localDateInTimeZone,
+  25:   suggestedTargetDefaults,
+  26:   type GoalEvidenceInput,
+  27:   type GoalProgress,
+  28:   type GoalTargetEditDraft,
+  29: } from './goalEngine';
+  30: import {
+  31:   estimateGoalWorkload,
+  32:   recommendLearningGoals,
+  33: } from './goalRecommendationEngine';
+  34: import {
+  35:   cancelGoal,
+  36:   endGoal,
+  37:   evaluateGoalLifecycleAndPersist,
+  38:   pauseGoal,
+  39:   resumeGoal,
+  40:   updateGoal,
+  41: } from './goalLifecycleService';
+  42: 
+  43: interface Props {
+  44:   profile: StudentProfile;
+  45:   lastSyncedAt?: string | null;
+  46:   onBack: () => void;
+  47:   onStartEvaluation: () => void;
+  48: }
+  49: 
+  50: type PageState =
+  51:   | { status: 'loading' }
+  52:   | { status: 'error'; message: string }
+  53:   | { status: 'ready'; data: GoalsData };
+  54: 
+  55: interface GoalsData {
+  56:   goals: LearningGoal[];
+  57:   events: MathAnswerEvent[];
+  58:   itemStates: StudentItemState[];
+  59:   skillSummaries: StudentSkillSummary[];
+  60:   now: string;
+... (841 more lines)
 ```
 
 ### `src/features/multiplication/MultiplicationQuizPage.tsx`
@@ -846,23 +916,23 @@ Purpose: Local persistence/database layer.
   17: import { generateId } from '../../utils/id';
   18: import { recordQuizFirstAttempt, recordQuizRetry, finalizeQuizSession } from '../learning/recordAnswer';
   19: import { appNow } from '../time/clock';
-  20:
+  20: 
   21: interface Props {
   22:   studentId: string;
   23:   settings: StudentSettings;
   24:   onDone: () => void;
   25:   onStartPractice?: (config: SessionConfig) => void;
   26: }
-  27:
+  27: 
   28: type Phase = 'setup' | 'loading' | 'active' | 'feedback' | 'retry' | 'saving' | 'summary';
-  29:
+  29: 
   30: const QUIZ_LENGTHS = [10, 20, 30, 50];
   31: const DEFAULT_LENGTH = 20;
   32: const FEEDBACK_PAUSE_MS = 600; // visual pause after the answer speech finishes
-  33:
-  34:
-  35: // â”€â”€ Sub-components â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  36:
+  33: 
+  34: 
+  35: // ── Sub-components ─────────────────────────────────────────────────────────────
+  36: 
   37: function FactChip({ label, bg, text }: { label: string; bg: string; text: string }) {
   38:   return (
   39:     <span style={{ background: bg, color: text, borderRadius: '8px', padding: '4px 10px', fontSize: '14px', fontWeight: '600', display: 'inline-block', margin: '3px' }}>
@@ -870,7 +940,7 @@ Purpose: Local persistence/database layer.
   41:     </span>
   42:   );
   43: }
-  44:
+  44: 
   45: function StatBox({ label, value, color = '#111827' }: { label: string; value: string; color?: string }) {
   46:   return (
   47:     <div style={{ background: '#f9fafb', borderRadius: '10px', padding: '12px', textAlign: 'center', flex: 1 }}>
@@ -879,9 +949,9 @@ Purpose: Local persistence/database layer.
   50:     </div>
   51:   );
   52: }
-  53:
-  54: // â”€â”€ Setup screen â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  55:
+  53: 
+  54: // ── Setup screen ───────────────────────────────────────────────────────────────
+  55: 
   56: function SetupScreen({
   57:   quizLength, onSelectLength, onStart, onBack,
   58: }: {
@@ -909,10 +979,10 @@ Purpose: Local persistence/database layer.
   12: import { MathPrompt } from '../visuals/MathPrompt';
   13: import { hasVisualModel } from '../visuals/visualModelUtils';
   14: import { getHint } from './hintEngine';
-  15:
+  15: 
   16: const AUTO_ADVANCE_MS = 700;     // visual-only pause when audio is off
   17: const POST_SPEECH_PAUSE_MS = 200; // short pause after answer speech finishes
-  18:
+  18: 
   19: interface Props {
   20:   studentId: string;
   21:   config: SessionConfig;
@@ -923,7 +993,7 @@ Purpose: Local persistence/database layer.
   26:   onPlayAgain?: () => void;
   27:   onBack?: () => void;
   28: }
-  29:
+  29: 
   30: export function PracticeScreen({
   31:   studentId, config, settings, onUpdateSettings, onDone, onOpenSettings, onPlayAgain, onBack,
   32: }: Props) {
@@ -936,15 +1006,15 @@ Purpose: Local persistence/database layer.
   39:   const [showExplanation, setShowExplanation] = useState(false);
   40:   const inputRef = useRef<HTMLInputElement>(null);
   41:   const autoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  42:   // Always-current shadow of `input` state â€” kept in sync via useLayoutEffect
+  42:   // Always-current shadow of `input` state — kept in sync via useLayoutEffect
   43:   // (runs synchronously after every commit) so the keyboard handler registered
   44:   // via useEffect (a macro-task) never reads a stale partial value when the
   45:   // user types the last digit and immediately presses Enter in the same frame.
   46:   const inputLatestRef = useRef<string>('');
   47:   useLayoutEffect(() => { inputLatestRef.current = input; });
-  48:
-  49:   // â”€â”€ Start â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  50:
+  48: 
+  49:   // ── Start ─────────────────────────────────────────────────────────────────
+  50: 
   51:   useEffect(() => {
   52:     startSession(config);
   53:     return () => {
@@ -953,8 +1023,8 @@ Purpose: Local persistence/database layer.
   56:     };
   57:   // eslint-disable-next-line react-hooks/exhaustive-deps
   58:   }, []);
-  59:
-  60:   // â”€â”€ Focus helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  59: 
+  60:   // ── Focus helpers ─────────────────────────────────────────────────────────
 ... (491 more lines)
 ```
 
@@ -975,7 +1045,7 @@ Purpose: Student/app settings UI or persistence.
   10: import { getAiConfig, setAiKey, setAiModel, clearAiKey, DEFAULT_MODEL } from '../ai/aiConfig';
   11: import { askTutor, explainAiError, aiErrorDetail } from '../ai/gemini';
   12: import { checkForUpdate, type BuildInfo } from './updateCheck';
-  13:
+  13: 
   14: interface Props {
   15:   profile: StudentProfile;
   16:   onUpdateProfile: (p: StudentProfile) => void;
@@ -989,10 +1059,10 @@ Purpose: Student/app settings UI or persistence.
   24:   onSignOut: () => void;
   25:   onManualSync: () => void;
   26: }
-  27:
+  27: 
   28: /** Known Gemini models with a free tier. Each has its own daily quota. */
   29: const AI_MODELS = ['gemini-2.0-flash', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'];
-  30:
+  30: 
   31: function Section({ title, children }: { title: string; children: React.ReactNode }) {
   32:   return (
   33:     <div style={s.section}>
@@ -1001,7 +1071,7 @@ Purpose: Student/app settings UI or persistence.
   36:     </div>
   37:   );
   38: }
-  39:
+  39: 
   40: function ToggleRow({ label, desc, checked, onChange }: {
   41:   label: string; desc?: string; checked: boolean; onChange: (v: boolean) => void;
   42: }) {
@@ -1020,76 +1090,8 @@ Purpose: Student/app settings UI or persistence.
   55:     </label>
   56:   );
   57: }
-  58:
+  58: 
   59: export function SettingsPage({ profile, onUpdateProfile, onBack, onSwitchStudent, auth, syncStatus, lastSyncedAt, syncError, onSignIn, onSignOut, onManualSync }: Props) {
   60:   const settings = profile.settings;
 ... (455 more lines)
-```
-
-### `src/features/stats/FactStatsTable.tsx`
-
-Purpose: Local persistence/database layer.
-
-```text
-   1: import { useEffect, useState, useMemo } from 'react';
-   2: import type { StudentItemState, SessionConfig } from '../../types/math';
-   3: import type { MathFactStatus } from '../learning/learningEvents';
-   4: import { itemStateRepo } from '../../db/repositories';
-   5: import { db } from '../../db/dexie';
-   6: import { TABLE_MIN, TABLE_MAX, tableFromItemId } from '../curriculum/multiplicationItems';
-   7: import { describeItem } from '../curriculum/describeItem';
-   8: import { FACT_STATUS_COLORS } from '../../utils/masteryColors';
-   9:
-  10: interface Props {
-  11:   studentId: string;
-  12:   onStartPractice?: (config: SessionConfig) => void;
-  13: }
-  14:
-  15: type SortKey = 'accuracy' | 'wrong' | 'attempts' | 'avgSpeed' | 'bestSpeed';
-  16: type TypeFilter = 'all' | 'mul' | 'div' | 'add' | 'sub' | 'frac' | 'word' | 'round' | 'factors' | 'dec' | 'area' | 'geometry' | 'measurement' | 'data' | 'pattern';
-  17:
-  18: const ALL_FACT_STATUSES: MathFactStatus[] = ['new', 'forgotten', 'weak', 'learning', 'developing', 'strong', 'mastered'];
-  19:
-  20: const OPERATION_TABS: { key: TypeFilter; label: string; icon: string }[] = [
-  21:   { key: 'all',         label: 'All',        icon: 'âˆ‘' },
-  22:   { key: 'mul',         label: 'Multiply',   icon: 'âœ–ï¸' },
-  23:   { key: 'div',         label: 'Divide',     icon: 'âž—' },
-  24:   { key: 'add',         label: 'Add',        icon: 'âž•' },
-  25:   { key: 'sub',         label: 'Subtract',   icon: 'âž–' },
-  26:   { key: 'frac',        label: 'Fractions',  icon: 'ðŸ•' },
-  27:   { key: 'word',        label: 'Word',       icon: 'ðŸ“–' },
-  28:   { key: 'round',       label: 'Rounding',   icon: 'ðŸ”µ' },
-  29:   { key: 'factors',     label: 'Primes',     icon: 'ðŸ”¢' },
-  30:   { key: 'dec',         label: 'Decimals',   icon: 'ðŸ”Ÿ' },
-  31:   { key: 'area',        label: 'Area',       icon: 'ðŸ“' },
-  32:   { key: 'geometry',    label: 'Geometry',   icon: 'ðŸ”·' },
-  33:   { key: 'measurement', label: 'Measure',    icon: 'â°' },
-  34:   { key: 'data',        label: 'Data',       icon: 'ðŸ“Š' },
-  35:   { key: 'pattern',     label: 'Patterns',   icon: 'ðŸ”' },
-  36: ];
-  37:
-  38: /** Bucket an itemId's describe-group into a TypeFilter (unknown-factor counts as multiply). */
-  39: function bucketOf(itemId: string): Exclude<TypeFilter, 'all'> | 'other' {
-  40:   const g = describeItem(itemId).group;
-  41:   if (g === 'mul' || g === 'unk') return 'mul';
-  42:   if (g === 'div') return 'div';
-  43:   if (g === 'add') return 'add';
-  44:   if (g === 'sub') return 'sub';
-  45:   if (g === 'frac') return 'frac';
-  46:   if (g === 'word') return 'word';
-  47:   if (g === 'round') return 'round';
-  48:   if (g === 'factors') return 'factors';
-  49:   if (g === 'dec') return 'dec';
-  50:   if (g === 'area') return 'area';
-  51:   if (g === 'geometry') return 'geometry';
-  52:   if (g === 'measurement') return 'measurement';
-  53:   if (g === 'data') return 'data';
-  54:   if (g === 'pattern') return 'pattern';
-  55:   return 'other';
-  56: }
-  57:
-  58: export function FactStatsTable({ studentId, onStartPractice }: Props) {
-  59:   const [states, setStates] = useState<StudentItemState[]>([]);
-  60:   // Quiz-system status map: itemId â†’ MathFactStatus (covers weak/forgotten from quiz events).
-... (341 more lines)
 ```

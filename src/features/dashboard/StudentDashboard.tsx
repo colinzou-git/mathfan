@@ -23,6 +23,7 @@ interface Props {
   onStartQuiz: () => void;
   onOpenAchievementDetail: (filter: AchievementFilter, data: TodayAchievementData) => void;
   onOpenMasteryMap?: () => void;
+  onOpenGoals?: () => void;
 }
 
 interface QuickStats {
@@ -76,7 +77,7 @@ const OPERATIONS: { op: PracticeOp; label: string; icon: string }[] = [
   { op: 'pattern',        label: 'Patterns',  icon: '🔁' },
 ];
 
-export function StudentDashboard({ profile, lastSyncedAt, onStartDailyReview, onPickOperation, onOpenStats, onOpenSettings, onStartQuiz, onOpenAchievementDetail, onOpenMasteryMap }: Props) {
+export function StudentDashboard({ profile, lastSyncedAt, onStartDailyReview, onPickOperation, onOpenStats, onOpenSettings, onStartQuiz, onOpenAchievementDetail, onOpenMasteryMap, onOpenGoals }: Props) {
   const [quick, setQuick] = useState<QuickStats | null>(null);
   const [dueByGroup, setDueByGroup] = useState<Record<string, DueGroup>>({});
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
@@ -213,6 +214,13 @@ export function StudentDashboard({ profile, lastSyncedAt, onStartDailyReview, on
         </button>
       )}
 
+      {onOpenGoals && (
+        <button style={s.goalsBtn} onClick={onOpenGoals}>
+          <div style={s.goalsTitle}>🎯 Goals</div>
+          <div style={s.goalsSub}>Set learning goals and see your recommended plan.</div>
+        </button>
+      )}
+
       {/* Operation picker */}
       <p style={s.sectionLabel}>Practice an operation</p>
       <div style={s.opGrid}>
@@ -302,6 +310,9 @@ const s: Record<string, CSSProperties> = {
   masteryMapBtn: { width: '100%', padding: '14px 16px', background: '#f5f3ff', color: '#5b21b6', border: '1.5px solid #c4b5fd', borderRadius: '12px', cursor: 'pointer', marginTop: '8px', textAlign: 'left', touchAction: 'manipulation' },
   masteryMapTitle: { fontSize: '16px', fontWeight: '700', marginBottom: '3px' },
   masteryMapSub: { fontSize: '13px', color: '#7c3aed', fontWeight: '400' },
+  goalsBtn: { width: '100%', padding: '14px 16px', background: '#ecfeff', color: '#155e75', border: '1.5px solid #67e8f9', borderRadius: '12px', cursor: 'pointer', marginTop: '8px', textAlign: 'left', touchAction: 'manipulation' },
+  goalsTitle: { fontSize: '16px', fontWeight: '700', marginBottom: '3px' },
+  goalsSub: { fontSize: '13px', color: '#0e7490', fontWeight: '400' },
   sectionLabel: { fontSize: '13px', fontWeight: '700', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '18px 0 10px' },
   opGrid: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' },
   opBtn: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', padding: '16px 0', background: '#fff', border: '2px solid #e5e7eb', borderRadius: '14px', cursor: 'pointer', touchAction: 'manipulation' },
