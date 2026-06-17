@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-17T16:54:25.714691+00:00",
+  "generated_at": "2026-06-17T17:07:20.892680+00:00",
   "repo_root": "C:\\Users\\colin\\Documents\\mathFan",
   "package": {
     "name": "mathfan",
@@ -2160,13 +2160,17 @@
     {
       "path": "src/features/dashboard/StudentDashboard.tsx",
       "ext": ".tsx",
-      "bytes": 16512,
-      "lines": 341,
-      "sha1": "caeec303a7cf",
+      "bytes": 25450,
+      "lines": 521,
+      "sha1": "b5a32845e1ea",
       "imports": [
         "../../db/repositories",
         "../../types/math",
         "../curriculum/describeItem",
+        "../curriculum/makeItemFromId",
+        "../goals/dailyNewGoalPlanner",
+        "../mastery/grade3MasteryMap",
+        "../mastery/skillMasteryEngine",
         "../stats/statsEngine",
         "../stats/todayAchievement",
         "../stats/TodayAchievementSection",
@@ -2179,7 +2183,10 @@
       ],
       "functions": [
         "Chip",
+        "completeSkillSummaries",
         "handleStartReview",
+        "openExtra",
+        "startDailyNewTile",
         "StudentDashboard"
       ],
       "classes": [],
@@ -2326,6 +2333,68 @@
       "css_classes": [],
       "json_keys": [],
       "purpose": "Exports reusable code: DiagnosticSession.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/goals/dailyNewGoalPlanner.ts",
+      "ext": ".ts",
+      "bytes": 12087,
+      "lines": 310,
+      "sha1": "619ced19adf8",
+      "imports": [
+        "../../types/math",
+        "../curriculum/makeItemFromId",
+        "../learning/learningEvents",
+        "../mastery/grade3MasteryMap",
+        "../mastery/skillMapping",
+        "../mastery/skillMasteryEngine",
+        "../mastery/skillPracticePlanner",
+        "./goalEngine",
+        "./types"
+      ],
+      "exports": [
+        "DailyNewGoalEmptyReason",
+        "DailyNewGoalLearningKind",
+        "DailyNewGoalPlan",
+        "DailyNewGoalTile",
+        "DailyNewGoalTileKind",
+        "planDailyNewForGoals",
+        "PlanDailyNewGoalsArgs"
+      ],
+      "functions": [
+        "buildGroups",
+        "chooseItemBatch",
+        "directAttemptedItemIds",
+        "directFirstAttempt",
+        "dueItemIds",
+        "localDayStartIso",
+        "makeConfig",
+        "makeTile",
+        "orderItems",
+        "planDailyNewForGoals",
+        "poolForSkill",
+        "schemaKey",
+        "todayGoalLearningEvents"
+      ],
+      "classes": [],
+      "interfaces": [
+        "Candidate",
+        "DailyNewGoalPlan",
+        "DailyNewGoalTile",
+        "PlanDailyNewGoalsArgs",
+        "SkillGroup"
+      ],
+      "types": [
+        "DailyNewGoalEmptyReason",
+        "DailyNewGoalLearningKind",
+        "DailyNewGoalTileKind"
+      ],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Exports reusable code: DailyNewGoalEmptyReason, DailyNewGoalLearningKind, DailyNewGoalPlan, DailyNewGoalTile, DailyNewGoalTileKind.",
       "too_large": false,
       "read_error": null
     },
@@ -2874,9 +2943,9 @@
     {
       "path": "src/features/learning/learningEvents.ts",
       "ext": ".ts",
-      "bytes": 2951,
-      "lines": 81,
-      "sha1": "1bba5221fabf",
+      "bytes": 3058,
+      "lines": 84,
+      "sha1": "9fa42a16deb9",
       "imports": [
         "../../db/dexie",
         "../../types/math",
@@ -3806,9 +3875,9 @@
     {
       "path": "src/features/practice/usePracticeSession.ts",
       "ext": ".ts",
-      "bytes": 23485,
-      "lines": 552,
-      "sha1": "9dbb1e7fb8b5",
+      "bytes": 24121,
+      "lines": 564,
+      "sha1": "b26974c21fc1",
       "imports": [
         "../../components/opSpecs",
         "../../db/dexie",
@@ -5363,6 +5432,43 @@
       "read_error": null
     },
     {
+      "path": "src/tests/dailyNewGoalPlanner.test.ts",
+      "ext": ".ts",
+      "bytes": 10236,
+      "lines": 292,
+      "sha1": "eb863949afe9",
+      "imports": [
+        "../features/goals/dailyNewGoalPlanner",
+        "../features/goals/types",
+        "../features/learning/learningEvents",
+        "../features/mastery/skillMasteryEngine",
+        "../features/mastery/skillPracticePlanner",
+        "../types/math",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [
+        "baseline",
+        "event",
+        "goal",
+        "plan",
+        "pool",
+        "state",
+        "summary",
+        "target"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/tests/describeItem.test.ts",
       "ext": ".ts",
       "bytes": 4493,
@@ -5724,9 +5830,9 @@
     {
       "path": "src/tests/goalsPage.test.tsx",
       "ext": ".tsx",
-      "bytes": 10912,
-      "lines": 325,
-      "sha1": "df6c442073a2",
+      "bytes": 12403,
+      "lines": 365,
+      "sha1": "9fb2c0b7e681",
       "imports": [
         "../db/repositories",
         "../features/dashboard/StudentDashboard",
@@ -6230,9 +6336,9 @@
     {
       "path": "src/tests/practiceSession.test.ts",
       "ext": ".ts",
-      "bytes": 14259,
-      "lines": 356,
-      "sha1": "75c1ccdcda78",
+      "bytes": 15828,
+      "lines": 402,
+      "sha1": "9ff53e1a4f7f",
       "imports": [
         "../db/repositories",
         "../features/curriculum/makeItemFromId",
@@ -6752,9 +6858,9 @@
     {
       "path": "src/types/math.ts",
       "ext": ".ts",
-      "bytes": 9147,
-      "lines": 304,
-      "sha1": "7607328ae9ff",
+      "bytes": 9490,
+      "lines": 314,
+      "sha1": "0edde7788ce7",
       "imports": [],
       "exports": [
         "AnswerInput",
@@ -6763,6 +6869,7 @@
         "FactGrowth",
         "FactWindowStats",
         "FractionMode",
+        "GoalLearningKind",
         "GradeLevel",
         "GrowthDirection",
         "GrowthSummary",
@@ -6806,6 +6913,7 @@
       "types": [
         "AnswerInput",
         "FractionMode",
+        "GoalLearningKind",
         "GradeLevel",
         "GrowthDirection",
         "ItemType",

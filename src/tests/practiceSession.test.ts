@@ -189,6 +189,52 @@ describe('usePracticeSession — wrong first attempt + correct retry', () => {
     expect(vi.mocked(recordPracticeAnswer).mock.calls.length).toBeGreaterThanOrEqual(2);
     expect(result.current.state.phase).toBe('correct');
   });
+
+  it('persists Daily New for Goals attribution on the session, event, and attempt', async () => {
+    const config: SessionConfig = {
+      ...SESSION_CONFIG,
+      origin: 'daily_new_for_goals',
+      goalId: 'goal-1',
+      goalTargetId: 'target-1',
+      goalIds: ['goal-1', 'goal-2'],
+      goalTargetIds: ['target-1', 'target-2'],
+      goalLearningKind: 'planned',
+    };
+    const { result } = renderHook(() => usePracticeSession(STUDENT_ID));
+
+    await act(async () => {
+      await result.current.startSession(config);
+    });
+    await act(async () => {
+      await result.current.submitAnswer('56');
+    });
+
+    expect(vi.mocked(sessionRepo.save)).toHaveBeenCalledWith(expect.objectContaining({
+      origin: 'daily_new_for_goals',
+      goalId: 'goal-1',
+      goalTargetId: 'target-1',
+      goalIds: ['goal-1', 'goal-2'],
+      goalTargetIds: ['target-1', 'target-2'],
+      goalLearningKind: 'planned',
+    }));
+    const [payload] = vi.mocked(recordPracticeAnswer).mock.calls[0];
+    expect(payload.event).toEqual(expect.objectContaining({
+      origin: 'daily_new_for_goals',
+      goalId: 'goal-1',
+      goalTargetId: 'target-1',
+      goalIds: ['goal-1', 'goal-2'],
+      goalTargetIds: ['target-1', 'target-2'],
+      goalLearningKind: 'planned',
+    }));
+    expect(payload.attempt).toEqual(expect.objectContaining({
+      origin: 'daily_new_for_goals',
+      goalId: 'goal-1',
+      goalTargetId: 'target-1',
+      goalIds: ['goal-1', 'goal-2'],
+      goalTargetIds: ['target-1', 'target-2'],
+      goalLearningKind: 'planned',
+    }));
+  });
 });
 
 // ── Phase 6: mistake pattern detection ───────────────────────────────────────

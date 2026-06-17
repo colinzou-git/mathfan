@@ -265,6 +265,9 @@ export function usePracticeSession(studentId: string) {
       origin: config.origin,
       goalId: config.goalId,
       goalTargetId: config.goalTargetId,
+      goalIds: config.goalIds,
+      goalTargetIds: config.goalTargetIds,
+      goalLearningKind: config.goalLearningKind,
     });
 
     queueRef.current = queue;
@@ -371,6 +374,9 @@ export function usePracticeSession(studentId: string) {
               origin: configRef.current?.origin,
               goalId: configRef.current?.goalId,
               goalTargetId: configRef.current?.goalTargetId,
+              goalIds: configRef.current?.goalIds,
+              goalTargetIds: configRef.current?.goalTargetIds,
+              goalLearningKind: configRef.current?.goalLearningKind,
               createdAt,
             },
           };
@@ -398,6 +404,9 @@ export function usePracticeSession(studentId: string) {
         origin: configRef.current?.origin,
         goalId: configRef.current?.goalId,
         goalTargetId: configRef.current?.goalTargetId,
+        goalIds: configRef.current?.goalIds,
+        goalTargetIds: configRef.current?.goalTargetIds,
+        goalLearningKind: configRef.current?.goalLearningKind,
         createdAt,
       },
       // Retries do not change FSRS state — pass undefined to skip the itemStates write.
@@ -418,6 +427,9 @@ export function usePracticeSession(studentId: string) {
         origin: configRef.current?.origin,
         goalId: configRef.current?.goalId,
         goalTargetId: configRef.current?.goalTargetId,
+        goalIds: configRef.current?.goalIds,
+        goalTargetIds: configRef.current?.goalTargetIds,
+        goalLearningKind: configRef.current?.goalLearningKind,
         createdAt,
       },
     };

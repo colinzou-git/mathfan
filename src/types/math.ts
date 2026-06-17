@@ -2,7 +2,8 @@ export type GradeLevel = 3 | 4 | 5;
 export type ReviewGrade = 'again' | 'hard' | 'good' | 'easy';
 export type MasteryLevel = 'new' | 'learning' | 'developing' | 'strong' | 'mastered';
 export type SessionLength = number; // any positive integer
-export type PracticeOrigin = 'daily_recommended_learning' | 'goal_page';
+export type PracticeOrigin = 'daily_recommended_learning' | 'daily_new_for_goals' | 'goal_page';
+export type GoalLearningKind = 'planned' | 'extra';
 
 export type ItemType =
   | 'multiplication_fact'
@@ -175,6 +176,9 @@ export interface AttemptLog {
   origin?: PracticeOrigin;
   goalId?: string;
   goalTargetId?: string;
+  goalIds?: string[];
+  goalTargetIds?: string[];
+  goalLearningKind?: GoalLearningKind;
   createdAt: string;
 }
 
@@ -201,6 +205,9 @@ export interface PracticeSession {
   origin?: PracticeOrigin;
   goalId?: string;
   goalTargetId?: string;
+  goalIds?: string[];
+  goalTargetIds?: string[];
+  goalLearningKind?: GoalLearningKind;
 }
 
 // ── Stats types ───────────────────────────────────────────────────────────────
@@ -272,6 +279,9 @@ export interface SessionConfig {
   origin?: PracticeOrigin;
   goalId?: string;
   goalTargetId?: string;
+  goalIds?: string[];
+  goalTargetIds?: string[];
+  goalLearningKind?: GoalLearningKind;
 }
 
 // ── Growth comparison (period over period) ─────────────────────────────────────

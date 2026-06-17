@@ -1,6 +1,6 @@
 # Code Map Overview
 
-Generated: 2026-06-17 16:54:25 UTC
+Generated: 2026-06-17 17:07:20 UTC
 
 Repo root: `C:\Users\colin\Documents\mathFan`  
 Output folder: `C:\Users\colin\Documents\mathFan\docs\code-map`
@@ -14,9 +14,9 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 - Package name: `mathfan`
 - Version: `1.2.0`
 - Module type: `module`
-- Scanned files: **204**
-- Scanned lines: **39,672**
-- Scanned bytes: **1,563,341**
+- Scanned files: **206**
+- Scanned lines: **40,565**
+- Scanned bytes: **1,598,748**
 
 ## NPM scripts
 
@@ -78,10 +78,10 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 | src/features/goals/GoalsPage.tsx | 923 | React UI component file: ConfirmDialog, EmptyState, GoalCard, GoalWizard. | ConfirmDialog, EmptyState, GoalCard, GoalWizard, ProgressBar, SummaryCard, GoalsPage, activeLearningDays |
 | src/features/multiplication/MultiplicationQuizPage.tsx | 845 | Local persistence/database layer. | FactChip, SetupScreen, StatBox, SummaryScreen, MultiplicationQuizPage, FactChip, MultiplicationQuizPage, recommendedPracticeConfig |
 | src/features/practice/PracticeScreen.tsx | 552 | Local persistence/database layer. | KbChip, PracticeScreen, KbChip, onKey, PracticeScreen, run, submitChoice |
+| src/features/dashboard/StudentDashboard.tsx | 521 | Dashboard/profile setup/student navigation feature. | Chip, PracticeOp, StudentDashboard, Chip, completeSkillSummaries, handleStartReview, openExtra, startDailyNewTile |
 | src/features/settings/SettingsPage.tsx | 516 | Student/app settings UI or persistence. | Section, SyncRow, ToggleRow, SettingsPage, applyUpdate, buildId, buildLabel, checkForUpdates |
 | src/features/stats/FactStatsTable.tsx | 402 | Local persistence/database layer. | SortBtn, SummaryStat, FactStatsTable, bucketOf, FactStatsTable, SortBtn, startPractice, SummaryStat |
 | src/features/mastery/Grade3MasteryMapPage.tsx | 365 | Grade 3 mastery map UI: skill display, detail panels, and parent action cards. | LegendItem, Grade3MasteryMapPage, buildCompleteSummaries, computeUnmetPrereqNames, Grade3MasteryMapPage, LegendItem |
-| src/features/dashboard/StudentDashboard.tsx | 341 | Dashboard/profile setup/student navigation feature. | Chip, PracticeOp, StudentDashboard, Chip, handleStartReview, StudentDashboard |
 | src/features/stats/StatsPage.tsx | 246 | Progress/statistics screens or calculations. | SummaryPill, StatsPage, buildRange, daysBetween, StatsPage, SummaryPill, toYMD |
 | src/features/stats/DrillHistory.tsx | 238 | Progress/statistics screens or calculations. | AttemptDetail, MetricChip, Pill, DrillHistory, AttemptDetail, dateLabel, DrillHistory, durationLabel |
 | src/features/visuals/DraggableEqualGroups.tsx | 230 | Reusable SVG visual model components (area grids, shape diagrams, fraction bars, arrays). | DraggableObject, DropZone, DraggableEqualGroups, checkEqualGroups, DraggableEqualGroups, DraggableObject, DropZone, handleDragEnd |
@@ -93,8 +93,8 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 | src/features/mastery/skillPracticePlanner.ts | 702 | Grade 3 skill practice planner: maps skill IDs to SessionConfig for the mastery map. | PlanOptions, planPracticeForSkill, add2DigitRegroupingItemIds, add3DigitRegroupingItemIds, arithmeticPatternItemIds, divisionWordItemIds, divItemIds, elapsedTimeItemIds |
 | src/features/goals/GoalEvaluationSession.tsx | 624 | Exports reusable code: GoalEvaluationSession. | GoalEvaluationSession, buildNewLearningCandidates, buildReviewFindings, buildUpdatedState, confirmCancel, continueNext, evaluationArgs, GoalEvaluationSession |
 | src/features/goals/goalEvaluationEngine.ts | 575 | Exports reusable code: ADAPTIVE_GOAL_EVALUATION_CONFIRMATION_COUNT, ADAPTIVE_GOAL_EVALUATION_HISTORICAL_PRIOR_CAP, ADAPTIVE_GOAL_EVALUATION_QUESTION_COUNT, AdaptiveGoalEvaluationArgs, AdaptiveGoalEvaluationItem. | ADAPTIVE_GOAL_EVALUATION_CONFIRMATION_COUNT, ADAPTIVE_GOAL_EVALUATION_HISTORICAL_PRIOR_CAP, ADAPTIVE_GOAL_EVALUATION_QUESTION_COUNT, AdaptiveGoalEvaluationArgs, AdaptiveGoalEvaluationItem, AdaptiveGoalEvaluationPhase, AdaptiveGoalEvaluationResponse, AdaptiveGoalEvaluationResult |
+| src/features/practice/usePracticeSession.ts | 564 | Local persistence/database layer. | usePracticeSession, CorrectResult, LastSessionSummary, SessionState, usePracticeSession, getStaticItem, usePracticeSession |
 | src/features/diagnosis/DiagnosticSession.tsx | 558 | Exports reusable code: DiagnosticSession. | DiagnosticSession, complete, DiagnosticSession, onKey |
-| src/features/practice/usePracticeSession.ts | 552 | Local persistence/database layer. | usePracticeSession, CorrectResult, LastSessionSummary, SessionState, usePracticeSession, getStaticItem, usePracticeSession |
 | src/features/goals/goalEngine.ts | 524 | Exports reusable code: applyGoalTargetEdits, buildGoalSkillTarget, calculateGoalProgress, calculateTargetProgress, captureGoalBaseline. | applyGoalTargetEdits, buildGoalSkillTarget, calculateGoalProgress, calculateTargetProgress, captureGoalBaseline, defaultSkillIdForItem, evaluateGoalLifecycle, GoalEvidenceInput |
 | src/features/goals/goalRecommendationEngine.ts | 494 | Exports reusable code: CandidateFeatures, estimateGoalWorkload, GoalRecommendation, GoalRecommendationArgs, GoalRecommendationCandidate. | CandidateFeatures, estimateGoalWorkload, GoalRecommendation, GoalRecommendationArgs, GoalRecommendationCandidate, GoalRecommendationResult, GoalRecommendationTarget, RecommendationReasonLabel |
 
@@ -174,6 +174,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   │   ├── diagnosticPlanner.ts
 │   │   │   └── DiagnosticSession.tsx
 │   │   ├── goals
+│   │   │   ├── dailyNewGoalPlanner.ts
 │   │   │   ├── goalEngine.ts
 │   │   │   ├── goalEvaluationEngine.ts
 │   │   │   ├── goalEvaluationPersistence.ts
@@ -262,6 +263,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   ├── arithmeticItems.test.ts
 │   │   ├── clock.test.ts
 │   │   ├── components.test.tsx
+│   │   ├── dailyNewGoalPlanner.test.ts
 │   │   ├── describeItem.test.ts
 │   │   ├── diagnosticPlanner.test.ts
 │   │   ├── diagnosticSession.test.tsx
@@ -1034,70 +1036,70 @@ Purpose: Local persistence/database layer.
 ... (491 more lines)
 ```
 
-### `src/features/settings/SettingsPage.tsx`
+### `src/features/dashboard/StudentDashboard.tsx`
 
-Purpose: Student/app settings UI or persistence.
+Purpose: Dashboard/profile setup/student navigation feature.
 
 ```text
-   1: import { useState, useEffect } from 'react';
-   2: import type { StudentProfile, StudentSettings, GradeLevel, SessionLength, ThemeName } from '../../types/math';
-   3: import { THEMES, applyTheme } from '../theme/themes';
-   4: import { getDriveFileInfo } from '../sync/driveSync';
-   5: import type { SyncStatus } from '../sync/driveSync';
-   6: import type { AuthState } from '../auth/googleAuth';
-   7: import { attemptRepo } from '../../db/repositories';
-   8: import { studentRepo } from '../../db/repositories';
-   9: import { isDebugSpeed, enableDebugSpeed, disableDebugSpeed } from '../time/clock';
-  10: import { getAiConfig, setAiKey, setAiModel, clearAiKey, DEFAULT_MODEL } from '../ai/aiConfig';
-  11: import { askTutor, explainAiError, aiErrorDetail } from '../ai/gemini';
-  12: import { checkForUpdate, type BuildInfo } from './updateCheck';
-  13: 
-  14: interface Props {
-  15:   profile: StudentProfile;
-  16:   onUpdateProfile: (p: StudentProfile) => void;
-  17:   onBack: () => void;
-  18:   onSwitchStudent: () => void;
-  19:   auth: AuthState;
-  20:   syncStatus: SyncStatus;
-  21:   lastSyncedAt: string | null;
-  22:   syncError: string | null;
-  23:   onSignIn: () => void;
-  24:   onSignOut: () => void;
-  25:   onManualSync: () => void;
-  26: }
-  27: 
-  28: /** Known Gemini models with a free tier. Each has its own daily quota. */
-  29: const AI_MODELS = ['gemini-2.0-flash', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'];
-  30: 
-  31: function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  32:   return (
-  33:     <div style={s.section}>
-  34:       <h3 style={s.sectionTitle}>{title}</h3>
-  35:       <div style={s.sectionBody}>{children}</div>
-  36:     </div>
-  37:   );
-  38: }
-  39: 
-  40: function ToggleRow({ label, desc, checked, onChange }: {
-  41:   label: string; desc?: string; checked: boolean; onChange: (v: boolean) => void;
-  42: }) {
-  43:   return (
-  44:     <label style={s.row}>
-  45:       <div>
-  46:         <p style={s.rowLabel}>{label}</p>
-  47:         {desc && <p style={s.rowDesc}>{desc}</p>}
-  48:       </div>
-  49:       <button
-  50:         role="switch" aria-checked={checked} onClick={() => onChange(!checked)}
-  51:         style={{ ...s.toggle, background: checked ? 'var(--primary)' : '#d1d5db' }}
-  52:       >
-  53:         <span style={{ ...s.knob, transform: checked ? 'translateX(22px)' : 'translateX(2px)' }} />
-  54:       </button>
-  55:     </label>
-  56:   );
-  57: }
-  58: 
-  59: export function SettingsPage({ profile, onUpdateProfile, onBack, onSwitchStudent, auth, syncStatus, lastSyncedAt, syncError, onSignIn, onSignOut, onManualSync }: Props) {
-  60:   const settings = profile.settings;
-... (455 more lines)
+   1: import { useEffect, useRef, useState } from 'react';
+   2: import type { CSSProperties } from 'react';
+   3: import type { StudentProfile, SessionConfig } from '../../types/math';
+   4: import { itemStateRepo, learningGoalRepo, mathAnswerEventRepo, sessionRepo } from '../../db/repositories';
+   5: import { computeTodayStats, computeStreak, eventsToAttemptLogs } from '../stats/statsEngine';
+   6: import { appNow } from '../time/clock';
+   7: import { describeItem } from '../curriculum/describeItem';
+   8: import { TodayAchievementSection } from '../stats/TodayAchievementSection';
+   9: import type { AchievementFilter, TodayAchievementData } from '../stats/todayAchievement';
+  10: import { deriveGrade3SkillSummaries, type StudentSkillSummary } from '../mastery/skillMasteryEngine';
+  11: import { GRADE3_MASTERY_MAP } from '../mastery/grade3MasteryMap';
+  12: import { makeItemFromId } from '../curriculum/makeItemFromId';
+  13: import { planDailyNewForGoals, type DailyNewGoalPlan, type DailyNewGoalTile } from '../goals/dailyNewGoalPlanner';
+  14: 
+  15: export type PracticeOp =
+  16:   | 'multiplication' | 'division' | 'addition' | 'subtraction' | 'fraction'
+  17:   | 'word' | 'rounding' | 'factors' | 'decimals'
+  18:   | 'area' | 'geometry' | 'measurement' | 'data' | 'pattern';
+  19: 
+  20: interface Props {
+  21:   profile: StudentProfile;
+  22:   lastSyncedAt?: string | null;
+  23:   onStartDailyReview: (config: SessionConfig) => void;
+  24:   onPickOperation: (op: PracticeOp) => void;
+  25:   onOpenStats: () => void;
+  26:   onOpenSettings: () => void;
+  27:   onStartQuiz: () => void;
+  28:   onOpenAchievementDetail: (filter: AchievementFilter, data: TodayAchievementData) => void;
+  29:   onOpenMasteryMap?: () => void;
+  30:   onOpenGoals?: () => void;
+  31: }
+  32: 
+  33: interface QuickStats {
+  34:   todayQuestions: number;
+  35:   todayAccuracy: number;
+  36:   todayMinutes: number;
+  37:   streak: number;
+  38:   dueCount: number;
+  39: }
+  40: 
+  41: interface DueGroup {
+  42:   label: string;
+  43:   icon: string;
+  44:   ids: string[];
+  45: }
+  46: 
+  47: const GROUP_DISPLAY: Record<string, { label: string; icon: string }> = {
+  48:   mul:         { label: 'Multiply',    icon: '✖️' },
+  49:   div:         { label: 'Divide',      icon: '➗' },
+  50:   add:         { label: 'Add',         icon: '➕' },
+  51:   sub:         { label: 'Subtract',    icon: '➖' },
+  52:   frac:        { label: 'Fractions',   icon: '🍕' },
+  53:   word:        { label: 'Word',        icon: '📖' },
+  54:   round:       { label: 'Rounding',    icon: '🔵' },
+  55:   factors:     { label: 'Primes',      icon: '🔢' },
+  56:   dec:         { label: 'Decimals',    icon: '🔟' },
+  57:   area:        { label: 'Area',        icon: '📐' },
+  58:   geometry:    { label: 'Geometry',    icon: '🔷' },
+  59:   measurement: { label: 'Measure',     icon: '⏰' },
+  60:   data:        { label: 'Data',        icon: '📊' },
+... (460 more lines)
 ```

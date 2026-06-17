@@ -1,12 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import type { StudentProfile, SessionConfig } from '../../types/math';
-import { itemStateRepo, mathAnswerEventRepo, sessionRepo } from '../../db/repositories';
+import { itemStateRepo, learningGoalRepo, mathAnswerEventRepo, sessionRepo } from '../../db/repositories';
 import { computeTodayStats, computeStreak, eventsToAttemptLogs } from '../stats/statsEngine';
 import { appNow } from '../time/clock';
 import { describeItem } from '../curriculum/describeItem';
 import { TodayAchievementSection } from '../stats/TodayAchievementSection';
 import type { AchievementFilter, TodayAchievementData } from '../stats/todayAchievement';
+import { deriveGrade3SkillSummaries, type StudentSkillSummary } from '../mastery/skillMasteryEngine';
+import { GRADE3_MASTERY_MAP } from '../mastery/grade3MasteryMap';
+import { makeItemFromId } from '../curriculum/makeItemFromId';
+import { planDailyNewForGoals, type DailyNewGoalPlan, type DailyNewGoalTile } from '../goals/dailyNewGoalPlanner';
 
 export type PracticeOp =
   | 'multiplication' | 'division' | 'addition' | 'subtraction' | 'fraction'
@@ -80,8 +84,12 @@ const OPERATIONS: { op: PracticeOp; label: string; icon: string }[] = [
 export function StudentDashboard({ profile, lastSyncedAt, onStartDailyReview, onPickOperation, onOpenStats, onOpenSettings, onStartQuiz, onOpenAchievementDetail, onOpenMasteryMap, onOpenGoals }: Props) {
   const [quick, setQuick] = useState<QuickStats | null>(null);
   const [dueByGroup, setDueByGroup] = useState<Record<string, DueGroup>>({});
+  const [dailyNewPlan, setDailyNewPlan] = useState<DailyNewGoalPlan | null>(null);
+  const [dailyNewError, setDailyNewError] = useState<string | null>(null);
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
   const [practiceRounds, setPracticeRounds] = useState(1);
+  const [extraOpen, setExtraOpen] = useState(false);
+  const [selectedExtraId, setSelectedExtraId] = useState<string | null>(null);
   const roundsInputRef = useRef<HTMLInputElement>(null);
 
   // Focus and select the rounds input when the modal opens so keyboard users
@@ -97,10 +105,11 @@ export function StudentDashboard({ profile, lastSyncedAt, onStartDailyReview, on
     (async () => {
       const now = appNow();
       const nowStr = now.toISOString();
-      const [events, states, sessions] = await Promise.all([
+      const [events, states, sessions, goals] = await Promise.all([
         mathAnswerEventRepo.getAll(profile.id),
         itemStateRepo.getForStudent(profile.id),
         sessionRepo.getAll(profile.id),
+        learningGoalRepo.list(profile.id),
       ]);
       const attempts = eventsToAttemptLogs(events);
       const todayStats = computeTodayStats(attempts, sessions, now);
@@ -127,8 +136,32 @@ export function StudentDashboard({ profile, lastSyncedAt, onStartDailyReview, on
         streak,
         dueCount: dueStates.length,
       });
+
+      try {
+        const derived = deriveGrade3SkillSummaries({
+          studentId: profile.id,
+          items: makeItemFromId,
+          mathAnswerEvents: events,
+          itemStates: states,
+          now: now.toISOString(),
+        });
+        setDailyNewPlan(planDailyNewForGoals({
+          studentId: profile.id,
+          goals,
+          events,
+          itemStates: states,
+          skillSummaries: completeSkillSummaries(profile.id, derived),
+          now: now.toISOString(),
+          timezone: profile.timezone,
+        }));
+        setDailyNewError(null);
+      } catch (err) {
+        console.warn('[StudentDashboard] Daily New for Goals failed', err);
+        setDailyNewPlan(null);
+        setDailyNewError(err instanceof Error ? err.message : 'Daily New for Goals could not load.');
+      }
     })();
-  }, [profile.id, lastSyncedAt]);
+  }, [profile.id, profile.timezone, lastSyncedAt]);
 
   const sortedGroups = GROUP_ORDER.filter(k => dueByGroup[k]);
 
@@ -144,6 +177,18 @@ export function StudentDashboard({ profile, lastSyncedAt, onStartDailyReview, on
     });
     setSelectedGroup(null);
   };
+
+  const startDailyNewTile = (tile: DailyNewGoalTile) => {
+    onStartDailyReview(tile.config);
+  };
+
+  const openExtra = () => {
+    const first = dailyNewPlan?.extraChoices[0] ?? null;
+    setSelectedExtraId(first?.id ?? null);
+    setExtraOpen(true);
+  };
+
+  const selectedExtra = dailyNewPlan?.extraChoices.find(tile => tile.id === selectedExtraId) ?? dailyNewPlan?.extraChoices[0] ?? null;
 
   return (
     <div style={s.container}>
@@ -205,6 +250,72 @@ export function StudentDashboard({ profile, lastSyncedAt, onStartDailyReview, on
           Daily Review due (0)
         </button>
       )}
+
+      {/* Daily New for Goals */}
+      <p style={s.sectionLabel}>Daily New for Goals</p>
+      <section style={s.dailyNewSection} aria-label="Daily New for Goals">
+        <p style={s.dailyNewCopy}>Learn new goal skills here. Previously learned items appear in Daily Review when they are due.</p>
+        {dailyNewError && (
+          <div role="alert" style={s.dailyNewNotice}>
+            Daily New for Goals could not load.
+          </div>
+        )}
+        {!dailyNewError && !dailyNewPlan && (
+          <div style={s.dailyNewNotice}>Loading Daily New for Goals...</div>
+        )}
+        {dailyNewPlan?.emptyReason === 'no_active_goals' && (
+          <div style={s.dailyNewNotice}>
+            <p style={s.noticeText}>Set a goal to get a daily new-learning plan.</p>
+            {onOpenGoals && <button style={s.dailyNewStart} onClick={onOpenGoals}>Set a Goal</button>}
+          </div>
+        )}
+        {dailyNewPlan?.emptyReason === 'no_unseen_items' && (
+          <div style={s.dailyNewNotice}>
+            <p style={s.noticeText}>Your new goal material is finished for now. Use Daily Review for scheduled practice.</p>
+          </div>
+        )}
+        {dailyNewPlan && dailyNewPlan.tiles.length > 0 && (
+          <div style={s.dailyNewGrid}>
+            {dailyNewPlan.tiles.map(tile => (
+              <article key={tile.id} style={s.dailyNewTile}>
+                <div style={s.tileTop}>
+                  <div>
+                    <h3 style={s.tileTitle}>{tile.skillTitle}</h3>
+                    <p style={s.tileSub}>{tile.goalTitles.length > 1 ? `${tile.goalTitles.length} goals` : tile.goalTitles[0]}</p>
+                  </div>
+                  <span style={tile.isComplete ? s.completeBadge : s.newBadge}>
+                    {tile.isComplete ? 'Completed' : tile.kind === 'new_skill' ? 'New' : 'Continue'}
+                  </span>
+                </div>
+                <p style={s.tileReason}>{tile.reason}</p>
+                <div style={s.tileMeta}>
+                  <span>{tile.questionCount} Q</span>
+                  <span>{tile.estimatedMinutes} min</span>
+                  <span>{Math.round(tile.progress * 100)}%</span>
+                  <span>{Math.max(0, tile.daysRemaining)}d left</span>
+                </div>
+                <button style={s.dailyNewStart} disabled={tile.isComplete} onClick={() => startDailyNewTile(tile)}>
+                  {tile.isComplete ? 'Done today' : 'Start'}
+                </button>
+              </article>
+            ))}
+          </div>
+        )}
+        {dailyNewPlan && dailyNewPlan.emptyReason !== 'no_active_goals' && (
+          <>
+            <button
+              style={s.extraBtn}
+              disabled={dailyNewPlan.extraChoices.length === 0}
+              onClick={openExtra}
+            >
+              Learn Extra
+            </button>
+            {dailyNewPlan.extraChoices.length === 0 && (
+              <p style={s.noticeText}>No more new goal items right now. Check Daily Review for scheduled practice.</p>
+            )}
+          </>
+        )}
+      </section>
 
       {/* Grade 3 Math Map */}
       {onOpenMasteryMap && (
@@ -285,8 +396,60 @@ export function StudentDashboard({ profile, lastSyncedAt, onStartDailyReview, on
           </div>
         </div>
       )}
+
+      {extraOpen && dailyNewPlan && (
+        <div style={s.overlay} onClick={() => setExtraOpen(false)}>
+          <div style={s.modal} onClick={e => e.stopPropagation()}>
+            <p style={s.modalTitle}>Learn Extra</p>
+            {dailyNewPlan.extraChoices.length === 0 ? (
+              <p style={s.modalSub}>No more new goal items right now. Check Daily Review for scheduled practice.</p>
+            ) : (
+              <>
+                <div style={s.extraList}>
+                  {dailyNewPlan.extraChoices.map(tile => (
+                    <button
+                      key={tile.id}
+                      style={{ ...s.extraChoice, borderColor: selectedExtraId === tile.id ? 'var(--primary)' : '#e5e7eb' }}
+                      onClick={() => setSelectedExtraId(tile.id)}
+                    >
+                      <strong>{tile.skillTitle}</strong>
+                      <span>{tile.questionCount} unseen questions · {tile.goalTitles.length > 1 ? `${tile.goalTitles.length} goals` : tile.goalTitles[0]}</span>
+                    </button>
+                  ))}
+                </div>
+                <button
+                  style={s.modalStart}
+                  disabled={!selectedExtra}
+                  onClick={() => {
+                    if (selectedExtra) startDailyNewTile(selectedExtra);
+                    setExtraOpen(false);
+                  }}
+                >
+                  Start Extra
+                </button>
+              </>
+            )}
+            <button style={s.modalCancel} onClick={() => setExtraOpen(false)}>Cancel</button>
+          </div>
+        </div>
+      )}
     </div>
   );
+}
+
+function completeSkillSummaries(studentId: string, summaries: StudentSkillSummary[]): StudentSkillSummary[] {
+  const byId = new Map(summaries.map(summary => [summary.skillId, summary]));
+  return GRADE3_MASTERY_MAP.map(skill => byId.get(skill.id) ?? {
+    studentId,
+    skillId: skill.id,
+    status: 'new',
+    attemptCount: 0,
+    correctCount: 0,
+    accuracy: 0,
+    dueItemCount: 0,
+    itemCount: 0,
+    mistakePatterns: [],
+  });
 }
 
 function Chip({ label, value, color = '#1f2937' }: { label: string; value: string; color?: string }) {
@@ -325,6 +488,23 @@ const s: Record<string, CSSProperties> = {
   dueLabel: { fontSize: '11px', fontWeight: '600', color: '#374151' },
   dueBadge: { fontSize: '17px', fontWeight: 'bold', color: '#d97706', background: '#fef3c7', borderRadius: '20px', padding: '1px 8px' },
   dueBtnEmpty: { width: '100%', padding: '14px', background: '#f9fafb', color: '#9ca3af', border: '1.5px solid #e5e7eb', borderRadius: '12px', fontSize: '15px', fontWeight: '600', cursor: 'default', marginBottom: '4px' },
+  dailyNewSection: { display: 'grid', gap: '10px', marginBottom: '4px' },
+  dailyNewCopy: { fontSize: '13px', color: '#4b5563', margin: 0, lineHeight: 1.45 },
+  dailyNewNotice: { background: '#f9fafb', border: '1.5px solid #e5e7eb', borderRadius: '10px', padding: '12px', display: 'grid', gap: '8px' },
+  noticeText: { margin: 0, fontSize: '13px', color: '#6b7280', lineHeight: 1.4 },
+  dailyNewGrid: { display: 'grid', gap: '8px' },
+  dailyNewTile: { background: '#fff', border: '1.5px solid #bae6fd', borderRadius: '8px', padding: '12px', display: 'grid', gap: '8px' },
+  tileTop: { display: 'flex', justifyContent: 'space-between', gap: '10px', alignItems: 'flex-start' },
+  tileTitle: { margin: 0, fontSize: '15px', color: '#111827' },
+  tileSub: { margin: '2px 0 0', fontSize: '12px', color: '#0369a1' },
+  tileReason: { margin: 0, fontSize: '13px', color: '#4b5563' },
+  tileMeta: { display: 'flex', flexWrap: 'wrap', gap: '6px', fontSize: '12px', color: '#374151' },
+  newBadge: { fontSize: '11px', fontWeight: '800', color: '#075985', background: '#e0f2fe', borderRadius: '999px', padding: '3px 8px' },
+  completeBadge: { fontSize: '11px', fontWeight: '800', color: '#166534', background: '#dcfce7', borderRadius: '999px', padding: '3px 8px' },
+  dailyNewStart: { padding: '10px 12px', background: '#0ea5e9', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: '700', cursor: 'pointer' },
+  extraBtn: { padding: '10px 12px', background: '#fff', color: '#075985', border: '1.5px solid #7dd3fc', borderRadius: '8px', fontSize: '14px', fontWeight: '700', cursor: 'pointer' },
+  extraList: { display: 'grid', gap: '8px', marginBottom: '12px' },
+  extraChoice: { display: 'grid', gap: '3px', textAlign: 'left', background: '#fff', border: '2px solid #e5e7eb', borderRadius: '8px', padding: '10px', color: '#1f2937', cursor: 'pointer' },
   // Modal
   overlay: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 },
   modal: { background: '#fff', borderRadius: '20px', padding: '28px 24px', maxWidth: '300px', width: '90%', textAlign: 'center', boxShadow: '0 20px 60px rgba(0,0,0,0.25)' },

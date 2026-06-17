@@ -183,13 +183,13 @@ afterEach(() => {
 });
 
 describe('dashboard Goals entry', () => {
-  it('appears directly after the Grade 3 Math Map card and opens Goals', async () => {
+  it('places Daily New for Goals between Daily Review and the Grade 3 Math Map, then opens Goals', async () => {
     vi.mocked(mathAnswerEventRepo.getAll).mockResolvedValue([]);
     vi.mocked(itemStateRepo.getForStudent).mockResolvedValue([]);
     vi.mocked(sessionRepo.getAll).mockResolvedValue([]);
     const onOpenGoals = vi.fn();
 
-    render(
+    const view = render(
       <StudentDashboard
         profile={profile()}
         onStartDailyReview={() => {}}
@@ -204,11 +204,51 @@ describe('dashboard Goals entry', () => {
     );
 
     const mapCard = await screen.findByText(/Grade 3 Math Map/i);
+    const text = view.container.textContent ?? '';
+    const dailyReviewIndex = text.indexOf('Daily Review');
+    const dailyNewIndex = text.indexOf('Daily New for Goals');
+    const mathMapIndex = text.indexOf('Grade 3 Math Map');
+    expect(dailyReviewIndex).toBeGreaterThanOrEqual(0);
+    expect(dailyNewIndex).toBeGreaterThan(dailyReviewIndex);
+    expect(mathMapIndex).toBeGreaterThan(dailyNewIndex);
+
     const goalsCard = screen.getByRole('button', { name: /Goals/i });
     expect(mapCard.closest('button')?.nextElementSibling).toBe(goalsCard.closest('button'));
 
     fireEvent.click(goalsCard);
     expect(onOpenGoals).toHaveBeenCalledTimes(1);
+  });
+
+  it('starts Learn Extra with Daily New goal attribution', async () => {
+    store.goals = [goal()];
+    const onStartDailyReview = vi.fn();
+
+    render(
+      <StudentDashboard
+        profile={profile()}
+        onStartDailyReview={onStartDailyReview}
+        onPickOperation={() => {}}
+        onOpenStats={() => {}}
+        onOpenSettings={() => {}}
+        onStartQuiz={() => {}}
+        onOpenAchievementDetail={() => {}}
+        onOpenMasteryMap={() => {}}
+        onOpenGoals={() => {}}
+      />,
+    );
+
+    const extra = await screen.findByRole('button', { name: /learn extra/i });
+    await waitFor(() => expect(extra).not.toBeDisabled());
+    fireEvent.click(extra);
+    fireEvent.click(await screen.findByRole('button', { name: /start extra/i }));
+
+    expect(onStartDailyReview).toHaveBeenCalledTimes(1);
+    expect(onStartDailyReview).toHaveBeenCalledWith(expect.objectContaining({
+      origin: 'daily_new_for_goals',
+      goalLearningKind: 'extra',
+      goalIds: ['goal-1'],
+      goalTargetIds: ['target-1'],
+    }));
   });
 });
 

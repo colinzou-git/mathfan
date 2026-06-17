@@ -4,7 +4,7 @@
 
 | Package | Import count |
 | --- | --- |
-| vitest | 56 |
+| vitest | 57 |
 | react | 35 |
 | @testing-library/react | 11 |
 | __future__ | 8 |
@@ -153,6 +153,10 @@
 | src/features/dashboard/StudentDashboard.tsx | ../../db/repositories |
 | src/features/dashboard/StudentDashboard.tsx | ../../types/math |
 | src/features/dashboard/StudentDashboard.tsx | ../curriculum/describeItem |
+| src/features/dashboard/StudentDashboard.tsx | ../curriculum/makeItemFromId |
+| src/features/dashboard/StudentDashboard.tsx | ../goals/dailyNewGoalPlanner |
+| src/features/dashboard/StudentDashboard.tsx | ../mastery/grade3MasteryMap |
+| src/features/dashboard/StudentDashboard.tsx | ../mastery/skillMasteryEngine |
 | src/features/dashboard/StudentDashboard.tsx | ../stats/statsEngine |
 | src/features/dashboard/StudentDashboard.tsx | ../stats/todayAchievement |
 | src/features/dashboard/StudentDashboard.tsx | ../stats/TodayAchievementSection |
@@ -175,6 +179,15 @@
 | src/features/diagnosis/DiagnosticSession.tsx | ../time/clock |
 | src/features/diagnosis/DiagnosticSession.tsx | ./diagnosticPersistence |
 | src/features/diagnosis/DiagnosticSession.tsx | ./diagnosticPlanner |
+| src/features/goals/dailyNewGoalPlanner.ts | ../../types/math |
+| src/features/goals/dailyNewGoalPlanner.ts | ../curriculum/makeItemFromId |
+| src/features/goals/dailyNewGoalPlanner.ts | ../learning/learningEvents |
+| src/features/goals/dailyNewGoalPlanner.ts | ../mastery/grade3MasteryMap |
+| src/features/goals/dailyNewGoalPlanner.ts | ../mastery/skillMapping |
+| src/features/goals/dailyNewGoalPlanner.ts | ../mastery/skillMasteryEngine |
+| src/features/goals/dailyNewGoalPlanner.ts | ../mastery/skillPracticePlanner |
+| src/features/goals/dailyNewGoalPlanner.ts | ./goalEngine |
+| src/features/goals/dailyNewGoalPlanner.ts | ./types |
 | src/features/goals/goalEngine.ts | ../../types/math |
 | src/features/goals/goalEngine.ts | ../curriculum/makeItemFromId |
 | src/features/goals/goalEngine.ts | ../learning/learningEvents |
@@ -474,6 +487,12 @@
 | src/tests/components.test.tsx | ../features/mastery/SkillTile |
 | src/tests/components.test.tsx | ../features/mastery/todayPlanEngine |
 | src/tests/components.test.tsx | ../types/math |
+| src/tests/dailyNewGoalPlanner.test.ts | ../features/goals/dailyNewGoalPlanner |
+| src/tests/dailyNewGoalPlanner.test.ts | ../features/goals/types |
+| src/tests/dailyNewGoalPlanner.test.ts | ../features/learning/learningEvents |
+| src/tests/dailyNewGoalPlanner.test.ts | ../features/mastery/skillMasteryEngine |
+| src/tests/dailyNewGoalPlanner.test.ts | ../features/mastery/skillPracticePlanner |
+| src/tests/dailyNewGoalPlanner.test.ts | ../types/math |
 | src/tests/describeItem.test.ts | ../features/curriculum/describeItem |
 | src/tests/diagnosticPlanner.test.ts | ../features/diagnosis/diagnosticPlanner |
 | src/tests/diagnosticPlanner.test.ts | ../features/practice/answerChecker |
