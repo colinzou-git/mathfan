@@ -488,6 +488,7 @@
 | src/tests/components.test.tsx | ../features/mastery/todayPlanEngine |
 | src/tests/components.test.tsx | ../types/math |
 | src/tests/dailyNewGoalPlanner.test.ts | ../features/goals/dailyNewGoalPlanner |
+| src/tests/dailyNewGoalPlanner.test.ts | ../features/goals/goalEngine |
 | src/tests/dailyNewGoalPlanner.test.ts | ../features/goals/types |
 | src/tests/dailyNewGoalPlanner.test.ts | ../features/learning/learningEvents |
 | src/tests/dailyNewGoalPlanner.test.ts | ../features/mastery/skillMasteryEngine |
@@ -534,6 +535,7 @@
 | src/tests/goalSnapshot.test.ts | ../features/goals/types |
 | src/tests/goalSnapshot.test.ts | ../features/learning/learningEvents |
 | src/tests/goalSnapshot.test.ts | ../features/sync/snapshot |
+| src/tests/goalSnapshot.test.ts | ../types/math |
 | src/tests/goalsPage.test.tsx | ../db/repositories |
 | src/tests/goalsPage.test.tsx | ../features/dashboard/StudentDashboard |
 | src/tests/goalsPage.test.tsx | ../features/goals/GoalsPage |

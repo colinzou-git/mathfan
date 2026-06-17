@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AppSnapshot } from '../features/sync/snapshot';
 import type { GoalEvaluation, GoalEvent, LearningGoal } from '../features/goals/types';
 import type { MathAnswerEvent } from '../features/learning/learningEvents';
+import type { AttemptLog, PracticeSession, StudentProfile } from '../types/math';
 
 type KeyFn<T> = (row: T) => unknown;
 
@@ -92,6 +93,28 @@ function baseSnapshot(overrides: Partial<AppSnapshot> = {}): AppSnapshot {
   };
 }
 
+function student(overrides: Partial<StudentProfile> = {}): StudentProfile {
+  return {
+    id: 'student-1',
+    displayName: 'Alex',
+    gradeLevel: 3,
+    timezone: 'America/Los_Angeles',
+    createdAt: '2026-01-01T00:00:00.000Z',
+    settings: {
+      audioEnabled: false,
+      speechRate: 1,
+      dailyGoalMinutes: 10,
+      sessionLength: 10,
+      autoAdvance: true,
+      theme: 'indigo',
+      allowTimedMode: false,
+      competitionModeEnabled: false,
+      parentModeEnabled: false,
+    },
+    ...overrides,
+  };
+}
+
 function goal(overrides: Partial<LearningGoal> = {}): LearningGoal {
   return {
     id: 'goal-1',
@@ -140,6 +163,38 @@ function answerEvent(overrides: Partial<MathAnswerEvent> = {}): MathAnswerEvent 
     isRetry: false,
     hintUsed: false,
     latencyMs: 1000,
+    createdAt: '2026-06-01T00:00:00.000Z',
+    ...overrides,
+  };
+}
+
+function practiceSession(overrides: Partial<PracticeSession> = {}): PracticeSession {
+  return {
+    id: 'session-1',
+    studentId: 'student-1',
+    startedAt: '2026-06-01T00:00:00.000Z',
+    mode: 'daily_review',
+    plannedQuestionCount: 5,
+    completedQuestionCount: 0,
+    correctCount: 0,
+    averageLatencyMs: 0,
+    ...overrides,
+  };
+}
+
+function attempt(overrides: Partial<AttemptLog> = {}): AttemptLog {
+  return {
+    id: 'attempt-1',
+    studentId: 'student-1',
+    itemId: 'MUL_2x3',
+    skillId: 'g3-mul-meaning',
+    sessionId: 'session-1',
+    promptShown: '2 x 3',
+    correctAnswer: 6,
+    studentAnswer: 6,
+    isCorrect: true,
+    latencyMs: 1000,
+    reviewGrade: 'good',
     createdAt: '2026-06-01T00:00:00.000Z',
     ...overrides,
   };
@@ -252,5 +307,92 @@ describe('goal snapshot v2', () => {
     expect(mockDb.mathAnswerEvents.rows).toHaveLength(1);
     expect(rebuilds.rebuildMultFactStatsFromEvents).toHaveBeenCalledWith('student-1');
     expect(rebuilds.rebuildItemStatesFromEvents).toHaveBeenCalledWith('student-1');
+  });
+
+  it('loads a version-1 snapshot without goal arrays and keeps existing learning data', async () => {
+    const legacySnapshot = {
+      appId: 'mathfan',
+      snapshotVersion: 1,
+      snapshotAt: '2026-05-01T00:00:00.000Z',
+      students: [student()],
+      itemStates: [],
+      attempts: [attempt({ id: 'legacy-attempt' })],
+      sessions: [practiceSession({ id: 'legacy-session' })],
+      mathAnswerEvents: [answerEvent({ id: 'legacy-event' })],
+    } as unknown as AppSnapshot;
+
+    expect(validateSnapshot(legacySnapshot)).toBe(true);
+    await mergeSnapshot(legacySnapshot);
+
+    expect(await mockDb.attempts.get('legacy-attempt')).toBeDefined();
+    expect(await mockDb.sessions.get('legacy-session')).toBeDefined();
+    expect(await mockDb.mathAnswerEvents.get('legacy-event')).toBeDefined();
+    expect(mockDb.learningGoals.rows).toHaveLength(0);
+    expect(rebuilds.rebuildItemStatesFromEvents).toHaveBeenCalledWith('student-1');
+  });
+
+  it('preserves new multi-goal attribution and legacy origin records through merge', async () => {
+    await mergeSnapshot(baseSnapshot({
+      sessions: [
+        practiceSession({
+          id: 'planned-session',
+          origin: 'daily_new_for_goals',
+          goalIds: ['goal-1', 'goal-2'],
+          goalTargetIds: ['target-1', 'target-2'],
+          goalLearningKind: 'planned',
+        }),
+        practiceSession({
+          id: 'legacy-session',
+          origin: 'daily_recommended_learning',
+        }),
+      ],
+      attempts: [
+        attempt({
+          id: 'planned-attempt',
+          sessionId: 'planned-session',
+          origin: 'daily_new_for_goals',
+          goalIds: ['goal-1', 'goal-2'],
+          goalTargetIds: ['target-1', 'target-2'],
+          goalLearningKind: 'planned',
+        }),
+      ],
+      mathAnswerEvents: [
+        answerEvent({
+          id: 'planned-event',
+          sessionId: 'planned-session',
+          origin: 'daily_new_for_goals',
+          goalIds: ['goal-1', 'goal-2'],
+          goalTargetIds: ['target-1', 'target-2'],
+          goalLearningKind: 'planned',
+        }),
+        answerEvent({
+          id: 'legacy-event',
+          sessionId: 'legacy-session',
+          origin: 'daily_recommended_learning',
+        }),
+      ],
+    }));
+
+    expect(await mockDb.sessions.get('planned-session')).toEqual(expect.objectContaining({
+      origin: 'daily_new_for_goals',
+      goalIds: ['goal-1', 'goal-2'],
+      goalTargetIds: ['target-1', 'target-2'],
+      goalLearningKind: 'planned',
+    }));
+    expect(await mockDb.attempts.get('planned-attempt')).toEqual(expect.objectContaining({
+      goalIds: ['goal-1', 'goal-2'],
+      goalLearningKind: 'planned',
+    }));
+    expect(await mockDb.mathAnswerEvents.get('planned-event')).toEqual(expect.objectContaining({
+      goalIds: ['goal-1', 'goal-2'],
+      goalTargetIds: ['target-1', 'target-2'],
+      goalLearningKind: 'planned',
+    }));
+    expect(await mockDb.sessions.get('legacy-session')).toEqual(expect.objectContaining({
+      origin: 'daily_recommended_learning',
+    }));
+    expect(await mockDb.mathAnswerEvents.get('legacy-event')).toEqual(expect.objectContaining({
+      origin: 'daily_recommended_learning',
+    }));
   });
 });

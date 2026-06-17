@@ -5,6 +5,7 @@ import type { MathAnswerEvent } from '../features/learning/learningEvents';
 import type { StudentItemState } from '../types/math';
 import type { StudentSkillSummary } from '../features/mastery/skillMasteryEngine';
 import { planPracticeForSkill } from '../features/mastery/skillPracticePlanner';
+import { calculateGoalProgress } from '../features/goals/goalEngine';
 
 const STUDENT_ID = 'student-1';
 const NOW = '2026-06-17T16:00:00.000Z';
@@ -253,6 +254,67 @@ describe('planDailyNewForGoals allocation', () => {
     expect(second.tiles[0].itemIds).toEqual(first.tiles[0].itemIds);
     expect(second.tiles[0].isComplete).toBe(true);
   });
+
+  it('moves a learned Daily New item out of Daily New when it becomes FSRS-due for Daily Review', () => {
+    const first = plan();
+    const learned = first.tiles[0].itemIds[0];
+    const learnedEvent = event(learned, {
+      origin: 'daily_new_for_goals',
+      goalLearningKind: 'planned',
+      createdAt: '2026-06-17T16:05:00.000Z',
+    });
+    const dueState = state(learned, { nextDueAt: '2026-06-17T15:00:00.000Z' });
+    const second = plan({
+      events: [learnedEvent],
+      itemStates: [dueState],
+      skillSummaries: [summary('g3-mul-meaning', 'review_due')],
+    });
+
+    expect(second.tiles.flatMap(tile => tile.itemIds)).not.toContain(learned);
+    expect(second.extraChoices.flatMap(tile => tile.itemIds)).not.toContain(learned);
+    expect(dueState.nextDueAt! <= NOW).toBe(true);
+  });
+
+  it('records planned Daily New canonical events as goal progress without mutating manual counters', () => {
+    const g = goal();
+    const first = plan({ goals: [g] });
+    const completedEvents = first.tiles[0].itemIds.slice(0, 1).map((id, index) => event(id, {
+      id: `planned-${index}`,
+      origin: 'daily_new_for_goals',
+      goalLearningKind: 'planned',
+      createdAt: `2026-06-17T16:${String(index).padStart(2, '0')}:00.000Z`,
+    }));
+
+    const progress = calculateGoalProgress(g, {
+      studentId: STUDENT_ID,
+      events: completedEvents,
+      itemStates: [],
+      skillSummaries: [summary('g3-mul-meaning', 'needs_practice')],
+      now: NOW,
+      timezone: TZ,
+    });
+
+    expect(progress.targets[0].firstAttemptCount).toBe(1);
+    expect(progress.targets[0].distinctItemCount).toBe(1);
+    expect(progress.targets[0].questionsCompletedToday).toBe(1);
+    expect(g.targets[0].baseline.attemptCount).toBe(0);
+  });
+
+  it('starts a fresh local-day Daily New plan after yesterday completed work', () => {
+    const first = plan({ now: '2026-06-17T16:00:00.000Z' });
+    const yesterdayCompleted = first.tiles[0].itemIds.map(id => event(id, {
+      origin: 'daily_new_for_goals',
+      goalLearningKind: 'planned',
+      createdAt: '2026-06-17T16:10:00.000Z',
+    }));
+    const nextDay = plan({
+      events: yesterdayCompleted,
+      now: '2026-06-18T16:00:00.000Z',
+    });
+
+    expect(nextDay.tiles[0].isComplete).toBe(false);
+    expect(nextDay.tiles.flatMap(tile => tile.itemIds).some(id => !first.tiles[0].itemIds.includes(id))).toBe(true);
+  });
 });
 
 describe('planDailyNewForGoals Learn Extra', () => {
@@ -281,6 +343,38 @@ describe('planDailyNewForGoals Learn Extra', () => {
     expect(second.extraChoices.flatMap(tile => tile.itemIds)).not.toContain(completed);
   });
 
+  it('advances repeated Learn Extra sessions without reusing planned or already-used daily IDs', () => {
+    const first = plan();
+    const planned = new Set(first.tiles.flatMap(tile => tile.itemIds));
+    const firstExtra = first.extraChoices[0].itemIds;
+    const second = plan({
+      events: firstExtra.map((id, index) => event(id, {
+        id: `extra-${index}`,
+        origin: 'daily_new_for_goals',
+        goalLearningKind: 'extra',
+        sessionId: 'extra-session-1',
+        createdAt: `2026-06-17T17:${String(index).padStart(2, '0')}:00.000Z`,
+      })),
+    });
+    const secondExtra = second.extraChoices.flatMap(tile => tile.itemIds);
+
+    expect(secondExtra.every(id => !planned.has(id))).toBe(true);
+    expect(secondExtra.every(id => !firstExtra.includes(id))).toBe(true);
+  });
+
+  it('treats legacy daily_recommended_learning events as readable same-day Daily New completion data', () => {
+    const first = plan();
+    const completedEvents = first.tiles[0].itemIds.map((id, index) => event(id, {
+      id: `legacy-${index}`,
+      origin: 'daily_recommended_learning',
+      createdAt: `2026-06-17T16:${String(index + 10).padStart(2, '0')}:00.000Z`,
+    }));
+    const second = plan({ events: completedEvents });
+
+    expect(second.tiles[0].itemIds).toEqual(first.tiles[0].itemIds);
+    expect(second.tiles[0].isComplete).toBe(true);
+  });
+
   it('disables extra when exhausted', () => {
     const events = pool().map(id => event(id));
     const result = plan({ events });
@@ -288,4 +382,3 @@ describe('planDailyNewForGoals Learn Extra', () => {
     expect(result.exhaustedExtra).toBe(true);
   });
 });
-

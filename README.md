@@ -112,6 +112,16 @@ Current and planned practice areas include:
 
 MathFan uses a spaced-review approach so students do not only practice once and forget. Skills come back for review at better times, especially when the student is likely to need reinforcement.
 
+### Goals and Daily New for Goals
+
+Students can create short learning goals from recommendations, practice history, or a 30-question adaptive evaluation. Goals separate new learning from review:
+
+- Daily New for Goals introduces unseen items from incomplete active-goal skills.
+- Daily Review remains the place for previously learned items that FSRS schedules for review.
+- Learn Extra lets a student voluntarily practice more unseen goal material beyond the planned daily workload.
+
+See [Goals, Daily New for Goals, and Daily Review](docs/goals-daily-new-for-goals.md) for the implementation model and data-flow notes.
+
 ### Progress tracking
 
 Students and parents can review progress over time, including:

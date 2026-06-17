@@ -1,6 +1,6 @@
 # Code Map Overview
 
-Generated: 2026-06-17 17:07:20 UTC
+Generated: 2026-06-17 17:18:39 UTC
 
 Repo root: `C:\Users\colin\Documents\mathFan`  
 Output folder: `C:\Users\colin\Documents\mathFan\docs\code-map`
@@ -14,9 +14,9 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 - Package name: `mathfan`
 - Version: `1.2.0`
 - Module type: `module`
-- Scanned files: **206**
-- Scanned lines: **40,565**
-- Scanned bytes: **1,598,748**
+- Scanned files: **207**
+- Scanned lines: **40,903**
+- Scanned bytes: **1,615,406**
 
 ## NPM scripts
 
@@ -108,6 +108,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   ├── features.html
 │   │   └── index.html
 │   ├── CLOUD_DEVELOPMENT.md
+│   ├── goals-daily-new-for-goals.md
 │   ├── grade3-mastery-map-roadmap.md
 │   └── PRD.md
 ├── scripts

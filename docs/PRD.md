@@ -345,15 +345,32 @@ Shipped; previously undocumented.
 
 ---
 
+## Section 24 - Goals, Daily New for Goals, and Adaptive Evaluation
+
+| ID | Priority | Status | Description |
+|---|---|---|---|
+| MF-250 | P0 | Done | **Learning goals.** Students can create, edit, pause/resume, end/cancel, and complete goals with durable baselines, target gates, and historical lifecycle events. Code: `features/goals/GoalsPage.tsx`, `goalEngine.ts`, `goalLifecycleService.ts`. |
+| MF-251 | P0 | Done | **Goal recommendations.** Goal wizard recommendations use practice history, skill summaries, uncertainty, workload estimates, active-goal overlap, and deterministic scoring. Code: `goalRecommendationEngine.ts`. |
+| MF-252 | P0 | Done | **Adaptive Goal Evaluation.** A 30-question adaptive planning aid separates new-learning candidates from Daily Review findings and resumes in-progress evaluations. It is not a standardized calibrated test. Code: `goalEvaluationEngine.ts`, `GoalEvaluationSession.tsx`, `goalEvaluationPersistence.ts`. |
+| MF-253 | P0 | Done | **Daily New for Goals.** Dashboard section appears after Daily Review and before the Math Map. It plans unseen items from incomplete active-goal skills and excludes direct prior attempts, related-evidence-only review items, retries, and FSRS-due items. Code: `dailyNewGoalPlanner.ts`, `StudentDashboard.tsx`. |
+| MF-254 | P0 | Done | **Daily Review separation.** Previously learned or currently due items remain in Daily Review. Daily New has no `review_for_goal` mode and does not mutate or suppress FSRS due state. Tests: `dailyNewGoalPlanner.test.ts`, `scheduler.test.ts`, `practiceSession.test.ts`. |
+| MF-255 | P1 | Done | **Learn Extra.** Students can voluntarily choose extra unseen active-goal material outside the planned workload. Extra sessions avoid planned and already-used Daily New IDs for the local day and carry `goalLearningKind: 'extra'`. Code: `dailyNewGoalPlanner.ts`, `StudentDashboard.tsx`. |
+| MF-256 | P1 | Done | **Multi-goal attribution.** Planned and extra sessions can carry `goalIds`, `goalTargetIds`, and legacy single-goal fields so overlapping goals keep attribution through save and sync. Code: `types/math.ts`, `learningEvents.ts`, `usePracticeSession.ts`, `snapshot.ts`. |
+| MF-257 | P1 | Done | **Legacy origin compatibility.** Historical `origin: 'daily_recommended_learning'` records remain readable while new Daily New sessions write `origin: 'daily_new_for_goals'`. Tests: `dailyNewGoalPlanner.test.ts`, `goalSnapshot.test.ts`. |
+| MF-258 | P1 | Done | **Goal-aware Drive snapshots.** Snapshot v2 includes goals, goal events, and evaluations; version 1 snapshots without goal arrays remain valid. Goal/evaluation merges use latest valid `updatedAt`; append-only goal events union by ID. Code: `sync/snapshot.ts`. |
+| MF-259 | P1 | Done | **Goals documentation.** Product and data-flow documentation explains Goals vs Daily New for Goals vs Daily Review, the unseen-item rule, Learn Extra behavior, legacy origins, and evaluation limitations. Docs: `docs/goals-daily-new-for-goals.md`. |
+
+---
+
 ## Appendix — Status counts (auto-update manually when editing)
 
 | Status | Count |
 |---|---|
-| Done | 56 |
+| Done | 66 |
 | Partial | 11 |
 | Not Started | 39 |
 | Deferred | 0 |
-| **Total** | **106** |
+| **Total** | **116** |
 
 > "Done (changed)" and "Done (gated/config)" are counted as Done above. Partial =
 > implemented but with a stated gap.

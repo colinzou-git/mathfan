@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-17T17:07:20.892680+00:00",
+  "generated_at": "2026-06-17T17:18:39.279280+00:00",
   "repo_root": "C:\\Users\\colin\\Documents\\mathFan",
   "package": {
     "name": "mathfan",
@@ -189,6 +189,26 @@
       "read_error": null
     },
     {
+      "path": "docs/goals-daily-new-for-goals.md",
+      "ext": ".md",
+      "bytes": 4620,
+      "lines": 76,
+      "sha1": "4931a99ca86b",
+      "imports": [],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Project file.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "docs/grade3-mastery-map-roadmap.md",
       "ext": ".md",
       "bytes": 26112,
@@ -211,9 +231,9 @@
     {
       "path": "docs/PRD.md",
       "ext": ".md",
-      "bytes": 34746,
-      "lines": 440,
-      "sha1": "de80eda72495",
+      "bytes": 37762,
+      "lines": 457,
+      "sha1": "f9b64b8a075b",
       "imports": [],
       "exports": [],
       "functions": [],
@@ -351,9 +371,9 @@
     {
       "path": "README.md",
       "ext": ".md",
-      "bytes": 9098,
-      "lines": 349,
-      "sha1": "cf732afaf197",
+      "bytes": 9719,
+      "lines": 359,
+      "sha1": "cd7a4e234ebb",
       "imports": [],
       "exports": [],
       "functions": [],
@@ -5434,11 +5454,12 @@
     {
       "path": "src/tests/dailyNewGoalPlanner.test.ts",
       "ext": ".ts",
-      "bytes": 10236,
-      "lines": 292,
-      "sha1": "eb863949afe9",
+      "bytes": 14058,
+      "lines": 385,
+      "sha1": "a8ccde12d588",
       "imports": [
         "../features/goals/dailyNewGoalPlanner",
+        "../features/goals/goalEngine",
         "../features/goals/types",
         "../features/learning/learningEvents",
         "../features/mastery/skillMasteryEngine",
@@ -5798,21 +5819,25 @@
     {
       "path": "src/tests/goalSnapshot.test.ts",
       "ext": ".ts",
-      "bytes": 8033,
-      "lines": 257,
-      "sha1": "3f18862cd914",
+      "bytes": 12612,
+      "lines": 399,
+      "sha1": "1a50ecbd81c1",
       "imports": [
         "../features/goals/types",
         "../features/learning/learningEvents",
         "../features/sync/snapshot",
+        "../types/math",
         "vitest"
       ],
       "exports": [],
       "functions": [
         "answerEvent",
+        "attempt",
         "baseSnapshot",
         "evaluation",
-        "goal"
+        "goal",
+        "practiceSession",
+        "student"
       ],
       "classes": [
         "MemoryTable"
