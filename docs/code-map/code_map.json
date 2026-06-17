@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-17T06:53:37.621219+00:00",
+  "generated_at": "2026-06-17T07:32:31.860110+00:00",
   "repo_root": "C:\\Users\\colin\\Documents\\mathFan",
   "package": {
     "name": "mathfan",
@@ -1064,9 +1064,9 @@
     {
       "path": "src/db/repositories.ts",
       "ext": ".ts",
-      "bytes": 13240,
+      "bytes": 13300,
       "lines": 314,
-      "sha1": "4e04ee31971b",
+      "sha1": "0d1c3b066968",
       "imports": [
         "../features/goals/types",
         "../features/learning/learningEvents",
@@ -1414,9 +1414,9 @@
     {
       "path": "src/features/audio/speech.ts",
       "ext": ".ts",
-      "bytes": 2248,
-      "lines": 64,
-      "sha1": "d6dbb5ca8dcb",
+      "bytes": 6927,
+      "lines": 207,
+      "sha1": "8d9d2c1f348f",
       "imports": [
         "./mathSpeech"
       ],
@@ -1428,17 +1428,27 @@
         "stopSpeech"
       ],
       "functions": [
+        "clearActiveTimers",
         "done",
+        "enqueue",
         "ensureVoice",
+        "finishActive",
         "getBestVoice",
+        "getSynth",
+        "installInteractionUnlock",
+        "isEnglish",
+        "isUsEnglish",
         "preloadVoices",
         "speak",
         "speakFeedback",
         "speakProblem",
-        "stopSpeech"
+        "stopSpeech",
+        "unlock"
       ],
       "classes": [],
-      "interfaces": [],
+      "interfaces": [
+        "ActiveSpeech"
+      ],
       "types": [],
       "components": [],
       "hooks": [],
@@ -2318,11 +2328,129 @@
       "read_error": null
     },
     {
+      "path": "src/features/goals/goalEngine.ts",
+      "ext": ".ts",
+      "bytes": 17007,
+      "lines": 524,
+      "sha1": "a048ce16d330",
+      "imports": [
+        "../../types/math",
+        "../curriculum/makeItemFromId",
+        "../learning/learningEvents",
+        "../mastery/skillMapping",
+        "../mastery/skillMasteryEngine",
+        "./types"
+      ],
+      "exports": [
+        "applyGoalTargetEdits",
+        "buildGoalSkillTarget",
+        "calculateGoalProgress",
+        "calculateTargetProgress",
+        "captureGoalBaseline",
+        "defaultSkillIdForItem",
+        "evaluateGoalLifecycle",
+        "GoalEvidenceInput",
+        "GoalProgress",
+        "GoalTargetEditDraft",
+        "GoalTargetProgress",
+        "LifecycleEvaluation",
+        "localDateInTimeZone",
+        "SkillIdResolver",
+        "suggestedTargetDefaults",
+        "TargetGateStatus",
+        "transitionGoal"
+      ],
+      "functions": [
+        "accuracyOf",
+        "activeDays",
+        "applyGoalTargetEdits",
+        "buildGoalSkillTarget",
+        "calculateGoalProgress",
+        "calculateTargetProgress",
+        "captureGoalBaseline",
+        "clamp01",
+        "defaultSkillIdForItem",
+        "displayAccuracyProgress",
+        "displayHintProgress",
+        "displayScore",
+        "distinctItems",
+        "dueItemCount",
+        "evaluateGoalLifecycle",
+        "eventBelongsToSkill",
+        "goalEvent",
+        "hasEvent",
+        "hintRateOf",
+        "isDirectFirstAttempt",
+        "localDateInTimeZone",
+        "mistakePatterns",
+        "part",
+        "safeDateMs",
+        "skillEvents",
+        "skillStates",
+        "stateBelongsToSkill",
+        "suggestedTargetDefaults",
+        "summaryFor",
+        "transitionGoal"
+      ],
+      "classes": [],
+      "interfaces": [
+        "GoalEvidenceInput",
+        "GoalProgress",
+        "GoalTargetEditDraft",
+        "GoalTargetProgress",
+        "LifecycleEvaluation",
+        "TargetGateStatus"
+      ],
+      "types": [
+        "SkillIdResolver"
+      ],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Exports reusable code: applyGoalTargetEdits, buildGoalSkillTarget, calculateGoalProgress, calculateTargetProgress, captureGoalBaseline.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/goals/goalLifecycleService.ts",
+      "ext": ".ts",
+      "bytes": 1854,
+      "lines": 49,
+      "sha1": "5ddc1cb33edd",
+      "imports": [
+        "../../db/repositories",
+        "../../utils/id",
+        "./goalEngine",
+        "./types"
+      ],
+      "exports": [],
+      "functions": [
+        "cancelGoal",
+        "endGoal",
+        "evaluateGoalLifecycleAndPersist",
+        "pauseGoal",
+        "persistEvaluation",
+        "resumeGoal",
+        "updateGoal"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Support module that imports project/external dependencies.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/features/goals/types.ts",
       "ext": ".ts",
-      "bytes": 2465,
-      "lines": 109,
-      "sha1": "9408631f3230",
+      "bytes": 2488,
+      "lines": 110,
+      "sha1": "8536dda5cb01",
       "imports": [
         "../learning/learningEvents",
         "../mastery/skillMasteryEngine"
@@ -5017,6 +5145,43 @@
       "read_error": null
     },
     {
+      "path": "src/tests/goalEngine.test.ts",
+      "ext": ".ts",
+      "bytes": 15497,
+      "lines": 405,
+      "sha1": "fbc74744b0ea",
+      "imports": [
+        "../features/goals/goalEngine",
+        "../features/goals/types",
+        "../features/learning/learningEvents",
+        "../features/mastery/skillMasteryEngine",
+        "../types/math",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [
+        "baseline",
+        "completeProgress",
+        "event",
+        "goal",
+        "input",
+        "resolveSkillId",
+        "state",
+        "summary",
+        "target"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/tests/goalRepositories.test.ts",
       "ext": ".ts",
       "bytes": 5631,
@@ -5876,9 +6041,9 @@
     {
       "path": "src/tests/speech.test.ts",
       "ext": ".ts",
-      "bytes": 5656,
-      "lines": 170,
-      "sha1": "a170793670ac",
+      "bytes": 6619,
+      "lines": 204,
+      "sha1": "52dfd870c7a3",
       "imports": [
         "../features/audio/speech",
         "vitest"

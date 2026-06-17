@@ -4,7 +4,7 @@
 
 | Package | Import count |
 | --- | --- |
-| vitest | 50 |
+| vitest | 51 |
 | react | 33 |
 | __future__ | 8 |
 | sys | 8 |
@@ -173,6 +173,16 @@
 | src/features/diagnosis/DiagnosticSession.tsx | ../time/clock |
 | src/features/diagnosis/DiagnosticSession.tsx | ./diagnosticPersistence |
 | src/features/diagnosis/DiagnosticSession.tsx | ./diagnosticPlanner |
+| src/features/goals/goalEngine.ts | ../../types/math |
+| src/features/goals/goalEngine.ts | ../curriculum/makeItemFromId |
+| src/features/goals/goalEngine.ts | ../learning/learningEvents |
+| src/features/goals/goalEngine.ts | ../mastery/skillMapping |
+| src/features/goals/goalEngine.ts | ../mastery/skillMasteryEngine |
+| src/features/goals/goalEngine.ts | ./types |
+| src/features/goals/goalLifecycleService.ts | ../../db/repositories |
+| src/features/goals/goalLifecycleService.ts | ../../utils/id |
+| src/features/goals/goalLifecycleService.ts | ./goalEngine |
+| src/features/goals/goalLifecycleService.ts | ./types |
 | src/features/goals/types.ts | ../learning/learningEvents |
 | src/features/goals/types.ts | ../mastery/skillMasteryEngine |
 | src/features/learning/eventRebuild.ts | ../../db/dexie |
@@ -419,6 +429,11 @@
 | src/tests/eventRebuild.test.ts | ../types/math |
 | src/tests/fractionItems.test.ts | ../features/curriculum/fractionItems |
 | src/tests/goalDexieSchema.test.ts | ../db/dexie |
+| src/tests/goalEngine.test.ts | ../features/goals/goalEngine |
+| src/tests/goalEngine.test.ts | ../features/goals/types |
+| src/tests/goalEngine.test.ts | ../features/learning/learningEvents |
+| src/tests/goalEngine.test.ts | ../features/mastery/skillMasteryEngine |
+| src/tests/goalEngine.test.ts | ../types/math |
 | src/tests/goalRepositories.test.ts | ../db/repositories |
 | src/tests/goalRepositories.test.ts | ../features/goals/types |
 | src/tests/goalSnapshot.test.ts | ../features/goals/types |
