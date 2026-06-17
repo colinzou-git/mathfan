@@ -4,9 +4,9 @@
 
 | Package | Import count |
 | --- | --- |
-| vitest | 53 |
+| vitest | 54 |
 | react | 34 |
-| @testing-library/react | 8 |
+| @testing-library/react | 9 |
 | __future__ | 8 |
 | sys | 8 |
 | pathlib | 6 |
@@ -180,6 +180,13 @@
 | src/features/goals/goalEngine.ts | ../mastery/skillMapping |
 | src/features/goals/goalEngine.ts | ../mastery/skillMasteryEngine |
 | src/features/goals/goalEngine.ts | ./types |
+| src/features/goals/goalEvaluationEngine.ts | ../../types/math |
+| src/features/goals/goalEvaluationEngine.ts | ../../utils/rng |
+| src/features/goals/goalEvaluationEngine.ts | ../curriculum/makeItemFromId |
+| src/features/goals/goalEvaluationEngine.ts | ../learning/learningEvents |
+| src/features/goals/goalEvaluationEngine.ts | ../mastery/grade3MasteryMap |
+| src/features/goals/goalEvaluationEngine.ts | ../mastery/skillMapping |
+| src/features/goals/goalEvaluationEngine.ts | ../mastery/skillPracticePlanner |
 | src/features/goals/goalLifecycleService.ts | ../../db/repositories |
 | src/features/goals/goalLifecycleService.ts | ../../utils/id |
 | src/features/goals/goalLifecycleService.ts | ./goalEngine |
@@ -453,6 +460,14 @@
 | src/tests/goalEngine.test.ts | ../features/learning/learningEvents |
 | src/tests/goalEngine.test.ts | ../features/mastery/skillMasteryEngine |
 | src/tests/goalEngine.test.ts | ../types/math |
+| src/tests/goalEvaluationEngine.test.tsx | ../features/curriculum/makeItemFromId |
+| src/tests/goalEvaluationEngine.test.tsx | ../features/goals/goalEvaluationEngine |
+| src/tests/goalEvaluationEngine.test.tsx | ../features/learning/learningEvents |
+| src/tests/goalEvaluationEngine.test.tsx | ../features/mastery/grade3MasteryMap |
+| src/tests/goalEvaluationEngine.test.tsx | ../features/mastery/skillPracticePlanner |
+| src/tests/goalEvaluationEngine.test.tsx | ../features/practice/answerChecker |
+| src/tests/goalEvaluationEngine.test.tsx | ../features/practice/QuestionRenderer |
+| src/tests/goalEvaluationEngine.test.tsx | ../types/math |
 | src/tests/goalRecommendationEngine.test.ts | ../features/goals/goalRecommendationEngine |
 | src/tests/goalRecommendationEngine.test.ts | ../features/goals/types |
 | src/tests/goalRecommendationEngine.test.ts | ../features/learning/learningEvents |

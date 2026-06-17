@@ -1,6 +1,6 @@
 # Code Map Overview
 
-Generated: 2026-06-17 08:09:52 UTC
+Generated: 2026-06-17 16:30:37 UTC
 
 Repo root: `C:\Users\colin\Documents\mathFan`  
 Output folder: `C:\Users\colin\Documents\mathFan\docs\code-map`
@@ -14,9 +14,9 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 - Package name: `mathfan`
 - Version: `1.2.0`
 - Module type: `module`
-- Scanned files: **198**
-- Scanned lines: **37,608**
-- Scanned bytes: **1,481,178**
+- Scanned files: **200**
+- Scanned lines: **38,441**
+- Scanned bytes: **1,513,571**
 
 ## NPM scripts
 
@@ -91,12 +91,12 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 | src/features/stats/QuizStatsView.tsx | 135 | Progress/statistics screens or calculations. | FactGroup, QuizStatsView, avgSecStr, FactGroup, fmt, QuizStatsView |
 | src/features/stats/TodayAchievementSection.tsx | 125 | Progress/statistics screens or calculations. | AchievementTile, TodayAchievementSection, AchievementTile, TodayAchievementSection |
 | src/features/mastery/skillPracticePlanner.ts | 702 | Grade 3 skill practice planner: maps skill IDs to SessionConfig for the mastery map. | PlanOptions, planPracticeForSkill, add2DigitRegroupingItemIds, add3DigitRegroupingItemIds, arithmeticPatternItemIds, divisionWordItemIds, divItemIds, elapsedTimeItemIds |
+| src/features/goals/goalEvaluationEngine.ts | 575 | Exports reusable code: ADAPTIVE_GOAL_EVALUATION_CONFIRMATION_COUNT, ADAPTIVE_GOAL_EVALUATION_HISTORICAL_PRIOR_CAP, ADAPTIVE_GOAL_EVALUATION_QUESTION_COUNT, AdaptiveGoalEvaluationArgs, AdaptiveGoalEvaluationItem. | ADAPTIVE_GOAL_EVALUATION_CONFIRMATION_COUNT, ADAPTIVE_GOAL_EVALUATION_HISTORICAL_PRIOR_CAP, ADAPTIVE_GOAL_EVALUATION_QUESTION_COUNT, AdaptiveGoalEvaluationArgs, AdaptiveGoalEvaluationItem, AdaptiveGoalEvaluationPhase, AdaptiveGoalEvaluationResponse, AdaptiveGoalEvaluationResult |
 | src/features/diagnosis/DiagnosticSession.tsx | 558 | Exports reusable code: DiagnosticSession. | DiagnosticSession, complete, DiagnosticSession, onKey |
 | src/features/practice/usePracticeSession.ts | 552 | Local persistence/database layer. | usePracticeSession, CorrectResult, LastSessionSummary, SessionState, usePracticeSession, getStaticItem, usePracticeSession |
 | src/features/goals/goalEngine.ts | 524 | Exports reusable code: applyGoalTargetEdits, buildGoalSkillTarget, calculateGoalProgress, calculateTargetProgress, captureGoalBaseline. | applyGoalTargetEdits, buildGoalSkillTarget, calculateGoalProgress, calculateTargetProgress, captureGoalBaseline, defaultSkillIdForItem, evaluateGoalLifecycle, GoalEvidenceInput |
 | src/features/goals/goalRecommendationEngine.ts | 494 | Exports reusable code: CandidateFeatures, estimateGoalWorkload, GoalRecommendation, GoalRecommendationArgs, GoalRecommendationCandidate. | CandidateFeatures, estimateGoalWorkload, GoalRecommendation, GoalRecommendationArgs, GoalRecommendationCandidate, GoalRecommendationResult, GoalRecommendationTarget, RecommendationReasonLabel |
 | src/features/stats/statsEngine.ts | 395 | Progress/statistics screens or calculations. | addDays, computeDailyHistory, computeDayStats, computeFactGrowth, computePeriodComparison, computePeriodStats, computePerTableStats, computeStreak |
-| src/features/practice/hintEngine.ts | 373 | Practice session UI and/or quiz interaction logic. | getHint, HintResult, addHint, areaRectHint, areaSquaresHint, divHint, fracCmpHint, fracEquivHint |
 
 ## Repository tree, filtered
 
@@ -175,6 +175,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   │   └── DiagnosticSession.tsx
 │   │   ├── goals
 │   │   │   ├── goalEngine.ts
+│   │   │   ├── goalEvaluationEngine.ts
 │   │   │   ├── goalLifecycleService.ts
 │   │   │   ├── goalRecommendationEngine.ts
 │   │   │   ├── GoalsPage.tsx
@@ -265,6 +266,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   ├── fractionItems.test.ts
 │   │   ├── goalDexieSchema.test.ts
 │   │   ├── goalEngine.test.ts
+│   │   ├── goalEvaluationEngine.test.tsx
 │   │   ├── goalRecommendationEngine.test.ts
 │   │   ├── goalRepositories.test.ts
 │   │   ├── goalSnapshot.test.ts
