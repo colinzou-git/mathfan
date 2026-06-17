@@ -4,7 +4,7 @@
 
 | Package | Import count |
 | --- | --- |
-| vitest | 51 |
+| vitest | 52 |
 | react | 33 |
 | __future__ | 8 |
 | sys | 8 |
@@ -183,6 +183,12 @@
 | src/features/goals/goalLifecycleService.ts | ../../utils/id |
 | src/features/goals/goalLifecycleService.ts | ./goalEngine |
 | src/features/goals/goalLifecycleService.ts | ./types |
+| src/features/goals/goalRecommendationEngine.ts | ../../types/math |
+| src/features/goals/goalRecommendationEngine.ts | ../learning/learningEvents |
+| src/features/goals/goalRecommendationEngine.ts | ../mastery/grade3MasteryMap |
+| src/features/goals/goalRecommendationEngine.ts | ../mastery/skillMasteryEngine |
+| src/features/goals/goalRecommendationEngine.ts | ./goalEngine |
+| src/features/goals/goalRecommendationEngine.ts | ./types |
 | src/features/goals/types.ts | ../learning/learningEvents |
 | src/features/goals/types.ts | ../mastery/skillMasteryEngine |
 | src/features/learning/eventRebuild.ts | ../../db/dexie |
@@ -434,6 +440,11 @@
 | src/tests/goalEngine.test.ts | ../features/learning/learningEvents |
 | src/tests/goalEngine.test.ts | ../features/mastery/skillMasteryEngine |
 | src/tests/goalEngine.test.ts | ../types/math |
+| src/tests/goalRecommendationEngine.test.ts | ../features/goals/goalRecommendationEngine |
+| src/tests/goalRecommendationEngine.test.ts | ../features/goals/types |
+| src/tests/goalRecommendationEngine.test.ts | ../features/learning/learningEvents |
+| src/tests/goalRecommendationEngine.test.ts | ../features/mastery/skillMasteryEngine |
+| src/tests/goalRecommendationEngine.test.ts | ../types/math |
 | src/tests/goalRepositories.test.ts | ../db/repositories |
 | src/tests/goalRepositories.test.ts | ../features/goals/types |
 | src/tests/goalSnapshot.test.ts | ../features/goals/types |
