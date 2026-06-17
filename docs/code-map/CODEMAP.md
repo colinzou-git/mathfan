@@ -1,6 +1,6 @@
 ﻿# Code Map Overview
 
-Generated: 2026-06-17 07:32:31 UTC
+Generated: 2026-06-17 07:46:03 UTC
 
 Repo root: `C:\Users\colin\Documents\mathFan`
 Output folder: `C:\Users\colin\Documents\mathFan\docs\code-map`
@@ -14,9 +14,9 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 - Package name: `mathfan`
 - Version: `1.2.0`
 - Module type: `module`
-- Scanned files: **194**
-- Scanned lines: **35,570**
-- Scanned bytes: **1,402,301**
+- Scanned files: **196**
+- Scanned lines: **36,381**
+- Scanned bytes: **1,432,996**
 
 ## NPM scripts
 
@@ -93,10 +93,10 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 | src/features/diagnosis/DiagnosticSession.tsx | 558 | Exports reusable code: DiagnosticSession. | DiagnosticSession, complete, DiagnosticSession, onKey |
 | src/features/practice/usePracticeSession.ts | 552 | Local persistence/database layer. | usePracticeSession, CorrectResult, LastSessionSummary, SessionState, usePracticeSession, getStaticItem, usePracticeSession |
 | src/features/goals/goalEngine.ts | 524 | Exports reusable code: applyGoalTargetEdits, buildGoalSkillTarget, calculateGoalProgress, calculateTargetProgress, captureGoalBaseline. | applyGoalTargetEdits, buildGoalSkillTarget, calculateGoalProgress, calculateTargetProgress, captureGoalBaseline, defaultSkillIdForItem, evaluateGoalLifecycle, GoalEvidenceInput |
+| src/features/goals/goalRecommendationEngine.ts | 494 | Exports reusable code: CandidateFeatures, estimateGoalWorkload, GoalRecommendation, GoalRecommendationArgs, GoalRecommendationCandidate. | CandidateFeatures, estimateGoalWorkload, GoalRecommendation, GoalRecommendationArgs, GoalRecommendationCandidate, GoalRecommendationResult, GoalRecommendationTarget, RecommendationReasonLabel |
 | src/features/stats/statsEngine.ts | 395 | Progress/statistics screens or calculations. | addDays, computeDailyHistory, computeDayStats, computeFactGrowth, computePeriodComparison, computePeriodStats, computePerTableStats, computeStreak |
 | src/features/practice/hintEngine.ts | 373 | Practice session UI and/or quiz interaction logic. | getHint, HintResult, addHint, areaRectHint, areaSquaresHint, divHint, fracCmpHint, fracEquivHint |
 | src/features/curriculum/areaItems.ts | 303 | Practice item definitions and ID generators for a math curriculum topic. | areaPerimCmpId, areaPerimCompareItemIds, AreaPerimVariant, areaRectangleItemIds, areaRectId, areaSquaresId, areaSquaresItemIds, makeAreaPerimCompareItem |
-| src/features/mastery/SkillDetailPanel.tsx | 291 | Grade 3 mastery map UI: skill display, detail panels, and parent action cards. | SkillDetailPanel, formatPattern, SkillDetailPanel |
 
 ## Repository tree, filtered
 
@@ -176,6 +176,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 â”‚   â”‚   â”œâ”€â”€ goals
 â”‚   â”‚   â”‚   â”œâ”€â”€ goalEngine.ts
 â”‚   â”‚   â”‚   â”œâ”€â”€ goalLifecycleService.ts
+â”‚   â”‚   â”‚   â”œâ”€â”€ goalRecommendationEngine.ts
 â”‚   â”‚   â”‚   â””â”€â”€ types.ts
 â”‚   â”‚   â”œâ”€â”€ learning
 â”‚   â”‚   â”‚   â”œâ”€â”€ eventRebuild.ts
@@ -263,6 +264,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 â”‚   â”‚   â”œâ”€â”€ fractionItems.test.ts
 â”‚   â”‚   â”œâ”€â”€ goalDexieSchema.test.ts
 â”‚   â”‚   â”œâ”€â”€ goalEngine.test.ts
+â”‚   â”‚   â”œâ”€â”€ goalRecommendationEngine.test.ts
 â”‚   â”‚   â”œâ”€â”€ goalRepositories.test.ts
 â”‚   â”‚   â”œâ”€â”€ goalSnapshot.test.ts
 â”‚   â”‚   â”œâ”€â”€ grade3AddSubRegrouping.test.ts
