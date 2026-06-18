@@ -51,7 +51,8 @@ def create_profile(page: Page, name: str, fresh: str) -> None:
     expect(page.get_by_text("Please enter a name.", exact=True)).to_be_visible()
 
     page.get_by_label("Name", exact=True).fill(name)
-    page.get_by_role("button", name="Grade 3", exact=True).click()
+    # Grade 3 is the default selection. Verify it after profile creation instead
+    # of relying on the compound label's browser-specific accessible name.
     page.get_by_role("button", name=re.compile(r"Start Learning")).click()
 
     expect(page.get_by_role("heading", name=f"Hi, {name}!", exact=True)).to_be_visible()
