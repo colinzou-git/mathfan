@@ -87,6 +87,18 @@ def set_practice_preferences_and_verify_persistence(page: Page) -> None:
     page.get_by_role("button", name="← Back", exact=True).click()
 
 
+def expect_dashboard_attempt_stats(page: Page) -> None:
+    """Verify dashboard counters after one wrong and one corrected submission."""
+    today_label = page.get_by_text("Today", exact=True)
+    expect(today_label).to_be_visible()
+    # Dashboard Q counts answer submissions; the summary counts solved problems.
+    expect(today_label.locator("..")).to_contain_text("2 Q")
+
+    accuracy_label = page.get_by_text("Accuracy", exact=True)
+    expect(accuracy_label).to_be_visible()
+    expect(accuracy_label.locator("..")).to_contain_text("50%")
+
+
 def run_practice_journey(page: Page) -> None:
     # The operation button's accessible name includes its icon, so match the
     # visible operation text without requiring exact equality.
@@ -125,15 +137,12 @@ def run_practice_journey(page: Page) -> None:
     page.get_by_role("button", name="Home", exact=True).click()
 
     expect(page.get_by_role("heading", name="Hi, BrowserTester!", exact=True)).to_be_visible()
-    today_label = page.get_by_text("Today", exact=True)
-    expect(today_label).to_be_visible()
-    expect(today_label.locator("..")).to_contain_text("1 Q")
+    expect_dashboard_attempt_stats(page)
 
     # The saved answer/session must survive a reload.
     page.reload(wait_until="domcontentloaded")
     expect(page.get_by_role("heading", name="Hi, BrowserTester!", exact=True)).to_be_visible()
-    today_label = page.get_by_text("Today", exact=True)
-    expect(today_label.locator("..")).to_contain_text("1 Q")
+    expect_dashboard_attempt_stats(page)
 
 
 def desktop_student_journey(page: Page) -> None:
