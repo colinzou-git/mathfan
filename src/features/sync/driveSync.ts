@@ -15,6 +15,17 @@ export interface SyncResult {
   syncedAt?: string;
 }
 
+interface DriveListFile {
+  id: string;
+  size?: string;
+  modifiedTime?: string;
+}
+
+function newestSyncFile(files: DriveListFile[] | undefined): DriveListFile | null {
+  if (!files?.length) return null;
+  return [...files].sort((a, b) => (b.modifiedTime ?? '').localeCompare(a.modifiedTime ?? ''))[0];
+}
+
 async function authFetch(url: string, options: RequestInit = {}): Promise<Response> {
   const token = await getToken();
   if (!token) throw new Error('Not signed in');
@@ -31,10 +42,7 @@ async function findSyncFile(): Promise<string | null> {
   const res = await authFetch(LIST_URL);
   if (!res.ok) throw new Error(`Drive LIST failed: ${res.status}`);
   const data = await res.json();
-  const files = (data.files as { id: string; modifiedTime?: string }[] | undefined) ?? [];
-  if (files.length === 0) return null;
-  files.sort((a, b) => (b.modifiedTime ?? '').localeCompare(a.modifiedTime ?? ''));
-  return files[0].id;
+  return newestSyncFile(data.files as DriveListFile[] | undefined)?.id ?? null;
 }
 
 async function uploadSnapshot(snapshot: AppSnapshot, existingId?: string): Promise<void> {
@@ -142,7 +150,7 @@ export async function getDriveFileInfo(): Promise<DriveFileInfo> {
     const res = await authFetch(LIST_URL);
     if (!res.ok) return { sizeBytes: null, modifiedAt: null };
     const data = await res.json();
-    const file = (data.files as { id: string; size?: string; modifiedTime?: string }[])?.[0];
+    const file = newestSyncFile(data.files as DriveListFile[] | undefined);
     if (!file) return { sizeBytes: null, modifiedAt: null };
     return {
       sizeBytes: file.size ? parseInt(file.size) : null,
