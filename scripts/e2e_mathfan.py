@@ -1,0 +1,241 @@
+"""Browser-level end-to-end smoke tests for MathFan.
+
+The suite drives the production Vite preview with a real Chromium browser. It
+covers first-run profile setup, persisted settings, wrong/correct answer flows,
+session completion, dashboard updates, and responsive navigation.
+
+Run after starting a preview server:
+    npm run build
+    npm run preview -- --host 127.0.0.1 --port 4173
+    python scripts/e2e_mathfan.py http://127.0.0.1:4173
+"""
+from __future__ import annotations
+
+import os
+import re
+import sys
+import traceback
+from pathlib import Path
+from typing import Callable
+
+from playwright.sync_api import Browser, Page, expect, sync_playwright
+
+BASE_URL = sys.argv[1] if len(sys.argv) > 1 else os.environ.get(
+    "E2E_BASE_URL", "http://127.0.0.1:4173"
+)
+RESULTS_DIR = Path(os.environ.get("E2E_RESULTS_DIR", "test-results/browser"))
+RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def assert_no_horizontal_overflow(page: Page, label: str) -> None:
+    overflow = page.evaluate(
+        """() => ({
+            viewport: window.innerWidth,
+            document: document.documentElement.scrollWidth,
+            body: document.body.scrollWidth,
+        })"""
+    )
+    widest = max(overflow["document"], overflow["body"])
+    if widest > overflow["viewport"] + 1:
+        raise AssertionError(
+            f"{label} has horizontal overflow: viewport={overflow['viewport']} widest={widest}"
+        )
+
+
+def create_profile(page: Page, name: str, fresh: str) -> None:
+    page.goto(f"{BASE_URL}/?fresh={fresh}", wait_until="domcontentloaded")
+    expect(page.get_by_role("heading", name="Welcome to MathFan")).to_be_visible()
+
+    # Required-field validation must be visible and must not advance the screen.
+    page.get_by_role("button", name=re.compile(r"Start Learning")).click()
+    expect(page.get_by_text("Please enter a name.", exact=True)).to_be_visible()
+
+    page.get_by_label("Name", exact=True).fill(name)
+    page.get_by_role("button", name="Grade 3", exact=True).click()
+    page.get_by_role("button", name=re.compile(r"Start Learning")).click()
+
+    expect(page.get_by_role("heading", name=f"Hi, {name}!", exact=True)).to_be_visible()
+    expect(page.get_by_text("Grade 3", exact=True)).to_be_visible()
+
+
+def set_practice_preferences_and_verify_persistence(page: Page) -> None:
+    page.get_by_test_id("open-settings").click()
+    expect(page.get_by_role("heading", name="Settings", exact=True)).to_be_visible()
+
+    switches = page.get_by_role("switch")
+    if switches.count() < 2:
+        raise AssertionError("Expected Sound and Auto-advance switches in Settings")
+
+    expect(switches.nth(0)).to_have_attribute("aria-checked", "true")
+    expect(switches.nth(1)).to_have_attribute("aria-checked", "true")
+    switches.nth(0).click()
+    switches.nth(1).click()
+    expect(switches.nth(0)).to_have_attribute("aria-checked", "false")
+    expect(switches.nth(1)).to_have_attribute("aria-checked", "false")
+
+    # Give the IndexedDB writes time to finish before simulating an app restart.
+    page.wait_for_timeout(250)
+    page.get_by_role("button", name="← Back", exact=True).click()
+    page.reload(wait_until="domcontentloaded")
+    expect(page.get_by_role("heading", name=re.compile(r"Hi, BrowserTester!"))).to_be_visible()
+
+    page.get_by_test_id("open-settings").click()
+    switches = page.get_by_role("switch")
+    expect(switches.nth(0)).to_have_attribute("aria-checked", "false")
+    expect(switches.nth(1)).to_have_attribute("aria-checked", "false")
+    page.get_by_role("button", name="← Back", exact=True).click()
+
+
+def run_practice_journey(page: Page) -> None:
+    page.get_by_role("button", name="Multiply", exact=True).click()
+    expect(page.get_by_role("heading", name="Multiplication", exact=True)).to_be_visible()
+
+    # Force a deterministic 1 × 1 problem and a one-question session.
+    page.get_by_label("First number smallest", exact=True).fill("1")
+    page.get_by_label("First number largest", exact=True).fill("1")
+    page.get_by_label("Second number smallest", exact=True).fill("1")
+    page.get_by_label("Second number largest", exact=True).fill("1")
+    page.get_by_label("Number of questions", exact=True).fill("1")
+    page.get_by_role("button", name=re.compile(r"Start — 1 questions")).click()
+
+    answer = page.get_by_label("Your answer", exact=True)
+    expect(answer).to_be_visible()
+
+    # Wrong answer: the question remains active and progressive feedback appears.
+    answer.fill("2")
+    answer.press("Enter")
+    expect(page.get_by_text("Incorrect — try again", exact=True)).to_be_visible()
+    expect(page.get_by_role("status")).to_be_visible()
+
+    # Corrected answer: auto-advance is disabled, so the Next button must appear.
+    answer = page.get_by_label("Your answer", exact=True)
+    answer.fill("1")
+    answer.press("Enter")
+    expect(page.get_by_text(re.compile(r"Correct!|New personal best!"))).to_be_visible()
+    page.get_by_role("button", name=re.compile(r"Next")).click()
+
+    expect(page.get_by_role("heading", name="Session Complete!", exact=True)).to_be_visible()
+    expect(page.get_by_text("You solved 1 problem.", exact=True)).to_be_visible()
+    expect(page.get_by_text("1 learning moment", exact=True)).to_be_visible()
+    page.get_by_role("button", name="Home", exact=True).click()
+
+    expect(page.get_by_role("heading", name="Hi, BrowserTester!", exact=True)).to_be_visible()
+    today_label = page.get_by_text("Today", exact=True)
+    expect(today_label).to_be_visible()
+    expect(today_label.locator("..")).to_contain_text("1 Q")
+
+    # The saved answer/session must survive a reload.
+    page.reload(wait_until="domcontentloaded")
+    expect(page.get_by_role("heading", name="Hi, BrowserTester!", exact=True)).to_be_visible()
+    today_label = page.get_by_text("Today", exact=True)
+    expect(today_label.locator("..")).to_contain_text("1 Q")
+
+
+def desktop_student_journey(page: Page) -> None:
+    create_profile(page, "BrowserTester", "e2e-desktop")
+    set_practice_preferences_and_verify_persistence(page)
+    run_practice_journey(page)
+    assert_no_horizontal_overflow(page, "desktop dashboard")
+
+
+def responsive_navigation(page: Page, label: str) -> None:
+    create_profile(page, f"{label.title()}Tester", f"e2e-{label}")
+    assert_no_horizontal_overflow(page, f"{label} dashboard")
+
+    for button_name in (
+        "Grade 3 Math Map",
+        "Goals",
+        "Multiply",
+        "Multiplication Quiz",
+        "Stats & History",
+    ):
+        expect(page.get_by_role("button", name=re.compile(button_name))).to_be_visible()
+
+    page.get_by_test_id("open-settings").click()
+    expect(page.get_by_role("heading", name="Settings", exact=True)).to_be_visible()
+    assert_no_horizontal_overflow(page, f"{label} settings")
+    page.get_by_role("button", name="← Back", exact=True).click()
+
+    page.get_by_role("button", name="Multiply", exact=True).click()
+    expect(page.get_by_role("heading", name="Multiplication", exact=True)).to_be_visible()
+    expect(page.get_by_role("button", name=re.compile(r"Start — \d+ questions"))).to_be_visible()
+    assert_no_horizontal_overflow(page, f"{label} multiplication setup")
+
+
+def run_scenario(
+    browser: Browser,
+    name: str,
+    viewport: dict[str, int],
+    scenario: Callable[[Page], None],
+) -> None:
+    context = browser.new_context(
+        viewport=viewport,
+        timezone_id="America/Los_Angeles",
+        service_workers="block",
+        reduced_motion="reduce",
+    )
+    context.tracing.start(screenshots=True, snapshots=True, sources=True)
+    page = context.new_page()
+    page_errors: list[str] = []
+    page.on("pageerror", lambda exc: page_errors.append(str(exc)))
+
+    try:
+        scenario(page)
+        if page_errors:
+            raise AssertionError(f"Unhandled page errors: {page_errors}")
+        context.tracing.stop()
+        print(f"PASS: {name}", flush=True)
+    except Exception:
+        screenshot = RESULTS_DIR / f"{name}.png"
+        trace = RESULTS_DIR / f"{name}-trace.zip"
+        try:
+            page.screenshot(path=str(screenshot), full_page=True)
+        except Exception:
+            pass
+        try:
+            context.tracing.stop(path=str(trace))
+        except Exception:
+            pass
+        print(f"FAIL: {name}", flush=True)
+        traceback.print_exc()
+        raise
+    finally:
+        context.close()
+
+
+def main() -> int:
+    failures: list[str] = []
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch(headless=True)
+        scenarios = [
+            ("desktop-student-journey", {"width": 1440, "height": 1000}, desktop_student_journey),
+            (
+                "mobile-responsive",
+                {"width": 390, "height": 844},
+                lambda page: responsive_navigation(page, "mobile"),
+            ),
+            (
+                "ipad-responsive",
+                {"width": 1024, "height": 768},
+                lambda page: responsive_navigation(page, "ipad"),
+            ),
+        ]
+        for name, viewport, scenario in scenarios:
+            try:
+                run_scenario(browser, name, viewport, scenario)
+            except Exception as exc:
+                failures.append(f"{name}: {exc}")
+        browser.close()
+
+    if failures:
+        print("\nBrowser E2E failures:", flush=True)
+        for failure in failures:
+            print(f"  - {failure}", flush=True)
+        return 1
+
+    print("\nPASS: all MathFan browser E2E scenarios", flush=True)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
