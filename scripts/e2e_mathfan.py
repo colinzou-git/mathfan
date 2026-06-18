@@ -88,7 +88,9 @@ def set_practice_preferences_and_verify_persistence(page: Page) -> None:
 
 
 def run_practice_journey(page: Page) -> None:
-    page.get_by_role("button", name="Multiply", exact=True).click()
+    # The operation button's accessible name includes its icon, so match the
+    # visible operation text without requiring exact equality.
+    page.get_by_role("button", name=re.compile(r"Multiply")).click()
     expect(page.get_by_role("heading", name="Multiplication", exact=True)).to_be_visible()
 
     # Force a deterministic 1 × 1 problem and a one-question session.
@@ -159,7 +161,7 @@ def responsive_navigation(page: Page, label: str) -> None:
     assert_no_horizontal_overflow(page, f"{label} settings")
     page.get_by_role("button", name="← Back", exact=True).click()
 
-    page.get_by_role("button", name="Multiply", exact=True).click()
+    page.get_by_role("button", name=re.compile(r"Multiply")).click()
     expect(page.get_by_role("heading", name="Multiplication", exact=True)).to_be_visible()
     expect(page.get_by_role("button", name=re.compile(r"Start — \d+ questions"))).to_be_visible()
     assert_no_horizontal_overflow(page, f"{label} multiplication setup")
