@@ -116,7 +116,9 @@ def run_practice_journey(page: Page) -> None:
 
     expect(page.get_by_role("heading", name="Session Complete!", exact=True)).to_be_visible()
     expect(page.get_by_text("You solved 1 problem.", exact=True)).to_be_visible()
-    expect(page.get_by_text("1 learning moment", exact=True)).to_be_visible()
+    learning_label = page.get_by_text("learning moment", exact=True)
+    expect(learning_label).to_be_visible()
+    expect(learning_label.locator("..")).to_contain_text("1")
     page.get_by_role("button", name="Home", exact=True).click()
 
     expect(page.get_by_role("heading", name="Hi, BrowserTester!", exact=True)).to_be_visible()
