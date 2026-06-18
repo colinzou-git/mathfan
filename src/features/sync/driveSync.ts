@@ -29,9 +29,12 @@ async function authFetch(url: string, options: RequestInit = {}): Promise<Respon
 
 async function findSyncFile(): Promise<string | null> {
   const res = await authFetch(LIST_URL);
-  if (!res.ok) return null;
+  if (!res.ok) throw new Error(`Drive LIST failed: ${res.status}`);
   const data = await res.json();
-  return (data.files as { id: string }[])?.[0]?.id ?? null;
+  const files = (data.files as { id: string; modifiedTime?: string }[] | undefined) ?? [];
+  if (files.length === 0) return null;
+  files.sort((a, b) => (b.modifiedTime ?? '').localeCompare(a.modifiedTime ?? ''));
+  return files[0].id;
 }
 
 async function uploadSnapshot(snapshot: AppSnapshot, existingId?: string): Promise<void> {
@@ -76,9 +79,10 @@ async function downloadSnapshot(): Promise<AppSnapshot | null> {
   const fileId = await findSyncFile();
   if (!fileId) return null;
   const res = await authFetch(`${FILES_URL}/${fileId}?alt=media`);
-  if (!res.ok) return null;
+  if (!res.ok) throw new Error(`Drive download failed: ${res.status}`);
   const raw = await res.json();
-  return validateSnapshot(raw) ? raw : null;
+  if (!validateSnapshot(raw)) throw new Error('Drive snapshot is invalid');
+  return raw;
 }
 
 // ── Public ────────────────────────────────────────────────────────────────────
