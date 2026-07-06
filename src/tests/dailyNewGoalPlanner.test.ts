@@ -6,6 +6,7 @@ import type { StudentItemState } from '../types/math';
 import type { StudentSkillSummary } from '../features/mastery/skillMasteryEngine';
 import { planPracticeForSkill } from '../features/mastery/skillPracticePlanner';
 import { calculateGoalProgress } from '../features/goals/goalEngine';
+import { DEFAULT_DAILY_NEW_GOAL_LIMITS, normalizeDailyNewGoalLimits, validateDailyNewGoalLimits } from '../features/goals/dailyNewGoalLimits';
 
 const STUDENT_ID = 'student-1';
 const NOW = '2026-06-17T16:00:00.000Z';
@@ -197,7 +198,36 @@ describe('planDailyNewForGoals allocation', () => {
     });
     expect(result.tiles.length).toBeLessThanOrEqual(3);
     expect(result.tiles.every(tile => tile.questionCount >= 5 && tile.questionCount <= 12)).toBe(true);
-    expect(result.tiles.reduce((sum, tile) => sum + tile.questionCount, 0)).toBeLessThanOrEqual(40);
+    expect(result.tiles.reduce((sum, tile) => sum + tile.questionCount, 0)).toBeLessThanOrEqual(80);
+  });
+
+  it('respects custom global tile limits and planned total cap', () => {
+    const result = plan({
+      goals: [
+        goal({ id: 'g1', targets: [target({ id: 't1', skillId: 'g3-mul-meaning' })] }),
+        goal({ id: 'g2', targets: [target({ id: 't2', skillId: 'g3-area-concept' })] }),
+      ],
+      skillSummaries: [summary(), summary('g3-area-concept')],
+      dailyNewGoalQuestionLimits: { minQuestionsPerSkillTile: 3, maxQuestionsPerSkillTile: 8, maxPlannedQuestionsPerDay: 10 },
+    });
+    expect(result.tiles.every(tile => tile.questionCount >= 3 && tile.questionCount <= 8)).toBe(true);
+    expect(result.tiles.reduce((sum, tile) => sum + tile.questionCount, 0)).toBeLessThanOrEqual(10);
+  });
+
+  it('uses per-goal overrides and warns when same-skill limits conflict', () => {
+    const result = plan({ goals: [
+      goal({ id: 'g1', dailyNewQuestionLimitsOverride: { minQuestionsPerSkillTile: 10, maxQuestionsPerSkillTile: 12 } }),
+      goal({ id: 'g2', dailyNewQuestionLimitsOverride: { minQuestionsPerSkillTile: 3, maxQuestionsPerSkillTile: 5 } }),
+    ] });
+    expect(result.tiles[0].questionCount).toBeLessThanOrEqual(5);
+    expect(result.warnings.some(warning => warning.code === 'conflicting_goal_tile_limits')).toBe(true);
+  });
+
+  it('warns when a short goal needs more days at its current limits', () => {
+    const result = plan({
+      goals: [goal({ targetDate: '2026-06-17', durationDays: 1, dailyNewQuestionLimitsOverride: { minQuestionsPerSkillTile: 1, maxQuestionsPerSkillTile: 1 } })],
+    });
+    expect(result.warnings.find(warning => warning.code === 'goal_needs_more_days')?.extraDaysNeeded).toBeGreaterThan(0);
   });
 
   it('ensures the most urgent eligible goal receives a tile', () => {
@@ -314,6 +344,19 @@ describe('planDailyNewForGoals allocation', () => {
 
     expect(nextDay.tiles[0].isComplete).toBe(false);
     expect(nextDay.tiles.flatMap(tile => tile.itemIds).some(id => !first.tiles[0].itemIds.includes(id))).toBe(true);
+  });
+});
+
+describe('Daily New goal limit validation', () => {
+  it('uses the backward-compatible defaults and normalizes invalid saved data', () => {
+    expect(normalizeDailyNewGoalLimits()).toEqual(DEFAULT_DAILY_NEW_GOAL_LIMITS);
+    expect(normalizeDailyNewGoalLimits({ minQuestionsPerSkillTile: 20, maxQuestionsPerSkillTile: 2, maxPlannedQuestionsPerDay: 3 }))
+      .toEqual({ minQuestionsPerSkillTile: 20, maxQuestionsPerSkillTile: 20, maxPlannedQuestionsPerDay: 20 });
+  });
+
+  it('rejects impossible user-entered limits', () => {
+    const result = validateDailyNewGoalLimits({ minQuestionsPerSkillTile: 6, maxQuestionsPerSkillTile: 5, maxPlannedQuestionsPerDay: 4 });
+    expect(result.errors).toHaveLength(2);
   });
 });
 

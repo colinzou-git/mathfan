@@ -71,6 +71,12 @@ export interface StudentProfile {
   settings: StudentSettings;
 }
 
+export interface DailyNewGoalQuestionLimits {
+  minQuestionsPerSkillTile: number;
+  maxQuestionsPerSkillTile: number;
+  maxPlannedQuestionsPerDay: number;
+}
+
 export interface StudentSettings {
   audioEnabled: boolean;
   speechRate: number;
@@ -81,6 +87,7 @@ export interface StudentSettings {
   allowTimedMode: boolean;
   competitionModeEnabled: boolean;
   parentModeEnabled: boolean;
+  dailyNewGoalQuestionLimits?: DailyNewGoalQuestionLimits;
 }
 
 // Forward-declare ThemeName here so StudentSettings can reference it without a circular import

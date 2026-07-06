@@ -1,12 +1,13 @@
 import type { MathAnswerEvent } from '../learning/learningEvents';
 import type { StudentSkillSummary } from '../mastery/skillMasteryEngine';
 import type { LearningGoal } from './types';
-import type { SessionConfig, StudentItemState } from '../../types/math';
+import type { DailyNewGoalQuestionLimits, SessionConfig, StudentItemState } from '../../types/math';
 import { makeItemFromId } from '../curriculum/makeItemFromId';
 import { inferGrade3SkillId } from '../mastery/skillMapping';
 import { planPracticeForSkill } from '../mastery/skillPracticePlanner';
 import { getGrade3Skill } from '../mastery/grade3MasteryMap';
 import { calculateGoalProgress, localDateInTimeZone, type GoalEvidenceInput, type GoalTargetProgress } from './goalEngine';
+import { normalizeDailyNewGoalLimits, resolveGoalTileLimits } from './dailyNewGoalLimits';
 
 export type DailyNewGoalTileKind = 'new_skill' | 'continue_new_learning';
 export type DailyNewGoalLearningKind = 'planned' | 'extra';
@@ -36,6 +37,17 @@ export interface DailyNewGoalPlan {
   extraChoices: DailyNewGoalTile[];
   emptyReason: DailyNewGoalEmptyReason;
   exhaustedExtra: boolean;
+  warnings: DailyNewGoalWarning[];
+}
+
+export type DailyNewGoalWarningCode = 'goal_needs_more_days' | 'conflicting_goal_tile_limits';
+export interface DailyNewGoalWarning {
+  code: DailyNewGoalWarningCode;
+  goalId?: string;
+  goalTitle?: string;
+  skillId?: string;
+  message: string;
+  extraDaysNeeded?: number;
 }
 
 export interface PlanDailyNewGoalsArgs {
@@ -46,6 +58,7 @@ export interface PlanDailyNewGoalsArgs {
   skillSummaries: StudentSkillSummary[];
   now: string;
   timezone: string;
+  dailyNewGoalQuestionLimits?: Partial<DailyNewGoalQuestionLimits>;
 }
 
 interface Candidate {
@@ -56,6 +69,8 @@ interface Candidate {
   priority: number;
   progress: number;
   daysRemaining: number;
+  minQuestionsPerSkillTile: number;
+  maxQuestionsPerSkillTile: number;
 }
 
 interface SkillGroup {
@@ -65,12 +80,12 @@ interface SkillGroup {
   priority: number;
   progress: number;
   daysRemaining: number;
+  minQuestionsPerSkillTile: number;
+  maxQuestionsPerSkillTile: number;
+  hasConflictingLimits: boolean;
 }
 
-const MIN_TILE_QUESTIONS = 5;
-const MAX_TILE_QUESTIONS = 12;
 const MAX_PLANNED_TILES = 3;
-const MAX_PLANNED_TOTAL = 40;
 
 function directFirstAttempt(event: MathAnswerEvent): boolean {
   return !event.isRetry && event.relatedEvidence !== true;
@@ -214,6 +229,7 @@ function buildGroups(args: PlanDailyNewGoalsArgs, attempted: Set<string>, exclud
   const summaryMap = new Map(skillSummaries.map(summary => [summary.skillId, summary]));
   const evidence: GoalEvidenceInput = { studentId, events, itemStates, skillSummaries, now, timezone };
   const bySkill = new Map<string, SkillGroup>();
+  const globalLimits = normalizeDailyNewGoalLimits(args.dailyNewGoalQuestionLimits);
 
   for (const goal of activeGoals) {
     const progress = calculateGoalProgress(goal, evidence);
@@ -225,6 +241,7 @@ function buildGroups(args: PlanDailyNewGoalsArgs, attempted: Set<string>, exclud
       if (eligible.length === 0) continue;
       const unfinishedPerDay = eligible.length / Math.max(1, progress.daysRemaining + 1);
       const urgency = progress.daysRemaining <= 1 ? 4 : progress.daysRemaining <= 3 ? 2 : 0;
+      const goalLimits = resolveGoalTileLimits(goal, globalLimits);
       const candidate: Candidate = {
         goal,
         target: targetProgress,
@@ -233,6 +250,7 @@ function buildGroups(args: PlanDailyNewGoalsArgs, attempted: Set<string>, exclud
         priority: unfinishedPerDay + urgency + (1 - targetProgress.displayScore),
         progress: targetProgress.displayScore,
         daysRemaining: progress.daysRemaining,
+        ...goalLimits,
       };
       const group = bySkill.get(targetProgress.skillId) ?? {
         skillId: targetProgress.skillId,
@@ -241,7 +259,18 @@ function buildGroups(args: PlanDailyNewGoalsArgs, attempted: Set<string>, exclud
         priority: 0,
         progress: 1,
         daysRemaining: Number.POSITIVE_INFINITY,
+        minQuestionsPerSkillTile: candidate.minQuestionsPerSkillTile,
+        maxQuestionsPerSkillTile: candidate.maxQuestionsPerSkillTile,
+        hasConflictingLimits: false,
       };
+      if (group.candidates.length > 0) {
+        group.minQuestionsPerSkillTile = Math.max(group.minQuestionsPerSkillTile, candidate.minQuestionsPerSkillTile);
+        group.maxQuestionsPerSkillTile = Math.min(group.maxQuestionsPerSkillTile, candidate.maxQuestionsPerSkillTile);
+        if (group.minQuestionsPerSkillTile > group.maxQuestionsPerSkillTile) {
+          group.minQuestionsPerSkillTile = group.maxQuestionsPerSkillTile;
+          group.hasConflictingLimits = true;
+        }
+      }
       group.candidates.push(candidate);
       group.itemIds = Array.from(new Set([...group.itemIds, ...eligible]));
       group.priority = Math.max(group.priority, candidate.priority);
@@ -259,8 +288,30 @@ function buildGroups(args: PlanDailyNewGoalsArgs, attempted: Set<string>, exclud
 
 function chooseItemBatch(group: SkillGroup, used: Set<string>, preferredCount: number): string[] {
   const remaining = orderItems(group.itemIds.filter(id => !used.has(id)));
-  const count = Math.min(MAX_TILE_QUESTIONS, Math.max(Math.min(MIN_TILE_QUESTIONS, remaining.length), preferredCount), remaining.length);
+  const minForGroup = Math.min(group.minQuestionsPerSkillTile, remaining.length);
+  const count = Math.min(group.maxQuestionsPerSkillTile, Math.max(minForGroup, preferredCount), remaining.length);
   return remaining.slice(0, count);
+}
+
+function buildWarnings(activeGoals: LearningGoal[], groups: SkillGroup[], limits: DailyNewGoalQuestionLimits): DailyNewGoalWarning[] {
+  const warnings: DailyNewGoalWarning[] = groups.filter(group => group.hasConflictingLimits).map(group => ({
+    code: 'conflicting_goal_tile_limits', skillId: group.skillId,
+    message: 'Some goals have conflicting Daily New limits for this skill. MathFan used the lower max question cap.',
+  }));
+  for (const goal of activeGoals) {
+    const candidates = groups.flatMap(group => group.candidates.filter(candidate => candidate.goal.id === goal.id));
+    if (!candidates.length) continue;
+    const daysAvailable = Math.max(1, Math.min(...candidates.map(candidate => candidate.daysRemaining)) + 1);
+    const requiredBySkill = Math.max(...candidates.map(candidate => Math.ceil(candidate.itemIds.length / candidate.maxQuestionsPerSkillTile)));
+    const totalEligible = new Set(candidates.flatMap(candidate => candidate.itemIds)).size;
+    const requiredDays = Math.max(requiredBySkill, Math.ceil(totalEligible / limits.maxPlannedQuestionsPerDay));
+    const extraDaysNeeded = requiredDays - daysAvailable;
+    if (extraDaysNeeded > 0) warnings.push({
+      code: 'goal_needs_more_days', goalId: goal.id, goalTitle: goal.title, extraDaysNeeded,
+      message: `This goal may need ${extraDaysNeeded} more day${extraDaysNeeded === 1 ? '' : 's'} at your current Daily New limits.`,
+    });
+  }
+  return warnings;
 }
 
 export function planDailyNewForGoals(args: PlanDailyNewGoalsArgs): DailyNewGoalPlan {
@@ -273,11 +324,12 @@ export function planDailyNewForGoals(args: PlanDailyNewGoalsArgs): DailyNewGoalP
   const groups = buildGroups(args, attemptedBeforeDay, new Set());
   const tiles: DailyNewGoalTile[] = [];
   let plannedTotal = 0;
+  const globalLimits = normalizeDailyNewGoalLimits(args.dailyNewGoalQuestionLimits);
 
   for (const group of groups.slice(0, MAX_PLANNED_TILES)) {
-    const preferred = Math.min(MAX_TILE_QUESTIONS, Math.max(MIN_TILE_QUESTIONS, Math.ceil(group.itemIds.length / Math.max(1, group.daysRemaining + 1))));
-    const remainingBudget = MAX_PLANNED_TOTAL - plannedTotal;
-    if (remainingBudget <= 0) break;
+    const preferred = Math.min(group.maxQuestionsPerSkillTile, Math.max(group.minQuestionsPerSkillTile, Math.ceil(group.itemIds.length / Math.max(1, group.daysRemaining + 1))));
+    const remainingBudget = globalLimits.maxPlannedQuestionsPerDay - plannedTotal;
+    if (remainingBudget < Math.min(group.minQuestionsPerSkillTile, group.itemIds.length)) break;
     const ids = chooseItemBatch(group, used, Math.min(preferred, remainingBudget));
     if (ids.length === 0) continue;
     ids.forEach(id => used.add(id));
@@ -291,7 +343,7 @@ export function planDailyNewForGoals(args: PlanDailyNewGoalsArgs): DailyNewGoalP
   const extraExcluded = new Set([...plannedIds, ...todayGoalLearningIds]);
   const extraGroups = buildGroups(args, allTimeAttempted, extraExcluded);
   const extraChoices = extraGroups.map(group => {
-    const ids = chooseItemBatch(group, new Set(), MAX_TILE_QUESTIONS);
+    const ids = chooseItemBatch(group, new Set(), group.maxQuestionsPerSkillTile);
     return ids.length ? makeTile(group, ids, 'extra', todayCompletedIds) : null;
   }).filter((tile): tile is DailyNewGoalTile => Boolean(tile));
 
@@ -300,5 +352,6 @@ export function planDailyNewForGoals(args: PlanDailyNewGoalsArgs): DailyNewGoalP
     extraChoices,
     emptyReason: activeGoals.length === 0 ? 'no_active_goals' : tiles.length === 0 ? 'no_unseen_items' : null,
     exhaustedExtra: activeGoals.length > 0 && extraChoices.length === 0,
+    warnings: buildWarnings(activeGoals, groups, globalLimits),
   };
 }

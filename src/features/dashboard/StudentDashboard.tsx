@@ -153,6 +153,7 @@ export function StudentDashboard({ profile, lastSyncedAt, onStartDailyReview, on
           skillSummaries: completeSkillSummaries(profile.id, derived),
           now: now.toISOString(),
           timezone: profile.timezone,
+          dailyNewGoalQuestionLimits: profile.settings.dailyNewGoalQuestionLimits,
         }));
         setDailyNewError(null);
       } catch (err) {
@@ -161,7 +162,7 @@ export function StudentDashboard({ profile, lastSyncedAt, onStartDailyReview, on
         setDailyNewError(err instanceof Error ? err.message : 'Daily New for Goals could not load.');
       }
     })();
-  }, [profile.id, profile.timezone, lastSyncedAt]);
+  }, [profile.id, profile.timezone, profile.settings.dailyNewGoalQuestionLimits, lastSyncedAt]);
 
   const sortedGroups = GROUP_ORDER.filter(k => dueByGroup[k]);
 
@@ -263,6 +264,11 @@ export function StudentDashboard({ profile, lastSyncedAt, onStartDailyReview, on
         {!dailyNewError && !dailyNewPlan && (
           <div style={s.dailyNewNotice}>Loading Daily New for Goals...</div>
         )}
+        {dailyNewPlan?.warnings.map((warning, index) => (
+          <p key={`${warning.code}:${warning.goalId ?? warning.skillId ?? index}`} style={s.dailyNewWarning}>
+            {warning.message}
+          </p>
+        ))}
         {dailyNewPlan?.emptyReason === 'no_active_goals' && (
           <div style={s.dailyNewNotice}>
             <p style={s.noticeText}>Set a goal to get a daily new-learning plan.</p>
@@ -491,6 +497,7 @@ const s: Record<string, CSSProperties> = {
   dailyNewSection: { display: 'grid', gap: '10px', marginBottom: '4px' },
   dailyNewCopy: { fontSize: '13px', color: '#4b5563', margin: 0, lineHeight: 1.45 },
   dailyNewNotice: { background: '#f9fafb', border: '1.5px solid #e5e7eb', borderRadius: '10px', padding: '12px', display: 'grid', gap: '8px' },
+  dailyNewWarning: { background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '8px', padding: '8px 10px', color: '#92400e', fontSize: '13px', margin: '8px 0' },
   noticeText: { margin: 0, fontSize: '13px', color: '#6b7280', lineHeight: 1.4 },
   dailyNewGrid: { display: 'grid', gap: '8px' },
   dailyNewTile: { background: '#fff', border: '1.5px solid #bae6fd', borderRadius: '8px', padding: '12px', display: 'grid', gap: '8px' },

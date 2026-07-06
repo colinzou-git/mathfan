@@ -1,6 +1,6 @@
 import type { SkillSummaryStatus } from '../mastery/skillMasteryEngine';
 import type { MathAnswerEvent } from '../learning/learningEvents';
-import type { ReviewGrade } from '../../types/math';
+import type { DailyNewGoalQuestionLimits, ReviewGrade } from '../../types/math';
 
 export type LearningGoalStatus = 'active' | 'paused' | 'completed' | 'ended' | 'cancelled';
 export type GoalSource = 'recommended' | 'evaluation' | 'manual';
@@ -52,6 +52,9 @@ export interface LearningGoal {
   completedAt?: string;
   endedAt?: string;
   evaluationId?: string;
+  dailyNewQuestionLimitsOverride?: Partial<Pick<DailyNewGoalQuestionLimits,
+    'minQuestionsPerSkillTile' | 'maxQuestionsPerSkillTile'
+  >>;
 }
 
 export type GoalEventType =

@@ -314,6 +314,34 @@ describe('GoalsPage', () => {
     expect(await screen.findByText('2')).toBeInTheDocument();
   });
 
+  it('shows default Daily New limits and saves a per-goal override', async () => {
+    renderGoals();
+    await openWizardToStep(3);
+
+    expect(screen.getByLabelText(/Default min questions per skill per day/i)).toHaveValue(5);
+    expect(screen.getByLabelText(/Default max questions per skill per day/i)).toHaveValue(12);
+    expect(screen.getByLabelText(/Max planned goal-new questions per day/i)).toHaveValue(80);
+    fireEvent.click(screen.getByLabelText(/Use custom per-skill limits/i));
+    fireEvent.change(screen.getByLabelText(/^Min questions per skill per day$/i), { target: { value: '3' } });
+    fireEvent.change(screen.getByLabelText(/^Max questions per skill per day$/i), { target: { value: '7' } });
+    fireEvent.click(screen.getByRole('button', { name: /save goal/i }));
+
+    await waitFor(() => expect(store.goals[0].dailyNewQuestionLimitsOverride).toEqual({
+      minQuestionsPerSkillTile: 3,
+      maxQuestionsPerSkillTile: 7,
+    }));
+  });
+
+  it('blocks invalid Daily New limits', async () => {
+    renderGoals();
+    await openWizardToStep(3);
+    fireEvent.change(screen.getByLabelText(/Default min questions per skill per day/i), { target: { value: '10' } });
+    fireEvent.change(screen.getByLabelText(/Default max questions per skill per day/i), { target: { value: '5' } });
+    fireEvent.click(screen.getByRole('button', { name: /save goal/i }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(/greater than or equal/i);
+    expect(store.goals).toHaveLength(0);
+  });
+
   it('opens Add Goal review with evaluation-selected skills without auto-creating a goal', async () => {
     const handled = renderGoalsWithInitialSkills(['g3-mul-meaning']);
 

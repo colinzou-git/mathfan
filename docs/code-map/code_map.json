@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-06-17T17:18:39.279280+00:00",
-  "repo_root": "C:\\Users\\colin\\Documents\\mathFan",
+  "generated_at": "2026-07-06T18:40:33.599325+00:00",
+  "repo_root": "/home/ubuntu/mathfan",
   "package": {
     "name": "mathfan",
     "version": "1.2.0",
@@ -13,6 +13,9 @@
       "test": "vitest run",
       "test:watch": "vitest",
       "test:coverage": "vitest run --coverage",
+      "test:e2e:journey": "python scripts/e2e_mathfan.py",
+      "test:e2e:update": "python scripts/smoke-update-flow.py",
+      "test:e2e": "npm run test:e2e:journey && npm run test:e2e:update",
       "ci": "npm run lint && npm test && npm run build"
     },
     "dependencies": {
@@ -51,9 +54,9 @@
     {
       "path": "AGENTS.md",
       "ext": ".md",
-      "bytes": 1533,
-      "lines": 44,
-      "sha1": "20498e45bea0",
+      "bytes": 2336,
+      "lines": 65,
+      "sha1": "b03a0daed50d",
       "imports": [],
       "exports": [],
       "functions": [],
@@ -165,6 +168,46 @@
       "css_classes": [],
       "json_keys": [],
       "purpose": "Local persistence/database layer.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "docs/BROWSER_TESTING.md",
+      "ext": ".md",
+      "bytes": 2507,
+      "lines": 79,
+      "sha1": "cfe7f5297d00",
+      "imports": [],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Project file.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "docs/bug-review-2026-06-18.md",
+      "ext": ".md",
+      "bytes": 848,
+      "lines": 10,
+      "sha1": "c9d2279daf80",
+      "imports": [],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Project file.",
       "too_large": false,
       "read_error": null
     },
@@ -318,9 +361,9 @@
     {
       "path": "package.json",
       "ext": ".json",
-      "bytes": 1268,
-      "lines": 48,
-      "sha1": "8d59b93b90fa",
+      "bytes": 1458,
+      "lines": 51,
+      "sha1": "704de5918132",
       "imports": [],
       "exports": [],
       "functions": [],
@@ -354,6 +397,9 @@
         "scripts",
         "test",
         "test:coverage",
+        "test:e2e",
+        "test:e2e:journey",
+        "test:e2e:update",
         "test:watch",
         "ts-fsrs",
         "type",
@@ -385,6 +431,26 @@
       "css_classes": [],
       "json_keys": [],
       "purpose": "Local persistence/database layer.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "requirements-e2e.txt",
+      "ext": ".txt",
+      "bytes": 20,
+      "lines": 2,
+      "sha1": "ece099316f67",
+      "imports": [],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Project file.",
       "too_large": false,
       "read_error": null
     },
@@ -478,6 +544,55 @@
       "read_error": null
     },
     {
+      "path": "scripts/e2e_mathfan.py",
+      "ext": ".py",
+      "bytes": 10213,
+      "lines": 256,
+      "sha1": "d7380e822af1",
+      "imports": [
+        "__future__",
+        "os",
+        "pathlib",
+        "playwright.sync_api",
+        "re",
+        "sys",
+        "traceback",
+        "typing"
+      ],
+      "exports": [
+        "assert_no_horizontal_overflow",
+        "create_profile",
+        "desktop_student_journey",
+        "expect_dashboard_attempt_stats",
+        "main",
+        "responsive_navigation",
+        "run_practice_journey",
+        "run_scenario",
+        "set_practice_preferences_and_verify_persistence"
+      ],
+      "functions": [
+        "assert_no_horizontal_overflow",
+        "create_profile",
+        "desktop_student_journey",
+        "expect_dashboard_attempt_stats",
+        "main",
+        "responsive_navigation",
+        "run_practice_journey",
+        "run_scenario",
+        "set_practice_preferences_and_verify_persistence"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Exports reusable code: assert_no_horizontal_overflow, create_profile, desktop_student_journey, expect_dashboard_attempt_stats, main.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "scripts/generate_code_map.py",
       "ext": ".py",
       "bytes": 1268,
@@ -552,37 +667,6 @@
       "read_error": null
     },
     {
-      "path": "scripts/smoke-google-auth.py",
-      "ext": ".py",
-      "bytes": 11191,
-      "lines": 221,
-      "sha1": "1efa4a668521",
-      "imports": [
-        "__future__",
-        "playwright.sync_api",
-        "sys",
-        "time"
-      ],
-      "exports": [
-        "dismiss_gate",
-        "main"
-      ],
-      "functions": [
-        "dismiss_gate",
-        "main"
-      ],
-      "classes": [],
-      "interfaces": [],
-      "types": [],
-      "components": [],
-      "hooks": [],
-      "css_classes": [],
-      "json_keys": [],
-      "purpose": "Cloud sync/auth/data transfer logic.",
-      "too_large": false,
-      "read_error": null
-    },
-    {
       "path": "scripts/smoke-https-headers.py",
       "ext": ".py",
       "bytes": 3157,
@@ -618,46 +702,18 @@
       "read_error": null
     },
     {
-      "path": "scripts/smoke-template.py",
-      "ext": ".py",
-      "bytes": 2227,
-      "lines": 62,
-      "sha1": "979a90e35de6",
-      "imports": [
-        "__future__",
-        "playwright.sync_api",
-        "sys",
-        "time"
-      ],
-      "exports": [
-        "main"
-      ],
-      "functions": [
-        "main"
-      ],
-      "classes": [],
-      "interfaces": [],
-      "types": [],
-      "components": [],
-      "hooks": [],
-      "css_classes": [],
-      "json_keys": [],
-      "purpose": "Exports reusable code: main.",
-      "too_large": false,
-      "read_error": null
-    },
-    {
       "path": "scripts/smoke-update-flow.py",
       "ext": ".py",
-      "bytes": 5681,
-      "lines": 133,
-      "sha1": "ad4a6ab12192",
+      "bytes": 6406,
+      "lines": 174,
+      "sha1": "76d84ba8cbbe",
       "imports": [
         "__future__",
         "json",
+        "os",
+        "pathlib",
         "playwright.sync_api",
-        "sys",
-        "time"
+        "sys"
       ],
       "exports": [
         "abort_build_info",
@@ -685,9 +741,9 @@
     {
       "path": "src/App.tsx",
       "ext": ".tsx",
-      "bytes": 10465,
-      "lines": 312,
-      "sha1": "fe34c5be86e4",
+      "bytes": 10505,
+      "lines": 313,
+      "sha1": "6c16ab2abc9f",
       "imports": [
         "./components/opSpecs",
         "./components/RangeSetup",
@@ -2180,9 +2236,9 @@
     {
       "path": "src/features/dashboard/StudentDashboard.tsx",
       "ext": ".tsx",
-      "bytes": 25450,
-      "lines": 521,
-      "sha1": "b5a32845e1ea",
+      "bytes": 25973,
+      "lines": 528,
+      "sha1": "9f7ba4cd63ac",
       "imports": [
         "../../db/repositories",
         "../../types/math",
@@ -2357,11 +2413,47 @@
       "read_error": null
     },
     {
+      "path": "src/features/goals/dailyNewGoalLimits.ts",
+      "ext": ".ts",
+      "bytes": 2689,
+      "lines": 49,
+      "sha1": "e87650c91c45",
+      "imports": [
+        "../../types/math",
+        "./types"
+      ],
+      "exports": [
+        "DailyNewGoalLimitValidationResult",
+        "DEFAULT_DAILY_NEW_GOAL_LIMITS",
+        "normalizeDailyNewGoalLimits",
+        "resolveGoalTileLimits",
+        "validateDailyNewGoalLimits"
+      ],
+      "functions": [
+        "integer",
+        "normalizeDailyNewGoalLimits",
+        "resolveGoalTileLimits",
+        "validateDailyNewGoalLimits"
+      ],
+      "classes": [],
+      "interfaces": [
+        "DailyNewGoalLimitValidationResult"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Exports reusable code: DailyNewGoalLimitValidationResult, DEFAULT_DAILY_NEW_GOAL_LIMITS, normalizeDailyNewGoalLimits, resolveGoalTileLimits, validateDailyNewGoalLimits.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/features/goals/dailyNewGoalPlanner.ts",
       "ext": ".ts",
-      "bytes": 12087,
-      "lines": 310,
-      "sha1": "619ced19adf8",
+      "bytes": 15009,
+      "lines": 358,
+      "sha1": "cebd4fd185bd",
       "imports": [
         "../../types/math",
         "../curriculum/makeItemFromId",
@@ -2370,6 +2462,7 @@
         "../mastery/skillMapping",
         "../mastery/skillMasteryEngine",
         "../mastery/skillPracticePlanner",
+        "./dailyNewGoalLimits",
         "./goalEngine",
         "./types"
       ],
@@ -2379,11 +2472,14 @@
         "DailyNewGoalPlan",
         "DailyNewGoalTile",
         "DailyNewGoalTileKind",
+        "DailyNewGoalWarning",
+        "DailyNewGoalWarningCode",
         "planDailyNewForGoals",
         "PlanDailyNewGoalsArgs"
       ],
       "functions": [
         "buildGroups",
+        "buildWarnings",
         "chooseItemBatch",
         "directAttemptedItemIds",
         "directFirstAttempt",
@@ -2402,13 +2498,15 @@
         "Candidate",
         "DailyNewGoalPlan",
         "DailyNewGoalTile",
+        "DailyNewGoalWarning",
         "PlanDailyNewGoalsArgs",
         "SkillGroup"
       ],
       "types": [
         "DailyNewGoalEmptyReason",
         "DailyNewGoalLearningKind",
-        "DailyNewGoalTileKind"
+        "DailyNewGoalTileKind",
+        "DailyNewGoalWarningCode"
       ],
       "components": [],
       "hooks": [],
@@ -2421,9 +2519,9 @@
     {
       "path": "src/features/goals/goalEngine.ts",
       "ext": ".ts",
-      "bytes": 17007,
-      "lines": 524,
-      "sha1": "a048ce16d330",
+      "bytes": 17234,
+      "lines": 531,
+      "sha1": "0b4a661c8320",
       "imports": [
         "../../types/math",
         "../curriculum/makeItemFromId",
@@ -2458,6 +2556,7 @@
         "buildGoalSkillTarget",
         "calculateGoalProgress",
         "calculateTargetProgress",
+        "calendarDayNumber",
         "captureGoalBaseline",
         "clamp01",
         "defaultSkillIdForItem",
@@ -2802,9 +2901,9 @@
     {
       "path": "src/features/goals/GoalsPage.tsx",
       "ext": ".tsx",
-      "bytes": 38105,
-      "lines": 923,
-      "sha1": "cbf71a02b2bc",
+      "bytes": 43906,
+      "lines": 1001,
+      "sha1": "0ac771d7cfda",
       "imports": [
         "../../db/repositories",
         "../../types/math",
@@ -2814,6 +2913,8 @@
         "../mastery/grade3MasteryMap",
         "../mastery/skillMasteryEngine",
         "../time/clock",
+        "./dailyNewGoalLimits",
+        "./dailyNewGoalPlanner",
         "./goalEngine",
         "./goalLifecycleService",
         "./goalRecommendationEngine",
@@ -2880,9 +2981,9 @@
     {
       "path": "src/features/goals/types.ts",
       "ext": ".ts",
-      "bytes": 2693,
-      "lines": 117,
-      "sha1": "a45618dc10ea",
+      "bytes": 2863,
+      "lines": 120,
+      "sha1": "54b2a7f5660c",
       "imports": [
         "../../types/math",
         "../learning/learningEvents",
@@ -4033,15 +4134,16 @@
     {
       "path": "src/features/settings/SettingsPage.tsx",
       "ext": ".tsx",
-      "bytes": 25536,
-      "lines": 516,
-      "sha1": "6f6f57162aee",
+      "bytes": 27911,
+      "lines": 554,
+      "sha1": "95d27be1779a",
       "imports": [
         "../../db/repositories",
         "../../types/math",
         "../ai/aiConfig",
         "../ai/gemini",
         "../auth/googleAuth",
+        "../goals/dailyNewGoalLimits",
         "../sync/driveSync",
         "../theme/themes",
         "../time/clock",
@@ -4062,6 +4164,7 @@
         "removeAi",
         "save",
         "saveAi",
+        "saveDailyNewLimits",
         "saveName",
         "Section",
         "SettingsPage",
@@ -4523,9 +4626,9 @@
     {
       "path": "src/features/sync/driveSync.ts",
       "ext": ".ts",
-      "bytes": 4889,
-      "lines": 151,
-      "sha1": "88de0a7f321f",
+      "bytes": 5326,
+      "lines": 163,
+      "sha1": "aab36ffa84ee",
       "imports": [
         "../auth/googleAuth",
         "./snapshot"
@@ -4540,6 +4643,7 @@
         "downloadSnapshot",
         "findSyncFile",
         "getDriveFileInfo",
+        "newestSyncFile",
         "pullAndMerge",
         "pushLocal",
         "syncBothWays",
@@ -4548,6 +4652,7 @@
       "classes": [],
       "interfaces": [
         "DriveFileInfo",
+        "DriveListFile",
         "SyncResult"
       ],
       "types": [
@@ -5454,10 +5559,11 @@
     {
       "path": "src/tests/dailyNewGoalPlanner.test.ts",
       "ext": ".ts",
-      "bytes": 14058,
-      "lines": 385,
-      "sha1": "a8ccde12d588",
+      "bytes": 16581,
+      "lines": 428,
+      "sha1": "99064800fc1d",
       "imports": [
+        "../features/goals/dailyNewGoalLimits",
         "../features/goals/dailyNewGoalPlanner",
         "../features/goals/goalEngine",
         "../features/goals/types",
@@ -5561,6 +5667,29 @@
       "css_classes": [],
       "json_keys": [],
       "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/driveSyncErrors.test.ts",
+      "ext": ".ts",
+      "bytes": 1947,
+      "lines": 60,
+      "sha1": "ef3dd96a1b42",
+      "imports": [
+        "../features/sync/driveSync",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Cloud sync/auth/data transfer logic.",
       "too_large": false,
       "read_error": null
     },
@@ -5855,9 +5984,9 @@
     {
       "path": "src/tests/goalsPage.test.tsx",
       "ext": ".tsx",
-      "bytes": 12403,
-      "lines": 365,
-      "sha1": "9fb2c0b7e681",
+      "bytes": 13916,
+      "lines": 393,
+      "sha1": "b60891216a22",
       "imports": [
         "../db/repositories",
         "../features/dashboard/StudentDashboard",
@@ -6166,6 +6295,45 @@
       "css_classes": [],
       "json_keys": [],
       "purpose": "Local persistence/database layer.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/mainBranchGoalFixes.test.ts",
+      "ext": ".ts",
+      "bytes": 4444,
+      "lines": 153,
+      "sha1": "4a4a53c684b1",
+      "imports": [
+        "../features/curriculum/makeItemFromId",
+        "../features/goals/dailyNewGoalPlanner",
+        "../features/goals/goalEngine",
+        "../features/goals/types",
+        "../features/learning/learningEvents",
+        "../features/mastery/skillMapping",
+        "../features/mastery/skillMasteryEngine",
+        "../features/mastery/skillPracticePlanner",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [
+        "baseline",
+        "dailyPlan",
+        "extraEvent",
+        "goal",
+        "ordered",
+        "schemaKey",
+        "summary",
+        "target"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
       "too_large": false,
       "read_error": null
     },
@@ -6549,6 +6717,31 @@
       "read_error": null
     },
     {
+      "path": "src/tests/settingsDailyNewLimits.test.tsx",
+      "ext": ".tsx",
+      "bytes": 2105,
+      "lines": 44,
+      "sha1": "70cd2f6a5898",
+      "imports": [
+        "../features/settings/SettingsPage",
+        "../types/math",
+        "@testing-library/react",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/tests/setup.ts",
       "ext": ".ts",
       "bytes": 36,
@@ -6883,13 +7076,14 @@
     {
       "path": "src/types/math.ts",
       "ext": ".ts",
-      "bytes": 9490,
-      "lines": 314,
-      "sha1": "0edde7788ce7",
+      "bytes": 9707,
+      "lines": 321,
+      "sha1": "7a557becfb9d",
       "imports": [],
       "exports": [
         "AnswerInput",
         "AttemptLog",
+        "DailyNewGoalQuestionLimits",
         "DayStats",
         "FactGrowth",
         "FactWindowStats",
@@ -6920,6 +7114,7 @@
       "classes": [],
       "interfaces": [
         "AttemptLog",
+        "DailyNewGoalQuestionLimits",
         "DayStats",
         "FactGrowth",
         "FactWindowStats",
@@ -6953,7 +7148,7 @@
       "hooks": [],
       "css_classes": [],
       "json_keys": [],
-      "purpose": "Exports reusable code: AnswerInput, AttemptLog, DayStats, FactGrowth, FactWindowStats.",
+      "purpose": "Exports reusable code: AnswerInput, AttemptLog, DailyNewGoalQuestionLimits, DayStats, FactGrowth.",
       "too_large": false,
       "read_error": null
     },

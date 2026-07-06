@@ -39,6 +39,8 @@ import {
   resumeGoal,
   updateGoal,
 } from './goalLifecycleService';
+import { normalizeDailyNewGoalLimits, validateDailyNewGoalLimits } from './dailyNewGoalLimits';
+import { planDailyNewForGoals } from './dailyNewGoalPlanner';
 
 interface Props {
   profile: StudentProfile;
@@ -47,6 +49,7 @@ interface Props {
   onInitialGoalSkillsHandled?: () => void;
   onBack: () => void;
   onStartEvaluation: () => void;
+  onUpdateProfile?: (profile: StudentProfile) => void | Promise<void>;
 }
 
 type PageState =
@@ -317,7 +320,7 @@ function GoalCard({
   );
 }
 
-export function GoalsPage({ profile, lastSyncedAt, initialGoalSkillIds, onInitialGoalSkillsHandled, onBack, onStartEvaluation }: Props) {
+export function GoalsPage({ profile, lastSyncedAt, initialGoalSkillIds, onInitialGoalSkillsHandled, onBack, onStartEvaluation, onUpdateProfile }: Props) {
   const [page, setPage] = useState<PageState>({ status: 'loading' });
   const [refreshKey, setRefreshKey] = useState(0);
   const [wizard, setWizard] = useState<WizardMode | null>(() => initialWizardFromSkills(initialGoalSkillIds));
@@ -476,6 +479,7 @@ export function GoalsPage({ profile, lastSyncedAt, initialGoalSkillIds, onInitia
           profile={profile}
           data={ready}
           onStartEvaluation={onStartEvaluation}
+          onUpdateProfile={onUpdateProfile}
           onClose={() => setWizard(null)}
           onSaved={() => {
             setWizard(null);
@@ -537,6 +541,7 @@ function GoalWizard({
   onStartEvaluation,
   onClose,
   onSaved,
+  onUpdateProfile,
 }: {
   mode: WizardMode;
   profile: StudentProfile;
@@ -544,6 +549,7 @@ function GoalWizard({
   onStartEvaluation: () => void;
   onClose: () => void;
   onSaved: () => void;
+  onUpdateProfile?: (profile: StudentProfile) => void | Promise<void>;
 }) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const nowDate = data.now.slice(0, 10);
@@ -559,6 +565,13 @@ function GoalWizard({
   );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [globalLimitsDraft, setGlobalLimitsDraft] = useState(() =>
+    normalizeDailyNewGoalLimits(profile.settings.dailyNewGoalQuestionLimits));
+  const [useGoalOverride, setUseGoalOverride] = useState(Boolean(editing?.dailyNewQuestionLimitsOverride));
+  const [goalLimitDraft, setGoalLimitDraft] = useState(() => ({
+    minQuestionsPerSkillTile: editing?.dailyNewQuestionLimitsOverride?.minQuestionsPerSkillTile ?? globalLimitsDraft.minQuestionsPerSkillTile,
+    maxQuestionsPerSkillTile: editing?.dailyNewQuestionLimitsOverride?.maxQuestionsPerSkillTile ?? globalLimitsDraft.maxQuestionsPerSkillTile,
+  }));
 
   const capacity = estimateGoalWorkload({
     studentId: profile.id,
@@ -584,6 +597,32 @@ function GoalWizard({
   });
   const maxSkills = durationDays <= 1 ? 1 : durationDays <= 7 ? 2 : 3;
   const targetDate = targetDateFor(startDate, durationDays);
+  const previewTargets = selectedSkillIds.map(skillId => {
+    const existing = editing?.targets.find(target => target.skillId === skillId);
+    if (existing) return existing;
+    const recommended = selectedRecommendation?.targets.find(target => target.skillId === skillId);
+    const baseline = recommended?.baseline ?? captureGoalBaseline(evidenceInput(data, profile), skillId);
+    const reason = recommended?.reason ?? reasonForSummary(data.skillSummaries.find(summary => summary.skillId === skillId));
+    return buildGoalSkillTarget({
+      skillId, reason, baseline,
+      ...(recommended?.thresholds ?? suggestedTargetDefaults(reason, baseline)),
+    }, baseline, `preview-${skillId}`);
+  });
+  const previewGoal: LearningGoal = {
+    ...(editing ?? {
+      id: 'daily-new-preview', studentId: profile.id, source: 'manual' as const, status: 'active' as const,
+      createdAt: data.now, updatedAt: data.now,
+    }),
+    title: title.trim() || 'This goal', durationDays, startDate, targetDate, targets: previewTargets,
+    dailyNewQuestionLimitsOverride: useGoalOverride ? goalLimitDraft : undefined,
+  };
+  const shortGoalWarning = step === 3 && previewTargets.length > 0
+    ? planDailyNewForGoals({
+        studentId: profile.id, goals: [previewGoal], events: data.events, itemStates: data.itemStates,
+        skillSummaries: data.skillSummaries, now: data.now, timezone: profile.timezone,
+        dailyNewGoalQuestionLimits: globalLimitsDraft,
+      }).warnings.find(warning => warning.code === 'goal_needs_more_days')
+    : undefined;
 
   useEffect(() => {
     const firstButton = dialogRef.current?.querySelector('button, input') as HTMLElement | null;
@@ -622,6 +661,15 @@ function GoalWizard({
   const save = async () => {
     setSaving(true);
     setError(null);
+    const globalValidation = validateDailyNewGoalLimits(globalLimitsDraft);
+    const overrideValidation = useGoalOverride
+      ? validateDailyNewGoalLimits({ ...globalLimitsDraft, ...goalLimitDraft })
+      : null;
+    if (globalValidation.errors.length || overrideValidation?.errors.length) {
+      setSaving(false);
+      setError((globalValidation.errors[0] ?? overrideValidation?.errors[0])!);
+      return;
+    }
     const now = appNow().toISOString();
     const input = evidenceInput(data, profile);
     const makeTargetFromSkill = (skillId: string): GoalTargetEditDraft => {
@@ -666,6 +714,7 @@ function GoalWizard({
           startDate,
           targetDate,
           targets,
+          dailyNewQuestionLimitsOverride: useGoalOverride ? goalLimitDraft : undefined,
         }, now);
       } else {
         const targets: GoalSkillTarget[] = drafts.map(draft =>
@@ -683,6 +732,7 @@ function GoalWizard({
           targets,
           createdAt: now,
           updatedAt: now,
+          dailyNewQuestionLimitsOverride: useGoalOverride ? goalLimitDraft : undefined,
         };
         await learningGoalRepo.create(goal, now);
         await goalEventRepo.append({
@@ -694,6 +744,10 @@ function GoalWizard({
           message: 'Goal created',
         });
       }
+      await onUpdateProfile?.({
+        ...profile,
+        settings: { ...profile.settings, dailyNewGoalQuestionLimits: globalValidation.limits },
+      });
       onSaved();
     } catch (err) {
       setSaving(false);
@@ -840,6 +894,30 @@ function GoalWizard({
                 </div>
               ))}
             </div>
+            <h3 style={s.sectionTitle}>Daily New limits</h3>
+            <label style={s.label} htmlFor="daily-new-min">Default min questions per skill per day</label>
+            <input id="daily-new-min" type="number" min={1} max={50} value={globalLimitsDraft.minQuestionsPerSkillTile}
+              onChange={event => setGlobalLimitsDraft(current => ({ ...current, minQuestionsPerSkillTile: Number(event.target.value) }))} style={s.input} />
+            <label style={s.label} htmlFor="daily-new-max">Default max questions per skill per day</label>
+            <input id="daily-new-max" type="number" min={1} max={100} value={globalLimitsDraft.maxQuestionsPerSkillTile}
+              onChange={event => setGlobalLimitsDraft(current => ({ ...current, maxQuestionsPerSkillTile: Number(event.target.value) }))} style={s.input} />
+            <label style={s.label} htmlFor="daily-new-total">Max planned goal-new questions per day</label>
+            <input id="daily-new-total" type="number" min={1} max={200} value={globalLimitsDraft.maxPlannedQuestionsPerDay}
+              onChange={event => setGlobalLimitsDraft(current => ({ ...current, maxPlannedQuestionsPerDay: Number(event.target.value) }))} style={s.input} />
+            <p style={s.dialogText}>These only affect Daily New for Goals. FSRS Daily Review is unchanged.</p>
+            {shortGoalWarning && <p style={s.advisory}>{shortGoalWarning.message}</p>}
+            <label style={s.checkboxRow}>
+              <input type="checkbox" checked={useGoalOverride} onChange={event => setUseGoalOverride(event.target.checked)} />
+              <span>Use custom per-skill limits for this goal</span>
+            </label>
+            {useGoalOverride && <div>
+              <label style={s.label} htmlFor="goal-daily-new-min">Min questions per skill per day</label>
+              <input id="goal-daily-new-min" type="number" min={1} max={50} value={goalLimitDraft.minQuestionsPerSkillTile}
+                onChange={event => setGoalLimitDraft(current => ({ ...current, minQuestionsPerSkillTile: Number(event.target.value) }))} style={s.input} />
+              <label style={s.label} htmlFor="goal-daily-new-max">Max questions per skill per day</label>
+              <input id="goal-daily-new-max" type="number" min={1} max={100} value={goalLimitDraft.maxQuestionsPerSkillTile}
+                onChange={event => setGoalLimitDraft(current => ({ ...current, maxQuestionsPerSkillTile: Number(event.target.value) }))} style={s.input} />
+            </div>}
           </div>
         )}
 

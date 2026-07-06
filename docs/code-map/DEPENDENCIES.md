@@ -4,21 +4,22 @@
 
 | Package | Import count |
 | --- | --- |
-| vitest | 57 |
+| vitest | 60 |
 | react | 35 |
-| @testing-library/react | 11 |
-| __future__ | 8 |
-| sys | 8 |
-| pathlib | 6 |
-| playwright.sync_api | 4 |
-| time | 4 |
+| @testing-library/react | 12 |
+| pathlib | 8 |
+| __future__ | 7 |
+| sys | 7 |
 | json | 3 |
+| os | 3 |
+| playwright.sync_api | 3 |
+| re | 3 |
 | @vitejs/plugin-react | 2 |
 | argparse | 2 |
 | datetime | 2 |
 | node:fs | 2 |
-| re | 2 |
 | ssl | 2 |
+| typing | 2 |
 | @dnd-kit/core | 1 |
 | @dnd-kit/sortable | 1 |
 | @eslint/js | 1 |
@@ -39,13 +40,13 @@
 | math | 1 |
 | node:path | 1 |
 | node:url | 1 |
-| os | 1 |
 | react-dom | 1 |
 | socket | 1 |
 | subprocess | 1 |
+| time | 1 |
+| traceback | 1 |
 | ts-fsrs | 1 |
 | typescript-eslint | 1 |
-| typing | 1 |
 | urllib.parse | 1 |
 | vite | 1 |
 | vite-plugin-pwa | 1 |
@@ -179,6 +180,8 @@
 | src/features/diagnosis/DiagnosticSession.tsx | ../time/clock |
 | src/features/diagnosis/DiagnosticSession.tsx | ./diagnosticPersistence |
 | src/features/diagnosis/DiagnosticSession.tsx | ./diagnosticPlanner |
+| src/features/goals/dailyNewGoalLimits.ts | ../../types/math |
+| src/features/goals/dailyNewGoalLimits.ts | ./types |
 | src/features/goals/dailyNewGoalPlanner.ts | ../../types/math |
 | src/features/goals/dailyNewGoalPlanner.ts | ../curriculum/makeItemFromId |
 | src/features/goals/dailyNewGoalPlanner.ts | ../learning/learningEvents |
@@ -186,6 +189,7 @@
 | src/features/goals/dailyNewGoalPlanner.ts | ../mastery/skillMapping |
 | src/features/goals/dailyNewGoalPlanner.ts | ../mastery/skillMasteryEngine |
 | src/features/goals/dailyNewGoalPlanner.ts | ../mastery/skillPracticePlanner |
+| src/features/goals/dailyNewGoalPlanner.ts | ./dailyNewGoalLimits |
 | src/features/goals/dailyNewGoalPlanner.ts | ./goalEngine |
 | src/features/goals/dailyNewGoalPlanner.ts | ./types |
 | src/features/goals/goalEngine.ts | ../../types/math |
@@ -245,6 +249,8 @@
 | src/features/goals/GoalsPage.tsx | ../mastery/grade3MasteryMap |
 | src/features/goals/GoalsPage.tsx | ../mastery/skillMasteryEngine |
 | src/features/goals/GoalsPage.tsx | ../time/clock |
+| src/features/goals/GoalsPage.tsx | ./dailyNewGoalLimits |
+| src/features/goals/GoalsPage.tsx | ./dailyNewGoalPlanner |
 | src/features/goals/GoalsPage.tsx | ./goalEngine |
 | src/features/goals/GoalsPage.tsx | ./goalLifecycleService |
 | src/features/goals/GoalsPage.tsx | ./goalRecommendationEngine |
@@ -382,6 +388,7 @@
 | src/features/settings/SettingsPage.tsx | ../ai/aiConfig |
 | src/features/settings/SettingsPage.tsx | ../ai/gemini |
 | src/features/settings/SettingsPage.tsx | ../auth/googleAuth |
+| src/features/settings/SettingsPage.tsx | ../goals/dailyNewGoalLimits |
 | src/features/settings/SettingsPage.tsx | ../sync/driveSync |
 | src/features/settings/SettingsPage.tsx | ../theme/themes |
 | src/features/settings/SettingsPage.tsx | ../time/clock |
@@ -487,6 +494,7 @@
 | src/tests/components.test.tsx | ../features/mastery/SkillTile |
 | src/tests/components.test.tsx | ../features/mastery/todayPlanEngine |
 | src/tests/components.test.tsx | ../types/math |
+| src/tests/dailyNewGoalPlanner.test.ts | ../features/goals/dailyNewGoalLimits |
 | src/tests/dailyNewGoalPlanner.test.ts | ../features/goals/dailyNewGoalPlanner |
 | src/tests/dailyNewGoalPlanner.test.ts | ../features/goals/goalEngine |
 | src/tests/dailyNewGoalPlanner.test.ts | ../features/goals/types |
@@ -500,6 +508,7 @@
 | src/tests/diagnosticSession.test.tsx | ../db/repositories |
 | src/tests/diagnosticSession.test.tsx | ../features/diagnosis/diagnosticPersistence |
 | src/tests/diagnosticSession.test.tsx | ../features/diagnosis/DiagnosticSession |
+| src/tests/driveSyncErrors.test.ts | ../features/sync/driveSync |
 | src/tests/eventRebuild.test.ts | ../features/learning/eventRebuild |
 | src/tests/eventRebuild.test.ts | ../features/learning/learningEvents |
 | src/tests/eventRebuild.test.ts | ../types/math |
@@ -590,6 +599,14 @@
 | src/tests/learningEvents.test.ts | ../features/learning/learningEvents |
 | src/tests/learningEvents.test.ts | ../features/multiplication/masteryEngine |
 | src/tests/learningEvents.test.ts | ../features/stats/statsEngine |
+| src/tests/mainBranchGoalFixes.test.ts | ../features/curriculum/makeItemFromId |
+| src/tests/mainBranchGoalFixes.test.ts | ../features/goals/dailyNewGoalPlanner |
+| src/tests/mainBranchGoalFixes.test.ts | ../features/goals/goalEngine |
+| src/tests/mainBranchGoalFixes.test.ts | ../features/goals/types |
+| src/tests/mainBranchGoalFixes.test.ts | ../features/learning/learningEvents |
+| src/tests/mainBranchGoalFixes.test.ts | ../features/mastery/skillMapping |
+| src/tests/mainBranchGoalFixes.test.ts | ../features/mastery/skillMasteryEngine |
+| src/tests/mainBranchGoalFixes.test.ts | ../features/mastery/skillPracticePlanner |
 | src/tests/makeItemFromId.test.ts | ../features/curriculum/makeItemFromId |
 | src/tests/mathPrompt.test.tsx | ../features/visuals/FractionText |
 | src/tests/mathPrompt.test.tsx | ../features/visuals/MathPrompt |
@@ -633,6 +650,8 @@
 | src/tests/scheduler.test.ts | ../features/curriculum/multiplicationItems |
 | src/tests/scheduler.test.ts | ../features/scheduler/scheduler |
 | src/tests/scheduler.test.ts | ../types/math |
+| src/tests/settingsDailyNewLimits.test.tsx | ../features/settings/SettingsPage |
+| src/tests/settingsDailyNewLimits.test.tsx | ../types/math |
 | src/tests/skillMapping.test.ts | ../features/curriculum/fractionItems |
 | src/tests/skillMapping.test.ts | ../features/curriculum/multiplicationItems |
 | src/tests/skillMapping.test.ts | ../features/curriculum/wordProblemItems |

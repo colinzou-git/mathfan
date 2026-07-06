@@ -10,6 +10,7 @@ import { isDebugSpeed, enableDebugSpeed, disableDebugSpeed } from '../time/clock
 import { getAiConfig, setAiKey, setAiModel, clearAiKey, DEFAULT_MODEL } from '../ai/aiConfig';
 import { askTutor, explainAiError, aiErrorDetail } from '../ai/gemini';
 import { checkForUpdate, type BuildInfo } from './updateCheck';
+import { normalizeDailyNewGoalLimits, validateDailyNewGoalLimits } from '../goals/dailyNewGoalLimits';
 
 interface Props {
   profile: StudentProfile;
@@ -65,6 +66,8 @@ export function SettingsPage({ profile, onUpdateProfile, onBack, onSwitchStudent
   const [debugSpeed, setDebugSpeed] = useState(isDebugSpeed());
   const [updateState, setUpdateState] = useState<'idle' | 'checking' | 'available' | 'none' | 'error'>('idle');
   const [serverBuild, setServerBuild] = useState<BuildInfo | null>(null);
+  const [dailyNewLimits, setDailyNewLimits] = useState(() => normalizeDailyNewGoalLimits(settings.dailyNewGoalQuestionLimits));
+  const [dailyNewLimitsError, setDailyNewLimitsError] = useState<string | null>(null);
 
   // The build baked into this running bundle (substituted by Vite `define`).
   const currentBuild: BuildInfo = { appVersion: __APP_VERSION__, gitSha: __GIT_SHA__, buildTime: __BUILD_TIME__ };
@@ -144,6 +147,17 @@ export function SettingsPage({ profile, onUpdateProfile, onBack, onSwitchStudent
     await studentRepo.save(updated);
     onUpdateProfile(updated);
     setNameDirty(false);
+  };
+
+  const saveDailyNewLimits = () => {
+    const result = validateDailyNewGoalLimits(dailyNewLimits);
+    if (result.errors.length) {
+      setDailyNewLimitsError(result.errors[0]);
+      return;
+    }
+    setDailyNewLimitsError(null);
+    setDailyNewLimits(result.limits);
+    save({ dailyNewGoalQuestionLimits: result.limits });
   };
 
   function fmtBuildTime(iso: string): string {
@@ -263,6 +277,30 @@ export function SettingsPage({ profile, onUpdateProfile, onBack, onSwitchStudent
             <button style={s.adjBtn} onClick={() => save({ sessionLength: Math.min(200, settings.sessionLength + 5) as SessionLength })}>+5</button>
           </div>
         </div>
+      </Section>
+
+      <Section title="Daily New for Goals limits">
+        <label style={s.row}>
+          <span style={s.rowLabel}>Default min questions per skill per day</span>
+          <input aria-label="Default min questions per skill per day" type="number" min={1} max={50}
+            value={dailyNewLimits.minQuestionsPerSkillTile}
+            onChange={event => setDailyNewLimits(current => ({ ...current, minQuestionsPerSkillTile: Number(event.target.value) }))} style={s.numInput} />
+        </label>
+        <label style={s.row}>
+          <span style={s.rowLabel}>Default max questions per skill per day</span>
+          <input aria-label="Default max questions per skill per day" type="number" min={1} max={100}
+            value={dailyNewLimits.maxQuestionsPerSkillTile}
+            onChange={event => setDailyNewLimits(current => ({ ...current, maxQuestionsPerSkillTile: Number(event.target.value) }))} style={s.numInput} />
+        </label>
+        <label style={s.row}>
+          <span style={s.rowLabel}>Max planned goal-new questions per day</span>
+          <input aria-label="Max planned goal-new questions per day" type="number" min={1} max={200}
+            value={dailyNewLimits.maxPlannedQuestionsPerDay}
+            onChange={event => setDailyNewLimits(current => ({ ...current, maxPlannedQuestionsPerDay: Number(event.target.value) }))} style={s.numInput} />
+        </label>
+        <p style={s.rowDesc}>These only affect Daily New for Goals. FSRS Daily Review is unchanged.</p>
+        {dailyNewLimitsError && <p role="alert" style={{ color: '#b91c1c', fontSize: 13 }}>{dailyNewLimitsError}</p>}
+        <button style={s.saveBtn} onClick={saveDailyNewLimits}>Save Daily New limits</button>
       </Section>
 
       {/* ── Appearance ──────────────────────────────────────────────── */}

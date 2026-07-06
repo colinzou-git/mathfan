@@ -284,6 +284,7 @@ export default function App() {
         lastSyncedAt={lastSyncedAt}
         initialGoalSkillIds={initialGoalSkillIds}
         onInitialGoalSkillsHandled={() => setInitialGoalSkillIds(null)}
+        onUpdateProfile={updateProfile}
         onBack={() => setScreen('dashboard')}
         onStartEvaluation={() => setScreen('goal-evaluation')}
       />
