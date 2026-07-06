@@ -11,6 +11,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "test:e2e:journey": "python scripts/e2e_mathfan.py",
+    "test:e2e:update": "python scripts/smoke-update-flow.py",
+    "test:e2e": "npm run test:e2e:journey && npm run test:e2e:update",
     "ci": "npm run lint && npm test && npm run build"
   },
   "dependencies": {

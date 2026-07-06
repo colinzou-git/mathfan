@@ -15,6 +15,17 @@ export interface SyncResult {
   syncedAt?: string;
 }
 
+interface DriveListFile {
+  id: string;
+  size?: string;
+  modifiedTime?: string;
+}
+
+function newestSyncFile(files: DriveListFile[] | undefined): DriveListFile | null {
+  if (!files?.length) return null;
+  return [...files].sort((a, b) => (b.modifiedTime ?? '').localeCompare(a.modifiedTime ?? ''))[0];
+}
+
 async function authFetch(url: string, options: RequestInit = {}): Promise<Response> {
   const token = await getToken();
   if (!token) throw new Error('Not signed in');
@@ -29,9 +40,9 @@ async function authFetch(url: string, options: RequestInit = {}): Promise<Respon
 
 async function findSyncFile(): Promise<string | null> {
   const res = await authFetch(LIST_URL);
-  if (!res.ok) return null;
+  if (!res.ok) throw new Error(`Drive LIST failed: ${res.status}`);
   const data = await res.json();
-  return (data.files as { id: string }[])?.[0]?.id ?? null;
+  return newestSyncFile(data.files as DriveListFile[] | undefined)?.id ?? null;
 }
 
 async function uploadSnapshot(snapshot: AppSnapshot, existingId?: string): Promise<void> {
@@ -76,9 +87,10 @@ async function downloadSnapshot(): Promise<AppSnapshot | null> {
   const fileId = await findSyncFile();
   if (!fileId) return null;
   const res = await authFetch(`${FILES_URL}/${fileId}?alt=media`);
-  if (!res.ok) return null;
+  if (!res.ok) throw new Error(`Drive download failed: ${res.status}`);
   const raw = await res.json();
-  return validateSnapshot(raw) ? raw : null;
+  if (!validateSnapshot(raw)) throw new Error('Drive snapshot is invalid');
+  return raw;
 }
 
 // ── Public ────────────────────────────────────────────────────────────────────
@@ -138,7 +150,7 @@ export async function getDriveFileInfo(): Promise<DriveFileInfo> {
     const res = await authFetch(LIST_URL);
     if (!res.ok) return { sizeBytes: null, modifiedAt: null };
     const data = await res.json();
-    const file = (data.files as { id: string; size?: string; modifiedTime?: string }[])?.[0];
+    const file = newestSyncFile(data.files as DriveListFile[] | undefined);
     if (!file) return { sizeBytes: null, modifiedAt: null };
     return {
       sizeBytes: file.size ? parseInt(file.size) : null,

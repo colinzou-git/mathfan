@@ -257,12 +257,10 @@ function buildGroups(args: PlanDailyNewGoalsArgs, attempted: Set<string>, exclud
   });
 }
 
-function chooseItemBatch(group: SkillGroup, used: Set<string>, preferredCount: number, batchIndex = 0): string[] {
+function chooseItemBatch(group: SkillGroup, used: Set<string>, preferredCount: number): string[] {
   const remaining = orderItems(group.itemIds.filter(id => !used.has(id)));
-  const start = Math.min(remaining.length, batchIndex * MAX_TILE_QUESTIONS);
-  const sliced = remaining.slice(start);
-  const count = Math.min(MAX_TILE_QUESTIONS, Math.max(Math.min(MIN_TILE_QUESTIONS, sliced.length), preferredCount), sliced.length);
-  return sliced.slice(0, count);
+  const count = Math.min(MAX_TILE_QUESTIONS, Math.max(Math.min(MIN_TILE_QUESTIONS, remaining.length), preferredCount), remaining.length);
+  return remaining.slice(0, count);
 }
 
 export function planDailyNewForGoals(args: PlanDailyNewGoalsArgs): DailyNewGoalPlan {
@@ -291,12 +289,9 @@ export function planDailyNewForGoals(args: PlanDailyNewGoalsArgs): DailyNewGoalP
   const plannedIds = new Set(tiles.flatMap(tile => tile.itemIds));
   const todayGoalLearningIds = new Set(todayEvents.map(event => event.itemId));
   const extraExcluded = new Set([...plannedIds, ...todayGoalLearningIds]);
-  const extraBatchIndex = new Set(todayEvents
-    .filter(event => event.goalLearningKind === 'extra')
-    .map(event => event.sessionId)).size;
   const extraGroups = buildGroups(args, allTimeAttempted, extraExcluded);
   const extraChoices = extraGroups.map(group => {
-    const ids = chooseItemBatch(group, new Set(), MAX_TILE_QUESTIONS, extraBatchIndex);
+    const ids = chooseItemBatch(group, new Set(), MAX_TILE_QUESTIONS);
     return ids.length ? makeTile(group, ids, 'extra', todayCompletedIds) : null;
   }).filter((tile): tile is DailyNewGoalTile => Boolean(tile));
 

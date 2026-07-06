@@ -78,6 +78,7 @@ export interface GoalTargetEditDraft extends Partial<Omit<GoalSkillTarget, 'base
 }
 
 const RECENT_ATTEMPT_LIMIT = 20;
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 export function defaultSkillIdForItem(itemId: string): string | null {
   const item = makeItemFromId(itemId);
@@ -92,6 +93,12 @@ function clamp01(value: number): number {
 function safeDateMs(iso: string): number {
   const ms = Date.parse(iso);
   return Number.isFinite(ms) ? ms : 0;
+}
+
+function calendarDayNumber(date: string): number {
+  const [year, month, day] = date.split('-').map(Number);
+  if (![year, month, day].every(Number.isFinite)) return 0;
+  return Math.floor(Date.UTC(year, month - 1, day) / MS_PER_DAY);
 }
 
 export function localDateInTimeZone(iso: string, timezone: string): string {
@@ -404,7 +411,7 @@ export function calculateGoalProgress(goal: LearningGoal, args: GoalEvidenceInpu
     ? 0
     : targets.reduce((sum, progress) => sum + progress.displayScore * Math.max(0, progress.target.weight), 0) / totalWeight;
   const today = localDateInTimeZone(args.now, args.timezone);
-  const daysRemaining = Math.ceil((safeDateMs(`${goal.targetDate}T00:00:00`) - safeDateMs(`${today}T00:00:00`)) / (24 * 60 * 60 * 1000));
+  const daysRemaining = calendarDayNumber(goal.targetDate) - calendarDayNumber(today);
 
   return {
     goal,

@@ -1,43 +1,64 @@
-MathFan Codex Instructions
+# MathFan Codex Instructions
 
 MathFan is a React + TypeScript + Vite local-first PWA for elementary math practice.
 
-# Core rules
+## Start here
 
-Before search repo code, read docs/code-map/CLAUDE_START_HERE.md first, then docs/code-map/CODEMAP.md and docs/code-map/SYMBOLS.md. Use docs/code-map/code_map.json for lookup before scanning source files.
+Before scanning source files, read:
 
-Do not remove existing features.
+1. `CLAUDE.md`
+2. `docs/code-map/CLAUDE_START_HERE.md`
+3. `docs/code-map/CODEMAP.md`
+4. `docs/code-map/SYMBOLS.md`
 
-Do not redesign unrelated UI.
+Use `docs/code-map/code_map.json` for targeted lookup before broad repository searches.
 
-Preserve current FSRS scheduling behavior.
+## Project rules
 
-Preserve existing quiz, practice, stats, sync, and AI tutor behavior unless explicitly requested.
+- Do not remove existing features or redesign unrelated UI.
+- Preserve FSRS scheduling behavior unless the task explicitly changes it.
+- Preserve quiz, practice, stats, sync, and AI tutor behavior unless explicitly requested.
+- Treat `mathAnswerEvents` as the source of truth where possible.
+- Treat `itemStates` and `multFactStats` as derived caches.
+- Keep child-facing wording positive, encouraging, and non-shaming.
+- Prefer small, testable changes.
+- Add regression coverage for every confirmed bug.
 
-Use `mathAnswerEvents` as source of truth where possible.
+## Required validation
 
-Treat `itemStates`, `multFactStats`, and future `studentSkillStates` as derived caches.
+Run the normal code checks after every implementation change:
 
-Keep child-facing wording positive, encouraging, and non-shaming.
+```bash
+npm run ci
+```
 
-Prefer small, testable changes.
+For UI, navigation, persistence, input, PWA-update, or browser-facing changes, also run the browser suite:
 
-Ask User questions if any before implement code.
+```bash
+python -m pip install -r requirements-e2e.txt
+python -m playwright install chromium
+npm run build
+npm run preview -- --host 127.0.0.1 --port 4173
+# In another terminal:
+npm run test:e2e
+```
 
-Add tests for new logic.
+The browser suite must exercise the real built app rather than a component mock. Do not replace failed browser checks with unit tests.
 
-Run `npm run ci` after changes.
+## Codex browser workflow
 
-Make one commit per completed bug fixe or feature.
+When the Codex Browser plugin is available:
 
-If CI fails:
+1. Start or verify the local preview server at `http://127.0.0.1:4173`.
+2. Use `@Browser` for exploratory reproduction, clicks, typing, screenshots, DOM inspection, console inspection, and visual verification.
+3. Test desktop, mobile, and iPad-sized viewports when layout is affected.
+4. Convert any reproduced bug into an automated check in `scripts/e2e_mathfan.py` or `scripts/smoke-update-flow.py`.
+5. Re-run `npm run test:e2e` after the fix.
 
-Fix the issue if it is clearly caused by your changes.
+The in-app browser is not a substitute for repeatable automated tests. Do not use real Google credentials in browser automation; mock network/auth behavior instead.
 
-If still failing, suggest debug actions from user.
+## Completion
 
-At the end of a run, do the following:  
-Report the new source files introduced. If no new source files, say 'No new source files added.'  
-Run 'python .\tools\generate_code_maps.py' to update code map and symbol map. Report running results in one short sentence after run. if no run, say reasons in a short sentence.
-
-When the work is committed and CI is green, ask before pushing to origin main (or push if the user has already authorized it for this task).
+- Keep commits focused.
+- Run `python tools/generate_code_maps.py` when files or exported symbols change.
+- Report new files, tests run, and any validation that could not be completed.
