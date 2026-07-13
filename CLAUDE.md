@@ -40,4 +40,4 @@ At the end of a run, do the following:
 Report the new source files introduced. If no new source files, say 'No new source files added.'  
 Run 'python .\tools\generate_code_maps.py' to update code map and symbol map. Report running results in one short sentence after run. if no run, say reasons in a short sentence.
 
-When the work is committed and CI is green, ask before pushing to origin main (or push if the user has already authorized it for this task).
+When the requested code is complete and all required validation is green, commit it and push it to origin main without asking for additional confirmation. If branch protection prevents a direct push, open a pull request to main and enable auto-merge or merge it as soon as the required checks pass.

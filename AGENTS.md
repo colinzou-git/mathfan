@@ -62,3 +62,5 @@ The in-app browser is not a substitute for repeatable automated tests. Do not us
 - Keep commits focused.
 - Run `python tools/generate_code_maps.py` when files or exported symbols change.
 - Report new files, tests run, and any validation that could not be completed.
+- After the requested code is complete and all required validation passes, commit the work and push it to `origin/main` without asking for additional confirmation.
+- If branch protection prevents a direct push, open a pull request to `main` and enable auto-merge or merge it as soon as the required checks pass.

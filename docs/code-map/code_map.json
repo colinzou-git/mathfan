@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-13T05:16:24.956465+00:00",
+  "generated_at": "2026-07-13T05:45:27.306007+00:00",
   "repo_root": "/home/ubuntu/mathfan",
   "package": {
     "name": "mathfan",
@@ -55,9 +55,9 @@
     {
       "path": "AGENTS.md",
       "ext": ".md",
-      "bytes": 2336,
-      "lines": 65,
-      "sha1": "b03a0daed50d",
+      "bytes": 2648,
+      "lines": 67,
+      "sha1": "be8d18a89932",
       "imports": [],
       "exports": [],
       "functions": [],
@@ -75,9 +75,9 @@
     {
       "path": "CLAUDE.md",
       "ext": ".md",
-      "bytes": 1534,
+      "bytes": 1692,
       "lines": 44,
-      "sha1": "6221947c6956",
+      "sha1": "d2f00408bced",
       "imports": [],
       "exports": [],
       "functions": [],
