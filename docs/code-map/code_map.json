@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-06T18:40:33.599325+00:00",
+  "generated_at": "2026-07-13T05:16:24.956465+00:00",
   "repo_root": "/home/ubuntu/mathfan",
   "package": {
     "name": "mathfan",
@@ -23,6 +23,7 @@
       "@dnd-kit/sortable": "^10.0.0",
       "dexie": "^4.4.3",
       "fraction.js": "^5.3.4",
+      "jszip": "^3.10.1",
       "mafs": "^0.21.0",
       "react": "^19.2.6",
       "react-dom": "^19.2.6",
@@ -361,9 +362,9 @@
     {
       "path": "package.json",
       "ext": ".json",
-      "bytes": 1458,
-      "lines": 51,
-      "sha1": "704de5918132",
+      "bytes": 1482,
+      "lines": 52,
+      "sha1": "9c65acb7e029",
       "imports": [],
       "exports": [],
       "functions": [],
@@ -386,6 +387,7 @@
         "fraction.js",
         "globals",
         "jsdom",
+        "jszip",
         "lint",
         "mafs",
         "name",
@@ -546,18 +548,20 @@
     {
       "path": "scripts/e2e_mathfan.py",
       "ext": ".py",
-      "bytes": 10213,
-      "lines": 256,
-      "sha1": "d7380e822af1",
+      "bytes": 14867,
+      "lines": 345,
+      "sha1": "5d731882d8ed",
       "imports": [
         "__future__",
+        "json",
         "os",
         "pathlib",
         "playwright.sync_api",
         "re",
         "sys",
         "traceback",
-        "typing"
+        "typing",
+        "zipfile"
       ],
       "exports": [
         "assert_no_horizontal_overflow",
@@ -568,7 +572,8 @@
         "responsive_navigation",
         "run_practice_journey",
         "run_scenario",
-        "set_practice_preferences_and_verify_persistence"
+        "set_practice_preferences_and_verify_persistence",
+        "verify_local_user_data_exports"
       ],
       "functions": [
         "assert_no_horizontal_overflow",
@@ -579,7 +584,8 @@
         "responsive_navigation",
         "run_practice_journey",
         "run_scenario",
-        "set_practice_preferences_and_verify_persistence"
+        "set_practice_preferences_and_verify_persistence",
+        "verify_local_user_data_exports"
       ],
       "classes": [],
       "interfaces": [],
@@ -2413,6 +2419,71 @@
       "read_error": null
     },
     {
+      "path": "src/features/export/userDataExport.ts",
+      "ext": ".ts",
+      "bytes": 8796,
+      "lines": 276,
+      "sha1": "a3e8d4cc87db",
+      "imports": [
+        "../sync/snapshot",
+        "jszip"
+      ],
+      "exports": [
+        "buildExportMetadata",
+        "buildExportPayload",
+        "createJsonArtifact",
+        "formatExportFilename",
+        "getSnapshotTables",
+        "serializeCsv",
+        "serializePrettyJson",
+        "SnapshotTableName",
+        "UserDataExportDelivery",
+        "UserDataExportFormat",
+        "UserDataExportMetadata",
+        "UserDataExportPayload",
+        "UserDataExportResult"
+      ],
+      "functions": [
+        "asFile",
+        "buildExportMetadata",
+        "buildExportPayload",
+        "createJsonArtifact",
+        "createZipArtifact",
+        "csvValue",
+        "deliverExportFile",
+        "escapeCsvCell",
+        "exportUserData",
+        "formatExportFilename",
+        "getSnapshotTables",
+        "isStandalone",
+        "p",
+        "readableError",
+        "safeFilenamePart",
+        "serializeCsv",
+        "serializePrettyJson"
+      ],
+      "classes": [],
+      "interfaces": [
+        "ExportArtifact",
+        "SnapshotTable",
+        "UserDataExportMetadata",
+        "UserDataExportPayload",
+        "UserDataExportResult"
+      ],
+      "types": [
+        "SnapshotTableName",
+        "UserDataExportDelivery",
+        "UserDataExportFormat"
+      ],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Exports reusable code: buildExportMetadata, buildExportPayload, createJsonArtifact, formatExportFilename, getSnapshotTables.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/features/goals/dailyNewGoalLimits.ts",
       "ext": ".ts",
       "bytes": 2689,
@@ -4134,15 +4205,16 @@
     {
       "path": "src/features/settings/SettingsPage.tsx",
       "ext": ".tsx",
-      "bytes": 27911,
-      "lines": 554,
-      "sha1": "95d27be1779a",
+      "bytes": 32851,
+      "lines": 665,
+      "sha1": "9b473aa241ad",
       "imports": [
         "../../db/repositories",
         "../../types/math",
         "../ai/aiConfig",
         "../ai/gemini",
         "../auth/googleAuth",
+        "../export/userDataExport",
         "../goals/dailyNewGoalLimits",
         "../sync/driveSync",
         "../theme/themes",
@@ -4158,10 +4230,14 @@
         "buildId",
         "buildLabel",
         "checkForUpdates",
+        "closeOnEscape",
+        "closeOnOutsideClick",
+        "exportControl",
         "fmt",
         "fmtBuildTime",
         "p",
         "removeAi",
+        "runExport",
         "save",
         "saveAi",
         "saveDailyNewLimits",
@@ -4179,7 +4255,9 @@
       "interfaces": [
         "Props"
       ],
-      "types": [],
+      "types": [
+        "ExportUiState"
+      ],
       "components": [
         "Section",
         "SyncRow",
@@ -6742,6 +6820,34 @@
       "read_error": null
     },
     {
+      "path": "src/tests/settingsExportUserData.test.tsx",
+      "ext": ".tsx",
+      "bytes": 5686,
+      "lines": 128,
+      "sha1": "76930c07ef41",
+      "imports": [
+        "../features/settings/SettingsPage",
+        "../features/sync/driveSync",
+        "../types/math",
+        "@testing-library/react",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [
+        "renderSettings"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/tests/setup.ts",
       "ext": ".ts",
       "bytes": 36,
@@ -7005,6 +7111,33 @@
       "functions": [
         "fetchImpl",
         "jsonResponse"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/userDataExport.test.ts",
+      "ext": ".ts",
+      "bytes": 8745,
+      "lines": 226,
+      "sha1": "2d645dc4cd47",
+      "imports": [
+        "../features/export/userDataExport",
+        "../features/sync/snapshot",
+        "jszip",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [
+        "snapshot"
       ],
       "classes": [],
       "interfaces": [],

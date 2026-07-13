@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { StudentProfile, StudentSettings, GradeLevel, SessionLength, ThemeName } from '../../types/math';
 import { THEMES, applyTheme } from '../theme/themes';
 import { getDriveFileInfo } from '../sync/driveSync';
@@ -11,6 +11,7 @@ import { getAiConfig, setAiKey, setAiModel, clearAiKey, DEFAULT_MODEL } from '..
 import { askTutor, explainAiError, aiErrorDetail } from '../ai/gemini';
 import { checkForUpdate, type BuildInfo } from './updateCheck';
 import { normalizeDailyNewGoalLimits, validateDailyNewGoalLimits } from '../goals/dailyNewGoalLimits';
+import { exportUserData, type UserDataExportFormat } from '../export/userDataExport';
 
 interface Props {
   profile: StudentProfile;
@@ -25,6 +26,12 @@ interface Props {
   onSignOut: () => void;
   onManualSync: () => void;
 }
+
+type ExportUiState =
+  | { status: 'idle' }
+  | { status: 'exporting'; format: UserDataExportFormat }
+  | { status: 'success'; format: UserDataExportFormat; filename: string; warning?: string }
+  | { status: 'error'; message: string };
 
 /** Known Gemini models with a free tier. Each has its own daily quota. */
 const AI_MODELS = ['gemini-2.0-flash', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'];
@@ -68,6 +75,9 @@ export function SettingsPage({ profile, onUpdateProfile, onBack, onSwitchStudent
   const [serverBuild, setServerBuild] = useState<BuildInfo | null>(null);
   const [dailyNewLimits, setDailyNewLimits] = useState(() => normalizeDailyNewGoalLimits(settings.dailyNewGoalQuestionLimits));
   const [dailyNewLimitsError, setDailyNewLimitsError] = useState<string | null>(null);
+  const [exportMenuOpen, setExportMenuOpen] = useState(false);
+  const [exportState, setExportState] = useState<ExportUiState>({ status: 'idle' });
+  const exportControlRef = useRef<HTMLDivElement>(null);
 
   // The build baked into this running bundle (substituted by Vite `define`).
   const currentBuild: BuildInfo = { appVersion: __APP_VERSION__, gitSha: __GIT_SHA__, buildTime: __BUILD_TIME__ };
@@ -134,6 +144,28 @@ export function SettingsPage({ profile, onUpdateProfile, onBack, onSwitchStudent
       getDriveFileInfo().then(setDriveInfo);
     }
   }, [profile.id, auth.signedIn, lastSyncedAt]);
+
+  useEffect(() => {
+    if (!exportMenuOpen) return;
+    const closeOnOutsideClick = (event: MouseEvent) => {
+      if (!exportControlRef.current?.contains(event.target as Node)) setExportMenuOpen(false);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setExportMenuOpen(false);
+    };
+    document.addEventListener('mousedown', closeOnOutsideClick);
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.removeEventListener('mousedown', closeOnOutsideClick);
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [exportMenuOpen]);
+
+  useEffect(() => {
+    if (exportState.status !== 'success') return;
+    const timer = window.setTimeout(() => setExportState({ status: 'idle' }), 8000);
+    return () => window.clearTimeout(timer);
+  }, [exportState.status]);
 
   const save = (patch: Partial<StudentSettings>) => {
     const updated = { ...profile, settings: { ...settings, ...patch } };
@@ -202,6 +234,70 @@ export function SettingsPage({ profile, onUpdateProfile, onBack, onSwitchStudent
     }
     return 'Not yet synced';
   }
+
+  const runExport = async (format: UserDataExportFormat) => {
+    setExportMenuOpen(false);
+    setExportState({ status: 'exporting', format });
+    const result = await exportUserData(format);
+    if (result.ok && result.filename) {
+      setExportState({
+        status: 'success',
+        format,
+        filename: result.filename,
+        warning: syncStatus === 'error'
+          ? 'Exported local data. Google Drive sync is currently failing, so this file may not include newer activity from another device.'
+          : undefined,
+      });
+      return;
+    }
+    if (result.cancelled) {
+      setExportState({ status: 'idle' });
+      return;
+    }
+    setExportState({ status: 'error', message: result.error ?? 'Could not export user data. Please try again.' });
+  };
+
+  const exportControl = (
+    <div ref={exportControlRef} style={s.exportControl}>
+      <button
+        type="button"
+        style={{ ...s.exportBtn, opacity: exportState.status === 'exporting' ? 0.6 : 1 }}
+        aria-haspopup="menu"
+        aria-expanded={exportMenuOpen}
+        onClick={() => setExportMenuOpen(open => !open)}
+        disabled={exportState.status === 'exporting'}
+      >
+        {exportState.status === 'exporting' ? 'Exporting…' : 'Export User Data'}
+      </button>
+      {exportMenuOpen && (
+        <div role="menu" aria-label="Export format" style={s.exportMenu}>
+          <button type="button" role="menuitem" style={s.exportMenuItem} onClick={() => runExport('json')}>
+            Export as JSON
+          </button>
+          <button type="button" role="menuitem" style={s.exportMenuItem} onClick={() => runExport('zip')}>
+            Export as ZIP
+          </button>
+        </div>
+      )}
+    </div>
+  );
+
+  const exportDetails = (
+    <>
+      <p style={{ ...s.rowDesc, marginTop: '10px' }}>
+        Exports all MathFan data currently stored on this device. It does not sync with Google Drive first.
+      </p>
+      {exportState.status === 'success' && (
+        <div role="status" style={{ color: '#15803d', fontSize: '13px', marginTop: '8px' }}>
+          <p style={{ margin: 0 }}>Exported {exportState.filename}</p>
+          {exportState.warning && <p style={{ color: '#b45309', margin: '4px 0 0' }}>{exportState.warning}</p>}
+        </div>
+      )}
+      {exportState.status === 'error' && (
+        <p role="alert" style={{ color: '#b91c1c', fontSize: '13px', margin: '8px 0 0' }}>{exportState.message}</p>
+      )}
+    </>
+  );
 
   return (
     <div style={s.page}>
@@ -333,12 +429,16 @@ export function SettingsPage({ profile, onUpdateProfile, onBack, onSwitchStudent
       {/* ── Sync ────────────────────────────────────────────────────── */}
       <Section title="Google Sync">
         {!import.meta.env.VITE_GOOGLE_CLIENT_ID ? (
-          <div style={s.warnBox}>
-            <p style={{ fontWeight: '600', margin: '0 0 4px' }}>Not configured</p>
-            <p style={{ fontSize: '13px', margin: 0 }}>
-              Add <code>VITE_GOOGLE_CLIENT_ID</code> to your <code>.env</code> file and restart the dev server.
-            </p>
-          </div>
+          <>
+            <div style={s.warnBox}>
+              <p style={{ fontWeight: '600', margin: '0 0 4px' }}>Not configured</p>
+              <p style={{ fontSize: '13px', margin: 0 }}>
+                Add <code>VITE_GOOGLE_CLIENT_ID</code> to your <code>.env</code> file and restart the dev server.
+              </p>
+            </div>
+            <div style={s.syncActions}>{exportControl}</div>
+            {exportDetails}
+          </>
         ) : auth.signedIn ? (
           <>
             <div style={s.syncInfoGrid}>
@@ -357,7 +457,7 @@ export function SettingsPage({ profile, onUpdateProfile, onBack, onSwitchStudent
                 <SyncRow label="Questions in DB" value={`${totalQuestions.toLocaleString()} attempts`} />
               )}
             </div>
-            <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+            <div style={s.syncActions}>
               <button
                 style={{ ...s.syncBtn, opacity: syncStatus === 'syncing' ? 0.5 : 1 }}
                 onClick={onManualSync}
@@ -365,8 +465,10 @@ export function SettingsPage({ profile, onUpdateProfile, onBack, onSwitchStudent
               >
                 {syncStatus === 'syncing' ? '⏳ Syncing…' : '↻ Sync Now'}
               </button>
+              {exportControl}
               <button style={s.outBtn} onClick={onSignOut}>Sign Out</button>
             </div>
+            {exportDetails}
             {syncStatus === 'error' && syncError && (
               <p style={{ color: '#ef4444', fontSize: '13px', marginTop: '8px' }}>{syncError}</p>
             )}
@@ -376,13 +478,17 @@ export function SettingsPage({ profile, onUpdateProfile, onBack, onSwitchStudent
             <p style={{ ...s.rowDesc, marginBottom: '12px' }}>
               Sign in to sync your progress across devices. Data is stored privately in your Google Drive.
             </p>
-            <button
-              style={{ ...s.syncBtn, opacity: syncStatus === 'syncing' ? 0.5 : 1 }}
-              onClick={onSignIn}
-              disabled={syncStatus === 'syncing'}
-            >
-              {syncStatus === 'syncing' ? '⏳ Signing in…' : '🔑 Sign in with Google'}
-            </button>
+            <div style={s.syncActions}>
+              <button
+                style={{ ...s.syncBtn, opacity: syncStatus === 'syncing' ? 0.5 : 1 }}
+                onClick={onSignIn}
+                disabled={syncStatus === 'syncing'}
+              >
+                {syncStatus === 'syncing' ? '⏳ Signing in…' : '🔑 Sign in with Google'}
+              </button>
+              {exportControl}
+            </div>
+            {exportDetails}
             {syncStatus === 'error' && syncError && (
               <p style={{ color: '#ef4444', fontSize: '13px', marginTop: '8px' }}>{syncError}</p>
             )}
@@ -545,7 +651,12 @@ const s: Record<string, React.CSSProperties> = {
   themeGrid: { display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' },
   themeBtn: { width: '40px', height: '40px', borderRadius: '50%', border: 'none', cursor: 'pointer', transition: 'all 0.15s' },
   syncInfoGrid: { borderRadius: '8px', overflow: 'hidden' },
-  syncBtn: { flex: 1, padding: '10px 16px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: '10px', fontSize: '14px', fontWeight: '600', cursor: 'pointer' },
+  syncActions: { display: 'flex', gap: '8px', marginTop: '12px', flexWrap: 'wrap', alignItems: 'flex-start' },
+  syncBtn: { flex: '1 1 140px', padding: '10px 16px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: '10px', fontSize: '14px', fontWeight: '600', cursor: 'pointer' },
+  exportControl: { flex: '1 1 150px', minWidth: 0 },
+  exportBtn: { width: '100%', padding: '9px 14px', background: '#fff', color: 'var(--primary)', border: '2px solid var(--primary)', borderRadius: '10px', fontSize: '14px', fontWeight: '600', cursor: 'pointer' },
+  exportMenu: { display: 'flex', flexDirection: 'column', gap: '4px', padding: '6px', marginTop: '4px', border: '1px solid #d1d5db', borderRadius: '10px', background: '#fff', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' },
+  exportMenuItem: { padding: '9px 10px', border: 'none', borderRadius: '7px', background: '#f9fafb', color: '#111827', textAlign: 'left', cursor: 'pointer', fontSize: '14px', fontWeight: '500' },
   outBtn: { padding: '10px 16px', background: '#f3f4f6', color: '#374151', border: 'none', borderRadius: '10px', fontSize: '14px', fontWeight: '600', cursor: 'pointer' },
   warnBox: { background: '#fffbeb', border: '1px solid #fcd34d', borderRadius: '8px', padding: '12px' },
   preset: { padding: '5px 10px', border: '1.5px solid #e5e7eb', borderRadius: '16px', background: '#fff', fontSize: '12px', cursor: 'pointer', fontWeight: '500', fontFamily: 'ui-monospace, monospace' },

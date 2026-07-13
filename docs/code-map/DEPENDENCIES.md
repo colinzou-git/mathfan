@@ -4,19 +4,20 @@
 
 | Package | Import count |
 | --- | --- |
-| vitest | 60 |
+| vitest | 62 |
 | react | 35 |
-| @testing-library/react | 12 |
+| @testing-library/react | 13 |
 | pathlib | 8 |
 | __future__ | 7 |
 | sys | 7 |
-| json | 3 |
+| json | 4 |
 | os | 3 |
 | playwright.sync_api | 3 |
 | re | 3 |
 | @vitejs/plugin-react | 2 |
 | argparse | 2 |
 | datetime | 2 |
+| jszip | 2 |
 | node:fs | 2 |
 | ssl | 2 |
 | typing | 2 |
@@ -50,6 +51,7 @@
 | urllib.parse | 1 |
 | vite | 1 |
 | vite-plugin-pwa | 1 |
+| zipfile | 1 |
 
 ## Local import edges
 
@@ -180,6 +182,7 @@
 | src/features/diagnosis/DiagnosticSession.tsx | ../time/clock |
 | src/features/diagnosis/DiagnosticSession.tsx | ./diagnosticPersistence |
 | src/features/diagnosis/DiagnosticSession.tsx | ./diagnosticPlanner |
+| src/features/export/userDataExport.ts | ../sync/snapshot |
 | src/features/goals/dailyNewGoalLimits.ts | ../../types/math |
 | src/features/goals/dailyNewGoalLimits.ts | ./types |
 | src/features/goals/dailyNewGoalPlanner.ts | ../../types/math |
@@ -388,6 +391,7 @@
 | src/features/settings/SettingsPage.tsx | ../ai/aiConfig |
 | src/features/settings/SettingsPage.tsx | ../ai/gemini |
 | src/features/settings/SettingsPage.tsx | ../auth/googleAuth |
+| src/features/settings/SettingsPage.tsx | ../export/userDataExport |
 | src/features/settings/SettingsPage.tsx | ../goals/dailyNewGoalLimits |
 | src/features/settings/SettingsPage.tsx | ../sync/driveSync |
 | src/features/settings/SettingsPage.tsx | ../theme/themes |
@@ -652,6 +656,9 @@
 | src/tests/scheduler.test.ts | ../types/math |
 | src/tests/settingsDailyNewLimits.test.tsx | ../features/settings/SettingsPage |
 | src/tests/settingsDailyNewLimits.test.tsx | ../types/math |
+| src/tests/settingsExportUserData.test.tsx | ../features/settings/SettingsPage |
+| src/tests/settingsExportUserData.test.tsx | ../features/sync/driveSync |
+| src/tests/settingsExportUserData.test.tsx | ../types/math |
 | src/tests/skillMapping.test.ts | ../features/curriculum/fractionItems |
 | src/tests/skillMapping.test.ts | ../features/curriculum/multiplicationItems |
 | src/tests/skillMapping.test.ts | ../features/curriculum/wordProblemItems |
@@ -678,6 +685,8 @@
 | src/tests/todayPlanEngine.test.ts | ../features/mastery/todayPlanEngine |
 | src/tests/todayPlanEngine.test.ts | ../types/math |
 | src/tests/updateCheck.test.ts | ../features/settings/updateCheck |
+| src/tests/userDataExport.test.ts | ../features/export/userDataExport |
+| src/tests/userDataExport.test.ts | ../features/sync/snapshot |
 | src/tests/visualModel.test.ts | ../features/curriculum/areaItems |
 | src/tests/visualModel.test.ts | ../features/curriculum/fractionItems |
 | src/tests/visualModel.test.ts | ../features/curriculum/makeItemFromId |

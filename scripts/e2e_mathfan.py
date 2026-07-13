@@ -12,9 +12,11 @@ Run after starting a preview server:
 from __future__ import annotations
 
 import os
+import json
 import re
 import sys
 import traceback
+import zipfile
 from pathlib import Path
 from typing import Callable
 
@@ -145,10 +147,85 @@ def run_practice_journey(page: Page) -> None:
     expect_dashboard_attempt_stats(page)
 
 
+def verify_local_user_data_exports(page: Page) -> None:
+    """Download and inspect both local export formats while signed out."""
+    page.get_by_test_id("open-settings").click()
+    expect(page.get_by_role("heading", name="Settings", exact=True)).to_be_visible()
+    export_button = page.get_by_role("button", name="Export User Data", exact=True)
+    expect(export_button).to_be_enabled()
+
+    export_button.click()
+    with page.expect_download() as json_download_info:
+        page.get_by_role("menuitem", name="Export as JSON", exact=True).click()
+    json_download = json_download_info.value
+    if not re.fullmatch(r"mathfan-user-data-\d{8}-\d{6}\.json", json_download.suggested_filename):
+        raise AssertionError(f"Unexpected JSON export filename: {json_download.suggested_filename}")
+    json_path = json_download.path()
+    if json_path is None:
+        raise AssertionError("JSON export did not produce a local download path")
+    payload = json.loads(Path(json_path).read_text(encoding="utf-8"))
+    metadata = payload["exportMetadata"]
+    snapshot = payload["snapshot"]
+    if metadata["exportMode"] != "local":
+        raise AssertionError("JSON export is not marked as local")
+    for build_key in ("appVersion", "gitSha", "buildTime"):
+        if not metadata.get(build_key):
+            raise AssertionError(f"JSON export is missing {build_key}")
+    expected_tables = {
+        "students", "itemStates", "attempts", "sessions", "multFactStats",
+        "quizSessions", "mathAnswerEvents", "learningGoals", "goalEvents", "goalEvaluations",
+    }
+    if not expected_tables.issubset(snapshot):
+        raise AssertionError(f"JSON export is missing tables: {expected_tables - set(snapshot)}")
+    if not any(student["displayName"] == "BrowserTester" for student in snapshot["students"]):
+        raise AssertionError("JSON export did not preserve the created profile name")
+    if not snapshot["mathAnswerEvents"]:
+        raise AssertionError("JSON export did not include recorded practice activity")
+
+    export_button.click()
+    with page.expect_download() as zip_download_info:
+        page.get_by_role("menuitem", name="Export as ZIP", exact=True).click()
+    zip_download = zip_download_info.value
+    if not re.fullmatch(r"mathfan-user-data-\d{8}-\d{6}\.zip", zip_download.suggested_filename):
+        raise AssertionError(f"Unexpected ZIP export filename: {zip_download.suggested_filename}")
+    zip_path = zip_download.path()
+    if zip_path is None:
+        raise AssertionError("ZIP export did not produce a local download path")
+    root = Path(zip_download.suggested_filename).stem
+    expected_archive_files = {
+        f"{root}/manifest.json",
+        f"{root}/mathfan-user-data.json",
+        f"{root}/csv/students.csv",
+        f"{root}/csv/item-states.csv",
+        f"{root}/csv/attempts.csv",
+        f"{root}/csv/sessions.csv",
+        f"{root}/csv/multiplication-fact-stats.csv",
+        f"{root}/csv/quiz-sessions.csv",
+        f"{root}/csv/math-answer-events.csv",
+        f"{root}/csv/learning-goals.csv",
+        f"{root}/csv/goal-events.csv",
+        f"{root}/csv/goal-evaluations.csv",
+    }
+    with zipfile.ZipFile(zip_path) as archive:
+        names = set(archive.namelist())
+        if not expected_archive_files.issubset(names):
+            raise AssertionError(f"ZIP export is missing files: {expected_archive_files - names}")
+        manifest = json.loads(archive.read(f"{root}/manifest.json"))
+        zipped_payload = json.loads(archive.read(f"{root}/mathfan-user-data.json"))
+    if manifest["rowCounts"]["students"] < 1:
+        raise AssertionError("ZIP manifest has an incorrect student row count")
+    if not any(student["displayName"] == "BrowserTester" for student in zipped_payload["snapshot"]["students"]):
+        raise AssertionError("ZIP export did not preserve the created profile name")
+
+    assert_no_horizontal_overflow(page, "desktop export settings")
+    page.get_by_role("button", name="← Back", exact=True).click()
+
+
 def desktop_student_journey(page: Page) -> None:
     create_profile(page, "BrowserTester", "e2e-desktop")
     set_practice_preferences_and_verify_persistence(page)
     run_practice_journey(page)
+    verify_local_user_data_exports(page)
     assert_no_horizontal_overflow(page, "desktop dashboard")
 
 
@@ -168,6 +245,12 @@ def responsive_navigation(page: Page, label: str) -> None:
     page.get_by_test_id("open-settings").click()
     expect(page.get_by_role("heading", name="Settings", exact=True)).to_be_visible()
     assert_no_horizontal_overflow(page, f"{label} settings")
+    export_button = page.get_by_role("button", name="Export User Data", exact=True)
+    expect(export_button).to_be_enabled()
+    export_button.click()
+    expect(page.get_by_role("menu", name="Export format")).to_be_visible()
+    assert_no_horizontal_overflow(page, f"{label} export menu")
+    page.keyboard.press("Escape")
     page.get_by_role("button", name="← Back", exact=True).click()
 
     page.get_by_role("button", name=re.compile(r"Multiply")).click()
@@ -187,6 +270,12 @@ def run_scenario(
         timezone_id="America/Los_Angeles",
         service_workers="block",
         reduced_motion="reduce",
+    )
+    context.add_init_script(
+        """() => {
+            Object.defineProperty(navigator, 'share', { configurable: true, value: undefined });
+            Object.defineProperty(navigator, 'canShare', { configurable: true, value: undefined });
+        }"""
     )
     context.tracing.start(screenshots=True, snapshots=True, sources=True)
     page = context.new_page()
