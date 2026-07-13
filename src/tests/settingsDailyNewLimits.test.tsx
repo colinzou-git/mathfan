@@ -20,7 +20,7 @@ afterEach(cleanup);
 
 describe('SettingsPage Daily New goal limits', () => {
   it('shows defaults, validates, and saves global limits', async () => {
-    const onUpdateProfile = vi.fn();
+    const onUpdateProfile = vi.fn(async () => undefined);
     render(<SettingsPage profile={profile} onUpdateProfile={onUpdateProfile} onBack={() => {}} onSwitchStudent={() => {}}
       auth={{ signedIn: false, token: null, profile: null }} syncStatus="idle" lastSyncedAt={null} syncError={null}
       onSignIn={() => {}} onSignOut={() => {}} onManualSync={() => {}} />);

@@ -5,17 +5,23 @@ import { getDriveFileInfo } from '../sync/driveSync';
 import type { SyncStatus } from '../sync/driveSync';
 import type { AuthState } from '../auth/googleAuth';
 import { attemptRepo } from '../../db/repositories';
-import { studentRepo } from '../../db/repositories';
 import { isDebugSpeed, enableDebugSpeed, disableDebugSpeed } from '../time/clock';
 import { getAiConfig, setAiKey, setAiModel, clearAiKey, DEFAULT_MODEL } from '../ai/aiConfig';
 import { askTutor, explainAiError, aiErrorDetail } from '../ai/gemini';
 import { checkForUpdate, type BuildInfo } from './updateCheck';
 import { normalizeDailyNewGoalLimits, validateDailyNewGoalLimits } from '../goals/dailyNewGoalLimits';
-import { exportUserData, type UserDataExportFormat } from '../export/userDataExport';
+import {
+  canShareExportArtifact,
+  downloadPreparedExport,
+  prepareUserDataExport,
+  sharePreparedExport,
+  type PreparedUserDataExport,
+  type UserDataExportFormat,
+} from '../export/userDataExport';
 
 interface Props {
   profile: StudentProfile;
-  onUpdateProfile: (p: StudentProfile) => void;
+  onUpdateProfile: (p: StudentProfile) => Promise<void>;
   onBack: () => void;
   onSwitchStudent: () => void;
   auth: AuthState;
@@ -30,6 +36,13 @@ interface Props {
 type ExportUiState =
   | { status: 'idle' }
   | { status: 'exporting'; format: UserDataExportFormat }
+  | {
+      status: 'ready';
+      format: UserDataExportFormat;
+      artifact: PreparedUserDataExport;
+      deliveryMessage?: string;
+      sharing?: boolean;
+    }
   | { status: 'success'; format: UserDataExportFormat; filename: string; warning?: string }
   | { status: 'error'; message: string };
 
@@ -77,7 +90,14 @@ export function SettingsPage({ profile, onUpdateProfile, onBack, onSwitchStudent
   const [dailyNewLimitsError, setDailyNewLimitsError] = useState<string | null>(null);
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
   const [exportState, setExportState] = useState<ExportUiState>({ status: 'idle' });
+  const [profileWritePending, setProfileWritePending] = useState(false);
+  const [profileWriteError, setProfileWriteError] = useState<string | null>(null);
   const exportControlRef = useRef<HTMLDivElement>(null);
+  const latestProfileRef = useRef(profile);
+  const pendingProfileWriteRef = useRef<Promise<void>>(Promise.resolve());
+  const pendingWriteCountRef = useRef(0);
+  const mountedRef = useRef(true);
+  const syncStatusRef = useRef(syncStatus);
 
   // The build baked into this running bundle (substituted by Vite `define`).
   const currentBuild: BuildInfo = { appVersion: __APP_VERSION__, gitSha: __GIT_SHA__, buildTime: __BUILD_TIME__ };
@@ -146,6 +166,22 @@ export function SettingsPage({ profile, onUpdateProfile, onBack, onSwitchStudent
   }, [profile.id, auth.signedIn, lastSyncedAt]);
 
   useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
+
+  useEffect(() => {
+    if (pendingWriteCountRef.current === 0) latestProfileRef.current = profile;
+  }, [profile]);
+
+  useEffect(() => {
+    syncStatusRef.current = syncStatus;
+    if (syncStatus !== 'syncing') return;
+    const timer = window.setTimeout(() => setExportMenuOpen(false), 0);
+    return () => window.clearTimeout(timer);
+  }, [syncStatus]);
+
+  useEffect(() => {
     if (!exportMenuOpen) return;
     const closeOnOutsideClick = (event: MouseEvent) => {
       if (!exportControlRef.current?.contains(event.target as Node)) setExportMenuOpen(false);
@@ -167,18 +203,49 @@ export function SettingsPage({ profile, onUpdateProfile, onBack, onSwitchStudent
     return () => window.clearTimeout(timer);
   }, [exportState.status]);
 
+  const persistProfile = (updated: StudentProfile): Promise<void> => {
+    latestProfileRef.current = updated;
+    pendingWriteCountRef.current += 1;
+    setProfileWritePending(true);
+    setProfileWriteError(null);
+
+    const write = pendingProfileWriteRef.current
+      .catch(() => undefined)
+      .then(() => onUpdateProfile(updated));
+    pendingProfileWriteRef.current = write;
+
+    void write
+      .then(() => {
+        if (mountedRef.current && latestProfileRef.current === updated) setProfileWriteError(null);
+      })
+      .catch(error => {
+        console.error('[MathFan settings] Profile write failed.', error);
+        if (mountedRef.current) setProfileWriteError('Could not save the latest Settings changes. Please try again.');
+      })
+      .finally(() => {
+        pendingWriteCountRef.current -= 1;
+        if (mountedRef.current && pendingWriteCountRef.current === 0) setProfileWritePending(false);
+      });
+
+    return write;
+  };
+
   const save = (patch: Partial<StudentSettings>) => {
-    const updated = { ...profile, settings: { ...settings, ...patch } };
+    const current = latestProfileRef.current;
+    const updated = { ...current, settings: { ...current.settings, ...patch } };
     if (patch.theme) applyTheme(patch.theme);
-    onUpdateProfile(updated);
+    void persistProfile(updated);
   };
 
   const saveName = async () => {
-    if (!editName.trim() || editName.trim() === profile.displayName) { setNameDirty(false); return; }
-    const updated = { ...profile, displayName: editName.trim() };
-    await studentRepo.save(updated);
-    onUpdateProfile(updated);
-    setNameDirty(false);
+    if (!editName.trim() || editName.trim() === latestProfileRef.current.displayName) { setNameDirty(false); return; }
+    const updated = { ...latestProfileRef.current, displayName: editName.trim() };
+    try {
+      await persistProfile(updated);
+      if (mountedRef.current) setNameDirty(false);
+    } catch {
+      // persistProfile already reports a readable error and leaves the name retryable.
+    }
   };
 
   const saveDailyNewLimits = () => {
@@ -235,37 +302,101 @@ export function SettingsPage({ profile, onUpdateProfile, onBack, onSwitchStudent
     return 'Not yet synced';
   }
 
+  const currentSyncWarning = () => syncStatus === 'error'
+    ? 'Exported local data. Google Drive sync is currently failing, so this file may not include newer activity from another device.'
+    : undefined;
+
+  const completeExport = (format: UserDataExportFormat, filename: string) => {
+    setExportState({
+      status: 'success',
+      format,
+      filename,
+      warning: currentSyncWarning(),
+    });
+  };
+
   const runExport = async (format: UserDataExportFormat) => {
+    if (syncStatus === 'syncing' || exportState.status === 'exporting') return;
     setExportMenuOpen(false);
     setExportState({ status: 'exporting', format });
-    const result = await exportUserData(format);
-    if (result.ok && result.filename) {
+
+    try {
+      await pendingProfileWriteRef.current;
+    } catch (error) {
+      console.error('[MathFan export] Pending Settings write failed.', error);
       setExportState({
-        status: 'success',
-        format,
-        filename: result.filename,
-        warning: syncStatus === 'error'
-          ? 'Exported local data. Google Drive sync is currently failing, so this file may not include newer activity from another device.'
-          : undefined,
+        status: 'error',
+        message: 'Could not save the latest Settings changes. Please try again before exporting.',
       });
       return;
     }
-    if (result.cancelled) {
-      setExportState({ status: 'idle' });
+
+    const syncIsRunning = () => syncStatusRef.current === 'syncing';
+    if (syncIsRunning()) {
+      setExportState({ status: 'error', message: 'Finish the current sync before exporting local data.' });
       return;
     }
-    setExportState({ status: 'error', message: result.error ?? 'Could not export user data. Please try again.' });
+
+    const prepared = await prepareUserDataExport(format);
+    if (!prepared.ok) {
+      setExportState({ status: 'error', message: prepared.error });
+      return;
+    }
+
+    if (syncIsRunning()) {
+      setExportState({ status: 'error', message: 'The sync started before export finished. Please export again when sync is complete.' });
+      return;
+    }
+
+    if (canShareExportArtifact(prepared.artifact)) {
+      setExportState({ status: 'ready', format, artifact: prepared.artifact });
+      return;
+    }
+
+    const downloaded = downloadPreparedExport(prepared.artifact);
+    if (downloaded.ok) completeExport(format, prepared.artifact.filename);
+    else setExportState({ status: 'error', message: downloaded.error ?? 'Could not save the export file. Please try again.' });
   };
+
+  const shareReadyExport = async () => {
+    if (exportState.status !== 'ready' || exportState.sharing) return;
+    const current = exportState;
+    setExportState({ ...current, sharing: true, deliveryMessage: undefined });
+    const result = await sharePreparedExport(current.artifact);
+    if (result.status === 'shared') {
+      completeExport(current.format, current.artifact.filename);
+      return;
+    }
+    setExportState({
+      ...current,
+      sharing: false,
+      deliveryMessage: result.status === 'dismissed'
+        ? 'Sharing was not completed. You can try again or download the file instead.'
+        : result.message,
+    });
+  };
+
+  const downloadReadyExport = () => {
+    if (exportState.status !== 'ready') return;
+    const current = exportState;
+    const result = downloadPreparedExport(current.artifact);
+    if (result.ok) completeExport(current.format, current.artifact.filename);
+    else setExportState({ ...current, sharing: false, deliveryMessage: result.error });
+  };
+
+  const exportDisabled = exportState.status === 'exporting' || syncStatus === 'syncing';
+  const syncActionDisabled = syncStatus === 'syncing' || exportState.status === 'exporting';
 
   const exportControl = (
     <div ref={exportControlRef} style={s.exportControl}>
       <button
         type="button"
-        style={{ ...s.exportBtn, opacity: exportState.status === 'exporting' ? 0.6 : 1 }}
+        style={{ ...s.exportBtn, opacity: exportDisabled ? 0.6 : 1, cursor: exportDisabled ? 'not-allowed' : 'pointer' }}
         aria-haspopup="menu"
         aria-expanded={exportMenuOpen}
-        onClick={() => setExportMenuOpen(open => !open)}
-        disabled={exportState.status === 'exporting'}
+        title={syncStatus === 'syncing' ? 'Finish the current sync before exporting local data.' : undefined}
+        onClick={() => { if (!exportDisabled) setExportMenuOpen(open => !open); }}
+        disabled={exportDisabled}
       >
         {exportState.status === 'exporting' ? 'Exporting…' : 'Export User Data'}
       </button>
@@ -287,6 +418,36 @@ export function SettingsPage({ profile, onUpdateProfile, onBack, onSwitchStudent
       <p style={{ ...s.rowDesc, marginTop: '10px' }}>
         Exports all MathFan data currently stored on this device. It does not sync with Google Drive first.
       </p>
+      {syncStatus === 'syncing' && (
+        <p style={{ color: '#b45309', fontSize: '13px', margin: '6px 0 0' }}>
+          Finish the current sync before exporting local data.
+        </p>
+      )}
+      {profileWritePending && exportState.status !== 'exporting' && (
+        <p role="status" style={{ color: '#6b7280', fontSize: '13px', margin: '6px 0 0' }}>Saving changes…</p>
+      )}
+      {profileWriteError && exportState.status !== 'error' && (
+        <p role="alert" style={{ color: '#b91c1c', fontSize: '13px', margin: '6px 0 0' }}>{profileWriteError}</p>
+      )}
+      {exportState.status === 'ready' && (
+        <div style={s.exportReadyPanel}>
+          <p role="status" style={{ margin: 0, color: '#166534', fontSize: '13px' }}>
+            Your export is ready: <strong>{exportState.artifact.filename}</strong>
+          </p>
+          {exportState.deliveryMessage && (
+            <p role="alert" style={{ color: '#b45309', fontSize: '13px', margin: '6px 0 0' }}>
+              {exportState.deliveryMessage}
+            </p>
+          )}
+          <div style={{ ...s.syncActions, marginTop: '10px' }}>
+            <button type="button" style={s.syncBtn} onClick={shareReadyExport} disabled={exportState.sharing}>
+              {exportState.sharing ? 'Opening Share…' : 'Share or Save File'}
+            </button>
+            <button type="button" style={{ ...s.exportBtn, width: 'auto', flex: '1 1 140px' }} onClick={downloadReadyExport}>Download Instead</button>
+            <button type="button" style={s.outBtn} onClick={() => setExportState({ status: 'idle' })}>Cancel</button>
+          </div>
+        </div>
+      )}
       {exportState.status === 'success' && (
         <div role="status" style={{ color: '#15803d', fontSize: '13px', marginTop: '8px' }}>
           <p style={{ margin: 0 }}>Exported {exportState.filename}</p>
@@ -329,7 +490,7 @@ export function SettingsPage({ profile, onUpdateProfile, onBack, onSwitchStudent
             {([3, 4, 5] as GradeLevel[]).map(g => (
               <button
                 key={g}
-                onClick={() => onUpdateProfile({ ...profile, gradeLevel: g })}
+                onClick={() => void persistProfile({ ...latestProfileRef.current, gradeLevel: g })}
                 style={{ ...s.gradeBtn, ...(profile.gradeLevel === g ? s.gradeBtnOn : {}) }}
               >
                 {g}
@@ -363,6 +524,7 @@ export function SettingsPage({ profile, onUpdateProfile, onBack, onSwitchStudent
             <button style={s.adjBtn} onClick={() => save({ sessionLength: Math.max(1, settings.sessionLength - 5) as SessionLength })}>−5</button>
             <input
               type="number" min={1} max={200}
+              aria-label="Default questions per session"
               value={settings.sessionLength}
               onChange={e => {
                 const n = parseInt(e.target.value);
@@ -459,9 +621,9 @@ export function SettingsPage({ profile, onUpdateProfile, onBack, onSwitchStudent
             </div>
             <div style={s.syncActions}>
               <button
-                style={{ ...s.syncBtn, opacity: syncStatus === 'syncing' ? 0.5 : 1 }}
+                style={{ ...s.syncBtn, opacity: syncActionDisabled ? 0.5 : 1 }}
                 onClick={onManualSync}
-                disabled={syncStatus === 'syncing'}
+                disabled={syncActionDisabled}
               >
                 {syncStatus === 'syncing' ? '⏳ Syncing…' : '↻ Sync Now'}
               </button>
@@ -480,9 +642,9 @@ export function SettingsPage({ profile, onUpdateProfile, onBack, onSwitchStudent
             </p>
             <div style={s.syncActions}>
               <button
-                style={{ ...s.syncBtn, opacity: syncStatus === 'syncing' ? 0.5 : 1 }}
+                style={{ ...s.syncBtn, opacity: syncActionDisabled ? 0.5 : 1 }}
                 onClick={onSignIn}
-                disabled={syncStatus === 'syncing'}
+                disabled={syncActionDisabled}
               >
                 {syncStatus === 'syncing' ? '⏳ Signing in…' : '🔑 Sign in with Google'}
               </button>
@@ -657,6 +819,7 @@ const s: Record<string, React.CSSProperties> = {
   exportBtn: { width: '100%', padding: '9px 14px', background: '#fff', color: 'var(--primary)', border: '2px solid var(--primary)', borderRadius: '10px', fontSize: '14px', fontWeight: '600', cursor: 'pointer' },
   exportMenu: { display: 'flex', flexDirection: 'column', gap: '4px', padding: '6px', marginTop: '4px', border: '1px solid #d1d5db', borderRadius: '10px', background: '#fff', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' },
   exportMenuItem: { padding: '9px 10px', border: 'none', borderRadius: '7px', background: '#f9fafb', color: '#111827', textAlign: 'left', cursor: 'pointer', fontSize: '14px', fontWeight: '500' },
+  exportReadyPanel: { marginTop: '10px', padding: '12px', border: '1px solid #86efac', borderRadius: '10px', background: '#f0fdf4', overflowWrap: 'anywhere' },
   outBtn: { padding: '10px 16px', background: '#f3f4f6', color: '#374151', border: 'none', borderRadius: '10px', fontSize: '14px', fontWeight: '600', cursor: 'pointer' },
   warnBox: { background: '#fffbeb', border: '1px solid #fcd34d', borderRadius: '8px', padding: '12px' },
   preset: { padding: '5px 10px', border: '1.5px solid #e5e7eb', borderRadius: '16px', background: '#fff', fontSize: '12px', cursor: 'pointer', fontWeight: '500', fontFamily: 'ui-monospace, monospace' },

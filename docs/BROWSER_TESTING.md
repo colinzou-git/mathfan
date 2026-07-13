@@ -76,3 +76,16 @@ Prefer accessible selectors:
 - `get_by_text(...)`
 
 Use `data-testid` only when a stable accessible selector is unavailable. Keep test data deterministic by constraining number ranges and question counts. Block service workers for most browser tests so cached PWA assets do not hide current-build failures; test service-worker/update behavior separately.
+
+## Manual iPhone/iPad export checklist
+
+Chromium automation covers prepared-file UI and download integrity, but it cannot reproduce every iOS transient-user-activation or share-target condition. Before an export-related release, install the built PWA on both iPhone and iPad and verify:
+
+1. Generate JSON and ZIP exports; use a profile with a realistically large practice history for ZIP.
+2. Confirm **Share or Save File** appears only after generation finishes.
+3. Open the share sheet and save the file to Files.
+4. Dismiss the share sheet and confirm the prepared file remains available with a readable message.
+5. Retry **Share or Save File** without regenerating the export.
+6. Exercise a device with no suitable share target, where reproducible, and a browser permission/blocking failure.
+7. Use **Download Instead** after an incomplete share and verify the same filename and non-empty file are delivered.
+8. Tap **Cancel** and confirm the prepared-file controls disappear.

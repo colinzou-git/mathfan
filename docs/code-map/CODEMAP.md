@@ -1,6 +1,6 @@
 # Code Map Overview
 
-Generated: 2026-07-13 05:45:27 UTC
+Generated: 2026-07-13 06:54:22 UTC
 
 Repo root: `/home/ubuntu/mathfan`
 Output folder: `/home/ubuntu/mathfan/docs/code-map`
@@ -14,9 +14,9 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 - Package name: `mathfan`
 - Version: `1.2.0`
 - Module type: `module`
-- Scanned files: **216**
-- Scanned lines: **42,443**
-- Scanned bytes: **1,678,542**
+- Scanned files: **217**
+- Scanned lines: **43,033**
+- Scanned bytes: **1,706,559**
 
 ## NPM scripts
 
@@ -73,7 +73,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 | --- | --- | --- | --- |
 | src/App.tsx | 313 | Top-level React app shell: routes/screens, global state, and feature wiring. | App, handleQuizDone, handleSessionDone, pickOperation, startPractice, updateProfile, updateSettings |
 | src/features/sync/SyncWidget.tsx | 156 | Cloud sync/auth/data transfer logic. | GoogleIcon, SyncWidget, friendlyError, GoogleIcon, initials, SyncWidget, timeSince |
-| src/features/sync/snapshot.ts | 210 | Local persistence/database layer. | AppSnapshot, validateSnapshot, buildSnapshot, mergeSnapshot, remoteHasNewerUpdatedAt, validateSnapshot, validTimeMs |
+| src/features/sync/snapshot.ts | 225 | Local persistence/database layer. | AppSnapshot, validateSnapshot, buildSnapshot, mergeSnapshot, remoteHasNewerUpdatedAt, validateSnapshot, validTimeMs |
 | vite.config.ts | 82 | Vite build/PWA configuration. | buildInfoPlugin |
 | package.json | 52 | Project package metadata, scripts, dependencies, and dev tooling. |  |
 | src/main.tsx | 21 | React entry point that mounts the app. |  |
@@ -81,7 +81,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 | src/features/sync/useSync.ts | 99 | Cloud sync/auth/data transfer logic. | useSync, initAuth, SyncState, useSync, recordSync, useSync |
 | src/features/goals/GoalsPage.tsx | 1001 | React UI component file: ConfirmDialog, EmptyState, GoalCard, GoalWizard. | ConfirmDialog, EmptyState, GoalCard, GoalWizard, ProgressBar, SummaryCard, GoalsPage, activeLearningDays |
 | src/features/multiplication/MultiplicationQuizPage.tsx | 845 | Local persistence/database layer. | FactChip, SetupScreen, StatBox, SummaryScreen, MultiplicationQuizPage, FactChip, MultiplicationQuizPage, recommendedPracticeConfig |
-| src/features/settings/SettingsPage.tsx | 665 | Student/app settings UI or persistence. | Section, SyncRow, ToggleRow, SettingsPage, applyUpdate, buildId, buildLabel, checkForUpdates |
+| src/features/settings/SettingsPage.tsx | 828 | Student/app settings UI or persistence. | Section, SyncRow, ToggleRow, SettingsPage, applyUpdate, buildId, buildLabel, checkForUpdates |
 | src/features/practice/PracticeScreen.tsx | 552 | Local persistence/database layer. | KbChip, PracticeScreen, KbChip, onKey, PracticeScreen, run, submitChoice |
 | src/features/dashboard/StudentDashboard.tsx | 528 | Dashboard/profile setup/student navigation feature. | Chip, PracticeOp, StudentDashboard, Chip, completeSkillSummaries, handleStartReview, openExtra, startDailyNewTile |
 | src/features/stats/FactStatsTable.tsx | 402 | Local persistence/database layer. | SortBtn, SummaryStat, FactStatsTable, bucketOf, FactStatsTable, SortBtn, startPractice, SummaryStat |
@@ -318,6 +318,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   ├── skillMapping.test.ts
 │   │   ├── skillMasteryEngine.test.ts
 │   │   ├── skillPracticePlanner.test.ts
+│   │   ├── snapshotBuild.test.ts
 │   │   ├── snapshotValidation.test.ts
 │   │   ├── speech.test.ts
 │   │   ├── statsEngine.test.ts
@@ -527,39 +528,39 @@ Purpose: Local persistence/database layer.
   26: // ── Build ─────────────────────────────────────────────────────────────────────
   27:
   28: export async function buildSnapshot(): Promise<AppSnapshot> {
-  29:   const [
-  30:     students,
-  31:     itemStates,
-  32:     attempts,
-  33:     sessions,
-  34:     multFactStats,
-  35:     quizSessions,
-  36:     mathAnswerEvents,
-  37:     learningGoals,
-  38:     goalEvents,
-  39:     goalEvaluations,
-  40:   ] = await Promise.all([
-  41:     db.students.toArray(),
-  42:     db.itemStates.toArray(),
-  43:     db.attempts.toArray(),
-  44:     db.sessions.toArray(),
-  45:     db.multFactStats.toArray(),
-  46:     db.quizSessions.toArray(),
-  47:     db.mathAnswerEvents.toArray(),
-  48:     db.learningGoals.toArray(),
-  49:     db.goalEvents.toArray(),
-  50:     db.goalEvaluations.toArray(),
-  51:   ]);
-  52:   return {
-  53:     appId: 'mathfan',
-  54:     snapshotVersion: 2,
-  55:     snapshotAt: new Date().toISOString(),
-  56:     students,
-  57:     itemStates,
-  58:     attempts,
-  59:     sessions,
-  60:     multFactStats,
-... (149 more lines)
+  29:   const tables = [
+  30:     db.students,
+  31:     db.itemStates,
+  32:     db.attempts,
+  33:     db.sessions,
+  34:     db.multFactStats,
+  35:     db.quizSessions,
+  36:     db.mathAnswerEvents,
+  37:     db.learningGoals,
+  38:     db.goalEvents,
+  39:     db.goalEvaluations,
+  40:   ];
+  41:
+  42:   return db.transaction('r', tables, async () => {
+  43:     const [
+  44:       students,
+  45:       itemStates,
+  46:       attempts,
+  47:       sessions,
+  48:       multFactStats,
+  49:       quizSessions,
+  50:       mathAnswerEvents,
+  51:       learningGoals,
+  52:       goalEvents,
+  53:       goalEvaluations,
+  54:     ] = await Promise.all([
+  55:       db.students.toArray(),
+  56:       db.itemStates.toArray(),
+  57:       db.attempts.toArray(),
+  58:       db.sessions.toArray(),
+  59:       db.multFactStats.toArray(),
+  60:       db.quizSessions.toArray(),
+... (164 more lines)
 ```
 
 ### `vite.config.ts`
@@ -999,60 +1000,60 @@ Purpose: Student/app settings UI or persistence.
    5: import type { SyncStatus } from '../sync/driveSync';
    6: import type { AuthState } from '../auth/googleAuth';
    7: import { attemptRepo } from '../../db/repositories';
-   8: import { studentRepo } from '../../db/repositories';
-   9: import { isDebugSpeed, enableDebugSpeed, disableDebugSpeed } from '../time/clock';
-  10: import { getAiConfig, setAiKey, setAiModel, clearAiKey, DEFAULT_MODEL } from '../ai/aiConfig';
-  11: import { askTutor, explainAiError, aiErrorDetail } from '../ai/gemini';
-  12: import { checkForUpdate, type BuildInfo } from './updateCheck';
-  13: import { normalizeDailyNewGoalLimits, validateDailyNewGoalLimits } from '../goals/dailyNewGoalLimits';
-  14: import { exportUserData, type UserDataExportFormat } from '../export/userDataExport';
-  15:
-  16: interface Props {
-  17:   profile: StudentProfile;
-  18:   onUpdateProfile: (p: StudentProfile) => void;
-  19:   onBack: () => void;
-  20:   onSwitchStudent: () => void;
-  21:   auth: AuthState;
-  22:   syncStatus: SyncStatus;
-  23:   lastSyncedAt: string | null;
-  24:   syncError: string | null;
-  25:   onSignIn: () => void;
-  26:   onSignOut: () => void;
-  27:   onManualSync: () => void;
-  28: }
-  29:
-  30: type ExportUiState =
-  31:   | { status: 'idle' }
-  32:   | { status: 'exporting'; format: UserDataExportFormat }
-  33:   | { status: 'success'; format: UserDataExportFormat; filename: string; warning?: string }
-  34:   | { status: 'error'; message: string };
+   8: import { isDebugSpeed, enableDebugSpeed, disableDebugSpeed } from '../time/clock';
+   9: import { getAiConfig, setAiKey, setAiModel, clearAiKey, DEFAULT_MODEL } from '../ai/aiConfig';
+  10: import { askTutor, explainAiError, aiErrorDetail } from '../ai/gemini';
+  11: import { checkForUpdate, type BuildInfo } from './updateCheck';
+  12: import { normalizeDailyNewGoalLimits, validateDailyNewGoalLimits } from '../goals/dailyNewGoalLimits';
+  13: import {
+  14:   canShareExportArtifact,
+  15:   downloadPreparedExport,
+  16:   prepareUserDataExport,
+  17:   sharePreparedExport,
+  18:   type PreparedUserDataExport,
+  19:   type UserDataExportFormat,
+  20: } from '../export/userDataExport';
+  21:
+  22: interface Props {
+  23:   profile: StudentProfile;
+  24:   onUpdateProfile: (p: StudentProfile) => Promise<void>;
+  25:   onBack: () => void;
+  26:   onSwitchStudent: () => void;
+  27:   auth: AuthState;
+  28:   syncStatus: SyncStatus;
+  29:   lastSyncedAt: string | null;
+  30:   syncError: string | null;
+  31:   onSignIn: () => void;
+  32:   onSignOut: () => void;
+  33:   onManualSync: () => void;
+  34: }
   35:
-  36: /** Known Gemini models with a free tier. Each has its own daily quota. */
-  37: const AI_MODELS = ['gemini-2.0-flash', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'];
-  38:
-  39: function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  40:   return (
-  41:     <div style={s.section}>
-  42:       <h3 style={s.sectionTitle}>{title}</h3>
-  43:       <div style={s.sectionBody}>{children}</div>
-  44:     </div>
-  45:   );
-  46: }
-  47:
-  48: function ToggleRow({ label, desc, checked, onChange }: {
-  49:   label: string; desc?: string; checked: boolean; onChange: (v: boolean) => void;
-  50: }) {
-  51:   return (
-  52:     <label style={s.row}>
-  53:       <div>
-  54:         <p style={s.rowLabel}>{label}</p>
-  55:         {desc && <p style={s.rowDesc}>{desc}</p>}
-  56:       </div>
-  57:       <button
-  58:         role="switch" aria-checked={checked} onClick={() => onChange(!checked)}
-  59:         style={{ ...s.toggle, background: checked ? 'var(--primary)' : '#d1d5db' }}
-  60:       >
-... (604 more lines)
+  36: type ExportUiState =
+  37:   | { status: 'idle' }
+  38:   | { status: 'exporting'; format: UserDataExportFormat }
+  39:   | {
+  40:       status: 'ready';
+  41:       format: UserDataExportFormat;
+  42:       artifact: PreparedUserDataExport;
+  43:       deliveryMessage?: string;
+  44:       sharing?: boolean;
+  45:     }
+  46:   | { status: 'success'; format: UserDataExportFormat; filename: string; warning?: string }
+  47:   | { status: 'error'; message: string };
+  48:
+  49: /** Known Gemini models with a free tier. Each has its own daily quota. */
+  50: const AI_MODELS = ['gemini-2.0-flash', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'];
+  51:
+  52: function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  53:   return (
+  54:     <div style={s.section}>
+  55:       <h3 style={s.sectionTitle}>{title}</h3>
+  56:       <div style={s.sectionBody}>{children}</div>
+  57:     </div>
+  58:   );
+  59: }
+  60:
+... (767 more lines)
 ```
 
 ### `src/features/practice/PracticeScreen.tsx`

@@ -4,7 +4,7 @@
 
 | Package | Import count |
 | --- | --- |
-| vitest | 62 |
+| vitest | 63 |
 | react | 35 |
 | @testing-library/react | 13 |
 | pathlib | 8 |
@@ -656,6 +656,7 @@
 | src/tests/scheduler.test.ts | ../types/math |
 | src/tests/settingsDailyNewLimits.test.tsx | ../features/settings/SettingsPage |
 | src/tests/settingsDailyNewLimits.test.tsx | ../types/math |
+| src/tests/settingsExportUserData.test.tsx | ../features/export/userDataExport |
 | src/tests/settingsExportUserData.test.tsx | ../features/settings/SettingsPage |
 | src/tests/settingsExportUserData.test.tsx | ../features/sync/driveSync |
 | src/tests/settingsExportUserData.test.tsx | ../types/math |
@@ -673,6 +674,7 @@
 | src/tests/skillPracticePlanner.test.ts | ../features/mastery/grade3MasteryMap |
 | src/tests/skillPracticePlanner.test.ts | ../features/mastery/skillMapping |
 | src/tests/skillPracticePlanner.test.ts | ../features/mastery/skillPracticePlanner |
+| src/tests/snapshotBuild.test.ts | ../features/sync/snapshot |
 | src/tests/snapshotValidation.test.ts | ../features/sync/snapshot |
 | src/tests/speech.test.ts | ../features/audio/speech |
 | src/tests/statsEngine.test.ts | ../features/stats/statsEngine |

@@ -58,8 +58,8 @@ const mockDb = vi.hoisted(() => {
     learningGoals: new MemoryTable<LearningGoal>(byId),
     goalEvents: new MemoryTable<GoalEvent>(byId),
     goalEvaluations: new MemoryTable<GoalEvaluation>(byId),
-    async transaction(_mode: string, _tables: unknown[], callback: () => Promise<void>) {
-      await callback();
+    async transaction<T>(_mode: string, _tables: unknown[], callback: () => Promise<T>): Promise<T> {
+      return callback();
     },
   };
 });

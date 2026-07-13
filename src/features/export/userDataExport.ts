@@ -28,9 +28,25 @@ export interface UserDataExportResult {
   filename?: string;
   format?: UserDataExportFormat;
   delivery?: UserDataExportDelivery;
-  cancelled?: boolean;
   error?: string;
 }
+
+export interface PreparedUserDataExport {
+  filename: string;
+  format: UserDataExportFormat;
+  blob: Blob;
+  file: File | null;
+}
+
+export type PrepareUserDataExportResult =
+  | { ok: true; artifact: PreparedUserDataExport }
+  | { ok: false; format: UserDataExportFormat; error: string };
+
+export type SharePreparedExportResult =
+  | { status: 'shared' }
+  | { status: 'dismissed' }
+  | { status: 'unavailable'; message: string }
+  | { status: 'failed'; message: string };
 
 export type SnapshotTableName =
   | 'students'
@@ -50,10 +66,14 @@ interface SnapshotTable {
   rows: Record<string, unknown>[];
 }
 
-interface ExportArtifact {
+export interface ExportArtifact {
   blob: Blob;
   filename: string;
 }
+
+export const OBJECT_URL_REVOKE_DELAY_MS = 60_000;
+const MAX_PENDING_OBJECT_URLS = 8;
+const pendingObjectUrls = new Map<string, number>();
 
 const TABLE_FILES: ReadonlyArray<[SnapshotTableName, string]> = [
   ['students', 'students.csv'],
@@ -193,7 +213,7 @@ export async function createZipArtifact(
   };
 }
 
-function isStandalone(): boolean {
+export function isStandaloneDisplayMode(): boolean {
   return window.matchMedia?.('(display-mode: standalone)').matches === true
     || ('standalone' in navigator && (navigator as Navigator & { standalone?: boolean }).standalone === true);
 }
@@ -206,31 +226,45 @@ function asFile(artifact: ExportArtifact): File | null {
   });
 }
 
-export async function deliverExportFile(artifact: ExportArtifact): Promise<UserDataExportDelivery | 'cancelled'> {
-  const file = asFile(artifact);
-  if (isStandalone() && file && navigator.share && navigator.canShare?.({ files: [file] })) {
-    try {
-      await navigator.share({ files: [file], title: 'MathFan user data export' });
-      return 'share';
-    } catch (error) {
-      if (error instanceof DOMException && error.name === 'AbortError') return 'cancelled';
-      console.error('[MathFan export] Web Share failed; falling back to download.', error);
-    }
-  }
+function revokeObjectUrl(url: string): void {
+  const timer = pendingObjectUrls.get(url);
+  if (timer === undefined) return;
+  window.clearTimeout(timer);
+  pendingObjectUrls.delete(url);
+  URL.revokeObjectURL(url);
+}
 
+function scheduleObjectUrlRevocation(url: string, delayMs: number): void {
+  if (pendingObjectUrls.size >= MAX_PENDING_OBJECT_URLS) {
+    const oldest = pendingObjectUrls.keys().next().value as string | undefined;
+    if (oldest) revokeObjectUrl(oldest);
+  }
+  const timer = window.setTimeout(() => revokeObjectUrl(url), delayMs);
+  pendingObjectUrls.set(url, timer);
+}
+
+export function downloadBlobArtifact(
+  artifact: ExportArtifact,
+  revokeDelayMs = OBJECT_URL_REVOKE_DELAY_MS,
+): UserDataExportDelivery {
   const url = URL.createObjectURL(artifact.blob);
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.download = artifact.filename;
-  anchor.style.display = 'none';
+  let anchor: HTMLAnchorElement | null = null;
   try {
+    anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = artifact.filename;
+    anchor.rel = 'noopener';
+    anchor.style.display = 'none';
     document.body.appendChild(anchor);
     anchor.click();
-    return 'download';
-  } finally {
-    anchor.remove();
+  } catch (error) {
     URL.revokeObjectURL(url);
+    throw error;
+  } finally {
+    anchor?.remove();
   }
+  scheduleObjectUrlRevocation(url, revokeDelayMs);
+  return 'download';
 }
 
 function readableError(stage: 'snapshot' | 'json' | 'zip' | 'delivery'): string {
@@ -240,7 +274,7 @@ function readableError(stage: 'snapshot' | 'json' | 'zip' | 'delivery'): string 
   return 'Could not save the export file. Please check your browser permissions and try again.';
 }
 
-export async function exportUserData(format: UserDataExportFormat): Promise<UserDataExportResult> {
+export async function prepareUserDataExport(format: UserDataExportFormat): Promise<PrepareUserDataExportResult> {
   let snapshot: AppSnapshot;
   try {
     snapshot = await buildSnapshot();
@@ -262,14 +296,77 @@ export async function exportUserData(format: UserDataExportFormat): Promise<User
     return { ok: false, format, error: readableError(format) };
   }
 
+  return {
+    ok: true,
+    artifact: {
+      ...artifact,
+      format,
+      file: asFile(artifact),
+    },
+  };
+}
+
+export function canShareExportArtifact(artifact: PreparedUserDataExport): boolean {
+  if (!isStandaloneDisplayMode() || artifact.file === null || typeof navigator.share !== 'function') return false;
   try {
-    const delivery = await deliverExportFile(artifact);
-    if (delivery === 'cancelled') {
-      return { ok: false, format, filename, cancelled: true, error: 'Export cancelled.' };
+    return navigator.canShare?.({ files: [artifact.file] }) === true;
+  } catch {
+    return false;
+  }
+}
+
+export function classifyShareError(error: unknown): SharePreparedExportResult {
+  if (error instanceof DOMException) {
+    if (error.name === 'AbortError') return { status: 'dismissed' };
+    if (error.name === 'NotAllowedError') {
+      return { status: 'failed', message: 'Sharing was blocked by the browser. Tap Download Instead.' };
     }
-    return { ok: true, format, filename, delivery };
+    if (error.name === 'DataError' || error.name === 'TypeError') {
+      return { status: 'failed', message: 'This browser could not share the generated file. Tap Download Instead.' };
+    }
+    return { status: 'failed', message: 'Could not share the export. Download the file instead.' };
+  }
+
+  console.error('[MathFan export] Web Share failed.', error);
+  return { status: 'failed', message: 'Could not share the export. Download the file instead.' };
+}
+
+export async function sharePreparedExport(
+  artifact: PreparedUserDataExport,
+): Promise<SharePreparedExportResult> {
+  if (!canShareExportArtifact(artifact) || !artifact.file) {
+    return {
+      status: 'unavailable',
+      message: 'Sharing is not available on this device. Download the file instead.',
+    };
+  }
+
+  try {
+    await navigator.share({ files: [artifact.file], title: 'MathFan user data export' });
+    return { status: 'shared' };
+  } catch (error) {
+    return classifyShareError(error);
+  }
+}
+
+export function downloadPreparedExport(artifact: PreparedUserDataExport): UserDataExportResult {
+  try {
+    downloadBlobArtifact(artifact);
+    return { ok: true, format: artifact.format, filename: artifact.filename, delivery: 'download' };
   } catch (error) {
     console.error('[MathFan export] File delivery failed.', error);
-    return { ok: false, format, filename, error: readableError('delivery') };
+    return {
+      ok: false,
+      format: artifact.format,
+      filename: artifact.filename,
+      error: readableError('delivery'),
+    };
   }
+}
+
+/** Convenience path for callers that always want a normal browser download. */
+export async function exportUserData(format: UserDataExportFormat): Promise<UserDataExportResult> {
+  const prepared = await prepareUserDataExport(format);
+  if (!prepared.ok) return prepared;
+  return downloadPreparedExport(prepared.artifact);
 }

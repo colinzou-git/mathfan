@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-13T05:45:27.306007+00:00",
+  "generated_at": "2026-07-13T06:54:22.614111+00:00",
   "repo_root": "/home/ubuntu/mathfan",
   "package": {
     "name": "mathfan",
@@ -175,9 +175,9 @@
     {
       "path": "docs/BROWSER_TESTING.md",
       "ext": ".md",
-      "bytes": 2507,
-      "lines": 79,
-      "sha1": "cfe7f5297d00",
+      "bytes": 3488,
+      "lines": 92,
+      "sha1": "01b2cb1e072c",
       "imports": [],
       "exports": [],
       "functions": [],
@@ -548,9 +548,9 @@
     {
       "path": "scripts/e2e_mathfan.py",
       "ext": ".py",
-      "bytes": 14867,
-      "lines": 345,
-      "sha1": "5d731882d8ed",
+      "bytes": 17616,
+      "lines": 392,
+      "sha1": "46ce5b40c023",
       "imports": [
         "__future__",
         "json",
@@ -573,6 +573,7 @@
         "run_practice_journey",
         "run_scenario",
         "set_practice_preferences_and_verify_persistence",
+        "standalone_pwa_share_flow",
         "verify_local_user_data_exports"
       ],
       "functions": [
@@ -585,6 +586,7 @@
         "run_practice_journey",
         "run_scenario",
         "set_practice_preferences_and_verify_persistence",
+        "standalone_pwa_share_flow",
         "verify_local_user_data_exports"
       ],
       "classes": [],
@@ -2421,9 +2423,9 @@
     {
       "path": "src/features/export/userDataExport.ts",
       "ext": ".ts",
-      "bytes": 8796,
-      "lines": 276,
-      "sha1": "a3e8d4cc87db",
+      "bytes": 11883,
+      "lines": 373,
+      "sha1": "1b1d6ec236e5",
       "imports": [
         "../sync/snapshot",
         "jszip"
@@ -2431,11 +2433,21 @@
       "exports": [
         "buildExportMetadata",
         "buildExportPayload",
+        "canShareExportArtifact",
+        "classifyShareError",
         "createJsonArtifact",
+        "downloadBlobArtifact",
+        "downloadPreparedExport",
+        "ExportArtifact",
         "formatExportFilename",
         "getSnapshotTables",
+        "isStandaloneDisplayMode",
+        "OBJECT_URL_REVOKE_DELAY_MS",
+        "PreparedUserDataExport",
+        "PrepareUserDataExportResult",
         "serializeCsv",
         "serializePrettyJson",
+        "SharePreparedExportResult",
         "SnapshotTableName",
         "UserDataExportDelivery",
         "UserDataExportFormat",
@@ -2447,30 +2459,40 @@
         "asFile",
         "buildExportMetadata",
         "buildExportPayload",
+        "canShareExportArtifact",
+        "classifyShareError",
         "createJsonArtifact",
         "createZipArtifact",
         "csvValue",
-        "deliverExportFile",
+        "downloadBlobArtifact",
+        "downloadPreparedExport",
         "escapeCsvCell",
         "exportUserData",
         "formatExportFilename",
         "getSnapshotTables",
-        "isStandalone",
+        "isStandaloneDisplayMode",
         "p",
+        "prepareUserDataExport",
         "readableError",
+        "revokeObjectUrl",
         "safeFilenamePart",
+        "scheduleObjectUrlRevocation",
         "serializeCsv",
-        "serializePrettyJson"
+        "serializePrettyJson",
+        "sharePreparedExport"
       ],
       "classes": [],
       "interfaces": [
         "ExportArtifact",
+        "PreparedUserDataExport",
         "SnapshotTable",
         "UserDataExportMetadata",
         "UserDataExportPayload",
         "UserDataExportResult"
       ],
       "types": [
+        "PrepareUserDataExportResult",
+        "SharePreparedExportResult",
         "SnapshotTableName",
         "UserDataExportDelivery",
         "UserDataExportFormat"
@@ -2479,7 +2501,7 @@
       "hooks": [],
       "css_classes": [],
       "json_keys": [],
-      "purpose": "Exports reusable code: buildExportMetadata, buildExportPayload, createJsonArtifact, formatExportFilename, getSnapshotTables.",
+      "purpose": "Exports reusable code: buildExportMetadata, buildExportPayload, canShareExportArtifact, classifyShareError, createJsonArtifact.",
       "too_large": false,
       "read_error": null
     },
@@ -4205,9 +4227,9 @@
     {
       "path": "src/features/settings/SettingsPage.tsx",
       "ext": ".tsx",
-      "bytes": 32851,
-      "lines": 665,
-      "sha1": "9b473aa241ad",
+      "bytes": 39527,
+      "lines": 828,
+      "sha1": "976704b5a269",
       "imports": [
         "../../db/repositories",
         "../../types/math",
@@ -4232,6 +4254,9 @@
         "checkForUpdates",
         "closeOnEscape",
         "closeOnOutsideClick",
+        "completeExport",
+        "currentSyncWarning",
+        "downloadReadyExport",
         "exportControl",
         "fmt",
         "fmtBuildTime",
@@ -4244,7 +4269,9 @@
         "saveName",
         "Section",
         "SettingsPage",
+        "shareReadyExport",
         "shortSha",
+        "syncIsRunning",
         "SyncRow",
         "syncTimeLabel",
         "testAi",
@@ -4747,9 +4774,9 @@
     {
       "path": "src/features/sync/snapshot.ts",
       "ext": ".ts",
-      "bytes": 8339,
-      "lines": 210,
-      "sha1": "8b8757211830",
+      "bytes": 8700,
+      "lines": 225,
+      "sha1": "ae9da420c252",
       "imports": [
         "../../db/dexie",
         "../../types/math",
@@ -6026,9 +6053,9 @@
     {
       "path": "src/tests/goalSnapshot.test.ts",
       "ext": ".ts",
-      "bytes": 12612,
+      "bytes": 12625,
       "lines": 399,
-      "sha1": "1a50ecbd81c1",
+      "sha1": "6fdf46ecbedb",
       "imports": [
         "../features/goals/types",
         "../features/learning/learningEvents",
@@ -6797,9 +6824,9 @@
     {
       "path": "src/tests/settingsDailyNewLimits.test.tsx",
       "ext": ".tsx",
-      "bytes": 2105,
+      "bytes": 2126,
       "lines": 44,
-      "sha1": "70cd2f6a5898",
+      "sha1": "d2962231382f",
       "imports": [
         "../features/settings/SettingsPage",
         "../types/math",
@@ -6822,10 +6849,11 @@
     {
       "path": "src/tests/settingsExportUserData.test.tsx",
       "ext": ".tsx",
-      "bytes": 5686,
-      "lines": 128,
-      "sha1": "76930c07ef41",
+      "bytes": 13532,
+      "lines": 286,
+      "sha1": "2d62c7c93d3f",
       "imports": [
+        "../features/export/userDataExport",
         "../features/settings/SettingsPage",
         "../features/sync/driveSync",
         "../types/math",
@@ -6834,10 +6862,15 @@
       ],
       "exports": [],
       "functions": [
-        "renderSettings"
+        "artifact",
+        "chooseFormat",
+        "renderSettings",
+        "settingsElement"
       ],
       "classes": [],
-      "interfaces": [],
+      "interfaces": [
+        "RenderOptions"
+      ],
       "types": [],
       "components": [],
       "hooks": [],
@@ -6952,6 +6985,29 @@
       "css_classes": [],
       "json_keys": [],
       "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/snapshotBuild.test.ts",
+      "ext": ".ts",
+      "bytes": 2117,
+      "lines": 57,
+      "sha1": "39d88ebea9b6",
+      "imports": [
+        "../features/sync/snapshot",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Local persistence/database layer.",
       "too_large": false,
       "read_error": null
     },
@@ -7126,9 +7182,9 @@
     {
       "path": "src/tests/userDataExport.test.ts",
       "ext": ".ts",
-      "bytes": 8745,
-      "lines": 226,
-      "sha1": "2d645dc4cd47",
+      "bytes": 12911,
+      "lines": 266,
+      "sha1": "84f77f2d6010",
       "imports": [
         "../features/export/userDataExport",
         "../features/sync/snapshot",
@@ -7137,6 +7193,7 @@
       ],
       "exports": [],
       "functions": [
+        "prepared",
         "snapshot"
       ],
       "classes": [],

@@ -26,44 +26,59 @@ export interface AppSnapshot {
 // ── Build ─────────────────────────────────────────────────────────────────────
 
 export async function buildSnapshot(): Promise<AppSnapshot> {
-  const [
-    students,
-    itemStates,
-    attempts,
-    sessions,
-    multFactStats,
-    quizSessions,
-    mathAnswerEvents,
-    learningGoals,
-    goalEvents,
-    goalEvaluations,
-  ] = await Promise.all([
-    db.students.toArray(),
-    db.itemStates.toArray(),
-    db.attempts.toArray(),
-    db.sessions.toArray(),
-    db.multFactStats.toArray(),
-    db.quizSessions.toArray(),
-    db.mathAnswerEvents.toArray(),
-    db.learningGoals.toArray(),
-    db.goalEvents.toArray(),
-    db.goalEvaluations.toArray(),
-  ]);
-  return {
-    appId: 'mathfan',
-    snapshotVersion: 2,
-    snapshotAt: new Date().toISOString(),
-    students,
-    itemStates,
-    attempts,
-    sessions,
-    multFactStats,
-    quizSessions,
-    mathAnswerEvents,
-    learningGoals,
-    goalEvents,
-    goalEvaluations,
-  };
+  const tables = [
+    db.students,
+    db.itemStates,
+    db.attempts,
+    db.sessions,
+    db.multFactStats,
+    db.quizSessions,
+    db.mathAnswerEvents,
+    db.learningGoals,
+    db.goalEvents,
+    db.goalEvaluations,
+  ];
+
+  return db.transaction('r', tables, async () => {
+    const [
+      students,
+      itemStates,
+      attempts,
+      sessions,
+      multFactStats,
+      quizSessions,
+      mathAnswerEvents,
+      learningGoals,
+      goalEvents,
+      goalEvaluations,
+    ] = await Promise.all([
+      db.students.toArray(),
+      db.itemStates.toArray(),
+      db.attempts.toArray(),
+      db.sessions.toArray(),
+      db.multFactStats.toArray(),
+      db.quizSessions.toArray(),
+      db.mathAnswerEvents.toArray(),
+      db.learningGoals.toArray(),
+      db.goalEvents.toArray(),
+      db.goalEvaluations.toArray(),
+    ]);
+    return {
+      appId: 'mathfan',
+      snapshotVersion: 2,
+      snapshotAt: new Date().toISOString(),
+      students,
+      itemStates,
+      attempts,
+      sessions,
+      multFactStats,
+      quizSessions,
+      mathAnswerEvents,
+      learningGoals,
+      goalEvents,
+      goalEvaluations,
+    };
+  });
 }
 
 // ── Apply (merge remote into local) ──────────────────────────────────────────

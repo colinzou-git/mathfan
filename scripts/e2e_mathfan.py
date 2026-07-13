@@ -154,6 +154,9 @@ def verify_local_user_data_exports(page: Page) -> None:
     export_button = page.get_by_role("button", name="Export User Data", exact=True)
     expect(export_button).to_be_enabled()
 
+    # Export must flush this write rather than capturing the previous value.
+    page.get_by_label("Default questions per session", exact=True).fill("25")
+
     export_button.click()
     with page.expect_download() as json_download_info:
         page.get_by_role("menuitem", name="Export as JSON", exact=True).click()
@@ -163,6 +166,8 @@ def verify_local_user_data_exports(page: Page) -> None:
     json_path = json_download.path()
     if json_path is None:
         raise AssertionError("JSON export did not produce a local download path")
+    if Path(json_path).stat().st_size == 0:
+        raise AssertionError("JSON export is empty")
     payload = json.loads(Path(json_path).read_text(encoding="utf-8"))
     metadata = payload["exportMetadata"]
     snapshot = payload["snapshot"]
@@ -179,6 +184,9 @@ def verify_local_user_data_exports(page: Page) -> None:
         raise AssertionError(f"JSON export is missing tables: {expected_tables - set(snapshot)}")
     if not any(student["displayName"] == "BrowserTester" for student in snapshot["students"]):
         raise AssertionError("JSON export did not preserve the created profile name")
+    browser_profile = next(student for student in snapshot["students"] if student["displayName"] == "BrowserTester")
+    if browser_profile["settings"]["sessionLength"] != 25:
+        raise AssertionError("JSON export did not flush the latest Settings write")
     if not snapshot["mathAnswerEvents"]:
         raise AssertionError("JSON export did not include recorded practice activity")
 
@@ -191,6 +199,8 @@ def verify_local_user_data_exports(page: Page) -> None:
     zip_path = zip_download.path()
     if zip_path is None:
         raise AssertionError("ZIP export did not produce a local download path")
+    if Path(zip_path).stat().st_size == 0:
+        raise AssertionError("ZIP export is empty")
     root = Path(zip_download.suggested_filename).stem
     expected_archive_files = {
         f"{root}/manifest.json",
@@ -259,11 +269,29 @@ def responsive_navigation(page: Page, label: str) -> None:
     assert_no_horizontal_overflow(page, f"{label} multiplication setup")
 
 
+def standalone_pwa_share_flow(page: Page) -> None:
+    create_profile(page, "PwaTester", "e2e-pwa-share")
+    page.get_by_test_id("open-settings").click()
+    page.get_by_role("button", name="Export User Data", exact=True).click()
+    page.get_by_role("menuitem", name="Export as JSON", exact=True).click()
+
+    share_button = page.get_by_role("button", name="Share or Save File", exact=True)
+    expect(share_button).to_be_visible()
+    expect(page.get_by_role("button", name="Download Instead", exact=True)).to_be_visible()
+    expect(page.get_by_role("button", name="Cancel", exact=True)).to_be_visible()
+    share_button.click()
+    expect(page.get_by_text(re.compile(r"Exported mathfan-user-data-.*\.json"))).to_be_visible()
+    share_calls = page.evaluate("window.__mathfanShareCalls || []")
+    if len(share_calls) != 1 or not share_calls[0].endswith(".json"):
+        raise AssertionError(f"Prepared file was not shared from the explicit click: {share_calls}")
+
+
 def run_scenario(
     browser: Browser,
     name: str,
     viewport: dict[str, int],
     scenario: Callable[[Page], None],
+    standalone_share: bool = False,
 ) -> None:
     context = browser.new_context(
         viewport=viewport,
@@ -271,12 +299,28 @@ def run_scenario(
         service_workers="block",
         reduced_motion="reduce",
     )
-    context.add_init_script(
-        """() => {
-            Object.defineProperty(navigator, 'share', { configurable: true, value: undefined });
-            Object.defineProperty(navigator, 'canShare', { configurable: true, value: undefined });
-        }"""
-    )
+    if standalone_share:
+        context.add_init_script(
+            """(() => {
+                const originalMatchMedia = window.matchMedia.bind(window);
+                window.matchMedia = query => query === '(display-mode: standalone)'
+                    ? { matches: true, media: query, onchange: null, addListener() {}, removeListener() {}, addEventListener() {}, removeEventListener() {}, dispatchEvent() { return true; } }
+                    : originalMatchMedia(query);
+                window.__mathfanShareCalls = [];
+                Object.defineProperty(navigator, 'canShare', { configurable: true, value: data => !!data?.files?.length });
+                Object.defineProperty(navigator, 'share', {
+                    configurable: true,
+                    value: async data => { window.__mathfanShareCalls.push(data.files[0].name); },
+                });
+            })()"""
+        )
+    else:
+        context.add_init_script(
+            """(() => {
+                Object.defineProperty(navigator, 'share', { configurable: true, value: undefined });
+                Object.defineProperty(navigator, 'canShare', { configurable: true, value: undefined });
+            })()"""
+        )
     context.tracing.start(screenshots=True, snapshots=True, sources=True)
     page = context.new_page()
     page_errors: list[str] = []
@@ -311,21 +355,24 @@ def main() -> int:
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(headless=True)
         scenarios = [
-            ("desktop-student-journey", {"width": 1440, "height": 1000}, desktop_student_journey),
+            ("desktop-student-journey", {"width": 1440, "height": 1000}, desktop_student_journey, False),
             (
                 "mobile-responsive",
                 {"width": 390, "height": 844},
                 lambda page: responsive_navigation(page, "mobile"),
+                False,
             ),
             (
                 "ipad-responsive",
                 {"width": 1024, "height": 768},
                 lambda page: responsive_navigation(page, "ipad"),
+                False,
             ),
+            ("standalone-pwa-share", {"width": 1024, "height": 768}, standalone_pwa_share_flow, True),
         ]
-        for name, viewport, scenario in scenarios:
+        for name, viewport, scenario, standalone_share in scenarios:
             try:
-                run_scenario(browser, name, viewport, scenario)
+                run_scenario(browser, name, viewport, scenario, standalone_share)
             except Exception as exc:
                 failures.append(f"{name}: {exc}")
         browser.close()
