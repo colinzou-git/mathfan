@@ -244,11 +244,14 @@ describe('answer checking: retry-first behavior (no answer reveal on wrong)', ()
     expect(result.isCorrect).toBe(true);
   });
 
-  it('fast correct pattern answer grades as "easy"', () => {
+  it('fast correct pattern answer grades as "good", not "easy" (issue #27: patterns are conceptual, not atomic_fluency)', () => {
+    // Speed alone does not prove transfer/conceptual mastery — only atomic-fact
+    // cards (multiplication/division) use latency to award 'easy'. See
+    // features/scheduler/responsePolicy.
     const item = makeItemFromId('APAT_2_2_4')!; // answer = 10
-    const result = checkAnswer(item, '10', 500); // under FAST_MS = 1500
+    const result = checkAnswer(item, '10', 500);
     expect(result.isCorrect).toBe(true);
-    expect(result.reviewGrade).toBe('easy');
+    expect(result.reviewGrade).toBe('good');
   });
 });
 

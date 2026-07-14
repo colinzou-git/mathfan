@@ -4,6 +4,7 @@ import {
   fsrsRetrievability, fsrsInterval, TARGET_RETENTION,
 } from '../features/scheduler/scheduler';
 import { generateMultiplicationItems, generateSingleTableItems } from '../features/curriculum/multiplicationItems';
+import { deriveCardKey } from '../features/scheduler/cardModel';
 import type { StudentItemState } from '../types/math';
 
 const MS_DAY = 86_400_000;
@@ -143,7 +144,7 @@ describe('applyReview — legacy state compatibility', () => {
   it('legacy state with only stabilityDays and fsrsDifficulty can be reviewed without crashing', () => {
     // Existing users may have records without the full ts-fsrs card envelope.
     const legacy: StudentItemState = {
-      studentId: 's1', itemId: 'MUL_8x9', skillId: 'sk',
+      studentId: 's1', cardKey: 'fact:mul:8x9', skillId: 'sk',
       attemptCount: 5, correctCount: 4, lastCorrect: true,
       lastLatencyMs: 2000, medianLatencyMs: 2200, ease: 2.5,
       stabilityDays: 7, fsrsDifficulty: 5,
@@ -171,7 +172,7 @@ describe('applyReview — legacy state compatibility', () => {
     // when the device clock was set ahead when the item was last reviewed.
     const future = new Date(now.getTime() + 38 * MS_DAY); // 38 days in the future
     const driftState: StudentItemState = {
-      studentId: 's1', itemId: 'MUL_8x9', skillId: 'sk',
+      studentId: 's1', cardKey: 'fact:mul:8x9', skillId: 'sk',
       attemptCount: 10, correctCount: 9, lastCorrect: true,
       lastLatencyMs: 1500, medianLatencyMs: 1600, ease: 2.5,
       stabilityDays: 14, fsrsDifficulty: 4.5,
@@ -207,7 +208,7 @@ describe('applyReview — retry semantics', () => {
 
 describe('updateMasteryLevel', () => {
   const base: StudentItemState = {
-    studentId: 's1', itemId: 'x', skillId: 'sk',
+    studentId: 's1', cardKey: 'template:x', skillId: 'sk',
     attemptCount: 0, correctCount: 0, lastCorrect: false,
     lastLatencyMs: 0, medianLatencyMs: 0, ease: 2.5,
     stabilityDays: 1, difficulty: 0.5, masteryLevel: 'new', mistakePatterns: [],
@@ -233,7 +234,7 @@ describe('planSession', () => {
 
   it('backfills to reach totalQuestions when pools are small (regression: n=3 gave 1 question)', () => {
     const states = new Map<string, StudentItemState>();
-    states.set(pool[0].id, {
+    states.set(deriveCardKey(pool[0]), {
       ...createInitialState('s1', pool[0]),
       attemptCount: 3, correctCount: 2, masteryLevel: 'developing',
       nextDueAt: new Date('2026-05-01T10:00:00Z').toISOString(),
@@ -245,7 +246,7 @@ describe('planSession', () => {
 
   it('due items are included', () => {
     const states = new Map<string, StudentItemState>();
-    states.set(pool[0].id, {
+    states.set(deriveCardKey(pool[0]), {
       ...createInitialState('s1', pool[0]),
       attemptCount: 3, correctCount: 2, masteryLevel: 'developing',
       nextDueAt: new Date('2026-05-01T10:00:00Z').toISOString(),
@@ -255,7 +256,7 @@ describe('planSession', () => {
 
   it('weak (learning/developing) items are included', () => {
     const states = new Map<string, StudentItemState>();
-    states.set(pool[0].id, {
+    states.set(deriveCardKey(pool[0]), {
       ...createInitialState('s1', pool[0]),
       attemptCount: 4, correctCount: 2, masteryLevel: 'learning',
       nextDueAt: new Date('2027-01-01').toISOString(), // not due yet
@@ -272,7 +273,7 @@ describe('planSession', () => {
 
   it('mastered items with future due date are NOT in the queue (pending FSRS review)', () => {
     const states = new Map<string, StudentItemState>();
-    states.set(pool[0].id, {
+    states.set(deriveCardKey(pool[0]), {
       ...createInitialState('s1', pool[0]),
       attemptCount: 20, correctCount: 19, masteryLevel: 'mastered',
       nextDueAt: new Date('2027-01-01').toISOString(),
@@ -283,7 +284,7 @@ describe('planSession', () => {
 
   it('mastered items whose FSRS due date has arrived ARE included in due bucket', () => {
     const states = new Map<string, StudentItemState>();
-    states.set(pool[0].id, {
+    states.set(deriveCardKey(pool[0]), {
       ...createInitialState('s1', pool[0]),
       attemptCount: 20, correctCount: 19, masteryLevel: 'mastered',
       nextDueAt: new Date('2026-05-01T10:00:00Z').toISOString(), // past due

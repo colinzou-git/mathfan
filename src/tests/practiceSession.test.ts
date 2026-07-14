@@ -276,7 +276,8 @@ describe('usePracticeSession — mistake pattern detection', () => {
   it('existing mistakePatterns are preserved and deduplicated', async () => {
     vi.mocked(itemStateRepo.getForStudent).mockResolvedValue([{
       studentId: STUDENT_ID,
-      itemId: 'MUL_7x8',
+      cardKey: 'fact:mul:7x8',
+      lastItemId: 'MUL_7x8',
       skillId: 'mul-7',
       attemptCount: 5,
       correctCount: 3,
@@ -381,7 +382,7 @@ describe('usePracticeSession — adaptive selection', () => {
     // MUL_8x7 is due and still being learned — generation should target it
     // rather than relying on a random pool happening to include 8 × 7.
     vi.mocked(itemStateRepo.getForStudent).mockResolvedValue([{
-      studentId: STUDENT_ID, itemId: 'MUL_8x7', skillId: 'mul',
+      studentId: STUDENT_ID, cardKey: 'fact:mul:7x8', lastItemId: 'MUL_8x7', skillId: 'mul',
       attemptCount: 4, correctCount: 1, lastCorrect: false, lastLatencyMs: 0,
       medianLatencyMs: 0, ease: 2.5, stabilityDays: 0, difficulty: 0.3,
       masteryLevel: 'learning' as const, nextDueAt: '2026-05-01T00:00:00Z', mistakePatterns: [],
@@ -397,5 +398,66 @@ describe('usePracticeSession — adaptive selection', () => {
     const cur = result.current.state.currentItem;
     expect(cur).not.toBeNull();
     expect(cur!.factA === 8 && cur!.factB === 7).toBe(true);
+  });
+});
+
+// ── Issue #28: one long-term scheduling update per card per session ───────────
+
+describe('usePracticeSession — one scheduling update per card per session', () => {
+  it('a card presented more than once in a session (pool smaller than sessionLength cycles) schedules only once', async () => {
+    const { result } = renderHook(() => usePracticeSession(STUDENT_ID));
+    await act(async () => {
+      // A single-item pool with sessionLength 3 forces selectAdaptiveItems to
+      // cycle the same card to fill the queue.
+      await result.current.startSession({
+        mode: 'area',
+        sessionLength: 3,
+        specificItemIds: ['AREA_RECT_3x4'],
+      });
+    });
+    expect(result.current.state.totalPlanned).toBe(3);
+
+    for (let i = 0; i < 3; i++) {
+      const cur = result.current.state.currentItem!;
+      expect(cur.id).toBe('AREA_RECT_3x4');
+      await act(async () => { await result.current.submitAnswer(String(cur.answer)); });
+      await act(async () => { await result.current.nextQuestion(); });
+    }
+
+    const calls = vi.mocked(recordPracticeAnswer).mock.calls;
+    expect(calls).toHaveLength(3);
+
+    // Only the first presentation actually schedules (updatedState written).
+    expect(calls[0][0].updatedState).toBeDefined();
+    expect(calls[1][0].updatedState).toBeUndefined();
+    expect(calls[2][0].updatedState).toBeUndefined();
+
+    // The repeats are recorded as direct evidence, explicitly marked non-scheduling.
+    expect(calls[0][0].event.schedulingEligible).toBe(true);
+    expect(calls[1][0].event.schedulingEligible).toBe(false);
+    expect(calls[1][0].event.ratingReason).toBe('same_session_repeat');
+    expect(calls[2][0].event.schedulingEligible).toBe(false);
+    expect(calls[2][0].event.ratingReason).toBe('same_session_repeat');
+
+    // presentationIndex increments across repeats of the same card.
+    expect(calls[0][0].event.presentationIndex).toBe(1);
+    expect(calls[1][0].event.presentationIndex).toBe(2);
+    expect(calls[2][0].event.presentationIndex).toBe(3);
+  });
+
+  it('a wrong retry within one presentation is still marked isRetry and does not schedule', async () => {
+    const { result } = renderHook(() => usePracticeSession(STUDENT_ID));
+    await act(async () => {
+      await result.current.startSession(SESSION_CONFIG);
+    });
+
+    await act(async () => { await result.current.submitAnswer('wrong'); }); // wrong first attempt
+    await act(async () => { await result.current.submitAnswer('56'); }); // correct retry
+
+    const calls = vi.mocked(recordPracticeAnswer).mock.calls;
+    expect(calls[0][0].event.isRetry).toBe(false);
+    expect(calls[0][0].updatedState).toBeDefined();
+    expect(calls[1][0].event.isRetry).toBe(true);
+    expect(calls[1][0].updatedState).toBeUndefined();
   });
 });

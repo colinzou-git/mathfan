@@ -13,6 +13,7 @@ import {
 } from '../features/adaptive/adaptiveItemSelector';
 import { buildWordProblemCandidates, buildFactorCandidates } from '../features/adaptive/candidatePools';
 import { makeItemFromId } from '../features/curriculum/makeItemFromId';
+import { deriveCardKeyFromItemId } from '../features/scheduler/cardModel';
 import { mulberry32 } from '../utils/rng';
 
 const NOW = new Date('2026-06-09T00:00:00Z');
@@ -28,7 +29,7 @@ function state(
   const attempts = opts.attempts ?? 4;
   const correct = opts.correct ?? attempts;
   return {
-    studentId: 's', itemId, skillId: '',
+    studentId: 's', cardKey: deriveCardKeyFromItemId(itemId), lastItemId: itemId, skillId: '',
     attemptCount: attempts, correctCount: correct,
     lastCorrect: true, lastLatencyMs: 0, medianLatencyMs: 0,
     ease: 2.5, stabilityDays: 0, difficulty: 0,
@@ -37,7 +38,7 @@ function state(
 }
 
 function mapOf(...states: StudentItemState[]): Map<string, StudentItemState> {
-  return new Map(states.map(s => [s.itemId, s]));
+  return new Map(states.map(s => [s.cardKey, s]));
 }
 
 function item(id: string): PracticeItem {

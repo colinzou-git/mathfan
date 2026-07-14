@@ -119,13 +119,14 @@ export function StudentDashboard({ profile, lastSyncedAt, onStartDailyReview, on
 
       const byGroup: Record<string, DueGroup> = {};
       for (const state of dueStates) {
-        const { group } = describeItem(state.itemId);
+        const itemId = state.lastItemId ?? state.cardKey;
+        const { group } = describeItem(itemId);
         const key = group === 'unk' ? 'mul' : group;
         if (!byGroup[key]) {
           const d = GROUP_DISPLAY[key] ?? GROUP_DISPLAY.other;
           byGroup[key] = { label: d.label, icon: d.icon, ids: [] };
         }
-        byGroup[key].ids.push(state.itemId);
+        byGroup[key].ids.push(itemId);
       }
       setDueByGroup(byGroup);
 

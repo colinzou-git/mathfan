@@ -3,6 +3,7 @@ import { planToday } from '../features/mastery/todayPlanEngine';
 import { GRADE3_MASTERY_MAP } from '../features/mastery/grade3MasteryMap';
 import type { StudentSkillSummary } from '../features/mastery/skillMasteryEngine';
 import type { StudentItemState } from '../types/math';
+import { deriveCardKeyFromItemId } from '../features/scheduler/cardModel';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -28,7 +29,8 @@ function makeSummary(
 function makeItemState(itemId: string, nextDueAt: string | undefined): StudentItemState {
   return {
     studentId: 's1',
-    itemId,
+    cardKey: deriveCardKeyFromItemId(itemId),
+    lastItemId: itemId,
     skillId: 'g3-mul-tables-basic',
     attemptCount: 5,
     correctCount: 5,

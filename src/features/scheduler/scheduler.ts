@@ -1,5 +1,6 @@
 import type { StudentItemState, PracticeItem, ReviewGrade, MasteryLevel } from '../../types/math';
 import { applyFsrsReview } from './fsrsAdapter';
+import { deriveCardKey, stateForItem } from './cardModel';
 
 // ── FSRS utility helpers (for display / tests) ────────────────────────────────
 // Lightweight display helpers used by the UI and tests.
@@ -133,7 +134,8 @@ export function createInitialState(
 ): StudentItemState {
   return {
     studentId,
-    itemId: item.id,
+    cardKey: deriveCardKey(item),
+    lastItemId: item.id,
     skillId: item.skillId,
     attemptCount: 0,
     correctCount: 0,
@@ -177,7 +179,7 @@ export function planSession(
   const unseen: PracticeItem[] = [];
 
   for (const item of allItems) {
-    const state = states.get(item.id);
+    const state = stateForItem(item, states);
     if (!state || state.masteryLevel === 'new') {
       unseen.push(item);
     } else if (state.nextDueAt && state.nextDueAt <= nowStr) {
@@ -196,13 +198,13 @@ export function planSession(
   const newCount  = Math.max(0, totalQuestions - dueCount - weakCount);
 
   due.sort((a, b) => {
-    const sa = states.get(a.id)?.nextDueAt ?? '';
-    const sb = states.get(b.id)?.nextDueAt ?? '';
+    const sa = stateForItem(a, states)?.nextDueAt ?? '';
+    const sb = stateForItem(b, states)?.nextDueAt ?? '';
     return sa.localeCompare(sb);
   });
   weak.sort((a, b) => {
-    const sa = states.get(a.id);
-    const sb = states.get(b.id);
+    const sa = stateForItem(a, states);
+    const sb = stateForItem(b, states);
     const accA = sa ? sa.correctCount / Math.max(1, sa.attemptCount) : 0;
     const accB = sb ? sb.correctCount / Math.max(1, sb.attemptCount) : 0;
     return accA - accB;

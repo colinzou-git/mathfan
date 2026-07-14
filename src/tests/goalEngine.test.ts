@@ -54,7 +54,8 @@ function event(overrides: Partial<MathAnswerEvent> = {}): MathAnswerEvent {
 function state(overrides: Partial<StudentItemState> = {}): StudentItemState {
   return {
     studentId: STUDENT_ID,
-    itemId: 'a',
+    cardKey: 'template:a',
+    lastItemId: 'a',
     skillId: SKILL_ID,
     attemptCount: 1,
     correctCount: 1,
@@ -162,8 +163,8 @@ describe('goal baseline capture', () => {
         event({ id: 'other', itemId: 'other', isCorrect: true, createdAt: '2026-05-31T12:00:03.000Z' }),
       ],
       itemStates: [
-        state({ itemId: 'a', nextDueAt: '2026-06-01T00:00:00.000Z', mistakePatterns: ['fraction:unit'] }),
-        state({ itemId: 'b', nextDueAt: '2026-06-10T00:00:00.000Z', mistakePatterns: ['fraction:compare'] }),
+        state({ cardKey: 'template:a', lastItemId: 'a', nextDueAt: '2026-06-01T00:00:00.000Z', mistakePatterns: ['fraction:unit'] }),
+        state({ cardKey: 'template:b', lastItemId: 'b', nextDueAt: '2026-06-10T00:00:00.000Z', mistakePatterns: ['fraction:compare'] }),
       ],
       now: BASELINE_AT,
       skillSummaries: [summary({ status: 'needs_practice' })],
@@ -233,7 +234,7 @@ describe('goal target progress evidence rules', () => {
         event({ id: 'c', itemId: 'c', createdAt: '2026-06-03T12:00:00.000Z', hintUsed: false }),
         event({ id: 'd', itemId: 'd', createdAt: '2026-06-03T13:00:00.000Z', hintUsed: true }),
       ],
-      itemStates: [state({ itemId: 'a', mistakePatterns: ['fraction:unit'] })],
+      itemStates: [state({ cardKey: 'template:a', lastItemId: 'a', mistakePatterns: ['fraction:unit'] })],
       skillSummaries: [summary({ status: 'mastered' })],
     }));
 
@@ -252,7 +253,7 @@ describe('goal target progress evidence rules', () => {
         event({ id: 'c2', itemId: 'c', createdAt: '2026-06-03T12:00:00.000Z' }),
         event({ id: 'd2', itemId: 'd', createdAt: '2026-06-03T13:00:00.000Z' }),
       ] : [],
-      itemStates: [state({ itemId: 'a', mistakePatterns: [] })],
+      itemStates: [state({ cardKey: 'template:a', lastItemId: 'a', mistakePatterns: [] })],
       skillSummaries: [summary({ status: 'mastered' })],
     }));
     expect(cleared.isComplete).toBe(true);
@@ -267,7 +268,7 @@ describe('goal target progress evidence rules', () => {
     });
     const stillDue = calculateTargetProgress(reviewTarget, input({
       events: [event({ id: 'post', itemId: 'a' })],
-      itemStates: [state({ itemId: 'a', nextDueAt: '2026-06-01T00:00:00.000Z' })],
+      itemStates: [state({ cardKey: 'template:a', lastItemId: 'a', nextDueAt: '2026-06-01T00:00:00.000Z' })],
       skillSummaries: [summary({ status: 'review_due', dueItemCount: 1 })],
     }));
     expect(stillDue.gates.skillStatus).toBe(false);
@@ -275,7 +276,7 @@ describe('goal target progress evidence rules', () => {
 
     const cleared = calculateTargetProgress(reviewTarget, input({
       events: [event({ id: 'post', itemId: 'a' })],
-      itemStates: [state({ itemId: 'a', nextDueAt: '2026-06-20T00:00:00.000Z' })],
+      itemStates: [state({ cardKey: 'template:a', lastItemId: 'a', nextDueAt: '2026-06-20T00:00:00.000Z' })],
       skillSummaries: [summary({ status: 'strong', dueItemCount: 0 })],
     }));
     expect(cleared.gates.skillStatus).toBe(true);

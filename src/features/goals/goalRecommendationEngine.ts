@@ -153,7 +153,7 @@ function skillForState(
   state: StudentItemState,
   resolveSkillId: SkillIdResolver,
 ): string | null {
-  return resolveSkillId(state.itemId) ?? state.skillId ?? null;
+  return resolveSkillId(state.lastItemId ?? state.cardKey) ?? state.skillId ?? null;
 }
 
 function skillEvents(args: GoalRecommendationArgs, skillId: string): MathAnswerEvent[] {

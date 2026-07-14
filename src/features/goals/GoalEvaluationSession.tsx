@@ -8,9 +8,12 @@ import type { MathAnswerEvent } from '../learning/learningEvents';
 import { GRADE3_MASTERY_MAP, getGrade3Skill } from '../mastery/grade3MasteryMap';
 import { inferGrade3SkillId } from '../mastery/skillMapping';
 import { planPracticeForSkill } from '../mastery/skillPracticePlanner';
-import { checkAnswer } from '../practice/answerChecker';
+import { checkAnswer, type RatingReason } from '../practice/answerChecker';
+import type { ResponsePolicyKind } from '../scheduler/responsePolicy';
+import type { FluencyBand } from '../fluency/fluencyEngine';
 import { QuestionRenderer } from '../practice/QuestionRenderer';
 import { applyReview, createInitialState } from '../scheduler/scheduler';
+import { deriveCardKey } from '../scheduler/cardModel';
 import { detectMistakes } from '../mastery/misconceptionEngine';
 import { itemStateRepo, goalEvaluationRepo, mathAnswerEventRepo } from '../../db/repositories';
 import { appNow } from '../time/clock';
@@ -49,6 +52,9 @@ interface PendingWrite {
   studentAnswer: string | number;
   isCorrect: boolean;
   reviewGrade: ReviewGrade;
+  ratingReason: RatingReason;
+  responsePolicy: ResponsePolicyKind;
+  fluencyBand: FluencyBand;
   item: PracticeItem;
   skillId: string;
 }
@@ -108,7 +114,11 @@ function buildNewLearningCandidates(
   itemStates: StudentItemState[],
 ): NewLearningCandidate[] {
   const attempted = new Set(events.filter(event => !event.isRetry).map(event => event.itemId));
-  const mastered = new Set(itemStates.filter(state => state.masteryLevel === 'mastered').map(state => state.itemId));
+  const mastered = new Set(
+    itemStates
+      .filter(state => state.masteryLevel === 'mastered')
+      .map(state => state.lastItemId ?? state.cardKey)
+  );
   const seenSkills = new Set<string>();
   const candidates = [...result.topGoalCandidates, ...result.skillsToStrengthen, ...result.skillsReadyToLearnNext];
   const rows: NewLearningCandidate[] = [];
@@ -160,7 +170,7 @@ function buildReviewFindings(itemStates: StudentItemState[], now: string): Revie
   const bySkill = new Map<string, ReviewFinding>();
   for (const state of itemStates) {
     if (state.attemptCount <= 0) continue;
-    const item = makeItemFromId(state.itemId);
+    const item = makeItemFromId(state.lastItemId ?? state.cardKey);
     const skillId = (item ? inferGrade3SkillId(item) : null) ?? state.skillId;
     const isDue = Boolean(state.nextDueAt && state.nextDueAt <= now);
     const isWeak = state.masteryLevel === 'learning' || state.masteryLevel === 'developing';
@@ -183,6 +193,7 @@ function buildUpdatedState(studentId: string, item: PracticeItem, existing: Stud
   let updated = applyReview(before, pending.reviewGrade ?? 'again', pending.latencyMs, String(pending.studentAnswer), now, {
     isCorrect: pending.isCorrect,
   });
+  updated = { ...updated, cardKey: deriveCardKey(item), lastItemId: item.id };
   if (!pending.isCorrect) {
     const merged = Array.from(new Set([...(updated.mistakePatterns ?? []), ...detectMistakes(item, pending.studentAnswer)]));
     updated = { ...updated, mistakePatterns: merged };
@@ -274,13 +285,15 @@ export function GoalEvaluationSession({ studentId, onCancel, onReturnToGoals, on
     try {
       const nowDate = appNow();
       const answeredAt = pending.answeredAt;
-      const existing = await itemStateRepo.get(studentId, pending.item.id);
+      const existing = await itemStateRepo.get(studentId, deriveCardKey(pending.item));
       const updatedState = buildUpdatedState(studentId, pending.item, existing, pending, nowDate);
       const event: MathAnswerEvent = {
         id: pending.eventId,
         studentId,
         sessionId: evaluation.id,
         itemId: pending.item.id,
+        cardKey: updatedState.cardKey,
+        schemaId: pending.item.schemaId,
         mode: 'goal_evaluation',
         promptShown: pending.item.prompt,
         correctAnswer: pending.item.answer,
@@ -289,6 +302,9 @@ export function GoalEvaluationSession({ studentId, onCancel, onReturnToGoals, on
         isRetry: false,
         hintUsed: false,
         latencyMs: pending.latencyMs,
+        ratingReason: pending.ratingReason,
+        responsePolicy: pending.responsePolicy,
+        fluencyBand: pending.fluencyBand,
         reviewGrade: pending.reviewGrade,
         factStatusBefore: existing?.masteryLevel ?? 'new',
         factStatusAfter: updatedState.masteryLevel,
@@ -335,7 +351,7 @@ export function GoalEvaluationSession({ studentId, onCancel, onReturnToGoals, on
             seed: evaluation.seed ?? 1,
             now: nowDate.toISOString(),
             mathAnswerEvents: [...events.filter(item => item.id !== event.id), event],
-            itemStates: [...itemStates.filter(item => item.itemId !== updatedState.itemId), updatedState],
+            itemStates: [...itemStates.filter(item => item.cardKey !== updatedState.cardKey), updatedState],
             responses: nextResponses,
           })
         : null;
@@ -353,7 +369,7 @@ export function GoalEvaluationSession({ studentId, onCancel, onReturnToGoals, on
       await recordGoalEvaluationAnswer({ event, attempt, updatedState, evaluation: nextEvaluation });
       setEvaluation(nextEvaluation);
       setEvents(current => [...current.filter(item => item.id !== event.id), event]);
-      setItemStates(current => [...current.filter(item => !(item.studentId === updatedState.studentId && item.itemId === updatedState.itemId)), updatedState]);
+      setItemStates(current => [...current.filter(item => !(item.studentId === updatedState.studentId && item.cardKey === updatedState.cardKey)), updatedState]);
       setPendingWrite(null);
       if (complete) {
         if (authState().signedIn) pushLocal().catch(console.warn);
@@ -381,6 +397,9 @@ export function GoalEvaluationSession({ studentId, onCancel, onReturnToGoals, on
       studentAnswer: checked.studentAnswer,
       isCorrect: checked.isCorrect,
       reviewGrade: checked.reviewGrade,
+      ratingReason: checked.ratingReason,
+      responsePolicy: checked.policyKind,
+      fluencyBand: checked.fluencyBand,
       item: currentItem,
       skillId: selection.skillId,
     };

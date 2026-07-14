@@ -41,9 +41,9 @@ Capstone. Depends on nearly everything above (#25-#29, #30-#34, #35).
 
 | # | Title | Branch | Status |
 |---|-------|--------|--------|
-| 25 | Learner identity + restore-first setup | A | not started |
-| 26 | Hybrid FSRS card model + migration | A | not started |
-| 27 | Task-aware FSRS ratings | A | not started |
+| 25 | Learner identity + restore-first setup | A | done (commit 7c8159a on feature/learner-identity-fsrs-core, pushed) |
+| 26 | Hybrid FSRS card model + migration | A | done (commit fe5b5d8 on feature/learner-identity-fsrs-core, pushed) |
+| 27 | Task-aware FSRS ratings | A | done (commit 63f6973 on feature/learner-identity-fsrs-core, pushed) |
 | 28 | One scheduling update per card/session | A | not started |
 | 30 | Area & perimeter redesign | B | not started |
 | 31 | Fractions redesign | B | not started |
@@ -56,11 +56,38 @@ Capstone. Depends on nearly everything above (#25-#29, #30-#34, #35).
 
 ## Current focus
 
-**Active branch:** (none yet — about to create `feature/learner-identity-fsrs-core`)
-**Active issue:** #25
-**Next concrete step:** Read `src/types/math.ts`, `src/db/dexie.ts`, `src/db/repositories.ts`,
-`src/features/dashboard/ProfileSetup.tsx`, `src/App.tsx`, `src/features/sync/snapshot.ts` in full,
-then create `src/features/profile/learnerIdentity.ts` per issue #25 spec.
+**Active branch:** `feature/learner-identity-fsrs-core` (created from main, pushed, 3 commits so far)
+**Active issue:** #28 — one long-term scheduling update per card per session
+**Next concrete step:** Read `gh issue view 28` for the complete spec, then
+`src/features/practice/usePracticeSession.ts` (`currentAttemptsRef`, `submitAnswer`, `startSession`'s
+`daily_review` queue-fill loop), `src/features/diagnosis/DiagnosticSession.tsx`,
+`src/features/goals/GoalEvaluationSession.tsx`. Add `schedulingReviewedCardsRef` (session-scoped
+Set<cardKey>) to usePracticeSession so a card updates FSRS at most once per session even if it's
+re-queued; refactor the daily_review queue-fill loop in `startSession` to backfill with distinct
+eligible cards instead of repeating due cards; extend `MathAnswerEvent` with `presentationIndex`
+(schedulingEligible already exists on CheckResult from #27, and cardKey/itemInstanceId/schemaId already
+exist on the event type from #26 — only presentationIndex is new). Consider a shared
+`SessionSchedulingGuard` utility per the issue text. `npm run ci` was green as of commit 63f6973;
+re-baseline before starting new work if resuming.
+
+## Known gaps / follow-ups (not blocking, revisit if time allows)
+
+- #25 acceptance criteria mention extending browser E2E (`scripts/e2e_mathfan.py`) with a fresh-install
+  restore scenario and a same-name separate-learner scenario. Not done — `npm run ci` does not run the
+  Python E2E suite, so this did not block the merge bar, but it's a real coverage gap worth closing
+  later, ideally alongside #26/#29's own E2E requirements.
+- #26 scoping decision: only multiplication and division facts became true `atomic_fact` cards this
+  round (canonical commutative folding for MUL, separate non-canonicalized DIV). Every other item type
+  (ADD, SUB, AREA_*, WORD_*, PERIM_*, fractions, measurement, etc.) got a degenerate 1:1 `template:<itemId>`
+  card — same granularity as before, just rekeyed — because the issue's own text defers real template
+  generators to the curriculum-redesign issues (#30-#34): "The first implementation should support the
+  Grade 3 templates introduced by the curriculum issues." When implementing #30-#34, register real
+  template generators in `src/features/curriculum/templateRegistry.ts` (referenced but not yet created)
+  and give those item types real multi-instance template cardKeys instead of the 1:1 fallback — that is
+  the intended second half of #26's card model, not a bug to fix in #27/#28.
+- #26's `LearningCardDescriptor.gradeLevel` defaults to 3 when `PracticeItem.gradeLevel` is absent (which
+  is always, today — no generator sets it yet). Harmless while the app is Grade-3-only; revisit if/when
+  Grade 4-5 content is added.
 
 ## Resume protocol for each /loop wake-up
 

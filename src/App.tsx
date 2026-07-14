@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { StudentProfile, SessionConfig, StudentSettings } from './types/math';
-import { studentRepo, sessionRepo, mathAnswerEventRepo } from './db/repositories';
+import { studentRepo, sessionRepo } from './db/repositories';
 import { ProfileSetup } from './features/dashboard/ProfileSetup';
 import { StudentDashboard, type PracticeOp } from './features/dashboard/StudentDashboard';
 import { PracticeScreen } from './features/practice/PracticeScreen';
@@ -18,11 +18,14 @@ import { GoalsPage } from './features/goals/GoalsPage';
 import { GoalEvaluationSession } from './features/goals/GoalEvaluationSession';
 import { preloadVoices } from './features/audio/speech';
 import { useSync, initAuth } from './features/sync/useSync';
-import { pushLocal } from './features/sync/driveSync';
-import { currentState as authState } from './features/auth/googleAuth';
+import { pushLocal, pullAndMerge } from './features/sync/driveSync';
+import { currentState as authState, hasPersistedGrant } from './features/auth/googleAuth';
 import { applyTheme } from './features/theme/themes';
 import { syncDiagnosticCompletionIfSignedIn } from './features/diagnosis/diagnosticCompletion';
 import { resolvePracticeDoneDestination } from './features/practice/practiceNavigation';
+import { bootstrapProfiles, loadActiveProfileSelection, saveActiveProfileSelection, resolveSelectedProfile } from './features/profile/profileBootstrap';
+import { runCardStateMigration } from './features/migrations/cardStateMigration';
+import type { RestoreState } from './features/dashboard/ProfileSetup';
 
 type Screen =
   | 'loading' | 'setup' | 'dashboard'
@@ -32,6 +35,8 @@ type Screen =
 export default function App() {
   const [screen, setScreen] = useState<Screen>('loading');
   const [profile, setProfile] = useState<StudentProfile | null>(null);
+  const [existingProfiles, setExistingProfiles] = useState<StudentProfile[]>([]);
+  const [restoreState, setRestoreState] = useState<RestoreState>('idle');
   const [sessionConfig, setSessionConfig] = useState<SessionConfig | null>(null);
   const [selectedOp, setSelectedOp] = useState<PracticeOp>('multiplication');
   const [achievementFilter, setAchievementFilter] = useState<AchievementFilter>('total');
@@ -40,22 +45,58 @@ export default function App() {
   const [practiceReturn, setPracticeReturn] = useState<Screen>('dashboard');
   const [initialGoalSkillIds, setInitialGoalSkillIds] = useState<string[] | null>(null);
 
-  // After a successful sync, refresh the profile from DB.
-  // This handles the case where Drive data was merged back onto a fresh install:
-  // the local empty student and the Drive student have different IDs, so we pick
-  // the student with the most events (i.e. the restored Drive profile).
+  const selectProfile = (p: StudentProfile) => {
+    setProfile(p);
+    saveActiveProfileSelection(p);
+    applyTheme(p.settings.theme ?? 'indigo');
+    sessionRepo.deleteEmpty(p.id).catch(() => {});
+    setScreen('dashboard');
+  };
+
+  const runBootstrap = async () => {
+    const grantPersisted = hasPersistedGrant();
+    setRestoreState(grantPersisted ? 'checking' : 'idle');
+    const result = await bootstrapProfiles({
+      loadLocalProfiles: () => studentRepo.getAll(),
+      hasPersistedGrant: grantPersisted,
+      attemptRestore: () => pullAndMerge(),
+      loadActiveSelection: loadActiveProfileSelection,
+    });
+    if (result.status === 'ready') {
+      selectProfile(result.selected);
+      return;
+    }
+    if (result.status === 'choose') {
+      setExistingProfiles(result.profiles);
+      setRestoreState('idle');
+      setScreen('setup');
+      return;
+    }
+    if (result.status === 'restore_available') {
+      setExistingProfiles([]);
+      setRestoreState('unavailable');
+      setScreen('setup');
+      return;
+    }
+    setExistingProfiles([]);
+    setRestoreState('idle');
+    setScreen('setup');
+  };
+
+  // After a successful sync, re-resolve the active profile from DB. This handles
+  // the case where a duplicate-learnerKey merge (see snapshot.ts) changed which
+  // profile id represents this learner.
   const syncRefreshGuard = useRef(true);
   useEffect(() => {
     if (syncRefreshGuard.current) { syncRefreshGuard.current = false; return; }
     if (!lastSyncedAt) return;
-    studentRepo.getAll().then(async all => {
+    studentRepo.getAll().then(all => {
       if (all.length === 0) return;
-      let best = all[0];
-      if (all.length > 1) {
-        const counts = await Promise.all(all.map(s => mathAnswerEventRepo.getAll(s.id).then(ev => ev.length)));
-        best = all[counts.indexOf(Math.max(...counts))];
-      }
+      const current = profile ? all.find(p => p.id === profile.id) : undefined;
+      const resolved = current ?? resolveSelectedProfile(all, loadActiveProfileSelection());
+      const best = resolved ?? all[0];
       setProfile(best);
+      saveActiveProfileSelection(best);
       applyTheme(best.settings.theme ?? 'indigo');
       setScreen(s => (s === 'setup' || s === 'loading') ? 'dashboard' : s);
     });
@@ -70,24 +111,19 @@ export default function App() {
   useEffect(() => {
     preloadVoices();
     initAuth();
-    studentRepo.getAll().then(all => {
-      if (all.length === 0) {
-        setScreen('setup');
-      } else {
-        const p = all[0];
-        setProfile(p);
-        // Apply saved theme immediately
-        applyTheme(p.settings.theme ?? 'indigo');
-        // Clean up any leftover empty sessions from earlier versions / abandoned starts
-        sessionRepo.deleteEmpty(p.id).catch(() => {});
-        setScreen('dashboard');
-      }
-    });
+    // Deferred to a microtask so the first setState happens outside the effect body itself.
+    // Card-state migration must finish before any screen reads itemStates.
+    Promise.resolve()
+      .then(() => runCardStateMigration())
+      .catch(err => console.warn('[App] card-state migration failed', err))
+      .then(runBootstrap);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const updateProfile = async (updated: StudentProfile) => {
-    setProfile(updated);
-    await studentRepo.save(updated);
+    const withTimestamp = { ...updated, updatedAt: new Date().toISOString() };
+    setProfile(withTimestamp);
+    await studentRepo.save(withTimestamp);
   };
 
   const updateSettings = async (settings: StudentSettings) => {
@@ -124,10 +160,17 @@ export default function App() {
   if (screen === 'setup') {
     return (
       <ProfileSetup
-        onCreated={p => {
-          setProfile(p);
-          applyTheme(p.settings.theme ?? 'indigo');
-          setScreen('dashboard');
+        existingProfiles={existingProfiles}
+        restoreState={restoreState}
+        onSelectExisting={selectProfile}
+        onCreate={async p => {
+          await studentRepo.saveNew(p);
+          selectProfile(p);
+        }}
+        onRestore={async () => {
+          setRestoreState('checking');
+          await pullAndMerge();
+          await runBootstrap();
         }}
       />
     );
@@ -141,7 +184,13 @@ export default function App() {
         profile={profile}
         onUpdateProfile={updateProfile}
         onBack={() => setScreen('dashboard')}
-        onSwitchStudent={() => setScreen('setup')}
+        onSwitchStudent={() => {
+          studentRepo.getAll().then(all => {
+            setExistingProfiles(all);
+            setRestoreState('idle');
+            setScreen('setup');
+          });
+        }}
         auth={auth}
         syncStatus={syncStatus}
         lastSyncedAt={lastSyncedAt}

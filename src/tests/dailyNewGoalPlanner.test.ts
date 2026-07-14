@@ -7,6 +7,7 @@ import type { StudentSkillSummary } from '../features/mastery/skillMasteryEngine
 import { planPracticeForSkill } from '../features/mastery/skillPracticePlanner';
 import { calculateGoalProgress } from '../features/goals/goalEngine';
 import { DEFAULT_DAILY_NEW_GOAL_LIMITS, normalizeDailyNewGoalLimits, validateDailyNewGoalLimits } from '../features/goals/dailyNewGoalLimits';
+import { deriveCardKeyFromItemId } from '../features/scheduler/cardModel';
 
 const STUDENT_ID = 'student-1';
 const NOW = '2026-06-17T16:00:00.000Z';
@@ -101,7 +102,8 @@ function event(itemId: string, overrides: Partial<MathAnswerEvent> = {}): MathAn
 function state(itemId: string, overrides: Partial<StudentItemState> = {}): StudentItemState {
   return {
     studentId: STUDENT_ID,
-    itemId,
+    cardKey: deriveCardKeyFromItemId(itemId),
+    lastItemId: itemId,
     skillId: 'g3-mul-meaning',
     attemptCount: 1,
     correctCount: 1,

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import type { MasteryLevel } from '../types/math';
 import { itemStateRepo } from '../db/repositories';
 import { MASTERY_COLORS } from '../utils/masteryColors';
+import { deriveCardKeyFromItemId } from '../features/scheduler/cardModel';
 
 interface Props { studentId: string }
 
@@ -26,8 +27,9 @@ export function MasteryGrid({ studentId }: Props) {
     itemStateRepo.getForStudent(studentId).then(states => {
       const m = new Map<string, CellInfo>();
       for (const s of states) {
-        if (!s.itemId.startsWith('MUL_')) continue;
-        m.set(s.itemId, {
+        if (!s.cardKey.startsWith('fact:mul:')) continue;
+        // Keyed by card, not exact orientation — 7×8 and 8×7 share one card.
+        m.set(s.cardKey, {
           level: s.masteryLevel,
           accuracy: s.attemptCount ? s.correctCount / s.attemptCount : 0,
           medianMs: s.medianLatencyMs,
@@ -73,7 +75,7 @@ export function MasteryGrid({ studentId }: Props) {
               </span>
               {RANGE.map(b => {
                 const id = `MUL_${a}x${b}`;
-                const info = grid.get(id);
+                const info = grid.get(deriveCardKeyFromItemId(id));
                 const level: MasteryLevel = info?.level ?? 'new';
                 const mc = MASTERY_COLORS[level];
                 const isSelected = selected?.a === a && selected?.b === b;

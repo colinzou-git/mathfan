@@ -1,8 +1,9 @@
 import { db } from './dexie';
-import type { StudentProfile, StudentItemState, AttemptLog, PracticeSession } from '../types/math';
+import type { StudentProfile, StudentItemState, AttemptLog, PracticeSession, GradeLevel } from '../types/math';
 import type { MathAnswerEvent } from '../features/learning/learningEvents';
 import type { QuizSession, MultiplicationFactStats, MultiplicationFactKey } from '../features/multiplication/types';
 import type { GoalEvaluation, GoalEvent, LearningGoal, LearningGoalStatus } from '../features/goals/types';
+import { profileCreationMatch } from '../features/profile/learnerIdentity';
 
 export const studentRepo = {
   async getAll(): Promise<StudentProfile[]> {
@@ -11,8 +12,26 @@ export const studentRepo = {
   async get(id: string): Promise<StudentProfile | undefined> {
     return db.students.get(id);
   },
+  async getByLearnerKey(learnerKey: string): Promise<StudentProfile | undefined> {
+    return db.students.where('learnerKey').equals(learnerKey).first();
+  },
+  /** Advisory duplicate-prevention lookup — does not guarantee global uniqueness. */
+  async findCreationMatches(name: string, grade: GradeLevel): Promise<StudentProfile[]> {
+    const all = await db.students.toArray();
+    return profileCreationMatch({ displayName: name, gradeLevel: grade }, all);
+  },
   async save(profile: StudentProfile): Promise<void> {
     await db.students.put(profile);
+  },
+  /** Creates a new profile, rejecting an accidental duplicate learnerKey or id instead of silently overwriting. */
+  async saveNew(profile: StudentProfile): Promise<void> {
+    if (profile.learnerKey) {
+      const existingByKey = await studentRepo.getByLearnerKey(profile.learnerKey);
+      if (existingByKey) throw new Error(`A profile with learnerKey ${profile.learnerKey} already exists.`);
+    }
+    const existingById = await db.students.get(profile.id);
+    if (existingById) throw new Error(`A profile with id ${profile.id} already exists.`);
+    await db.students.add(profile);
   },
   async delete(id: string): Promise<void> {
     await db.students.delete(id);
@@ -27,8 +46,16 @@ export const studentRepo = {
  * Use rebuildItemStatesFromEvents() to regenerate.
  */
 export const itemStateRepo = {
-  async get(studentId: string, itemId: string): Promise<StudentItemState | undefined> {
-    return db.itemStates.get([studentId, itemId]);
+  async get(studentId: string, cardKey: string): Promise<StudentItemState | undefined> {
+    return db.itemStates.get([studentId, cardKey]);
+  },
+  async getForCardKeys(studentId: string, cardKeys: string[]): Promise<StudentItemState[]> {
+    if (cardKeys.length === 0) return [];
+    const keySet = new Set(cardKeys);
+    return db.itemStates
+      .where('studentId').equals(studentId)
+      .and(s => keySet.has(s.cardKey))
+      .toArray();
   },
   async getForStudent(studentId: string): Promise<StudentItemState[]> {
     return db.itemStates.where('studentId').equals(studentId).toArray();

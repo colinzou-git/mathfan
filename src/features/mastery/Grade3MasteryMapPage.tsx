@@ -117,7 +117,7 @@ export function Grade3MasteryMapPage({ profile, onBack, onStartPractice, onStart
       // Collect all item IDs we need to resolve
       const allItemIds = new Set<string>();
       for (const e of events) allItemIds.add(e.itemId);
-      for (const s of states) allItemIds.add(s.itemId);
+      for (const s of states) allItemIds.add(s.lastItemId ?? s.cardKey);
 
       // Build item resolver using makeItemFromId
       const itemCache = new Map<string, ReturnType<typeof makeItemFromId>>();
@@ -146,12 +146,13 @@ export function Grade3MasteryMapPage({ profile, onBack, onStartPractice, onStart
         const computedDue = new Map<string, string[]>();
         for (const state of states) {
           if (state.nextDueAt != null && state.nextDueAt <= nowStr) {
-            const item = itemCache.get(state.itemId);
+            const itemId = state.lastItemId ?? state.cardKey;
+            const item = itemCache.get(itemId);
             if (item) {
               const skillId = inferGrade3SkillId(item);
               if (skillId) {
                 const arr = computedDue.get(skillId) ?? [];
-                arr.push(state.itemId);
+                arr.push(itemId);
                 computedDue.set(skillId, arr);
               }
             }

@@ -68,7 +68,7 @@ export function deriveGrade3SkillSummaries(
   // Collect all item IDs seen in this student's events and states
   const allItemIds = new Set<string>();
   for (const e of studentEvents) allItemIds.add(e.itemId);
-  for (const s of studentStates) allItemIds.add(s.itemId);
+  for (const s of studentStates) allItemIds.add(s.lastItemId ?? s.cardKey);
 
   // Build itemId → Grade 3 skillId map
   const itemSkillMap = new Map<string, string>();
@@ -101,7 +101,7 @@ export function deriveGrade3SkillSummaries(
   // Group item states by skillId (states provide dueItemCount and mistakePatterns)
   const statesBySkill = new Map<string, StudentItemState[]>();
   for (const state of studentStates) {
-    const skillId = itemSkillMap.get(state.itemId);
+    const skillId = itemSkillMap.get(state.lastItemId ?? state.cardKey);
     if (!skillId) continue;
     const arr = statesBySkill.get(skillId) ?? [];
     arr.push(state);
@@ -122,7 +122,7 @@ export function deriveGrade3SkillSummaries(
 
     const skillItemIds = new Set([
       ...events.map(e => e.itemId),
-      ...states.map(s => s.itemId),
+      ...states.map(s => s.lastItemId ?? s.cardKey),
     ]);
 
     return {

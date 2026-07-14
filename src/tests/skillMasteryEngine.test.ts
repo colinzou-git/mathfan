@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { deriveGrade3SkillSummaries } from '../features/mastery/skillMasteryEngine';
 import { makeMultiplicationItem } from '../features/curriculum/multiplicationItems';
+import { deriveCardKeyFromItemId } from '../features/scheduler/cardModel';
 import type { MathAnswerEvent } from '../features/learning/learningEvents';
 import type { StudentItemState } from '../types/math';
 
@@ -39,7 +40,8 @@ function makeState(
 ): StudentItemState {
   return {
     studentId,
-    itemId,
+    cardKey: deriveCardKeyFromItemId(itemId),
+    lastItemId: itemId,
     skillId: 'any',
     attemptCount: 0,
     correctCount: 0,

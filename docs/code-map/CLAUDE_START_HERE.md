@@ -37,8 +37,8 @@ python tools/generate_code_maps.py
 - `src/main.tsx` — React entry point that mounts the app.
 - `src/features/sync/driveSync.ts` — Cloud sync/auth/data transfer logic.
 - `src/features/sync/useSync.ts` — Cloud sync/auth/data transfer logic.
-- `src/features/goals/GoalsPage.tsx` — React UI component file: ConfirmDialog, EmptyState, GoalCard, GoalWizard.
-- `src/features/multiplication/MultiplicationQuizPage.tsx` — Local persistence/database layer.
+- `src/features/sync/learnerKeyMerge.ts` — Cloud sync/auth/data transfer logic.
+- `src/features/sync/timeUtil.ts` — Cloud sync/auth/data transfer logic.
 
 ## Suggested first prompt to Claude Code
 
