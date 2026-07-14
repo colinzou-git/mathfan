@@ -119,7 +119,11 @@ function localDayStartIso(now: string, timezone: string): string {
 }
 
 function dueItemIds(itemStates: StudentItemState[], now: string): Set<string> {
-  return new Set(itemStates.filter(state => state.nextDueAt && state.nextDueAt <= now).map(state => state.itemId));
+  return new Set(
+    itemStates
+      .filter(state => state.nextDueAt && state.nextDueAt <= now)
+      .map(state => state.lastItemId ?? state.cardKey)
+  );
 }
 
 function directAttemptedItemIds(events: MathAnswerEvent[], studentId: string, beforeIso?: string): Set<string> {

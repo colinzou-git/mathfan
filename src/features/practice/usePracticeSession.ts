@@ -5,6 +5,7 @@ import type {
 import { checkAnswer } from './answerChecker';
 import { classifyAttempts } from './metrics';
 import { applyReview, createInitialState, planSession, planTableSession } from '../scheduler/scheduler';
+import { deriveCardKey, stateForItem } from '../scheduler/cardModel';
 import {
   generateSingleTableItems, generateMultipleTablesItems, generateMultiplicationRangeItems,
   ALL_ITEMS, ITEM_MAP,
@@ -131,7 +132,7 @@ export function usePracticeSession(studentId: string) {
     sessionStartRef.current = Date.now();
 
     const allStates = await itemStateRepo.getForStudent(studentId);
-    const stateMap = new Map(allStates.map(s => [s.itemId, s]));
+    const stateMap = new Map(allStates.map(s => [s.cardKey, s]));
     statesRef.current = stateMap;
 
     let queue: string[];
@@ -307,7 +308,8 @@ export function usePracticeSession(studentId: string) {
     const now = appNow();
     const createdAt = now.toISOString();
 
-    const existing = statesRef.current.get(item.id) ?? createInitialState(studentId, item);
+    const cardKey = deriveCardKey(item);
+    const existing = stateForItem(item, statesRef.current) ?? createInitialState(studentId, item);
 
     // Only the first attempt at each question presentation updates long-term
     // FSRS scheduling. Retries are logged for stats but don't distort the
@@ -323,6 +325,7 @@ export function usePracticeSession(studentId: string) {
         console.warn('[usePracticeSession] applyReview error; FSRS update skipped', err);
         updated = existing;
       }
+      updated = { ...updated, cardKey, lastItemId: item.id };
     } else {
       updated = existing;
     }
@@ -338,7 +341,7 @@ export function usePracticeSession(studentId: string) {
 
     // Mutate refs before setState — safe because this is a plain event handler, not an updater.
     if (isFirstAttempt) {
-      statesRef.current.set(item.id, updated);
+      statesRef.current.set(cardKey, updated);
     }
 
     // Cross-skill evidence: a first-try-correct higher-level item gives a mild
@@ -349,17 +352,18 @@ export function usePracticeSession(studentId: string) {
       const updates = computeRelatedEvidence(item, statesRef.current, now);
       if (updates.length > 0) {
         relatedEvidence = updates.map(u => {
-          statesRef.current.set(u.itemId, u.after);
-          const factItem = makeItemFromId(u.itemId);
+          statesRef.current.set(u.cardKey, u.after);
+          const factItem = makeItemFromId(u.relatedItemId);
           return {
             state: u.after,
             event: {
               id: generateId(),
               studentId,
               sessionId: prev.sessionId!,
-              itemId: u.itemId,
+              itemId: u.relatedItemId,
+              cardKey: u.cardKey,
               mode: 'practice' as const,
-              promptShown: factItem?.prompt ?? u.itemId,
+              promptShown: factItem?.prompt ?? u.relatedItemId,
               correctAnswer: factItem?.answer ?? 0,
               studentAnswer: null,
               isCorrect: true,
@@ -390,6 +394,8 @@ export function usePracticeSession(studentId: string) {
         studentId,
         sessionId: prev.sessionId,
         itemId: item.id,
+        cardKey,
+        schemaId: item.schemaId,
         mode: 'practice',
         promptShown: item.prompt,
         correctAnswer: item.answer,

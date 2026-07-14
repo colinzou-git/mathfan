@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-14T06:16:53.042334+00:00",
+  "generated_at": "2026-07-14T06:52:16.131070+00:00",
   "repo_root": "/home/ubuntu/mathfan",
   "package": {
     "name": "mathfan",
@@ -421,9 +421,9 @@
     {
       "path": "PROGRESS.md",
       "ext": ".md",
-      "bytes": 4363,
-      "lines": 74,
-      "sha1": "38314804779a",
+      "bytes": 5165,
+      "lines": 83,
+      "sha1": "05fdc90d2516",
       "imports": [],
       "exports": [],
       "functions": [],
@@ -434,7 +434,7 @@
       "hooks": [],
       "css_classes": [],
       "json_keys": [],
-      "purpose": "Local persistence/database layer.",
+      "purpose": "Project file.",
       "too_large": false,
       "read_error": null
     },
@@ -771,9 +771,9 @@
     {
       "path": "src/App.tsx",
       "ext": ".tsx",
-      "bytes": 12180,
-      "lines": 357,
-      "sha1": "326ac3e12204",
+      "bytes": 12464,
+      "lines": 362,
+      "sha1": "f82c878ee984",
       "imports": [
         "./components/opSpecs",
         "./components/RangeSetup",
@@ -788,6 +788,7 @@
         "./features/goals/GoalEvaluationSession",
         "./features/goals/GoalsPage",
         "./features/mastery/Grade3MasteryMapPage",
+        "./features/migrations/cardStateMigration",
         "./features/multiplication/MultiplicationQuizPage",
         "./features/practice/practiceNavigation",
         "./features/practice/PracticeScreen",
@@ -831,11 +832,12 @@
     {
       "path": "src/components/MasteryGrid.tsx",
       "ext": ".tsx",
-      "bytes": 7665,
-      "lines": 175,
-      "sha1": "bcdf96847668",
+      "bytes": 7854,
+      "lines": 177,
+      "sha1": "6fd28eeac6cd",
       "imports": [
         "../db/repositories",
+        "../features/scheduler/cardModel",
         "../types/math",
         "../utils/masteryColors",
         "react"
@@ -1144,12 +1146,13 @@
     {
       "path": "src/db/dexie.ts",
       "ext": ".ts",
-      "bytes": 2248,
-      "lines": 59,
-      "sha1": "ca7cf7e9f9fe",
+      "bytes": 3879,
+      "lines": 91,
+      "sha1": "c02c6f647989",
       "imports": [
         "../features/goals/types",
         "../features/learning/learningEvents",
+        "../features/migrations/migrationTypes",
         "../features/multiplication/types",
         "../types/math",
         "dexie"
@@ -1175,9 +1178,9 @@
     {
       "path": "src/db/repositories.ts",
       "ext": ".ts",
-      "bytes": 14448,
-      "lines": 333,
-      "sha1": "7dd806d9b661",
+      "bytes": 14754,
+      "lines": 341,
+      "sha1": "75a2316894d1",
       "imports": [
         "../features/goals/types",
         "../features/learning/learningEvents",
@@ -1235,12 +1238,13 @@
     {
       "path": "src/features/adaptive/adaptiveItemSelector.ts",
       "ext": ".ts",
-      "bytes": 9214,
-      "lines": 238,
-      "sha1": "2248d2f66a5c",
+      "bytes": 9155,
+      "lines": 235,
+      "sha1": "c6e2c9952933",
       "imports": [
         "../../types/math",
         "../../utils/rng",
+        "../scheduler/cardModel",
         "./relatedItemMapping"
       ],
       "exports": [
@@ -1282,9 +1286,9 @@
     {
       "path": "src/features/adaptive/candidatePools.ts",
       "ext": ".ts",
-      "bytes": 5868,
-      "lines": 144,
-      "sha1": "20e8459bacf1",
+      "bytes": 6288,
+      "lines": 150,
+      "sha1": "7bd6feb98751",
       "imports": [
         "../../types/math",
         "../curriculum/numberTheoryItems",
@@ -1319,9 +1323,9 @@
     {
       "path": "src/features/adaptive/relatedEvidence.ts",
       "ext": ".ts",
-      "bytes": 2321,
-      "lines": 52,
-      "sha1": "04ab9545190a",
+      "bytes": 2487,
+      "lines": 54,
+      "sha1": "18d5eabdedab",
       "imports": [
         "../../types/math",
         "../scheduler/scheduler",
@@ -2277,9 +2281,9 @@
     {
       "path": "src/features/dashboard/StudentDashboard.tsx",
       "ext": ".tsx",
-      "bytes": 25973,
-      "lines": 528,
-      "sha1": "9f7ba4cd63ac",
+      "bytes": 26019,
+      "lines": 529,
+      "sha1": "b703d06cad44",
       "imports": [
         "../../db/repositories",
         "../../types/math",
@@ -2577,9 +2581,9 @@
     {
       "path": "src/features/goals/dailyNewGoalPlanner.ts",
       "ext": ".ts",
-      "bytes": 15009,
-      "lines": 358,
-      "sha1": "cebd4fd185bd",
+      "bytes": 15052,
+      "lines": 362,
+      "sha1": "c79aefee8957",
       "imports": [
         "../../types/math",
         "../curriculum/makeItemFromId",
@@ -2645,9 +2649,9 @@
     {
       "path": "src/features/goals/goalEngine.ts",
       "ext": ".ts",
-      "bytes": 17234,
+      "bytes": 17255,
       "lines": 531,
-      "sha1": "0b4a661c8320",
+      "sha1": "bbcbcc00d29c",
       "imports": [
         "../../types/math",
         "../curriculum/makeItemFromId",
@@ -2849,9 +2853,9 @@
     {
       "path": "src/features/goals/GoalEvaluationSession.tsx",
       "ext": ".tsx",
-      "bytes": 28591,
-      "lines": 624,
-      "sha1": "89f4f3c15c2c",
+      "bytes": 28806,
+      "lines": 630,
+      "sha1": "1240bef844ce",
       "imports": [
         "../../components/NumPad",
         "../../db/repositories",
@@ -2866,6 +2870,7 @@
         "../mastery/skillPracticePlanner",
         "../practice/answerChecker",
         "../practice/QuestionRenderer",
+        "../scheduler/cardModel",
         "../scheduler/scheduler",
         "../sync/driveSync",
         "../time/clock",
@@ -2948,9 +2953,9 @@
     {
       "path": "src/features/goals/goalRecommendationEngine.ts",
       "ext": ".ts",
-      "bytes": 18824,
+      "bytes": 18845,
       "lines": 494,
-      "sha1": "87c1ce3f8db8",
+      "sha1": "02edd10b40de",
       "imports": [
         "../../types/math",
         "../learning/learningEvents",
@@ -3156,9 +3161,9 @@
     {
       "path": "src/features/learning/eventRebuild.ts",
       "ext": ".ts",
-      "bytes": 6706,
-      "lines": 162,
-      "sha1": "1f4a97788df3",
+      "bytes": 7462,
+      "lines": 173,
+      "sha1": "10b1958cc49b",
       "imports": [
         "../../db/dexie",
         "../../types/math",
@@ -3167,6 +3172,7 @@
         "../multiplication/masteryEngine",
         "../multiplication/types",
         "../practice/answerChecker",
+        "../scheduler/cardModel",
         "../scheduler/scheduler",
         "./learningEvents"
       ],
@@ -3190,9 +3196,9 @@
     {
       "path": "src/features/learning/learningEvents.ts",
       "ext": ".ts",
-      "bytes": 3058,
-      "lines": 84,
-      "sha1": "9fa42a16deb9",
+      "bytes": 3411,
+      "lines": 90,
+      "sha1": "9d843f3063e2",
       "imports": [
         "../../db/dexie",
         "../../types/math",
@@ -3307,9 +3313,9 @@
     {
       "path": "src/features/mastery/Grade3MasteryMapPage.tsx",
       "ext": ".tsx",
-      "bytes": 12154,
-      "lines": 365,
-      "sha1": "9a04fc742a3a",
+      "bytes": 12221,
+      "lines": 366,
+      "sha1": "5da145cbe8c3",
       "imports": [
         "../../db/repositories",
         "../../types/math",
@@ -3478,9 +3484,9 @@
     {
       "path": "src/features/mastery/skillMasteryEngine.ts",
       "ext": ".ts",
-      "bytes": 4990,
+      "bytes": 5045,
       "lines": 141,
-      "sha1": "76acc3b500f3",
+      "sha1": "9d933a2c1fb4",
       "imports": [
         "../../types/math",
         "../learning/learningEvents",
@@ -3608,9 +3614,9 @@
     {
       "path": "src/features/mastery/todayPlanEngine.ts",
       "ext": ".ts",
-      "bytes": 7086,
+      "bytes": 7120,
       "lines": 191,
-      "sha1": "e0921cdb9c26",
+      "sha1": "05cc14300458",
       "imports": [
         "../../types/math",
         "../curriculum/makeItemFromId",
@@ -3644,6 +3650,81 @@
       "css_classes": [],
       "json_keys": [],
       "purpose": "Today's plan engine: determines which skills to review/practice based on mastery summaries.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/migrations/cardStateMigration.ts",
+      "ext": ".ts",
+      "bytes": 6883,
+      "lines": 167,
+      "sha1": "1e90a0800eb1",
+      "imports": [
+        "../../db/dexie",
+        "../../types/math",
+        "../../utils/id",
+        "../curriculum/makeItemFromId",
+        "../learning/eventRebuild",
+        "./migrationTypes"
+      ],
+      "exports": [
+        "MIGRATION_KIND",
+        "MigrationRunResult"
+      ],
+      "functions": [
+        "backupCurrentItemStates",
+        "isCardStateMigrationComplete",
+        "isValidState",
+        "preflight",
+        "rollbackCardStateMigration",
+        "runCardStateMigration",
+        "validate"
+      ],
+      "classes": [],
+      "interfaces": [
+        "MigrationRunResult"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Local persistence/database layer.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/migrations/migrationTypes.ts",
+      "ext": ".ts",
+      "bytes": 1047,
+      "lines": 33,
+      "sha1": "58c3d717d1d0",
+      "imports": [
+        "../../types/math"
+      ],
+      "exports": [
+        "DataMigrationKind",
+        "DataMigrationRun",
+        "DataMigrationStatus",
+        "LegacyStudentItemState",
+        "MigrationBackup"
+      ],
+      "functions": [],
+      "classes": [],
+      "interfaces": [
+        "DataMigrationRun",
+        "LegacyStudentItemState",
+        "MigrationBackup"
+      ],
+      "types": [
+        "DataMigrationKind",
+        "DataMigrationStatus"
+      ],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Local persistence/database layer.",
       "too_large": false,
       "read_error": null
     },
@@ -4122,9 +4203,9 @@
     {
       "path": "src/features/practice/usePracticeSession.ts",
       "ext": ".ts",
-      "bytes": 24121,
-      "lines": 564,
-      "sha1": "b26974c21fc1",
+      "bytes": 24408,
+      "lines": 570,
+      "sha1": "0b9644061a8a",
       "imports": [
         "../../components/opSpecs",
         "../../db/dexie",
@@ -4144,6 +4225,7 @@
         "../curriculum/roundingItems",
         "../learning/recordAnswer",
         "../mastery/misconceptionEngine",
+        "../scheduler/cardModel",
         "../scheduler/scheduler",
         "../time/clock",
         "./answerChecker",
@@ -4249,6 +4331,53 @@
       "read_error": null
     },
     {
+      "path": "src/features/scheduler/cardModel.ts",
+      "ext": ".ts",
+      "bytes": 3715,
+      "lines": 102,
+      "sha1": "81dd15839d6a",
+      "imports": [
+        "../../types/math",
+        "../learning/learningEvents"
+      ],
+      "exports": [
+        "deriveCardKey",
+        "deriveCardKeyFromEvent",
+        "deriveCardKeyFromItemId",
+        "describeLearningCard",
+        "isAtomicFactCard",
+        "isTemplateCard",
+        "LearningCardDescriptor",
+        "LearningCardKind",
+        "stateForItem"
+      ],
+      "functions": [
+        "canonicalMultiplicationCardKey",
+        "deriveCardKey",
+        "deriveCardKeyFromEvent",
+        "deriveCardKeyFromItemId",
+        "describeLearningCard",
+        "divisionCardKey",
+        "isAtomicFactCard",
+        "isTemplateCard",
+        "stateForItem"
+      ],
+      "classes": [],
+      "interfaces": [
+        "LearningCardDescriptor"
+      ],
+      "types": [
+        "LearningCardKind"
+      ],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "FSRS spaced-repetition scheduler: session planning and card state updates.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/features/scheduler/fsrsAdapter.ts",
       "ext": ".ts",
       "bytes": 4144,
@@ -4282,11 +4411,12 @@
     {
       "path": "src/features/scheduler/scheduler.ts",
       "ext": ".ts",
-      "bytes": 9558,
-      "lines": 262,
-      "sha1": "0dcf451c3609",
+      "bytes": 9690,
+      "lines": 264,
+      "sha1": "32f9906a7e68",
       "imports": [
         "../../types/math",
+        "./cardModel",
         "./fsrsAdapter"
       ],
       "exports": [
@@ -4483,9 +4613,9 @@
     {
       "path": "src/features/stats/FactStatsTable.tsx",
       "ext": ".tsx",
-      "bytes": 18207,
-      "lines": 402,
-      "sha1": "7ee75bca3e61",
+      "bytes": 18383,
+      "lines": 407,
+      "sha1": "19fd0fd19c5c",
       "imports": [
         "../../db/dexie",
         "../../db/repositories",
@@ -4502,6 +4632,7 @@
       "functions": [
         "bucketOf",
         "FactStatsTable",
+        "idOf",
         "SortBtn",
         "startPractice",
         "SummaryStat",
@@ -4905,9 +5036,9 @@
     {
       "path": "src/features/sync/snapshot.ts",
       "ext": ".ts",
-      "bytes": 9384,
+      "bytes": 9385,
       "lines": 237,
-      "sha1": "c1ff498b7743",
+      "sha1": "a002a25382f5",
       "imports": [
         "../../db/dexie",
         "../../types/math",
@@ -5615,14 +5746,15 @@
     {
       "path": "src/tests/adaptiveRelatedItemSelection.test.ts",
       "ext": ".ts",
-      "bytes": 17573,
-      "lines": 374,
-      "sha1": "a52a700beb1e",
+      "bytes": 17703,
+      "lines": 375,
+      "sha1": "f03b161744ee",
       "imports": [
         "../features/adaptive/adaptiveItemSelector",
         "../features/adaptive/candidatePools",
         "../features/adaptive/relatedItemMapping",
         "../features/curriculum/makeItemFromId",
+        "../features/scheduler/cardModel",
         "../types/math",
         "../utils/rng",
         "vitest"
@@ -5764,6 +5896,63 @@
       "read_error": null
     },
     {
+      "path": "src/tests/cardModel.test.ts",
+      "ext": ".ts",
+      "bytes": 5020,
+      "lines": 137,
+      "sha1": "f324147f69d1",
+      "imports": [
+        "../features/curriculum/makeItemFromId",
+        "../features/learning/learningEvents",
+        "../features/scheduler/cardModel",
+        "../types/math",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [
+        "baseEvent",
+        "makeState"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/cardStateMigration.test.ts",
+      "ext": ".ts",
+      "bytes": 4643,
+      "lines": 134,
+      "sha1": "44a9a7907039",
+      "imports": [
+        "../db/dexie",
+        "../features/learning/learningEvents",
+        "../features/migrations/cardStateMigration",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [
+        "clearAll",
+        "event"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Local persistence/database layer.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/tests/clock.test.ts",
       "ext": ".ts",
       "bytes": 1553,
@@ -5823,9 +6012,9 @@
     {
       "path": "src/tests/dailyNewGoalPlanner.test.ts",
       "ext": ".ts",
-      "bytes": 16581,
-      "lines": 428,
-      "sha1": "99064800fc1d",
+      "bytes": 16714,
+      "lines": 430,
+      "sha1": "7a4258537dcf",
       "imports": [
         "../features/goals/dailyNewGoalLimits",
         "../features/goals/dailyNewGoalPlanner",
@@ -5834,6 +6023,7 @@
         "../features/learning/learningEvents",
         "../features/mastery/skillMasteryEngine",
         "../features/mastery/skillPracticePlanner",
+        "../features/scheduler/cardModel",
         "../types/math",
         "vitest"
       ],
@@ -5960,9 +6150,9 @@
     {
       "path": "src/tests/eventRebuild.test.ts",
       "ext": ".ts",
-      "bytes": 11014,
+      "bytes": 11075,
       "lines": 279,
-      "sha1": "f4f678a4c0ba",
+      "sha1": "1a4c74bc740f",
       "imports": [
         "../features/learning/eventRebuild",
         "../features/learning/learningEvents",
@@ -6036,9 +6226,9 @@
     {
       "path": "src/tests/goalEngine.test.ts",
       "ext": ".ts",
-      "bytes": 15497,
-      "lines": 405,
-      "sha1": "fbc74744b0ea",
+      "bytes": 15690,
+      "lines": 406,
+      "sha1": "892fdfb831dd",
       "imports": [
         "../features/goals/goalEngine",
         "../features/goals/types",
@@ -6111,9 +6301,9 @@
     {
       "path": "src/tests/goalEvaluationSession.test.tsx",
       "ext": ".tsx",
-      "bytes": 12058,
-      "lines": 337,
-      "sha1": "83b05ccc2774",
+      "bytes": 12093,
+      "lines": 338,
+      "sha1": "b6d39c841c22",
       "imports": [
         "../db/repositories",
         "../features/goals/goalEvaluationPersistence",
@@ -6146,9 +6336,9 @@
     {
       "path": "src/tests/goalRecommendationEngine.test.ts",
       "ext": ".ts",
-      "bytes": 11871,
-      "lines": 317,
-      "sha1": "3a07ab7af068",
+      "bytes": 12067,
+      "lines": 318,
+      "sha1": "4a726744c951",
       "imports": [
         "../features/goals/goalRecommendationEngine",
         "../features/goals/types",
@@ -6850,9 +7040,9 @@
     {
       "path": "src/tests/practiceSession.test.ts",
       "ext": ".ts",
-      "bytes": 15828,
-      "lines": 402,
-      "sha1": "9ff53e1a4f7f",
+      "bytes": 15892,
+      "lines": 403,
+      "sha1": "a2a7e79a7251",
       "imports": [
         "../db/repositories",
         "../features/curriculum/makeItemFromId",
@@ -7011,13 +7201,14 @@
     {
       "path": "src/tests/relatedEvidence.test.ts",
       "ext": ".ts",
-      "bytes": 5158,
-      "lines": 116,
-      "sha1": "437d37d456d8",
+      "bytes": 5489,
+      "lines": 120,
+      "sha1": "c9907ca4f5e6",
       "imports": [
         "../features/adaptive/relatedEvidence",
         "../features/curriculum/makeItemFromId",
         "../features/learning/learningEvents",
+        "../features/scheduler/cardModel",
         "../features/stats/todayAchievement",
         "../types/math",
         "vitest"
@@ -7026,6 +7217,7 @@
       "functions": [
         "ev",
         "item",
+        "mapOf",
         "state"
       ],
       "classes": [],
@@ -7065,11 +7257,12 @@
     {
       "path": "src/tests/scheduler.test.ts",
       "ext": ".ts",
-      "bytes": 24623,
-      "lines": 496,
-      "sha1": "ac58c43a0c65",
+      "bytes": 24770,
+      "lines": 497,
+      "sha1": "e9e67e587e42",
       "imports": [
         "../features/curriculum/multiplicationItems",
+        "../features/scheduler/cardModel",
         "../features/scheduler/scheduler",
         "../types/math",
         "vitest"
@@ -7204,13 +7397,14 @@
     {
       "path": "src/tests/skillMasteryEngine.test.ts",
       "ext": ".ts",
-      "bytes": 15272,
-      "lines": 442,
-      "sha1": "fc268a9b0885",
+      "bytes": 15405,
+      "lines": 444,
+      "sha1": "fec4febbedcb",
       "imports": [
         "../features/curriculum/multiplicationItems",
         "../features/learning/learningEvents",
         "../features/mastery/skillMasteryEngine",
+        "../features/scheduler/cardModel",
         "../types/math",
         "vitest"
       ],
@@ -7395,13 +7589,14 @@
     {
       "path": "src/tests/todayPlanEngine.test.ts",
       "ext": ".ts",
-      "bytes": 18989,
-      "lines": 433,
-      "sha1": "cf7ffe6d7b39",
+      "bytes": 19122,
+      "lines": 435,
+      "sha1": "28f2d7950a8c",
       "imports": [
         "../features/mastery/grade3MasteryMap",
         "../features/mastery/skillMasteryEngine",
         "../features/mastery/todayPlanEngine",
+        "../features/scheduler/cardModel",
         "../types/math",
         "vitest"
       ],
@@ -7535,9 +7730,9 @@
     {
       "path": "src/types/math.ts",
       "ext": ".ts",
-      "bytes": 10080,
-      "lines": 327,
-      "sha1": "68cd073cdf3b",
+      "bytes": 10837,
+      "lines": 340,
+      "sha1": "86450b6a63d6",
       "imports": [],
       "exports": [
         "AnswerInput",

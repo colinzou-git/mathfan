@@ -46,8 +46,16 @@ export const studentRepo = {
  * Use rebuildItemStatesFromEvents() to regenerate.
  */
 export const itemStateRepo = {
-  async get(studentId: string, itemId: string): Promise<StudentItemState | undefined> {
-    return db.itemStates.get([studentId, itemId]);
+  async get(studentId: string, cardKey: string): Promise<StudentItemState | undefined> {
+    return db.itemStates.get([studentId, cardKey]);
+  },
+  async getForCardKeys(studentId: string, cardKeys: string[]): Promise<StudentItemState[]> {
+    if (cardKeys.length === 0) return [];
+    const keySet = new Set(cardKeys);
+    return db.itemStates
+      .where('studentId').equals(studentId)
+      .and(s => keySet.has(s.cardKey))
+      .toArray();
   },
   async getForStudent(studentId: string): Promise<StudentItemState[]> {
     return db.itemStates.where('studentId').equals(studentId).toArray();

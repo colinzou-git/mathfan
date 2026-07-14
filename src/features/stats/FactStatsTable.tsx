@@ -55,6 +55,11 @@ function bucketOf(itemId: string): Exclude<TypeFilter, 'all'> | 'other' {
   return 'other';
 }
 
+/** Concrete item id for display/parsing — states are keyed by cardKey, not by exact item id. */
+function idOf(s: StudentItemState): string {
+  return s.lastItemId ?? s.cardKey;
+}
+
 export function FactStatsTable({ studentId, onStartPractice }: Props) {
   const [states, setStates] = useState<StudentItemState[]>([]);
   // Quiz-system status map: itemId → MathFactStatus (covers weak/forgotten from quiz events).
@@ -88,7 +93,7 @@ export function FactStatsTable({ studentId, onStartPractice }: Props) {
   const groupCounts = useMemo(() => {
     const c: Record<string, number> = { all: states.length };
     for (const s of states) {
-      const b = bucketOf(s.itemId);
+      const b = bucketOf(idOf(s));
       c[b] = (c[b] ?? 0) + 1;
     }
     return c;
@@ -96,7 +101,7 @@ export function FactStatsTable({ studentId, onStartPractice }: Props) {
 
   // Quiz status (weak/forgotten) takes precedence over FSRS level for MUL_ items.
   const effectiveStatus = (s: StudentItemState): MathFactStatus =>
-    quizStatusMap.get(s.itemId) ?? s.masteryLevel;
+    quizStatusMap.get(idOf(s)) ?? s.masteryLevel;
 
   const toggleStatus = (level: MathFactStatus) => {
     setStatusFilter(prev => {
@@ -108,11 +113,11 @@ export function FactStatsTable({ studentId, onStartPractice }: Props) {
 
   const rows = useMemo(() => {
     const filtered = states.filter(s => {
-      if (typeFilter !== 'all' && bucketOf(s.itemId) !== typeFilter) return false;
-      const status = quizStatusMap.get(s.itemId) ?? s.masteryLevel;
+      if (typeFilter !== 'all' && bucketOf(idOf(s)) !== typeFilter) return false;
+      const status = quizStatusMap.get(idOf(s)) ?? s.masteryLevel;
       if (statusFilter.size > 0 && !statusFilter.has(status)) return false;
       if (tableFilter !== 'all') {
-        const t = tableFromItemId(s.itemId);
+        const t = tableFromItemId(idOf(s));
         if (t !== tableFilter) return false;
       }
       return true;
@@ -145,7 +150,7 @@ export function FactStatsTable({ studentId, onStartPractice }: Props) {
   const summary = useMemo(() => {
     const opStates = typeFilter === 'all'
       ? states
-      : states.filter(s => bucketOf(s.itemId) === typeFilter);
+      : states.filter(s => bucketOf(idOf(s)) === typeFilter);
     const attempts = opStates.reduce((sum, s) => sum + s.attemptCount, 0);
     const correct = opStates.reduce((sum, s) => sum + s.correctCount, 0);
     const speeds = opStates.map(s => s.medianLatencyMs).filter(Boolean);
@@ -167,7 +172,7 @@ export function FactStatsTable({ studentId, onStartPractice }: Props) {
 
   const startPractice = () => {
     if (!onStartPractice || rows.length === 0) return;
-    const specificItemIds = rows.map(r => r.itemId);
+    const specificItemIds = rows.map(r => idOf(r));
     const sessionLength = Math.min(specificItemIds.length * practiceRounds, 100);
     onStartPractice({ mode: 'multi_table', specificItemIds, sessionLength });
   };
@@ -302,11 +307,11 @@ export function FactStatsTable({ studentId, onStartPractice }: Props) {
             </thead>
             <tbody>
               {rows.map(s => {
-                const desc = describeItem(s.itemId);
+                const desc = describeItem(idOf(s));
                 const acc = Math.round(s.correctCount / s.attemptCount * 100);
                 const wrong = s.attemptCount - s.correctCount;
                 return (
-                  <tr key={s.itemId} style={{
+                  <tr key={s.cardKey} style={{
                     ...st.tr,
                     background: wrong > 2 ? '#fff5f5' : s.masteryLevel === 'mastered' ? '#f0fdf4' : '#fff',
                   }}>

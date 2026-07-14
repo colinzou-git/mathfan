@@ -1,6 +1,6 @@
 # Code Map Overview
 
-Generated: 2026-07-14 06:16:53 UTC
+Generated: 2026-07-14 06:52:16 UTC
 
 Repo root: `/home/ubuntu/mathfan`  
 Output folder: `/home/ubuntu/mathfan/docs/code-map`
@@ -14,9 +14,9 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 - Package name: `mathfan`
 - Version: `1.2.0`
 - Module type: `module`
-- Scanned files: **226**
-- Scanned lines: **44,103**
-- Scanned bytes: **1,747,168**
+- Scanned files: **231**
+- Scanned lines: **44,808**
+- Scanned bytes: **1,776,735**
 
 ## NPM scripts
 
@@ -72,7 +72,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 
 | File | Lines | Likely purpose | Key symbols |
 | --- | --- | --- | --- |
-| src/App.tsx | 357 | Top-level React app shell: routes/screens, global state, and feature wiring. | App, handleQuizDone, handleSessionDone, pickOperation, runBootstrap, selectProfile, startPractice, updateProfile |
+| src/App.tsx | 362 | Top-level React app shell: routes/screens, global state, and feature wiring. | App, handleQuizDone, handleSessionDone, pickOperation, runBootstrap, selectProfile, startPractice, updateProfile |
 | src/features/sync/SyncWidget.tsx | 156 | Cloud sync/auth/data transfer logic. | GoogleIcon, SyncWidget, friendlyError, GoogleIcon, initials, SyncWidget, timeSince |
 | src/features/sync/snapshot.ts | 237 | Local persistence/database layer. | AppSnapshot, remoteHasNewerUpdatedAt, validateSnapshot, validTimeMs, buildSnapshot, mergeSnapshot, validateSnapshot |
 | vite.config.ts | 82 | Vite build/PWA configuration. | buildInfoPlugin |
@@ -86,9 +86,9 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 | src/features/multiplication/MultiplicationQuizPage.tsx | 845 | Local persistence/database layer. | FactChip, SetupScreen, StatBox, SummaryScreen, MultiplicationQuizPage, FactChip, MultiplicationQuizPage, recommendedPracticeConfig |
 | src/features/settings/SettingsPage.tsx | 828 | Student/app settings UI or persistence. | Section, SyncRow, ToggleRow, SettingsPage, applyUpdate, buildId, buildLabel, checkForUpdates |
 | src/features/practice/PracticeScreen.tsx | 552 | Local persistence/database layer. | KbChip, PracticeScreen, KbChip, onKey, PracticeScreen, run, submitChoice |
-| src/features/dashboard/StudentDashboard.tsx | 528 | Dashboard/profile setup/student navigation feature. | Chip, PracticeOp, StudentDashboard, Chip, completeSkillSummaries, handleStartReview, openExtra, startDailyNewTile |
-| src/features/stats/FactStatsTable.tsx | 402 | Local persistence/database layer. | SortBtn, SummaryStat, FactStatsTable, bucketOf, FactStatsTable, SortBtn, startPractice, SummaryStat |
-| src/features/mastery/Grade3MasteryMapPage.tsx | 365 | Grade 3 mastery map UI: skill display, detail panels, and parent action cards. | LegendItem, Grade3MasteryMapPage, buildCompleteSummaries, computeUnmetPrereqNames, Grade3MasteryMapPage, LegendItem |
+| src/features/dashboard/StudentDashboard.tsx | 529 | Dashboard/profile setup/student navigation feature. | Chip, PracticeOp, StudentDashboard, Chip, completeSkillSummaries, handleStartReview, openExtra, startDailyNewTile |
+| src/features/stats/FactStatsTable.tsx | 407 | Local persistence/database layer. | SortBtn, SummaryStat, FactStatsTable, bucketOf, FactStatsTable, idOf, SortBtn, startPractice |
+| src/features/mastery/Grade3MasteryMapPage.tsx | 366 | Grade 3 mastery map UI: skill display, detail panels, and parent action cards. | LegendItem, Grade3MasteryMapPage, buildCompleteSummaries, computeUnmetPrereqNames, Grade3MasteryMapPage, LegendItem |
 | src/features/stats/StatsPage.tsx | 246 | Progress/statistics screens or calculations. | SummaryPill, StatsPage, buildRange, daysBetween, StatsPage, SummaryPill, toYMD |
 | src/features/stats/DrillHistory.tsx | 238 | Progress/statistics screens or calculations. | AttemptDetail, MetricChip, Pill, DrillHistory, AttemptDetail, dateLabel, DrillHistory, durationLabel |
 | src/features/visuals/DraggableEqualGroups.tsx | 230 | Reusable SVG visual model components (area grids, shape diagrams, fraction bars, arrays). | DraggableObject, DropZone, DraggableEqualGroups, checkEqualGroups, DraggableEqualGroups, DraggableObject, DropZone, handleDragEnd |
@@ -98,9 +98,9 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 | src/features/stats/QuizStatsView.tsx | 135 | Progress/statistics screens or calculations. | FactGroup, QuizStatsView, avgSecStr, FactGroup, fmt, QuizStatsView |
 | src/features/stats/TodayAchievementSection.tsx | 125 | Progress/statistics screens or calculations. | AchievementTile, TodayAchievementSection, AchievementTile, TodayAchievementSection |
 | src/features/mastery/skillPracticePlanner.ts | 702 | Grade 3 skill practice planner: maps skill IDs to SessionConfig for the mastery map. | PlanOptions, planPracticeForSkill, add2DigitRegroupingItemIds, add3DigitRegroupingItemIds, arithmeticPatternItemIds, divisionWordItemIds, divItemIds, elapsedTimeItemIds |
-| src/features/goals/GoalEvaluationSession.tsx | 624 | Exports reusable code: GoalEvaluationSession. | GoalEvaluationSession, buildNewLearningCandidates, buildReviewFindings, buildUpdatedState, confirmCancel, continueNext, evaluationArgs, GoalEvaluationSession |
+| src/features/goals/GoalEvaluationSession.tsx | 630 | Exports reusable code: GoalEvaluationSession. | GoalEvaluationSession, buildNewLearningCandidates, buildReviewFindings, buildUpdatedState, confirmCancel, continueNext, evaluationArgs, GoalEvaluationSession |
 | src/features/goals/goalEvaluationEngine.ts | 575 | Exports reusable code: ADAPTIVE_GOAL_EVALUATION_CONFIRMATION_COUNT, ADAPTIVE_GOAL_EVALUATION_HISTORICAL_PRIOR_CAP, ADAPTIVE_GOAL_EVALUATION_QUESTION_COUNT, AdaptiveGoalEvaluationArgs, AdaptiveGoalEvaluationItem. | ADAPTIVE_GOAL_EVALUATION_CONFIRMATION_COUNT, ADAPTIVE_GOAL_EVALUATION_HISTORICAL_PRIOR_CAP, ADAPTIVE_GOAL_EVALUATION_QUESTION_COUNT, AdaptiveGoalEvaluationArgs, AdaptiveGoalEvaluationItem, AdaptiveGoalEvaluationPhase, AdaptiveGoalEvaluationResponse, AdaptiveGoalEvaluationResult |
-| src/features/practice/usePracticeSession.ts | 564 | Local persistence/database layer. | usePracticeSession, CorrectResult, LastSessionSummary, SessionState, usePracticeSession, getStaticItem, usePracticeSession |
+| src/features/practice/usePracticeSession.ts | 570 | Local persistence/database layer. | usePracticeSession, CorrectResult, LastSessionSummary, SessionState, usePracticeSession, getStaticItem, usePracticeSession |
 | src/features/diagnosis/DiagnosticSession.tsx | 558 | Exports reusable code: DiagnosticSession. | DiagnosticSession, complete, DiagnosticSession, onKey |
 
 ## Repository tree, filtered
@@ -208,6 +208,9 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   │   ├── skillPracticePlanner.ts
 │   │   │   ├── SkillTile.tsx
 │   │   │   └── todayPlanEngine.ts
+│   │   ├── migrations
+│   │   │   ├── cardStateMigration.ts
+│   │   │   └── migrationTypes.ts
 │   │   ├── multiplication
 │   │   │   ├── masteryEngine.ts
 │   │   │   ├── multiplicationFacts.ts
@@ -228,6 +231,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   │   ├── learnerIdentity.ts
 │   │   │   └── profileBootstrap.ts
 │   │   ├── scheduler
+│   │   │   ├── cardModel.ts
 │   │   │   ├── fsrsAdapter.ts
 │   │   │   └── scheduler.ts
 │   │   ├── settings
@@ -276,6 +280,8 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   ├── appDiagnosticCompletion.test.ts
 │   │   ├── appGoalEvaluationNavigation.test.tsx
 │   │   ├── arithmeticItems.test.ts
+│   │   ├── cardModel.test.ts
+│   │   ├── cardStateMigration.test.ts
 │   │   ├── clock.test.ts
 │   │   ├── components.test.tsx
 │   │   ├── dailyNewGoalPlanner.test.ts
@@ -401,41 +407,41 @@ Purpose: Top-level React app shell: routes/screens, global state, and feature wi
   24: import { syncDiagnosticCompletionIfSignedIn } from './features/diagnosis/diagnosticCompletion';
   25: import { resolvePracticeDoneDestination } from './features/practice/practiceNavigation';
   26: import { bootstrapProfiles, loadActiveProfileSelection, saveActiveProfileSelection, resolveSelectedProfile } from './features/profile/profileBootstrap';
-  27: import type { RestoreState } from './features/dashboard/ProfileSetup';
-  28: 
-  29: type Screen =
-  30:   | 'loading' | 'setup' | 'dashboard'
-  31:   | 'daily-setup' | 'range-setup' | 'practice'
-  32:   | 'stats' | 'settings' | 'quiz' | 'today-detail' | 'mastery-map' | 'diagnostic' | 'goals' | 'goal-evaluation';
-  33: 
-  34: export default function App() {
-  35:   const [screen, setScreen] = useState<Screen>('loading');
-  36:   const [profile, setProfile] = useState<StudentProfile | null>(null);
-  37:   const [existingProfiles, setExistingProfiles] = useState<StudentProfile[]>([]);
-  38:   const [restoreState, setRestoreState] = useState<RestoreState>('idle');
-  39:   const [sessionConfig, setSessionConfig] = useState<SessionConfig | null>(null);
-  40:   const [selectedOp, setSelectedOp] = useState<PracticeOp>('multiplication');
-  41:   const [achievementFilter, setAchievementFilter] = useState<AchievementFilter>('total');
-  42:   const [achievementData, setAchievementData] = useState<TodayAchievementData | null>(null);
-  43:   const { auth, syncStatus, lastSyncedAt, syncError, handleSignIn, handleSignOut, manualSync } = useSync();
-  44:   const [practiceReturn, setPracticeReturn] = useState<Screen>('dashboard');
-  45:   const [initialGoalSkillIds, setInitialGoalSkillIds] = useState<string[] | null>(null);
-  46: 
-  47:   const selectProfile = (p: StudentProfile) => {
-  48:     setProfile(p);
-  49:     saveActiveProfileSelection(p);
-  50:     applyTheme(p.settings.theme ?? 'indigo');
-  51:     sessionRepo.deleteEmpty(p.id).catch(() => {});
-  52:     setScreen('dashboard');
-  53:   };
-  54: 
-  55:   const runBootstrap = async () => {
-  56:     const grantPersisted = hasPersistedGrant();
-  57:     setRestoreState(grantPersisted ? 'checking' : 'idle');
-  58:     const result = await bootstrapProfiles({
-  59:       loadLocalProfiles: () => studentRepo.getAll(),
-  60:       hasPersistedGrant: grantPersisted,
-... (296 more lines)
+  27: import { runCardStateMigration } from './features/migrations/cardStateMigration';
+  28: import type { RestoreState } from './features/dashboard/ProfileSetup';
+  29: 
+  30: type Screen =
+  31:   | 'loading' | 'setup' | 'dashboard'
+  32:   | 'daily-setup' | 'range-setup' | 'practice'
+  33:   | 'stats' | 'settings' | 'quiz' | 'today-detail' | 'mastery-map' | 'diagnostic' | 'goals' | 'goal-evaluation';
+  34: 
+  35: export default function App() {
+  36:   const [screen, setScreen] = useState<Screen>('loading');
+  37:   const [profile, setProfile] = useState<StudentProfile | null>(null);
+  38:   const [existingProfiles, setExistingProfiles] = useState<StudentProfile[]>([]);
+  39:   const [restoreState, setRestoreState] = useState<RestoreState>('idle');
+  40:   const [sessionConfig, setSessionConfig] = useState<SessionConfig | null>(null);
+  41:   const [selectedOp, setSelectedOp] = useState<PracticeOp>('multiplication');
+  42:   const [achievementFilter, setAchievementFilter] = useState<AchievementFilter>('total');
+  43:   const [achievementData, setAchievementData] = useState<TodayAchievementData | null>(null);
+  44:   const { auth, syncStatus, lastSyncedAt, syncError, handleSignIn, handleSignOut, manualSync } = useSync();
+  45:   const [practiceReturn, setPracticeReturn] = useState<Screen>('dashboard');
+  46:   const [initialGoalSkillIds, setInitialGoalSkillIds] = useState<string[] | null>(null);
+  47: 
+  48:   const selectProfile = (p: StudentProfile) => {
+  49:     setProfile(p);
+  50:     saveActiveProfileSelection(p);
+  51:     applyTheme(p.settings.theme ?? 'indigo');
+  52:     sessionRepo.deleteEmpty(p.id).catch(() => {});
+  53:     setScreen('dashboard');
+  54:   };
+  55: 
+  56:   const runBootstrap = async () => {
+  57:     const grantPersisted = hasPersistedGrant();
+  58:     setRestoreState(grantPersisted ? 'checking' : 'idle');
+  59:     const result = await bootstrapProfiles({
+  60:       loadLocalProfiles: () => studentRepo.getAll(),
+... (301 more lines)
 ```
 
 ### `src/features/sync/SyncWidget.tsx`

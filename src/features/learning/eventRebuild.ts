@@ -11,6 +11,7 @@
 import { db } from '../../db/dexie';
 import type { MathAnswerEvent } from './learningEvents';
 import { applyReview, applyRelatedEvidence, createInitialState } from '../scheduler/scheduler';
+import { deriveCardKeyFromEvent } from '../scheduler/cardModel';
 import { makeItemFromId } from '../curriculum/makeItemFromId';
 import { detectMistakes } from '../mastery/misconceptionEngine';
 import { deriveMasteryFromEvents } from '../multiplication/masteryEngine';
@@ -59,7 +60,9 @@ export async function rebuildMultFactStatsFromEvents(studentId: string): Promise
 
 /**
  * Recompute itemStates for a student from practice- and diagnostic-mode mathAnswerEvents.
- * Replays first-attempt events (isRetry=false) through applyReview in chronological order.
+ * Replays first-attempt events (isRetry=false) through applyReview in chronological order,
+ * grouped by canonical card key (see features/scheduler/cardModel) rather than exact item id —
+ * so e.g. MUL_7x8 and MUL_8x7 replay into one scheduled card, not two.
  * Both modes write FSRS itemState live (practice via recordPracticeAnswer, diagnostic via
  * recordDiagnosticAnswerWithRetry → recordPracticeAnswer), so both must be replayed here or
  * diagnostic-derived scheduler state is silently dropped after a sync merge/restore/repair.
@@ -68,7 +71,7 @@ export async function rebuildMultFactStatsFromEvents(studentId: string): Promise
  * must not affect the FSRS scheduler state, matching the live-practice behaviour in
  * usePracticeSession (which also calls applyReview only on the first attempt).
  *
- * mode: 'preserve-legacy' (default) — overwrites only items that have events; items without
+ * mode: 'preserve-legacy' (default) — overwrites only cards that have events; cards without
  *   events are left untouched. Safe for sync/migration where pre-event legacy rows may exist.
  * mode: 'strict' — additionally deletes any itemStates rows for this student that have no
  *   corresponding events. Use for repair/debug/reset to bring the cache fully in sync with events.
@@ -91,38 +94,45 @@ export async function rebuildItemStatesFromEvents(
 
   events.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 
-  const byItem = new Map<string, MathAnswerEvent[]>();
+  const byCard = new Map<string, MathAnswerEvent[]>();
   for (const e of events) {
-    const arr = byItem.get(e.itemId) ?? [];
+    const cardKey = deriveCardKeyFromEvent(e);
+    if (!cardKey) continue; // no usable item id — can't derive a card
+    const arr = byCard.get(cardKey) ?? [];
     arr.push(e);
-    byItem.set(e.itemId, arr);
+    byCard.set(cardKey, arr);
   }
 
   const rebuilt = new Set<string>();
-  for (const [itemId, itemEvents] of byItem) {
-    const item = makeItemFromId(itemId);
-    if (!item) continue; // can't reconstruct item metadata — skip
+  for (const [cardKey, cardEvents] of byCard) {
+    // Reconstruct a representative item (any event's itemId) purely to seed
+    // skillId/difficulty for createInitialState — all events in this group
+    // share the same card, so any of them works.
+    const seedItem = makeItemFromId(cardEvents[0].itemId);
+    if (!seedItem) continue; // can't reconstruct item metadata — skip
 
-    let state = createInitialState(studentId, item);
-    // Track whether the fact has any DIRECT evidence. Related-evidence events
+    let state = createInitialState(studentId, seedItem);
+    state = { ...state, cardKey };
+    // Track whether the card has any DIRECT evidence. Related-evidence events
     // (indirect FSRS nudges) are reinforce-only: they apply only after a direct
-    // attempt exists, and a fact with nothing but related evidence is left
+    // attempt exists, and a card with nothing but related evidence is left
     // untouched — matching the live write path and preserving legacy rows.
     let sawDirect = false;
-    for (const event of itemEvents) {
+    for (const event of cardEvents) {
       // Skip retry events — they are logged for stats but don't update the
       // scheduler. Old events that pre-date isRetry may lack the field; treat
       // missing as false (first attempt) to preserve existing behaviour.
       if (event.isRetry) continue;
 
       if (event.relatedEvidence) {
-        // Indirect nudge — FSRS-only, and only once the fact has direct history.
+        // Indirect nudge — FSRS-only, and only once the card has direct history.
         if (!sawDirect) continue;
         state = applyRelatedEvidence(state, new Date(event.createdAt));
         continue;
       }
 
       sawDirect = true;
+      const eventItem = makeItemFromId(event.itemId) ?? seedItem;
       state = applyReview(
         state,
         gradeFromEvent(event),
@@ -131,12 +141,13 @@ export async function rebuildItemStatesFromEvents(
         new Date(event.createdAt),
         { isCorrect: event.isCorrect },
       );
+      state = { ...state, cardKey, lastItemId: event.itemId };
 
       // Live practice/diagnostic sessions merge misconception tags into itemState
       // on first wrong attempts (see usePracticeSession/DiagnosticSession). Replay
       // that derived-cache behaviour here so a rebuild doesn't drop mistakePatterns.
       if (!event.isCorrect) {
-        const newTags = detectMistakes(item, String(event.studentAnswer ?? ''));
+        const newTags = detectMistakes(eventItem, String(event.studentAnswer ?? ''));
         if (newTags.length > 0) {
           state = {
             ...state,
@@ -145,17 +156,17 @@ export async function rebuildItemStatesFromEvents(
         }
       }
     }
-    // A fact reached only via related evidence has no direct state to rebuild —
+    // A card reached only via related evidence has no direct state to rebuild —
     // skip it so we never fabricate a 'new' row or clobber legacy data.
     if (!sawDirect) continue;
     await db.itemStates.put(state);
-    rebuilt.add(itemId);
+    rebuilt.add(cardKey);
   }
 
   if (options.mode === 'strict') {
     await db.itemStates
       .where('studentId').equals(studentId)
-      .and(s => !rebuilt.has(s.itemId))
+      .and(s => !rebuilt.has(s.cardKey))
       .delete();
   }
 }

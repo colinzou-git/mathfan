@@ -62,7 +62,7 @@ const { fakeDb } = vi.hoisted(() => {
   return {
     fakeDb: {
       mathAnswerEvents: new FakeTable<MathAnswerEvent>(e => e.id),
-      itemStates: new FakeTable<StudentItemState>(s => `${s.studentId}+${s.itemId}`),
+      itemStates: new FakeTable<StudentItemState>(s => `${s.studentId}+${s.cardKey}`),
     },
   };
 });
@@ -112,7 +112,7 @@ describe('rebuildItemStatesFromEvents — diagnostic events feed FSRS', () => {
 
     await rebuildItemStatesFromEvents(STUDENT);
 
-    const state = fakeDb.itemStates.rows.find(s => s.itemId === 'MUL_7x8');
+    const state = fakeDb.itemStates.rows.find(s => s.cardKey === 'fact:mul:7x8');
     expect(state).toBeDefined();
     expect(state!.reps).toBe(1);
     expect(state!.nextDueAt).toBeTruthy();
@@ -132,7 +132,7 @@ describe('rebuildItemStatesFromEvents — diagnostic events feed FSRS', () => {
 
     await rebuildItemStatesFromEvents(STUDENT);
 
-    const state = fakeDb.itemStates.rows.find(s => s.itemId === 'MUL_7x8');
+    const state = fakeDb.itemStates.rows.find(s => s.cardKey === 'fact:mul:7x8');
     expect(state).toBeDefined();
     // Only the first attempt was applied — reps stays at 1, not 2.
     expect(state!.reps).toBe(1);
@@ -146,7 +146,7 @@ describe('rebuildItemStatesFromEvents — diagnostic events feed FSRS', () => {
 
     await rebuildItemStatesFromEvents(STUDENT);
 
-    const state = fakeDb.itemStates.rows.find(s => s.itemId === 'MUL_7x8');
+    const state = fakeDb.itemStates.rows.find(s => s.cardKey === 'fact:mul:7x8');
     expect(state).toBeDefined();
     expect(state!.reps).toBe(2);
   });
@@ -159,7 +159,7 @@ describe('rebuildItemStatesFromEvents — diagnostic events feed FSRS', () => {
 
     await rebuildItemStatesFromEvents(STUDENT);
 
-    const state = fakeDb.itemStates.rows.find(s => s.itemId === 'MUL_7x8');
+    const state = fakeDb.itemStates.rows.find(s => s.cardKey === 'fact:mul:7x8');
     expect(state).toBeDefined();
     // Quiz event ignored; only the diagnostic event was applied.
     expect(state!.reps).toBe(1);
@@ -185,7 +185,7 @@ describe('rebuildItemStatesFromEvents — misconception tags survive rebuild', (
 
     await rebuildItemStatesFromEvents(STUDENT, { mode: 'strict' });
 
-    const state = fakeDb.itemStates.rows.find(s => s.itemId === 'MUL_7x8');
+    const state = fakeDb.itemStates.rows.find(s => s.cardKey === 'fact:mul:7x8');
     expect(state).toBeDefined();
     expect(state!.mistakePatterns).toContain('mul:addition_confusion');
   });
@@ -207,7 +207,7 @@ describe('rebuildItemStatesFromEvents — related-evidence (cross-skill) events'
 
     await rebuildItemStatesFromEvents(STUDENT);
 
-    const s = fakeDb.itemStates.rows.find(r => r.itemId === 'MUL_8x7')!;
+    const s = fakeDb.itemStates.rows.find(r => r.cardKey === 'fact:mul:7x8')!;
     expect(s).toBeDefined();
     // FSRS advanced for both the direct review and the indirect nudge …
     expect(s.reps).toBe(2);
@@ -228,7 +228,7 @@ describe('rebuildItemStatesFromEvents — related-evidence (cross-skill) events'
     await rebuildItemStatesFromEvents(STUDENT);
 
     // No direct evidence → no fabricated state row.
-    expect(fakeDb.itemStates.rows.find(r => r.itemId === 'MUL_8x7')).toBeUndefined();
+    expect(fakeDb.itemStates.rows.find(r => r.cardKey === 'fact:mul:7x8')).toBeUndefined();
   });
 
   it('skips a related-evidence event that precedes the first direct attempt', async () => {
@@ -243,7 +243,7 @@ describe('rebuildItemStatesFromEvents — related-evidence (cross-skill) events'
 
     await rebuildItemStatesFromEvents(STUDENT);
 
-    const s = fakeDb.itemStates.rows.find(r => r.itemId === 'MUL_8x7')!;
+    const s = fakeDb.itemStates.rows.find(r => r.cardKey === 'fact:mul:7x8')!;
     expect(s).toBeDefined();
     // The earlier related event was skipped; only the direct review applied.
     expect(s.reps).toBe(1);
@@ -258,7 +258,7 @@ describe('rebuildItemStatesFromEvents — sync merge preserves diagnostic FSRS s
     // Simulate: device recorded a diagnostic event and its live itemState.
     fakeDb.mathAnswerEvents.rows = [makeEvent({ id: 'd1', mode: 'diagnostic' })];
     await rebuildItemStatesFromEvents(STUDENT);
-    const live = fakeDb.itemStates.rows.find(s => s.itemId === 'MUL_7x8');
+    const live = fakeDb.itemStates.rows.find(s => s.cardKey === 'fact:mul:7x8');
     expect(live).toBeDefined();
     const liveReps = live!.reps;
     const liveDue = live!.nextDueAt;
@@ -268,7 +268,7 @@ describe('rebuildItemStatesFromEvents — sync merge preserves diagnostic FSRS s
     fakeDb.itemStates.rows = [];
     await rebuildItemStatesFromEvents(STUDENT, { mode: 'strict' });
 
-    const rebuilt = fakeDb.itemStates.rows.find(s => s.itemId === 'MUL_7x8');
+    const rebuilt = fakeDb.itemStates.rows.find(s => s.cardKey === 'fact:mul:7x8');
     expect(rebuilt).toBeDefined();
     expect(rebuilt!.reps).toBe(liveReps);
     expect(rebuilt!.nextDueAt).toBe(liveDue);

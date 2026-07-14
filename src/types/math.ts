@@ -138,11 +138,24 @@ export interface PracticeItem {
   relatedSkillIds?: string[];
   /** Coarse structural template id (e.g. "word_eg") for variety/repetition control. */
   schemaId?: string;
+  /**
+   * Canonical scheduling identity (see features/scheduler/cardModel). Optional —
+   * derivable from `id` when absent. Set explicitly for atomic-fact items so
+   * commutative orientations (MUL_7x8 / MUL_8x7) share one scheduled card.
+   */
+  cardKey?: string;
+  /** Distinguishes repeated presentations of the same generated item within a session. */
+  instanceKey?: string;
+  /** Defaults to grade 3 when absent — see features/scheduler/cardModel. */
+  gradeLevel?: GradeLevel;
 }
 
 export interface StudentItemState {
   studentId: string;
-  itemId: string;
+  /** Canonical scheduling identity — see features/scheduler/cardModel. Replaces the old `itemId` primary key. */
+  cardKey: string;
+  /** Most recent concrete item instance reviewed under this card. Use this (not cardKey) to reconstruct/display the item. */
+  lastItemId?: string;
   skillId: string;
   attemptCount: number;
   correctCount: number;

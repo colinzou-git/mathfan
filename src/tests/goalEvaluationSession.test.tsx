@@ -279,7 +279,8 @@ describe('GoalEvaluationSession', () => {
   it('completes exactly 30 questions, separates result sections, and can go to Daily Review', async () => {
     mockData.itemStates = [{
       studentId: 'student-1',
-      itemId: 'MUL_2x3',
+      cardKey: 'fact:mul:2x3',
+      lastItemId: 'MUL_2x3',
       skillId: 'g3-mul-meaning',
       attemptCount: 3,
       correctCount: 1,

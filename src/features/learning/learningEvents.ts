@@ -45,6 +45,12 @@ export interface MathAnswerEvent {
   relatedEvidence?: boolean;
   /** When relatedEvidence is true, the higher-level item ID that produced it. */
   evidenceSourceItemId?: string;
+  /** Canonical scheduling card this event's item belongs to — see features/scheduler/cardModel. */
+  cardKey?: string;
+  /** Uniquely identifies this presentation when the same generated item appears more than once. */
+  itemInstanceId?: string;
+  /** Coarse structural schema of the item, for analytics and question variety. */
+  schemaId?: string;
   createdAt: string;
 }
 

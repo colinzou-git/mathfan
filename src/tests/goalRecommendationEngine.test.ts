@@ -82,7 +82,8 @@ function event(overrides: Partial<MathAnswerEvent> = {}): MathAnswerEvent {
 function state(overrides: Partial<StudentItemState> = {}): StudentItemState {
   return {
     studentId: STUDENT_ID,
-    itemId: 'basicA',
+    cardKey: 'template:basicA',
+    lastItemId: 'basicA',
     skillId: 'g3-mul-tables-basic',
     attemptCount: 5,
     correctCount: 3,
@@ -162,7 +163,7 @@ describe('goal recommendation eligibility and ranking', () => {
   it('keeps a mastered skill eligible when due-review evidence exists', () => {
     const result = recommendLearningGoals(args({
       skillSummaries: [summary('g3-mul-tables-basic', 'mastered', { accuracy: 1 })],
-      itemStates: [state({ itemId: 'basicA', nextDueAt: '2026-06-10T12:00:00.000Z' })],
+      itemStates: [state({ cardKey: 'template:basicA', lastItemId: 'basicA', nextDueAt: '2026-06-10T12:00:00.000Z' })],
     }));
     const candidate = result.candidates.find(c => c.skillId === 'g3-mul-tables-basic');
     expect(candidate?.primaryReason).toBe('Review now');
@@ -176,8 +177,8 @@ describe('goal recommendation eligibility and ranking', () => {
         summary('g3-frac-unit', 'new'),
       ],
       itemStates: [
-        state({ itemId: 'basicA', nextDueAt: '2026-06-10T12:00:00.000Z' }),
-        state({ itemId: 'basicB', nextDueAt: '2026-06-12T12:00:00.000Z' }),
+        state({ cardKey: 'template:basicA', lastItemId: 'basicA', nextDueAt: '2026-06-10T12:00:00.000Z' }),
+        state({ cardKey: 'template:basicB', lastItemId: 'basicB', nextDueAt: '2026-06-12T12:00:00.000Z' }),
       ],
     }));
     expect(result.recommendations[0].skillIds).toContain('g3-mul-tables-basic');
@@ -249,7 +250,7 @@ describe('goal recommendation eligibility and ranking', () => {
     const sparse = recommendLearningGoals(args({
       skillSummaries: [summary('g3-mul-tables-basic', 'needs_practice')],
       events: [event({ id: 'one-wrong', itemId: 'basicA', isCorrect: false })],
-      itemStates: [state({ itemId: 'basicA', mistakePatterns: ['mul:neighbor_fact', 'mul:skip_count_error'] })],
+      itemStates: [state({ cardKey: 'template:basicA', lastItemId: 'basicA', mistakePatterns: ['mul:neighbor_fact', 'mul:skip_count_error'] })],
     })).candidates.find(c => c.skillId === 'g3-mul-tables-basic')!;
 
     expect(sparse.features.weakness).toBeLessThan(0.7);
@@ -304,7 +305,7 @@ describe('goal recommendation workload and output', () => {
   it('builds explanations only from evidence that is present', () => {
     const due = recommendLearningGoals(args({
       skillSummaries: [summary('g3-mul-tables-basic', 'review_due')],
-      itemStates: [state({ itemId: 'basicA', nextDueAt: '2026-06-14T12:00:00.000Z' })],
+      itemStates: [state({ cardKey: 'template:basicA', lastItemId: 'basicA', nextDueAt: '2026-06-14T12:00:00.000Z' })],
     })).candidates.find(c => c.skillId === 'g3-mul-tables-basic')!;
     expect(due.explanation).toContain('1 due item');
 

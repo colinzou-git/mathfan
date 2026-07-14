@@ -118,7 +118,7 @@ function buildReview(
     .filter(s => {
       if (s.nextDueAt == null || s.nextDueAt > nowStr) return false;
       // Must reconstruct from ID (filters off-map/invalid IDs)
-      const item = makeItemFromId(s.itemId);
+      const item = makeItemFromId(s.lastItemId ?? s.cardKey);
       if (!item) return false;
       // Must map to a Grade 3 mastery skill (prerequisites do not gate review —
       // a due item is due regardless of whether its skill's prereqs are met).
@@ -126,7 +126,7 @@ function buildReview(
       if (!skillId) return false;
       return true;
     })
-    .map(s => s.itemId);
+    .map(s => s.lastItemId ?? s.cardKey);
 
   if (dueIds.length === 0) return null;
 

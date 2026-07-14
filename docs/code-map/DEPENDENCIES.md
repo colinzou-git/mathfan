@@ -4,7 +4,7 @@
 
 | Package | Import count |
 | --- | --- |
-| vitest | 67 |
+| vitest | 69 |
 | react | 35 |
 | @testing-library/react | 14 |
 | pathlib | 8 |
@@ -70,6 +70,7 @@
 | src/App.tsx | ./features/goals/GoalEvaluationSession |
 | src/App.tsx | ./features/goals/GoalsPage |
 | src/App.tsx | ./features/mastery/Grade3MasteryMapPage |
+| src/App.tsx | ./features/migrations/cardStateMigration |
 | src/App.tsx | ./features/multiplication/MultiplicationQuizPage |
 | src/App.tsx | ./features/practice/practiceNavigation |
 | src/App.tsx | ./features/practice/PracticeScreen |
@@ -83,6 +84,7 @@
 | src/App.tsx | ./features/theme/themes |
 | src/App.tsx | ./types/math |
 | src/components/MasteryGrid.tsx | ../db/repositories |
+| src/components/MasteryGrid.tsx | ../features/scheduler/cardModel |
 | src/components/MasteryGrid.tsx | ../types/math |
 | src/components/MasteryGrid.tsx | ../utils/masteryColors |
 | src/components/opSpecs.ts | ../features/curriculum/areaItems |
@@ -97,6 +99,7 @@
 | src/components/SettingsOverlay.tsx | ../types/math |
 | src/db/dexie.ts | ../features/goals/types |
 | src/db/dexie.ts | ../features/learning/learningEvents |
+| src/db/dexie.ts | ../features/migrations/migrationTypes |
 | src/db/dexie.ts | ../features/multiplication/types |
 | src/db/dexie.ts | ../types/math |
 | src/db/repositories.ts | ../features/goals/types |
@@ -107,6 +110,7 @@
 | src/db/repositories.ts | ./dexie |
 | src/features/adaptive/adaptiveItemSelector.ts | ../../types/math |
 | src/features/adaptive/adaptiveItemSelector.ts | ../../utils/rng |
+| src/features/adaptive/adaptiveItemSelector.ts | ../scheduler/cardModel |
 | src/features/adaptive/adaptiveItemSelector.ts | ./relatedItemMapping |
 | src/features/adaptive/candidatePools.ts | ../../types/math |
 | src/features/adaptive/candidatePools.ts | ../curriculum/numberTheoryItems |
@@ -230,6 +234,7 @@
 | src/features/goals/GoalEvaluationSession.tsx | ../mastery/skillPracticePlanner |
 | src/features/goals/GoalEvaluationSession.tsx | ../practice/answerChecker |
 | src/features/goals/GoalEvaluationSession.tsx | ../practice/QuestionRenderer |
+| src/features/goals/GoalEvaluationSession.tsx | ../scheduler/cardModel |
 | src/features/goals/GoalEvaluationSession.tsx | ../scheduler/scheduler |
 | src/features/goals/GoalEvaluationSession.tsx | ../sync/driveSync |
 | src/features/goals/GoalEvaluationSession.tsx | ../time/clock |
@@ -270,6 +275,7 @@
 | src/features/learning/eventRebuild.ts | ../multiplication/masteryEngine |
 | src/features/learning/eventRebuild.ts | ../multiplication/types |
 | src/features/learning/eventRebuild.ts | ../practice/answerChecker |
+| src/features/learning/eventRebuild.ts | ../scheduler/cardModel |
 | src/features/learning/eventRebuild.ts | ../scheduler/scheduler |
 | src/features/learning/eventRebuild.ts | ./learningEvents |
 | src/features/learning/learningEvents.ts | ../../db/dexie |
@@ -323,6 +329,13 @@
 | src/features/mastery/todayPlanEngine.ts | ./skillMapping |
 | src/features/mastery/todayPlanEngine.ts | ./skillMasteryEngine |
 | src/features/mastery/todayPlanEngine.ts | ./skillPracticePlanner |
+| src/features/migrations/cardStateMigration.ts | ../../db/dexie |
+| src/features/migrations/cardStateMigration.ts | ../../types/math |
+| src/features/migrations/cardStateMigration.ts | ../../utils/id |
+| src/features/migrations/cardStateMigration.ts | ../curriculum/makeItemFromId |
+| src/features/migrations/cardStateMigration.ts | ../learning/eventRebuild |
+| src/features/migrations/cardStateMigration.ts | ./migrationTypes |
+| src/features/migrations/migrationTypes.ts | ../../types/math |
 | src/features/multiplication/masteryEngine.ts | ../learning/learningEvents |
 | src/features/multiplication/masteryEngine.ts | ./multiplicationFacts |
 | src/features/multiplication/masteryEngine.ts | ./types |
@@ -381,14 +394,18 @@
 | src/features/practice/usePracticeSession.ts | ../curriculum/roundingItems |
 | src/features/practice/usePracticeSession.ts | ../learning/recordAnswer |
 | src/features/practice/usePracticeSession.ts | ../mastery/misconceptionEngine |
+| src/features/practice/usePracticeSession.ts | ../scheduler/cardModel |
 | src/features/practice/usePracticeSession.ts | ../scheduler/scheduler |
 | src/features/practice/usePracticeSession.ts | ../time/clock |
 | src/features/practice/usePracticeSession.ts | ./answerChecker |
 | src/features/practice/usePracticeSession.ts | ./metrics |
 | src/features/profile/learnerIdentity.ts | ../../types/math |
 | src/features/profile/profileBootstrap.ts | ../../types/math |
+| src/features/scheduler/cardModel.ts | ../../types/math |
+| src/features/scheduler/cardModel.ts | ../learning/learningEvents |
 | src/features/scheduler/fsrsAdapter.ts | ../../types/math |
 | src/features/scheduler/scheduler.ts | ../../types/math |
+| src/features/scheduler/scheduler.ts | ./cardModel |
 | src/features/scheduler/scheduler.ts | ./fsrsAdapter |
 | src/features/settings/SettingsPage.tsx | ../../db/repositories |
 | src/features/settings/SettingsPage.tsx | ../../types/math |
@@ -484,6 +501,7 @@
 | src/tests/adaptiveRelatedItemSelection.test.ts | ../features/adaptive/candidatePools |
 | src/tests/adaptiveRelatedItemSelection.test.ts | ../features/adaptive/relatedItemMapping |
 | src/tests/adaptiveRelatedItemSelection.test.ts | ../features/curriculum/makeItemFromId |
+| src/tests/adaptiveRelatedItemSelection.test.ts | ../features/scheduler/cardModel |
 | src/tests/adaptiveRelatedItemSelection.test.ts | ../types/math |
 | src/tests/adaptiveRelatedItemSelection.test.ts | ../utils/rng |
 | src/tests/ai.test.ts | ../features/ai/aiConfig |
@@ -494,6 +512,13 @@
 | src/tests/appGoalEvaluationNavigation.test.tsx | ../App |
 | src/tests/appGoalEvaluationNavigation.test.tsx | ../types/math |
 | src/tests/arithmeticItems.test.ts | ../features/curriculum/arithmeticItems |
+| src/tests/cardModel.test.ts | ../features/curriculum/makeItemFromId |
+| src/tests/cardModel.test.ts | ../features/learning/learningEvents |
+| src/tests/cardModel.test.ts | ../features/scheduler/cardModel |
+| src/tests/cardModel.test.ts | ../types/math |
+| src/tests/cardStateMigration.test.ts | ../db/dexie |
+| src/tests/cardStateMigration.test.ts | ../features/learning/learningEvents |
+| src/tests/cardStateMigration.test.ts | ../features/migrations/cardStateMigration |
 | src/tests/clock.test.ts | ../features/time/clock |
 | src/tests/components.test.tsx | ../components/NumPad |
 | src/tests/components.test.tsx | ../components/SessionSummary |
@@ -513,6 +538,7 @@
 | src/tests/dailyNewGoalPlanner.test.ts | ../features/learning/learningEvents |
 | src/tests/dailyNewGoalPlanner.test.ts | ../features/mastery/skillMasteryEngine |
 | src/tests/dailyNewGoalPlanner.test.ts | ../features/mastery/skillPracticePlanner |
+| src/tests/dailyNewGoalPlanner.test.ts | ../features/scheduler/cardModel |
 | src/tests/dailyNewGoalPlanner.test.ts | ../types/math |
 | src/tests/describeItem.test.ts | ../features/curriculum/describeItem |
 | src/tests/diagnosticPlanner.test.ts | ../features/diagnosis/diagnosticPlanner |
@@ -667,10 +693,12 @@
 | src/tests/relatedEvidence.test.ts | ../features/adaptive/relatedEvidence |
 | src/tests/relatedEvidence.test.ts | ../features/curriculum/makeItemFromId |
 | src/tests/relatedEvidence.test.ts | ../features/learning/learningEvents |
+| src/tests/relatedEvidence.test.ts | ../features/scheduler/cardModel |
 | src/tests/relatedEvidence.test.ts | ../features/stats/todayAchievement |
 | src/tests/relatedEvidence.test.ts | ../types/math |
 | src/tests/rng.test.ts | ../utils/rng |
 | src/tests/scheduler.test.ts | ../features/curriculum/multiplicationItems |
+| src/tests/scheduler.test.ts | ../features/scheduler/cardModel |
 | src/tests/scheduler.test.ts | ../features/scheduler/scheduler |
 | src/tests/scheduler.test.ts | ../types/math |
 | src/tests/settingsDailyNewLimits.test.tsx | ../features/settings/SettingsPage |
@@ -688,6 +716,7 @@
 | src/tests/skillMasteryEngine.test.ts | ../features/curriculum/multiplicationItems |
 | src/tests/skillMasteryEngine.test.ts | ../features/learning/learningEvents |
 | src/tests/skillMasteryEngine.test.ts | ../features/mastery/skillMasteryEngine |
+| src/tests/skillMasteryEngine.test.ts | ../features/scheduler/cardModel |
 | src/tests/skillMasteryEngine.test.ts | ../types/math |
 | src/tests/skillPracticePlanner.test.ts | ../features/curriculum/makeItemFromId |
 | src/tests/skillPracticePlanner.test.ts | ../features/mastery/grade3MasteryMap |
@@ -704,6 +733,7 @@
 | src/tests/todayPlanEngine.test.ts | ../features/mastery/grade3MasteryMap |
 | src/tests/todayPlanEngine.test.ts | ../features/mastery/skillMasteryEngine |
 | src/tests/todayPlanEngine.test.ts | ../features/mastery/todayPlanEngine |
+| src/tests/todayPlanEngine.test.ts | ../features/scheduler/cardModel |
 | src/tests/todayPlanEngine.test.ts | ../types/math |
 | src/tests/updateCheck.test.ts | ../features/settings/updateCheck |
 | src/tests/userDataExport.test.ts | ../features/export/userDataExport |

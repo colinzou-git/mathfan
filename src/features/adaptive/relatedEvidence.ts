@@ -23,8 +23,10 @@ import { applyRelatedEvidence } from '../scheduler/scheduler';
  */
 
 export interface RelatedEvidenceUpdate {
-  /** The reinforced fact's own state ID (commutative-resolved). */
-  itemId: string;
+  /** The reinforced fact's canonical scheduling card (commutative-resolved). */
+  cardKey: string;
+  /** The concrete related-calculation item id (e.g. "MUL_7x8"), for display/prompt reconstruction. */
+  relatedItemId: string;
   before: StudentItemState;
   after: StudentItemState;
 }
@@ -43,9 +45,9 @@ export function computeRelatedEvidence(
   for (const rid of getRelatedItemIds(item)) {
     const before = lookupState(stateMap, rid);
     if (!before) continue;                 // reinforce-only
-    if (seen.has(before.itemId)) continue; // each fact at most once per item
-    seen.add(before.itemId);
-    updates.push({ itemId: before.itemId, before, after: applyRelatedEvidence(before, now) });
+    if (seen.has(before.cardKey)) continue; // each fact at most once per item
+    seen.add(before.cardKey);
+    updates.push({ cardKey: before.cardKey, relatedItemId: rid, before, after: applyRelatedEvidence(before, now) });
   }
   return updates;
 }

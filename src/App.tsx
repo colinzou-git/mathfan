@@ -24,6 +24,7 @@ import { applyTheme } from './features/theme/themes';
 import { syncDiagnosticCompletionIfSignedIn } from './features/diagnosis/diagnosticCompletion';
 import { resolvePracticeDoneDestination } from './features/practice/practiceNavigation';
 import { bootstrapProfiles, loadActiveProfileSelection, saveActiveProfileSelection, resolveSelectedProfile } from './features/profile/profileBootstrap';
+import { runCardStateMigration } from './features/migrations/cardStateMigration';
 import type { RestoreState } from './features/dashboard/ProfileSetup';
 
 type Screen =
@@ -111,7 +112,11 @@ export default function App() {
     preloadVoices();
     initAuth();
     // Deferred to a microtask so the first setState happens outside the effect body itself.
-    Promise.resolve().then(runBootstrap);
+    // Card-state migration must finish before any screen reads itemStates.
+    Promise.resolve()
+      .then(() => runCardStateMigration())
+      .catch(err => console.warn('[App] card-state migration failed', err))
+      .then(runBootstrap);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

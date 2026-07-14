@@ -1,5 +1,6 @@
 import type { PracticeItem, StudentItemState } from '../../types/math';
 import { getRelatedItemIds } from './relatedItemMapping';
+import { deriveCardKeyFromItemId, stateForItem } from '../scheduler/cardModel';
 import type { Rng } from '../../utils/rng';
 
 /**
@@ -62,19 +63,15 @@ function isDue(state: StudentItemState, nowStr: string): boolean {
 }
 
 /**
- * Look up an item's state, treating multiplication and addition as commutative
- * so embedded facts match whichever order the student has practiced.
+ * Look up a concrete item id's state via its canonical card key. Commutative
+ * orientations (e.g. MUL_7x8 / MUL_8x7) already resolve to the same card key
+ * — see features/scheduler/cardModel — so no manual operand-swap is needed.
  */
 export function lookupState(
   stateMap: Map<string, StudentItemState>,
   id: string,
 ): StudentItemState | undefined {
-  const direct = stateMap.get(id);
-  if (direct) return direct;
-  let m: RegExpMatchArray | null;
-  if ((m = id.match(/^MUL_(\d+)x(\d+)$/))) return stateMap.get(`MUL_${m[2]}x${m[1]}`);
-  if ((m = id.match(/^ADD_(\d+)p(\d+)$/))) return stateMap.get(`ADD_${m[2]}p${m[1]}`);
-  return undefined;
+  return stateMap.get(deriveCardKeyFromItemId(id));
 }
 
 /** True when a fact needs practice: due, still being learned, or low accuracy. */
@@ -115,7 +112,7 @@ export function scoreCandidateItem(
   now: Date,
 ): number {
   const nowStr = now.toISOString();
-  const own = stateMap.get(item.id);
+  const own = stateForItem(item, stateMap);
   const score = own ? needScore(own, nowStr) : UNSEEN_OWN_SCORE;
 
   let relatedBoost = 0;
@@ -154,7 +151,7 @@ export function rankCandidateItems(
 function itemTier(item: PracticeItem, stateMap: Map<string, StudentItemState>, now: Date): Tier {
   const nowStr = now.toISOString();
   const states: StudentItemState[] = [];
-  const own = stateMap.get(item.id);
+  const own = stateForItem(item, stateMap);
   if (own) states.push(own);
   for (const rid of getRelatedItemIds(item)) {
     const st = lookupState(stateMap, rid);

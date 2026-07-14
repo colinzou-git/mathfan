@@ -132,7 +132,7 @@ function stateBelongsToSkill(
   resolveSkillId: SkillIdResolver,
 ): boolean {
   if (state.studentId !== studentId) return false;
-  return (resolveSkillId(state.itemId) ?? state.skillId) === skillId;
+  return (resolveSkillId(state.lastItemId ?? state.cardKey) ?? state.skillId) === skillId;
 }
 
 function skillEvents(

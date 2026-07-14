@@ -188,7 +188,7 @@ export async function mergeSnapshot(remote: AppSnapshot): Promise<void> {
       }
 
       for (const remoteState of remote.itemStates) {
-        const localState = await db.itemStates.get([remoteState.studentId, remoteState.itemId]);
+        const localState = await db.itemStates.get([remoteState.studentId, remoteState.cardKey]);
         if (!localState || remoteState.attemptCount > localState.attemptCount) {
           await db.itemStates.put(remoteState);
         }

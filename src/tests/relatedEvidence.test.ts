@@ -12,6 +12,7 @@ import type { MasteryLevel, StudentItemState, PracticeSession } from '../types/m
 import type { MathAnswerEvent } from '../features/learning/learningEvents';
 import { computeRelatedEvidence } from '../features/adaptive/relatedEvidence';
 import { makeItemFromId } from '../features/curriculum/makeItemFromId';
+import { deriveCardKeyFromItemId } from '../features/scheduler/cardModel';
 import { computeTodayAchievement } from '../features/stats/todayAchievement';
 
 const NOW = new Date('2026-06-09T00:00:00Z');
@@ -24,7 +25,7 @@ function state(
   const attempts = opts.attempts ?? 4;
   const correct = opts.correct ?? attempts;
   return {
-    studentId: 's', itemId, skillId: '',
+    studentId: 's', cardKey: deriveCardKeyFromItemId(itemId), lastItemId: itemId, skillId: '',
     attemptCount: attempts, correctCount: correct,
     lastCorrect: true, lastLatencyMs: 1200, medianLatencyMs: 1200, personalBestMs: 900,
     ease: 2.5, stabilityDays: opts.stability ?? 5, fsrsDifficulty: 5, difficulty: 0,
@@ -32,6 +33,11 @@ function state(
     lastSeenAt: '2026-06-01T00:00:00Z', nextDueAt: '2026-06-04T00:00:00Z',
     masteryLevel: mastery, mistakePatterns: [],
   };
+}
+
+/** Builds a state map keyed the way production code keys it: by canonical card key. */
+function mapOf(...entries: StudentItemState[]): Map<string, StudentItemState> {
+  return new Map(entries.map(s => [s.cardKey, s]));
 }
 
 function item(id: string) {
@@ -46,24 +52,25 @@ describe('computeRelatedEvidence — reinforce-only', () => {
   });
 
   it('nudges an embedded fact that already has a state', () => {
-    const map = new Map([['MUL_8x7', state('MUL_8x7', 'developing')]]);
+    const map = mapOf(state('MUL_8x7', 'developing'));
     const updates = computeRelatedEvidence(item('AREA_RECT_8x7'), map, NOW);
     expect(updates).toHaveLength(1);
-    expect(updates[0].itemId).toBe('MUL_8x7');
+    expect(updates[0].relatedItemId).toBe('MUL_8x7');
   });
 
-  it('uses commutative state: AREA_RECT_8x7 reinforces an existing MUL_7x8', () => {
-    const map = new Map([['MUL_7x8', state('MUL_7x8', 'developing')]]);
+  it('uses commutative state: AREA_RECT_8x7 (embeds MUL_8x7) reinforces an existing MUL_7x8 card', () => {
+    const map = mapOf(state('MUL_7x8', 'developing'));
     const updates = computeRelatedEvidence(item('AREA_RECT_8x7'), map, NOW);
     expect(updates).toHaveLength(1);
-    expect(updates[0].itemId).toBe('MUL_7x8'); // reinforces the id that actually has history
+    // Orientation no longer matters for lookup — both map to one canonical card.
+    expect(updates[0].cardKey).toBe('fact:mul:7x8');
   });
 });
 
 describe('computeRelatedEvidence — FSRS-only (stats untouched)', () => {
   it('advances FSRS scheduling but leaves attempt/correct/latency counts unchanged', () => {
     const before = state('MUL_8x7', 'developing', { attempts: 4, correct: 3, reps: 3, stability: 5 });
-    const map = new Map([['MUL_8x7', before]]);
+    const map = mapOf(before);
     const { after } = computeRelatedEvidence(item('AREA_RECT_8x7'), map, NOW)[0];
 
     // FSRS moved forward …
@@ -78,12 +85,9 @@ describe('computeRelatedEvidence — FSRS-only (stats untouched)', () => {
 
   it('reinforces each embedded fact at most once (RECTI with repeated facts)', () => {
     // RECTI_3x3_3x3 embeds MUL_3x3 twice plus ADD_9p9.
-    const map = new Map([
-      ['MUL_3x3', state('MUL_3x3', 'developing')],
-      ['ADD_9p9', state('ADD_9p9', 'developing')],
-    ]);
+    const map = mapOf(state('MUL_3x3', 'developing'), state('ADD_9p9', 'developing'));
     const updates = computeRelatedEvidence(item('RECTI_3x3_3x3'), map, NOW);
-    const mulHits = updates.filter(u => u.itemId === 'MUL_3x3');
+    const mulHits = updates.filter(u => u.relatedItemId === 'MUL_3x3');
     expect(mulHits).toHaveLength(1);
   });
 });

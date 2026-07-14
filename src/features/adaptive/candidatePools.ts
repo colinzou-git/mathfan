@@ -55,8 +55,11 @@ export function buildWordProblemCandidates(
     targetSeen.add(item.id);
     targeted.push(item);
   };
-  for (const [id, state] of stateMap) {
+  for (const state of stateMap.values()) {
     if (!isNeedyState(state, now)) continue;
+    // stateMap is keyed by canonical card key; the concrete, parseable id
+    // (e.g. "MUL_7x8") lives on lastItemId — see features/scheduler/cardModel.
+    const id = state.lastItemId ?? state.cardKey;
     let m: RegExpMatchArray | null;
     if ((m = id.match(/^MUL_(\d+)x(\d+)$/))) {
       const a = +m[1], b = +m[2];
@@ -110,8 +113,11 @@ export function buildFactorCandidates(
     targetSeen.add(item.id);
     targeted.push(item);
   };
-  for (const [id, state] of stateMap) {
+  for (const state of stateMap.values()) {
     if (!isNeedyState(state, now)) continue;
+    // stateMap is keyed by canonical card key; the concrete, parseable id
+    // (e.g. "MUL_7x8") lives on lastItemId — see features/scheduler/cardModel.
+    const id = state.lastItemId ?? state.cardKey;
     let m: RegExpMatchArray | null;
     if ((m = id.match(/^DIV_(\d+)d(\d+)$/))) {
       const dividend = +m[1], divisor = +m[2];

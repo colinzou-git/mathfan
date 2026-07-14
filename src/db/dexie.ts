@@ -8,6 +8,7 @@ import type {
 import type { MultiplicationFactStats, QuizSession } from '../features/multiplication/types';
 import type { MathAnswerEvent } from '../features/learning/learningEvents';
 import type { GoalEvaluation, GoalEvent, LearningGoal } from '../features/goals/types';
+import type { DataMigrationRun, MigrationBackup } from '../features/migrations/migrationTypes';
 
 export class MathFanDB extends Dexie {
   students!: Table<StudentProfile>;
@@ -20,6 +21,8 @@ export class MathFanDB extends Dexie {
   learningGoals!: Table<LearningGoal>;
   goalEvents!: Table<GoalEvent>;
   goalEvaluations!: Table<GoalEvaluation>;
+  migrationBackups!: Table<MigrationBackup>;
+  dataMigrationRuns!: Table<DataMigrationRun>;
 
   constructor() {
     super('mathfan');
@@ -51,6 +54,35 @@ export class MathFanDB extends Dexie {
     // Version 6: durable learner identity (schema-only — does not backfill existing rows)
     this.version(6).stores({
       students: 'id, learnerKey, displayName',
+    });
+    // Version 7: hybrid card model, phase 1 — Dexie does not support changing an
+    // object store's primary key in place, so the old itemId-keyed itemStates
+    // store must be deleted and recreated. Before deletion, its rows are copied
+    // into migrationBackups so the pre-migration state is never silently lost —
+    // see features/migrations/cardStateMigration.ts, which replays mathAnswerEvents
+    // (unaffected by this schema change) to repopulate itemStates by cardKey.
+    this.version(7)
+      .stores({
+        itemStates: null,
+        migrationBackups: 'id, migrationRunId, createdAt',
+        dataMigrationRuns: 'id, kind, status, startedAt',
+      })
+      .upgrade(async tx => {
+        const legacyItemStates = await tx.table('itemStates').toArray();
+        if (legacyItemStates.length > 0) {
+          await tx.table('migrationBackups').put({
+            id: 'schema-v7-pre-cardkey-backup',
+            migrationRunId: 'schema-v7-auto-backup',
+            createdAt: new Date().toISOString(),
+            itemStates: legacyItemStates,
+          });
+        }
+      });
+    // Version 8: hybrid card model, phase 2 — itemStates recreated with the new
+    // card-owned primary key. Starts empty; cardStateMigration.ts populates it
+    // from mathAnswerEvents on next app boot.
+    this.version(8).stores({
+      itemStates: '[studentId+cardKey], studentId, cardKey, skillId, nextDueAt, masteryLevel',
     });
   }
 }

@@ -276,7 +276,8 @@ describe('usePracticeSession — mistake pattern detection', () => {
   it('existing mistakePatterns are preserved and deduplicated', async () => {
     vi.mocked(itemStateRepo.getForStudent).mockResolvedValue([{
       studentId: STUDENT_ID,
-      itemId: 'MUL_7x8',
+      cardKey: 'fact:mul:7x8',
+      lastItemId: 'MUL_7x8',
       skillId: 'mul-7',
       attemptCount: 5,
       correctCount: 3,
@@ -381,7 +382,7 @@ describe('usePracticeSession — adaptive selection', () => {
     // MUL_8x7 is due and still being learned — generation should target it
     // rather than relying on a random pool happening to include 8 × 7.
     vi.mocked(itemStateRepo.getForStudent).mockResolvedValue([{
-      studentId: STUDENT_ID, itemId: 'MUL_8x7', skillId: 'mul',
+      studentId: STUDENT_ID, cardKey: 'fact:mul:7x8', lastItemId: 'MUL_8x7', skillId: 'mul',
       attemptCount: 4, correctCount: 1, lastCorrect: false, lastLatencyMs: 0,
       medianLatencyMs: 0, ease: 2.5, stabilityDays: 0, difficulty: 0.3,
       masteryLevel: 'learning' as const, nextDueAt: '2026-05-01T00:00:00Z', mistakePatterns: [],
