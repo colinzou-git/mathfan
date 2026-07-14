@@ -41,10 +41,10 @@ Capstone. Depends on nearly everything above (#25-#29, #30-#34, #35).
 
 | # | Title | Branch | Status |
 |---|-------|--------|--------|
-| 25 | Learner identity + restore-first setup | A | done (commit 7c8159a on feature/learner-identity-fsrs-core, pushed) |
-| 26 | Hybrid FSRS card model + migration | A | done (commit fe5b5d8 on feature/learner-identity-fsrs-core, pushed) |
-| 27 | Task-aware FSRS ratings | A | done (commit 63f6973 on feature/learner-identity-fsrs-core, pushed) |
-| 28 | One scheduling update per card/session | A | not started |
+| 25 | Learner identity + restore-first setup | A | **merged to main** (eb36360) |
+| 26 | Hybrid FSRS card model + migration | A | **merged to main** (eb36360) |
+| 27 | Task-aware FSRS ratings | A | **merged to main** (eb36360) |
+| 28 | One scheduling update per card/session | A | **merged to main** (eb36360) |
 | 30 | Area & perimeter redesign | B | not started |
 | 31 | Fractions redesign | B | not started |
 | 32 | Multi-digit regrouping | B | not started |
@@ -56,19 +56,29 @@ Capstone. Depends on nearly everything above (#25-#29, #30-#34, #35).
 
 ## Current focus
 
-**Active branch:** `feature/learner-identity-fsrs-core` (created from main, pushed, 3 commits so far)
-**Active issue:** #28 — one long-term scheduling update per card per session
-**Next concrete step:** Read `gh issue view 28` for the complete spec, then
-`src/features/practice/usePracticeSession.ts` (`currentAttemptsRef`, `submitAnswer`, `startSession`'s
-`daily_review` queue-fill loop), `src/features/diagnosis/DiagnosticSession.tsx`,
-`src/features/goals/GoalEvaluationSession.tsx`. Add `schedulingReviewedCardsRef` (session-scoped
-Set<cardKey>) to usePracticeSession so a card updates FSRS at most once per session even if it's
-re-queued; refactor the daily_review queue-fill loop in `startSession` to backfill with distinct
-eligible cards instead of repeating due cards; extend `MathAnswerEvent` with `presentationIndex`
-(schedulingEligible already exists on CheckResult from #27, and cardKey/itemInstanceId/schemaId already
-exist on the event type from #26 — only presentationIndex is new). Consider a shared
-`SessionSchedulingGuard` utility per the issue text. `npm run ci` was green as of commit 63f6973;
-re-baseline before starting new work if resuming.
+**Branch A is fully merged to main** (merge commit eb36360, pushed to origin/main). The
+`feature/learner-identity-fsrs-core` branch can be deleted once you're confident nothing else needs it
+(not deleted yet — no destructive action taken without asking).
+
+**GitHub issues #25-#28 were NOT auto-closed** — the harness's auto-mode permission classifier blocked
+`gh issue close` as an unauthorized external-system write (batch-closing issues not created this
+session). They remain open on GitHub despite being merged. If you want them closed, do it manually or
+explicitly ask Claude to close them in a future session.
+
+**Active branch:** none yet — about to create `feature/grade3-curriculum-redesign` from the just-updated
+main (which now has the full Branch A card model / response policy / cardKey infrastructure).
+**Active issue:** #30 — area & perimeter redesign (first in Branch B's order: 30, 31, then 32→33→34)
+**Next concrete step:**
+1. `git checkout main && git pull && git checkout -b feature/grade3-curriculum-redesign`
+2. `gh issue view 30` for the complete spec.
+3. Read `src/features/curriculum/areaItems.ts`, `src/features/visuals/` (AreaGrid, RectilinearAreaModel,
+   VisualModel, visualModelUtils), `src/features/mastery/grade3MasteryMap.ts`, `skillMapping.ts`,
+   `skillPracticePlanner.ts`, `src/features/mastery/misconceptionEngine.ts`, `hintEngine` (find its file).
+4. This is the issue that should register the FIRST real entries in
+   `src/features/curriculum/templateRegistry.ts` (referenced by #26 but not yet created) — see the
+   "#26 scoping decision" note below before starting. Add `VisualSpec` to `PracticeItem`
+   (src/types/math.ts) per the issue's proposed `src/features/visuals/types.ts`.
+`npm run ci` was green as of merge commit eb36360; re-baseline before starting new work if resuming.
 
 ## Known gaps / follow-ups (not blocking, revisit if time allows)
 
