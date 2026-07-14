@@ -43,7 +43,7 @@ Capstone. Depends on nearly everything above (#25-#29, #30-#34, #35).
 |---|-------|--------|--------|
 | 25 | Learner identity + restore-first setup | A | done (commit 7c8159a on feature/learner-identity-fsrs-core, pushed) |
 | 26 | Hybrid FSRS card model + migration | A | done (commit fe5b5d8 on feature/learner-identity-fsrs-core, pushed) |
-| 27 | Task-aware FSRS ratings | A | not started |
+| 27 | Task-aware FSRS ratings | A | done (commit 63f6973 on feature/learner-identity-fsrs-core, pushed) |
 | 28 | One scheduling update per card/session | A | not started |
 | 30 | Area & perimeter redesign | B | not started |
 | 31 | Fractions redesign | B | not started |
@@ -56,15 +56,19 @@ Capstone. Depends on nearly everything above (#25-#29, #30-#34, #35).
 
 ## Current focus
 
-**Active branch:** `feature/learner-identity-fsrs-core` (created from main, pushed, 2 commits so far)
-**Active issue:** #27 — task-aware FSRS ratings, separate fluency from correctness
-**Next concrete step:** Read `src/features/practice/answerChecker.ts` (`checkAnswer`, `classifyResponse`)
-in full, `src/features/practice/usePracticeSession.ts` `submitAnswer()`, and `gh issue view 27` for the
-complete spec. Create `src/features/scheduler/responsePolicy.ts` (policy registry) and
-`src/features/fluency/fluencyEngine.ts` (student-relative baselines), then refactor `classifyResponse`
-to return structured `ResponseEvidence` and thread `LearningCardDescriptor`/policy kind through
-`checkAnswer()`'s callers. `npm run ci` was green as of commit fe5b5d8; re-baseline before starting new
-work if resuming.
+**Active branch:** `feature/learner-identity-fsrs-core` (created from main, pushed, 3 commits so far)
+**Active issue:** #28 — one long-term scheduling update per card per session
+**Next concrete step:** Read `gh issue view 28` for the complete spec, then
+`src/features/practice/usePracticeSession.ts` (`currentAttemptsRef`, `submitAnswer`, `startSession`'s
+`daily_review` queue-fill loop), `src/features/diagnosis/DiagnosticSession.tsx`,
+`src/features/goals/GoalEvaluationSession.tsx`. Add `schedulingReviewedCardsRef` (session-scoped
+Set<cardKey>) to usePracticeSession so a card updates FSRS at most once per session even if it's
+re-queued; refactor the daily_review queue-fill loop in `startSession` to backfill with distinct
+eligible cards instead of repeating due cards; extend `MathAnswerEvent` with `presentationIndex`
+(schedulingEligible already exists on CheckResult from #27, and cardKey/itemInstanceId/schemaId already
+exist on the event type from #26 — only presentationIndex is new). Consider a shared
+`SessionSchedulingGuard` utility per the issue text. `npm run ci` was green as of commit 63f6973;
+re-baseline before starting new work if resuming.
 
 ## Known gaps / follow-ups (not blocking, revisit if time allows)
 
