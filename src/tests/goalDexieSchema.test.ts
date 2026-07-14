@@ -13,3 +13,14 @@ describe('goal Dexie schema', () => {
     db.close();
   });
 });
+
+describe('learner identity Dexie schema', () => {
+  it('indexes students by learnerKey for future-profile lookup', () => {
+    const db = new MathFanDB();
+    const studentsSchema = db.tables.find(t => t.name === 'students')?.schema;
+
+    expect(studentsSchema?.idxByName['learnerKey']).toBeDefined();
+
+    db.close();
+  });
+});

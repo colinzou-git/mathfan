@@ -4,9 +4,9 @@
 
 | Package | Import count |
 | --- | --- |
-| vitest | 63 |
+| vitest | 67 |
 | react | 35 |
-| @testing-library/react | 13 |
+| @testing-library/react | 14 |
 | pathlib | 8 |
 | __future__ | 7 |
 | sys | 7 |
@@ -73,6 +73,7 @@
 | src/App.tsx | ./features/multiplication/MultiplicationQuizPage |
 | src/App.tsx | ./features/practice/practiceNavigation |
 | src/App.tsx | ./features/practice/PracticeScreen |
+| src/App.tsx | ./features/profile/profileBootstrap |
 | src/App.tsx | ./features/settings/SettingsPage |
 | src/App.tsx | ./features/stats/StatsPage |
 | src/App.tsx | ./features/stats/todayAchievement |
@@ -101,6 +102,7 @@
 | src/db/repositories.ts | ../features/goals/types |
 | src/db/repositories.ts | ../features/learning/learningEvents |
 | src/db/repositories.ts | ../features/multiplication/types |
+| src/db/repositories.ts | ../features/profile/learnerIdentity |
 | src/db/repositories.ts | ../types/math |
 | src/db/repositories.ts | ./dexie |
 | src/features/adaptive/adaptiveItemSelector.ts | ../../types/math |
@@ -150,9 +152,9 @@
 | src/features/curriculum/roundingItems.ts | ../../types/math |
 | src/features/curriculum/twoStepItems.ts | ../../types/math |
 | src/features/curriculum/wordProblemItems.ts | ../../types/math |
-| src/features/dashboard/ProfileSetup.tsx | ../../db/repositories |
 | src/features/dashboard/ProfileSetup.tsx | ../../types/math |
 | src/features/dashboard/ProfileSetup.tsx | ../../utils/id |
+| src/features/dashboard/ProfileSetup.tsx | ../profile/learnerIdentity |
 | src/features/dashboard/StudentDashboard.tsx | ../../db/repositories |
 | src/features/dashboard/StudentDashboard.tsx | ../../types/math |
 | src/features/dashboard/StudentDashboard.tsx | ../curriculum/describeItem |
@@ -383,6 +385,8 @@
 | src/features/practice/usePracticeSession.ts | ../time/clock |
 | src/features/practice/usePracticeSession.ts | ./answerChecker |
 | src/features/practice/usePracticeSession.ts | ./metrics |
+| src/features/profile/learnerIdentity.ts | ../../types/math |
+| src/features/profile/profileBootstrap.ts | ../../types/math |
 | src/features/scheduler/fsrsAdapter.ts | ../../types/math |
 | src/features/scheduler/scheduler.ts | ../../types/math |
 | src/features/scheduler/scheduler.ts | ./fsrsAdapter |
@@ -443,12 +447,16 @@
 | src/features/stats/TodayAchievementSection.tsx | ./todayAchievement |
 | src/features/sync/driveSync.ts | ../auth/googleAuth |
 | src/features/sync/driveSync.ts | ./snapshot |
+| src/features/sync/learnerKeyMerge.ts | ../../types/math |
+| src/features/sync/learnerKeyMerge.ts | ./snapshot |
 | src/features/sync/snapshot.ts | ../../db/dexie |
 | src/features/sync/snapshot.ts | ../../types/math |
 | src/features/sync/snapshot.ts | ../goals/types |
 | src/features/sync/snapshot.ts | ../learning/eventRebuild |
 | src/features/sync/snapshot.ts | ../learning/learningEvents |
 | src/features/sync/snapshot.ts | ../multiplication/types |
+| src/features/sync/snapshot.ts | ./learnerKeyMerge |
+| src/features/sync/snapshot.ts | ./timeUtil |
 | src/features/sync/SyncWidget.tsx | ../auth/googleAuth |
 | src/features/sync/SyncWidget.tsx | ./driveSync |
 | src/features/sync/useSync.ts | ../auth/googleAuth |
@@ -600,6 +608,13 @@
 | src/tests/hintEngine.test.ts | ../features/curriculum/twoStepItems |
 | src/tests/hintEngine.test.ts | ../features/curriculum/wordProblemItems |
 | src/tests/hintEngine.test.ts | ../features/practice/hintEngine |
+| src/tests/learnerIdentity.test.ts | ../features/profile/learnerIdentity |
+| src/tests/learnerIdentity.test.ts | ../types/math |
+| src/tests/learnerKeyMerge.test.ts | ../db/dexie |
+| src/tests/learnerKeyMerge.test.ts | ../features/learning/learningEvents |
+| src/tests/learnerKeyMerge.test.ts | ../features/sync/learnerKeyMerge |
+| src/tests/learnerKeyMerge.test.ts | ../features/sync/snapshot |
+| src/tests/learnerKeyMerge.test.ts | ../types/math |
 | src/tests/learningEvents.test.ts | ../features/learning/learningEvents |
 | src/tests/learningEvents.test.ts | ../features/multiplication/masteryEngine |
 | src/tests/learningEvents.test.ts | ../features/stats/statsEngine |
@@ -637,6 +652,10 @@
 | src/tests/practiceSession.test.ts | ../features/time/clock |
 | src/tests/practiceSession.test.ts | ../types/math |
 | src/tests/practiceSession.test.ts | ../utils/id |
+| src/tests/profileBootstrap.test.ts | ../features/profile/profileBootstrap |
+| src/tests/profileBootstrap.test.ts | ../types/math |
+| src/tests/profileSetup.test.tsx | ../features/dashboard/ProfileSetup |
+| src/tests/profileSetup.test.tsx | ../types/math |
 | src/tests/questionGenerator.test.ts | ../features/curriculum/multiplicationItems |
 | src/tests/quizAutoAdvance.test.tsx | ../features/audio/speech |
 | src/tests/quizAutoAdvance.test.tsx | ../features/multiplication/MultiplicationQuizPage |

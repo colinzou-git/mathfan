@@ -64,10 +64,16 @@ export type FractionMode = 'equivalent' | 'compare';
 
 export interface StudentProfile {
   id: string;
+  /** Durable UUID identifying this learner across devices/reinstalls. Absent on legacy profiles. */
+  learnerKey?: string;
+  /** Version of the identity model this profile was created under. Absent on legacy profiles. */
+  identityVersion?: 1;
   displayName: string;
   gradeLevel: GradeLevel;
   timezone: string;
   createdAt: string;
+  /** Last time metadata (name/grade/timezone/settings) changed. Used to resolve sync merge conflicts. */
+  updatedAt?: string;
   settings: StudentSettings;
 }
 

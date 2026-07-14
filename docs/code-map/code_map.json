@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-13T06:54:22.614111+00:00",
+  "generated_at": "2026-07-14T06:16:53.042334+00:00",
   "repo_root": "/home/ubuntu/mathfan",
   "package": {
     "name": "mathfan",
@@ -42,6 +42,7 @@
       "eslint": "^10.3.0",
       "eslint-plugin-react-hooks": "^7.1.1",
       "eslint-plugin-react-refresh": "^0.5.2",
+      "fake-indexeddb": "^6.2.5",
       "globals": "^17.6.0",
       "jsdom": "^29.1.1",
       "typescript": "~6.0.2",
@@ -362,9 +363,9 @@
     {
       "path": "package.json",
       "ext": ".json",
-      "bytes": 1482,
-      "lines": 52,
-      "sha1": "9c65acb7e029",
+      "bytes": 1514,
+      "lines": 53,
+      "sha1": "6570cbd12954",
       "imports": [],
       "exports": [],
       "functions": [],
@@ -384,6 +385,7 @@
         "eslint",
         "eslint-plugin-react-hooks",
         "eslint-plugin-react-refresh",
+        "fake-indexeddb",
         "fraction.js",
         "globals",
         "jsdom",
@@ -413,6 +415,26 @@
         "vitest"
       ],
       "purpose": "Project package metadata, scripts, dependencies, and dev tooling.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "PROGRESS.md",
+      "ext": ".md",
+      "bytes": 4363,
+      "lines": 74,
+      "sha1": "38314804779a",
+      "imports": [],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Local persistence/database layer.",
       "too_large": false,
       "read_error": null
     },
@@ -749,9 +771,9 @@
     {
       "path": "src/App.tsx",
       "ext": ".tsx",
-      "bytes": 10505,
-      "lines": 313,
-      "sha1": "6c16ab2abc9f",
+      "bytes": 12180,
+      "lines": 357,
+      "sha1": "326ac3e12204",
       "imports": [
         "./components/opSpecs",
         "./components/RangeSetup",
@@ -769,6 +791,7 @@
         "./features/multiplication/MultiplicationQuizPage",
         "./features/practice/practiceNavigation",
         "./features/practice/PracticeScreen",
+        "./features/profile/profileBootstrap",
         "./features/settings/SettingsPage",
         "./features/stats/StatsPage",
         "./features/stats/todayAchievement",
@@ -784,6 +807,8 @@
         "handleQuizDone",
         "handleSessionDone",
         "pickOperation",
+        "runBootstrap",
+        "selectProfile",
         "startPractice",
         "updateProfile",
         "updateSettings"
@@ -1119,9 +1144,9 @@
     {
       "path": "src/db/dexie.ts",
       "ext": ".ts",
-      "bytes": 2071,
-      "lines": 55,
-      "sha1": "cae29a060a68",
+      "bytes": 2248,
+      "lines": 59,
+      "sha1": "ca7cf7e9f9fe",
       "imports": [
         "../features/goals/types",
         "../features/learning/learningEvents",
@@ -1150,13 +1175,14 @@
     {
       "path": "src/db/repositories.ts",
       "ext": ".ts",
-      "bytes": 13300,
-      "lines": 314,
-      "sha1": "0d1c3b066968",
+      "bytes": 14448,
+      "lines": 333,
+      "sha1": "7dd806d9b661",
       "imports": [
         "../features/goals/types",
         "../features/learning/learningEvents",
         "../features/multiplication/types",
+        "../features/profile/learnerIdentity",
         "../types/math",
         "./dexie"
       ],
@@ -1547,14 +1573,15 @@
     {
       "path": "src/features/auth/googleAuth.ts",
       "ext": ".ts",
-      "bytes": 8757,
-      "lines": 240,
-      "sha1": "dd2cd554b5ee",
+      "bytes": 9213,
+      "lines": 255,
+      "sha1": "a4cc33b6463e",
       "imports": [],
       "exports": [
         "AuthState",
         "currentState",
         "GoogleProfile",
+        "hasPersistedGrant",
         "onChange",
         "signOut"
       ],
@@ -1563,6 +1590,7 @@
         "currentState",
         "fetchProfile",
         "getToken",
+        "hasPersistedGrant",
         "initTokenClient",
         "loadGisScript",
         "loadPersisted",
@@ -2212,19 +2240,22 @@
     {
       "path": "src/features/dashboard/ProfileSetup.tsx",
       "ext": ".tsx",
-      "bytes": 4277,
-      "lines": 147,
-      "sha1": "a2531e013f19",
+      "bytes": 9452,
+      "lines": 294,
+      "sha1": "43919954aa14",
       "imports": [
-        "../../db/repositories",
         "../../types/math",
         "../../utils/id",
+        "../profile/learnerIdentity",
         "react"
       ],
       "exports": [
-        "ProfileSetup"
+        "ProfileSetup",
+        "RestoreState"
       ],
       "functions": [
+        "buildProfile",
+        "createProfile",
         "handleSubmit",
         "ProfileSetup"
       ],
@@ -2232,7 +2263,9 @@
       "interfaces": [
         "Props"
       ],
-      "types": [],
+      "types": [
+        "RestoreState"
+      ],
       "components": [],
       "hooks": [],
       "css_classes": [],
@@ -4145,6 +4178,77 @@
       "read_error": null
     },
     {
+      "path": "src/features/profile/learnerIdentity.ts",
+      "ext": ".ts",
+      "bytes": 1780,
+      "lines": 41,
+      "sha1": "d68f68105d1d",
+      "imports": [
+        "../../types/math"
+      ],
+      "exports": [
+        "createLearnerKey",
+        "hasStableLearnerIdentity",
+        "normalizeLearnerName",
+        "profileCreationMatch"
+      ],
+      "functions": [
+        "createLearnerKey",
+        "hasStableLearnerIdentity",
+        "normalizeLearnerName",
+        "profileCreationMatch"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Exports reusable code: createLearnerKey, hasStableLearnerIdentity, normalizeLearnerName, profileCreationMatch.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/profile/profileBootstrap.ts",
+      "ext": ".ts",
+      "bytes": 3161,
+      "lines": 88,
+      "sha1": "a221f01b33a7",
+      "imports": [
+        "../../types/math"
+      ],
+      "exports": [
+        "ActiveProfileSelection",
+        "BootstrapProfilesArgs",
+        "loadActiveProfileSelection",
+        "ProfileBootstrapResult",
+        "resolveSelectedProfile",
+        "saveActiveProfileSelection"
+      ],
+      "functions": [
+        "bootstrapProfiles",
+        "loadActiveProfileSelection",
+        "resolveSelectedProfile",
+        "saveActiveProfileSelection"
+      ],
+      "classes": [],
+      "interfaces": [
+        "ActiveProfileSelection",
+        "BootstrapProfilesArgs"
+      ],
+      "types": [
+        "ProfileBootstrapResult"
+      ],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Exports reusable code: ActiveProfileSelection, BootstrapProfilesArgs, loadActiveProfileSelection, ProfileBootstrapResult, resolveSelectedProfile.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/features/scheduler/fsrsAdapter.ts",
       "ext": ".ts",
       "bytes": 4144,
@@ -4772,29 +4876,58 @@
       "read_error": null
     },
     {
+      "path": "src/features/sync/learnerKeyMerge.ts",
+      "ext": ".ts",
+      "bytes": 1314,
+      "lines": 34,
+      "sha1": "c35cb34f52ed",
+      "imports": [
+        "../../types/math",
+        "./snapshot"
+      ],
+      "exports": [
+        "resolveLearnerKeyDuplicate"
+      ],
+      "functions": [
+        "resolveLearnerKeyDuplicate"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Cloud sync/auth/data transfer logic.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/features/sync/snapshot.ts",
       "ext": ".ts",
-      "bytes": 8700,
-      "lines": 225,
-      "sha1": "ae9da420c252",
+      "bytes": 9384,
+      "lines": 237,
+      "sha1": "c1ff498b7743",
       "imports": [
         "../../db/dexie",
         "../../types/math",
         "../goals/types",
         "../learning/eventRebuild",
         "../learning/learningEvents",
-        "../multiplication/types"
+        "../multiplication/types",
+        "./learnerKeyMerge",
+        "./timeUtil"
       ],
       "exports": [
         "AppSnapshot",
-        "validateSnapshot"
+        "remoteHasNewerUpdatedAt",
+        "validateSnapshot",
+        "validTimeMs"
       ],
       "functions": [
         "buildSnapshot",
         "mergeSnapshot",
-        "remoteHasNewerUpdatedAt",
-        "validateSnapshot",
-        "validTimeMs"
+        "validateSnapshot"
       ],
       "classes": [],
       "interfaces": [
@@ -4837,6 +4970,32 @@
       "components": [
         "GoogleIcon"
       ],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Cloud sync/auth/data transfer logic.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/sync/timeUtil.ts",
+      "ext": ".ts",
+      "bytes": 475,
+      "lines": 13,
+      "sha1": "f9a1b496d70c",
+      "imports": [],
+      "exports": [
+        "remoteHasNewerUpdatedAt",
+        "validTimeMs"
+      ],
+      "functions": [
+        "remoteHasNewerUpdatedAt",
+        "validTimeMs"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
       "hooks": [],
       "css_classes": [],
       "json_keys": [],
@@ -5559,9 +5718,9 @@
     {
       "path": "src/tests/appGoalEvaluationNavigation.test.tsx",
       "ext": ".tsx",
-      "bytes": 4411,
-      "lines": 146,
-      "sha1": "5581cff25285",
+      "bytes": 4496,
+      "lines": 148,
+      "sha1": "6091d596f442",
       "imports": [
         "../App",
         "../types/math",
@@ -5854,9 +6013,9 @@
     {
       "path": "src/tests/goalDexieSchema.test.ts",
       "ext": ".ts",
-      "bytes": 458,
-      "lines": 16,
-      "sha1": "80ebc02d23be",
+      "bytes": 788,
+      "lines": 27,
+      "sha1": "5bd4a7217920",
       "imports": [
         "../db/dexie",
         "vitest"
@@ -6377,6 +6536,63 @@
       "read_error": null
     },
     {
+      "path": "src/tests/learnerIdentity.test.ts",
+      "ext": ".ts",
+      "bytes": 3229,
+      "lines": 97,
+      "sha1": "d059eb8480a5",
+      "imports": [
+        "../features/profile/learnerIdentity",
+        "../types/math",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [
+        "makeProfile"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/learnerKeyMerge.test.ts",
+      "ext": ".ts",
+      "bytes": 6063,
+      "lines": 166,
+      "sha1": "2d3a42b27027",
+      "imports": [
+        "../db/dexie",
+        "../features/learning/learningEvents",
+        "../features/sync/learnerKeyMerge",
+        "../features/sync/snapshot",
+        "../types/math",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [
+        "clearAll",
+        "emptySnapshot",
+        "makeProfile"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Local persistence/database layer.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/tests/learningEvents.test.ts",
       "ext": ".ts",
       "bytes": 17038,
@@ -6658,6 +6874,59 @@
       "css_classes": [],
       "json_keys": [],
       "purpose": "Local persistence/database layer.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/profileBootstrap.test.ts",
+      "ext": ".ts",
+      "bytes": 5371,
+      "lines": 155,
+      "sha1": "b7b1987a5533",
+      "imports": [
+        "../features/profile/profileBootstrap",
+        "../types/math",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [
+        "makeProfile"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/profileSetup.test.tsx",
+      "ext": ".tsx",
+      "bytes": 4718,
+      "lines": 141,
+      "sha1": "e7c5bc3c4085",
+      "imports": [
+        "../features/dashboard/ProfileSetup",
+        "../types/math",
+        "@testing-library/react",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [
+        "makeProfile"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
       "too_large": false,
       "read_error": null
     },
@@ -7266,9 +7535,9 @@
     {
       "path": "src/types/math.ts",
       "ext": ".ts",
-      "bytes": 9707,
-      "lines": 321,
-      "sha1": "7a557becfb9d",
+      "bytes": 10080,
+      "lines": 327,
+      "sha1": "68cd073cdf3b",
       "imports": [],
       "exports": [
         "AnswerInput",

@@ -49,10 +49,12 @@ vi.mock('../features/sync/useSync', () => ({
 
 vi.mock('../features/auth/googleAuth', () => ({
   currentState: () => ({ signedIn: false }),
+  hasPersistedGrant: () => false,
 }));
 
 vi.mock('../features/sync/driveSync', () => ({
   pushLocal: vi.fn(),
+  pullAndMerge: vi.fn(async () => ({ ok: true })),
 }));
 
 vi.mock('../features/theme/themes', () => ({

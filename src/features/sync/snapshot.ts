@@ -4,6 +4,8 @@ import type { MathAnswerEvent } from '../learning/learningEvents';
 import { rebuildMultFactStatsFromEvents, rebuildItemStatesFromEvents } from '../learning/eventRebuild';
 import { db } from '../../db/dexie';
 import type { GoalEvaluation, GoalEvent, LearningGoal } from '../goals/types';
+import { resolveLearnerKeyDuplicate } from './learnerKeyMerge';
+import { validTimeMs, remoteHasNewerUpdatedAt } from './timeUtil';
 
 export interface AppSnapshot {
   appId: 'mathfan';
@@ -97,18 +99,7 @@ export async function buildSnapshot(): Promise<AppSnapshot> {
  * This ensures that cross-device conflicts in derived caches are resolved from events,
  * not from stale computed aggregates.
  */
-function validTimeMs(value: string | undefined): number | null {
-  if (!value) return null;
-  const ms = Date.parse(value);
-  return Number.isFinite(ms) ? ms : null;
-}
-
-function remoteHasNewerUpdatedAt(remoteUpdatedAt: string, localUpdatedAt: string | undefined): boolean {
-  const remoteMs = validTimeMs(remoteUpdatedAt);
-  if (remoteMs === null) return false;
-  const localMs = validTimeMs(localUpdatedAt);
-  return localMs === null || remoteMs >= localMs;
-}
+export { validTimeMs, remoteHasNewerUpdatedAt };
 
 export async function mergeSnapshot(remote: AppSnapshot): Promise<void> {
   // Collect affected student IDs so we know who to rebuild after the transaction.
@@ -138,7 +129,28 @@ export async function mergeSnapshot(remote: AppSnapshot): Promise<void> {
       }
 
       // ── 2. Students ────────────────────────────────────────────────────────
+      // Same learnerKey, different id → resolve to one profile instead of
+      // creating a second future profile. Never applied to legacy profiles
+      // (no learnerKey), which are unioned by id as before.
       for (const s of remote.students) {
+        const localMatch = s.learnerKey
+          ? await db.students.where('learnerKey').equals(s.learnerKey).first()
+          : undefined;
+
+        if (localMatch && localMatch.id !== s.id) {
+          const [localEvents, remoteEvents] = await Promise.all([
+            db.mathAnswerEvents.where('studentId').equals(localMatch.id).count(),
+            db.mathAnswerEvents.where('studentId').equals(s.id).count(),
+          ]);
+          const resolved = resolveLearnerKeyDuplicate(localMatch, s, {
+            [localMatch.id]: localEvents,
+            [s.id]: remoteEvents,
+          });
+          await db.students.put(resolved);
+          if (resolved.id !== localMatch.id) await db.students.delete(localMatch.id);
+          continue;
+        }
+
         await db.students.put(s);
       }
 

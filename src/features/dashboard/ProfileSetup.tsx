@@ -1,16 +1,59 @@
 import { useState } from 'react';
 import type { StudentProfile, GradeLevel } from '../../types/math';
-import { studentRepo } from '../../db/repositories';
+import { createLearnerKey, profileCreationMatch } from '../profile/learnerIdentity';
 import { generateId } from '../../utils/id';
 
+export type RestoreState = 'idle' | 'checking' | 'available' | 'unavailable';
+
 interface Props {
-  onCreated: (profile: StudentProfile) => void;
+  /** Profiles already on this device/account. Empty on a genuinely fresh setup. */
+  existingProfiles: StudentProfile[];
+  restoreState: RestoreState;
+  onSelectExisting: (profile: StudentProfile) => void;
+  onCreate: (profile: StudentProfile) => Promise<void>;
+  onRestore?: () => Promise<void>;
 }
 
-export function ProfileSetup({ onCreated }: Props) {
+function buildProfile(name: string, grade: GradeLevel): StudentProfile {
+  return {
+    id: generateId(),
+    learnerKey: createLearnerKey(),
+    identityVersion: 1,
+    displayName: name.trim(),
+    gradeLevel: grade,
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    settings: {
+      audioEnabled: true,
+      speechRate: 0.9,
+      dailyGoalMinutes: 10,
+      sessionLength: 10,
+      autoAdvance: true,
+      theme: 'indigo' as const,
+      allowTimedMode: true,
+      competitionModeEnabled: false,
+      parentModeEnabled: false,
+    },
+  };
+}
+
+export function ProfileSetup({ existingProfiles, restoreState, onSelectExisting, onCreate, onRestore }: Props) {
+  const [showCreateForm, setShowCreateForm] = useState(existingProfiles.length === 0);
   const [name, setName] = useState('');
   const [grade, setGrade] = useState<GradeLevel>(3);
   const [error, setError] = useState('');
+  const [pendingMatches, setPendingMatches] = useState<StudentProfile[] | null>(null);
+  const [pendingProfile, setPendingProfile] = useState<StudentProfile | null>(null);
+
+  const createProfile = async (profile: StudentProfile) => {
+    setError('');
+    try {
+      await onCreate(profile);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not create profile. Please try again.');
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,27 +61,87 @@ export function ProfileSetup({ onCreated }: Props) {
       setError('Please enter a name.');
       return;
     }
-    const profile: StudentProfile = {
-      id: generateId(),
-      displayName: name.trim(),
-      gradeLevel: grade,
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      createdAt: new Date().toISOString(),
-      settings: {
-        audioEnabled: true,
-        speechRate: 0.9,
-        dailyGoalMinutes: 10,
-        sessionLength: 10,
-        autoAdvance: true,
-        theme: 'indigo' as const,
-        allowTimedMode: true,
-        competitionModeEnabled: false,
-        parentModeEnabled: false,
-      },
-    };
-    await studentRepo.save(profile);
-    onCreated(profile);
+    const draft = buildProfile(name, grade);
+    const matches = profileCreationMatch({ displayName: draft.displayName, gradeLevel: draft.gradeLevel }, existingProfiles);
+    if (matches.length > 0) {
+      setPendingMatches(matches);
+      setPendingProfile(draft);
+      return;
+    }
+    await createProfile(draft);
   };
+
+  if (pendingMatches && pendingProfile) {
+    return (
+      <div style={styles.container}>
+        <div style={styles.card}>
+          <h1 style={styles.title}>Is this the same learner?</h1>
+          <p style={styles.subtitle}>
+            We found {pendingMatches.length === 1 ? 'a profile' : 'profiles'} with the same name and grade.
+          </p>
+          <div style={styles.form}>
+            {pendingMatches.map(p => (
+              <button
+                key={p.id}
+                type="button"
+                style={styles.existingBtn}
+                onClick={() => onSelectExisting(p)}
+              >
+                Use existing profile — {p.displayName} (Grade {p.gradeLevel})
+              </button>
+            ))}
+            <button
+              type="button"
+              style={styles.submitBtn}
+              onClick={() => createProfile(pendingProfile)}
+            >
+              Create a separate learner
+            </button>
+            <button
+              type="button"
+              style={styles.linkBtn}
+              onClick={() => { setPendingMatches(null); setPendingProfile(null); }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!showCreateForm) {
+    return (
+      <div style={styles.container}>
+        <div style={styles.card}>
+          <div style={{ fontSize: '48px', textAlign: 'center', marginBottom: '8px' }}>🧮</div>
+          <h1 style={styles.title}>Welcome back to MathFan</h1>
+          <p style={styles.subtitle}>Who's practicing today?</p>
+          {restoreState === 'unavailable' && onRestore && (
+            <div style={styles.restoreBanner}>
+              <p style={{ margin: 0, fontSize: '14px' }}>We couldn't reach your saved data.</p>
+              <button type="button" style={styles.linkBtn} onClick={onRestore}>Try restoring again</button>
+            </div>
+          )}
+          <div style={styles.form}>
+            {existingProfiles.map(p => (
+              <button
+                key={p.id}
+                type="button"
+                style={styles.existingBtn}
+                onClick={() => onSelectExisting(p)}
+              >
+                {p.displayName} (Grade {p.gradeLevel})
+              </button>
+            ))}
+            <button type="button" style={styles.linkBtn} onClick={() => setShowCreateForm(true)}>
+              Create a separate learner
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={styles.container}>
@@ -46,6 +149,15 @@ export function ProfileSetup({ onCreated }: Props) {
         <div style={{ fontSize: '48px', textAlign: 'center', marginBottom: '8px' }}>🧮</div>
         <h1 style={styles.title}>Welcome to MathFan</h1>
         <p style={styles.subtitle}>Let's get started. Who's practicing today?</p>
+        {restoreState === 'checking' && (
+          <p style={{ textAlign: 'center', color: '#6b7280', fontSize: '14px' }}>Checking for existing data…</p>
+        )}
+        {restoreState === 'unavailable' && onRestore && (
+          <div style={styles.restoreBanner}>
+            <p style={{ margin: 0, fontSize: '14px' }}>We couldn't reach your saved data.</p>
+            <button type="button" style={styles.linkBtn} onClick={onRestore}>Try restoring again</button>
+          </div>
+        )}
         <form onSubmit={handleSubmit} style={styles.form}>
           <label style={styles.label}>
             Name
@@ -81,6 +193,11 @@ export function ProfileSetup({ onCreated }: Props) {
           <button type="submit" style={styles.submitBtn}>
             Start Learning →
           </button>
+          {existingProfiles.length > 0 && (
+            <button type="button" style={styles.linkBtn} onClick={() => setShowCreateForm(false)}>
+              ← Back to existing profiles
+            </button>
+          )}
         </form>
       </div>
     </div>
@@ -142,5 +259,35 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 'bold',
     cursor: 'pointer',
     marginTop: '4px',
+  },
+  existingBtn: {
+    padding: '14px',
+    background: '#eef2ff',
+    color: '#4f46e5',
+    border: '2px solid #c7d2fe',
+    borderRadius: '12px',
+    fontSize: '16px',
+    fontWeight: '600',
+    cursor: 'pointer',
+    textAlign: 'left',
+  },
+  linkBtn: {
+    padding: '8px',
+    background: 'none',
+    border: 'none',
+    color: '#6b7280',
+    fontSize: '14px',
+    cursor: 'pointer',
+    textDecoration: 'underline',
+  },
+  restoreBanner: {
+    background: '#fef3c7',
+    border: '1px solid #fde68a',
+    borderRadius: '10px',
+    padding: '12px',
+    marginBottom: '16px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '6px',
   },
 };

@@ -151,6 +151,21 @@ export function currentState(): AuthState {
   };
 }
 
+/**
+ * Synchronous, pre-preload() check for "was this device previously signed in".
+ * Used at app startup to decide whether to wait for a Drive restore before
+ * offering profile creation, without blocking on the full async preload().
+ */
+export function hasPersistedGrant(): boolean {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return false;
+    return Boolean(JSON.parse(raw).granted);
+  } catch {
+    return false;
+  }
+}
+
 // ── Public API ────────────────────────────────────────────────────────────────
 
 /** Call once at app startup (before the sign-in button appears). */

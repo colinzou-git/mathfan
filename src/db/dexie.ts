@@ -48,6 +48,10 @@ export class MathFanDB extends Dexie {
       goalEvents: 'id, studentId, goalId, type, createdAt, [studentId+createdAt]',
       goalEvaluations: 'id, studentId, status, updatedAt',
     });
+    // Version 6: durable learner identity (schema-only — does not backfill existing rows)
+    this.version(6).stores({
+      students: 'id, learnerKey, displayName',
+    });
   }
 }
 
