@@ -4,7 +4,7 @@
 
 | Package | Import count |
 | --- | --- |
-| vitest | 69 |
+| vitest | 71 |
 | react | 35 |
 | @testing-library/react | 14 |
 | pathlib | 8 |
@@ -184,11 +184,14 @@
 | src/features/diagnosis/DiagnosticSession.tsx | ../mastery/misconceptionEngine |
 | src/features/diagnosis/DiagnosticSession.tsx | ../practice/answerChecker |
 | src/features/diagnosis/DiagnosticSession.tsx | ../practice/QuestionRenderer |
+| src/features/diagnosis/DiagnosticSession.tsx | ../scheduler/cardModel |
 | src/features/diagnosis/DiagnosticSession.tsx | ../scheduler/scheduler |
 | src/features/diagnosis/DiagnosticSession.tsx | ../time/clock |
 | src/features/diagnosis/DiagnosticSession.tsx | ./diagnosticPersistence |
 | src/features/diagnosis/DiagnosticSession.tsx | ./diagnosticPlanner |
 | src/features/export/userDataExport.ts | ../sync/snapshot |
+| src/features/fluency/fluencyEngine.ts | ../learning/learningEvents |
+| src/features/fluency/fluencyEngine.ts | ../scheduler/responsePolicy |
 | src/features/goals/dailyNewGoalLimits.ts | ../../types/math |
 | src/features/goals/dailyNewGoalLimits.ts | ./types |
 | src/features/goals/dailyNewGoalPlanner.ts | ../../types/math |
@@ -227,6 +230,7 @@
 | src/features/goals/GoalEvaluationSession.tsx | ../../utils/id |
 | src/features/goals/GoalEvaluationSession.tsx | ../auth/googleAuth |
 | src/features/goals/GoalEvaluationSession.tsx | ../curriculum/makeItemFromId |
+| src/features/goals/GoalEvaluationSession.tsx | ../fluency/fluencyEngine |
 | src/features/goals/GoalEvaluationSession.tsx | ../learning/learningEvents |
 | src/features/goals/GoalEvaluationSession.tsx | ../mastery/grade3MasteryMap |
 | src/features/goals/GoalEvaluationSession.tsx | ../mastery/misconceptionEngine |
@@ -235,6 +239,7 @@
 | src/features/goals/GoalEvaluationSession.tsx | ../practice/answerChecker |
 | src/features/goals/GoalEvaluationSession.tsx | ../practice/QuestionRenderer |
 | src/features/goals/GoalEvaluationSession.tsx | ../scheduler/cardModel |
+| src/features/goals/GoalEvaluationSession.tsx | ../scheduler/responsePolicy |
 | src/features/goals/GoalEvaluationSession.tsx | ../scheduler/scheduler |
 | src/features/goals/GoalEvaluationSession.tsx | ../sync/driveSync |
 | src/features/goals/GoalEvaluationSession.tsx | ../time/clock |
@@ -360,6 +365,8 @@
 | src/features/multiplication/quizQuestionSelector.ts | ./multiplicationFacts |
 | src/features/multiplication/quizQuestionSelector.ts | ./types |
 | src/features/practice/answerChecker.ts | ../../types/math |
+| src/features/practice/answerChecker.ts | ../fluency/fluencyEngine |
+| src/features/practice/answerChecker.ts | ../scheduler/responsePolicy |
 | src/features/practice/hintEngine.ts | ../../types/math |
 | src/features/practice/metrics.ts | ../../types/math |
 | src/features/practice/PracticeScreen.tsx | ../../components/NumPad |
@@ -404,6 +411,8 @@
 | src/features/scheduler/cardModel.ts | ../../types/math |
 | src/features/scheduler/cardModel.ts | ../learning/learningEvents |
 | src/features/scheduler/fsrsAdapter.ts | ../../types/math |
+| src/features/scheduler/responsePolicy.ts | ../../types/math |
+| src/features/scheduler/responsePolicy.ts | ./cardModel |
 | src/features/scheduler/scheduler.ts | ../../types/math |
 | src/features/scheduler/scheduler.ts | ./cardModel |
 | src/features/scheduler/scheduler.ts | ./fsrsAdapter |
@@ -506,6 +515,7 @@
 | src/tests/adaptiveRelatedItemSelection.test.ts | ../utils/rng |
 | src/tests/ai.test.ts | ../features/ai/aiConfig |
 | src/tests/ai.test.ts | ../features/ai/gemini |
+| src/tests/answerChecker.test.ts | ../features/fluency/fluencyEngine |
 | src/tests/answerChecker.test.ts | ../features/practice/answerChecker |
 | src/tests/answerChecker.test.ts | ../types/math |
 | src/tests/appDiagnosticCompletion.test.ts | ../features/diagnosis/diagnosticCompletion |
@@ -550,6 +560,9 @@
 | src/tests/eventRebuild.test.ts | ../features/learning/eventRebuild |
 | src/tests/eventRebuild.test.ts | ../features/learning/learningEvents |
 | src/tests/eventRebuild.test.ts | ../types/math |
+| src/tests/fluencyEngine.test.ts | ../features/fluency/fluencyEngine |
+| src/tests/fluencyEngine.test.ts | ../features/learning/learningEvents |
+| src/tests/fluencyEngine.test.ts | ../features/scheduler/responsePolicy |
 | src/tests/fractionItems.test.ts | ../features/curriculum/fractionItems |
 | src/tests/goalDexieSchema.test.ts | ../db/dexie |
 | src/tests/goalEngine.test.ts | ../features/goals/goalEngine |
@@ -696,6 +709,9 @@
 | src/tests/relatedEvidence.test.ts | ../features/scheduler/cardModel |
 | src/tests/relatedEvidence.test.ts | ../features/stats/todayAchievement |
 | src/tests/relatedEvidence.test.ts | ../types/math |
+| src/tests/responsePolicy.test.ts | ../features/scheduler/cardModel |
+| src/tests/responsePolicy.test.ts | ../features/scheduler/responsePolicy |
+| src/tests/responsePolicy.test.ts | ../types/math |
 | src/tests/rng.test.ts | ../utils/rng |
 | src/tests/scheduler.test.ts | ../features/curriculum/multiplicationItems |
 | src/tests/scheduler.test.ts | ../features/scheduler/cardModel |

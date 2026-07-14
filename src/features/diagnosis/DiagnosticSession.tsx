@@ -19,6 +19,7 @@ import type { MathAnswerEvent } from '../learning/learningEvents';
 import { recordDiagnosticAnswerWithRetry } from './diagnosticPersistence';
 import { checkAnswer } from '../practice/answerChecker';
 import { applyReview, createInitialState } from '../scheduler/scheduler';
+import { deriveCardKey } from '../scheduler/cardModel';
 import { detectMistakes } from '../mastery/misconceptionEngine';
 import { itemStateRepo } from '../../db/repositories';
 import { generateId } from '../../utils/id';
@@ -108,7 +109,8 @@ export function DiagnosticSession({ studentId, onComplete, onCancel }: Props) {
     // — e.g. the itemStateRepo.get read throws — the "Try again" path rebuilds it from
     // scratch and can actually succeed on retry.
     pendingWritesRef.current.push(async () => {
-      let existing = await itemStateRepo.get(studentId, item.id);
+      const cardKey = deriveCardKey(item);
+      let existing = await itemStateRepo.get(studentId, cardKey);
       if (!existing) existing = createInitialState(studentId, item);
 
       let updated = existing;
@@ -117,6 +119,7 @@ export function DiagnosticSession({ studentId, onComplete, onCancel }: Props) {
       } catch {
         // FSRS error (e.g. clock drift) — keep existing state rather than blocking.
       }
+      updated = { ...updated, cardKey, lastItemId: item.id };
 
       if (!isCorrect) {
         const newTags = detectMistakes(item, studentAnswer);
@@ -131,6 +134,8 @@ export function DiagnosticSession({ studentId, onComplete, onCancel }: Props) {
         studentId,
         sessionId,
         itemId: item.id,
+        cardKey,
+        schemaId: item.schemaId,
         mode: 'diagnostic',
         promptShown: item.prompt,
         correctAnswer: item.answer,
@@ -140,6 +145,9 @@ export function DiagnosticSession({ studentId, onComplete, onCancel }: Props) {
         hintUsed: false,
         latencyMs,
         reviewGrade,
+        ratingReason: checked.ratingReason,
+        responsePolicy: checked.policyKind,
+        fluencyBand: checked.fluencyBand,
         factStatusBefore: existing.masteryLevel,
         factStatusAfter: updated.masteryLevel,
         createdAt,

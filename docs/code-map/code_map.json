@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-14T06:52:16.131070+00:00",
+  "generated_at": "2026-07-14T07:09:03.885460+00:00",
   "repo_root": "/home/ubuntu/mathfan",
   "package": {
     "name": "mathfan",
@@ -421,9 +421,9 @@
     {
       "path": "PROGRESS.md",
       "ext": ".md",
-      "bytes": 5165,
-      "lines": 83,
-      "sha1": "05fdc90d2516",
+      "bytes": 6488,
+      "lines": 97,
+      "sha1": "6c7dc0cef1bb",
       "imports": [],
       "exports": [],
       "functions": [],
@@ -2414,9 +2414,9 @@
     {
       "path": "src/features/diagnosis/DiagnosticSession.tsx",
       "ext": ".tsx",
-      "bytes": 17708,
-      "lines": 558,
-      "sha1": "205e77e71da1",
+      "bytes": 18049,
+      "lines": 566,
+      "sha1": "a38c8fec0317",
       "imports": [
         "../../components/NumPad",
         "../../db/repositories",
@@ -2426,6 +2426,7 @@
         "../mastery/misconceptionEngine",
         "../practice/answerChecker",
         "../practice/QuestionRenderer",
+        "../scheduler/cardModel",
         "../scheduler/scheduler",
         "../time/clock",
         "./diagnosticPersistence",
@@ -2539,6 +2540,43 @@
       "css_classes": [],
       "json_keys": [],
       "purpose": "Exports reusable code: buildExportMetadata, buildExportPayload, canShareExportArtifact, classifyShareError, createJsonArtifact.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/fluency/fluencyEngine.ts",
+      "ext": ".ts",
+      "bytes": 2310,
+      "lines": 68,
+      "sha1": "a42a43d23a25",
+      "imports": [
+        "../learning/learningEvents",
+        "../scheduler/responsePolicy"
+      ],
+      "exports": [
+        "classifyFluency",
+        "deriveFluencyBaseline",
+        "FluencyBand",
+        "MIN_BASELINE_SAMPLES",
+        "StudentFluencyBaseline"
+      ],
+      "functions": [
+        "classifyFluency",
+        "deriveFluencyBaseline",
+        "percentile"
+      ],
+      "classes": [],
+      "interfaces": [
+        "StudentFluencyBaseline"
+      ],
+      "types": [
+        "FluencyBand"
+      ],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Exports reusable code: classifyFluency, deriveFluencyBaseline, FluencyBand, MIN_BASELINE_SAMPLES, StudentFluencyBaseline.",
       "too_large": false,
       "read_error": null
     },
@@ -2853,9 +2891,9 @@
     {
       "path": "src/features/goals/GoalEvaluationSession.tsx",
       "ext": ".tsx",
-      "bytes": 28806,
-      "lines": 630,
-      "sha1": "1240bef844ce",
+      "bytes": 29391,
+      "lines": 643,
+      "sha1": "053b3283923f",
       "imports": [
         "../../components/NumPad",
         "../../db/repositories",
@@ -2863,6 +2901,7 @@
         "../../utils/id",
         "../auth/googleAuth",
         "../curriculum/makeItemFromId",
+        "../fluency/fluencyEngine",
         "../learning/learningEvents",
         "../mastery/grade3MasteryMap",
         "../mastery/misconceptionEngine",
@@ -2871,6 +2910,7 @@
         "../practice/answerChecker",
         "../practice/QuestionRenderer",
         "../scheduler/cardModel",
+        "../scheduler/responsePolicy",
         "../scheduler/scheduler",
         "../sync/driveSync",
         "../time/clock",
@@ -3161,9 +3201,9 @@
     {
       "path": "src/features/learning/eventRebuild.ts",
       "ext": ".ts",
-      "bytes": 7462,
+      "bytes": 7476,
       "lines": 173,
-      "sha1": "10b1958cc49b",
+      "sha1": "0b177ffb996a",
       "imports": [
         "../../db/dexie",
         "../../types/math",
@@ -3196,9 +3236,9 @@
     {
       "path": "src/features/learning/learningEvents.ts",
       "ext": ".ts",
-      "bytes": 3411,
-      "lines": 90,
-      "sha1": "9d843f3063e2",
+      "bytes": 4220,
+      "lines": 101,
+      "sha1": "c616b72d396b",
       "imports": [
         "../../db/dexie",
         "../../types/math",
@@ -3983,28 +4023,40 @@
     {
       "path": "src/features/practice/answerChecker.ts",
       "ext": ".ts",
-      "bytes": 2473,
-      "lines": 72,
-      "sha1": "6e0b5c4ef636",
+      "bytes": 6748,
+      "lines": 197,
+      "sha1": "45244663dfa6",
       "imports": [
-        "../../types/math"
+        "../../types/math",
+        "../fluency/fluencyEngine",
+        "../scheduler/responsePolicy"
       ],
       "exports": [
         "checkAnswer",
+        "CheckAnswerOptions",
         "CheckResult",
         "classifyResponse",
         "FAST_MS",
-        "NORMAL_MS"
+        "legacyClassifyByLatency",
+        "NORMAL_MS",
+        "RatingReason",
+        "RESPONSE_POLICY_VERSION",
+        "ResponseEvidence"
       ],
       "functions": [
         "checkAnswer",
-        "classifyResponse"
+        "classifyResponse",
+        "legacyClassifyByLatency"
       ],
       "classes": [],
       "interfaces": [
-        "CheckResult"
+        "CheckAnswerOptions",
+        "CheckResult",
+        "ResponseEvidence"
       ],
-      "types": [],
+      "types": [
+        "RatingReason"
+      ],
       "components": [],
       "hooks": [],
       "css_classes": [],
@@ -4203,9 +4255,9 @@
     {
       "path": "src/features/practice/usePracticeSession.ts",
       "ext": ".ts",
-      "bytes": 24408,
-      "lines": 570,
-      "sha1": "0b9644061a8a",
+      "bytes": 24651,
+      "lines": 574,
+      "sha1": "fc8ac9e3a5e6",
       "imports": [
         "../../components/opSpecs",
         "../../db/dexie",
@@ -4399,6 +4451,44 @@
       "interfaces": [],
       "types": [
         "FsrsStatePatch"
+      ],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "FSRS spaced-repetition scheduler: session planning and card state updates.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/scheduler/responsePolicy.ts",
+      "ext": ".ts",
+      "bytes": 2293,
+      "lines": 76,
+      "sha1": "c6cc8b0d3f26",
+      "imports": [
+        "../../types/math",
+        "./cardModel"
+      ],
+      "exports": [
+        "DEFAULT_FLUENCY_EASY_MS",
+        "DEFAULT_FLUENCY_HARD_MS",
+        "policyForCard",
+        "policyForItem",
+        "ResponsePolicy",
+        "ResponsePolicyKind"
+      ],
+      "functions": [
+        "policyForCard",
+        "policyForItem",
+        "policyKindForItem"
+      ],
+      "classes": [],
+      "interfaces": [
+        "ResponsePolicy"
+      ],
+      "types": [
+        "ResponsePolicyKind"
       ],
       "components": [],
       "hooks": [],
@@ -5803,16 +5893,19 @@
     {
       "path": "src/tests/answerChecker.test.ts",
       "ext": ".ts",
-      "bytes": 3621,
-      "lines": 98,
-      "sha1": "21962c5b5486",
+      "bytes": 8286,
+      "lines": 190,
+      "sha1": "64225a863424",
       "imports": [
+        "../features/fluency/fluencyEngine",
         "../features/practice/answerChecker",
         "../types/math",
         "vitest"
       ],
       "exports": [],
-      "functions": [],
+      "functions": [
+        "noHint"
+      ],
       "classes": [],
       "interfaces": [],
       "types": [],
@@ -6174,6 +6267,33 @@
       "css_classes": [],
       "json_keys": [],
       "purpose": "Local persistence/database layer.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/fluencyEngine.test.ts",
+      "ext": ".ts",
+      "bytes": 4305,
+      "lines": 89,
+      "sha1": "02e90bebbda5",
+      "imports": [
+        "../features/fluency/fluencyEngine",
+        "../features/learning/learningEvents",
+        "../features/scheduler/responsePolicy",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [
+        "event"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
       "too_large": false,
       "read_error": null
     },
@@ -6643,9 +6763,9 @@
     {
       "path": "src/tests/grade3TwoStepAndPatterns.test.ts",
       "ext": ".ts",
-      "bytes": 10667,
-      "lines": 270,
-      "sha1": "46d3c10b05f6",
+      "bytes": 10909,
+      "lines": 273,
+      "sha1": "23c813755a8c",
       "imports": [
         "../features/curriculum/makeItemFromId",
         "../features/mastery/grade3MasteryMap",
@@ -7219,6 +7339,33 @@
         "item",
         "mapOf",
         "state"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/responsePolicy.test.ts",
+      "ext": ".ts",
+      "bytes": 3400,
+      "lines": 66,
+      "sha1": "038b2503c0ac",
+      "imports": [
+        "../features/scheduler/cardModel",
+        "../features/scheduler/responsePolicy",
+        "../types/math",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [
+        "item"
       ],
       "classes": [],
       "interfaces": [],

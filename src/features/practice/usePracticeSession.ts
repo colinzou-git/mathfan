@@ -302,9 +302,10 @@ export function usePracticeSession(studentId: string) {
 
     const item = prev.currentItem;
     const latencyMs = Date.now() - questionStartRef.current;
-    const result = checkAnswer(item, rawInput, latencyMs);
     const attemptNo = currentAttemptsRef.current + 1;
     currentAttemptsRef.current = attemptNo;
+    const isFirstAttemptAtPresentation = attemptNo === 1;
+    const result = checkAnswer(item, rawInput, latencyMs, { hintUsed: !isFirstAttemptAtPresentation });
     const now = appNow();
     const createdAt = now.toISOString();
 
@@ -314,7 +315,7 @@ export function usePracticeSession(studentId: string) {
     // Only the first attempt at each question presentation updates long-term
     // FSRS scheduling. Retries are logged for stats but don't distort the
     // spaced-repetition schedule.
-    const isFirstAttempt = attemptNo === 1;
+    const isFirstAttempt = isFirstAttemptAtPresentation;
     let updated: StudentItemState;
     if (isFirstAttempt) {
       try {
@@ -405,6 +406,9 @@ export function usePracticeSession(studentId: string) {
         hintUsed: !isFirstAttempt,  // hints are shown automatically after first wrong answer
         latencyMs,
         reviewGrade: result.reviewGrade,
+        ratingReason: result.ratingReason,
+        responsePolicy: result.policyKind,
+        fluencyBand: result.fluencyBand,
         factStatusBefore: existing.masteryLevel,
         factStatusAfter: updated.masteryLevel,
         origin: configRef.current?.origin,

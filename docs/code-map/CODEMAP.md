@@ -1,6 +1,6 @@
 # Code Map Overview
 
-Generated: 2026-07-14 06:52:16 UTC
+Generated: 2026-07-14 07:09:03 UTC
 
 Repo root: `/home/ubuntu/mathfan`  
 Output folder: `/home/ubuntu/mathfan/docs/code-map`
@@ -14,9 +14,9 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 - Package name: `mathfan`
 - Version: `1.2.0`
 - Module type: `module`
-- Scanned files: **231**
-- Scanned lines: **44,808**
-- Scanned bytes: **1,776,735**
+- Scanned files: **235**
+- Scanned lines: **45,377**
+- Scanned bytes: **1,801,540**
 
 ## NPM scripts
 
@@ -98,10 +98,10 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 | src/features/stats/QuizStatsView.tsx | 135 | Progress/statistics screens or calculations. | FactGroup, QuizStatsView, avgSecStr, FactGroup, fmt, QuizStatsView |
 | src/features/stats/TodayAchievementSection.tsx | 125 | Progress/statistics screens or calculations. | AchievementTile, TodayAchievementSection, AchievementTile, TodayAchievementSection |
 | src/features/mastery/skillPracticePlanner.ts | 702 | Grade 3 skill practice planner: maps skill IDs to SessionConfig for the mastery map. | PlanOptions, planPracticeForSkill, add2DigitRegroupingItemIds, add3DigitRegroupingItemIds, arithmeticPatternItemIds, divisionWordItemIds, divItemIds, elapsedTimeItemIds |
-| src/features/goals/GoalEvaluationSession.tsx | 630 | Exports reusable code: GoalEvaluationSession. | GoalEvaluationSession, buildNewLearningCandidates, buildReviewFindings, buildUpdatedState, confirmCancel, continueNext, evaluationArgs, GoalEvaluationSession |
+| src/features/goals/GoalEvaluationSession.tsx | 643 | Exports reusable code: GoalEvaluationSession. | GoalEvaluationSession, buildNewLearningCandidates, buildReviewFindings, buildUpdatedState, confirmCancel, continueNext, evaluationArgs, GoalEvaluationSession |
 | src/features/goals/goalEvaluationEngine.ts | 575 | Exports reusable code: ADAPTIVE_GOAL_EVALUATION_CONFIRMATION_COUNT, ADAPTIVE_GOAL_EVALUATION_HISTORICAL_PRIOR_CAP, ADAPTIVE_GOAL_EVALUATION_QUESTION_COUNT, AdaptiveGoalEvaluationArgs, AdaptiveGoalEvaluationItem. | ADAPTIVE_GOAL_EVALUATION_CONFIRMATION_COUNT, ADAPTIVE_GOAL_EVALUATION_HISTORICAL_PRIOR_CAP, ADAPTIVE_GOAL_EVALUATION_QUESTION_COUNT, AdaptiveGoalEvaluationArgs, AdaptiveGoalEvaluationItem, AdaptiveGoalEvaluationPhase, AdaptiveGoalEvaluationResponse, AdaptiveGoalEvaluationResult |
-| src/features/practice/usePracticeSession.ts | 570 | Local persistence/database layer. | usePracticeSession, CorrectResult, LastSessionSummary, SessionState, usePracticeSession, getStaticItem, usePracticeSession |
-| src/features/diagnosis/DiagnosticSession.tsx | 558 | Exports reusable code: DiagnosticSession. | DiagnosticSession, complete, DiagnosticSession, onKey |
+| src/features/practice/usePracticeSession.ts | 574 | Local persistence/database layer. | usePracticeSession, CorrectResult, LastSessionSummary, SessionState, usePracticeSession, getStaticItem, usePracticeSession |
+| src/features/diagnosis/DiagnosticSession.tsx | 566 | Exports reusable code: DiagnosticSession. | DiagnosticSession, complete, DiagnosticSession, onKey |
 
 ## Repository tree, filtered
 
@@ -182,6 +182,8 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   │   └── DiagnosticSession.tsx
 │   │   ├── export
 │   │   │   └── userDataExport.ts
+│   │   ├── fluency
+│   │   │   └── fluencyEngine.ts
 │   │   ├── goals
 │   │   │   ├── dailyNewGoalLimits.ts
 │   │   │   ├── dailyNewGoalPlanner.ts
@@ -233,6 +235,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   ├── scheduler
 │   │   │   ├── cardModel.ts
 │   │   │   ├── fsrsAdapter.ts
+│   │   │   ├── responsePolicy.ts
 │   │   │   └── scheduler.ts
 │   │   ├── settings
 │   │   │   ├── SettingsPage.tsx
@@ -290,6 +293,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   ├── diagnosticSession.test.tsx
 │   │   ├── driveSyncErrors.test.ts
 │   │   ├── eventRebuild.test.ts
+│   │   ├── fluencyEngine.test.ts
 │   │   ├── fractionItems.test.ts
 │   │   ├── goalDexieSchema.test.ts
 │   │   ├── goalEngine.test.ts
@@ -326,6 +330,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   ├── quizAutoAdvance.test.tsx
 │   │   ├── rangeSelection.test.ts
 │   │   ├── relatedEvidence.test.ts
+│   │   ├── responsePolicy.test.ts
 │   │   ├── rng.test.ts
 │   │   ├── scheduler.test.ts
 │   │   ├── settingsDailyNewLimits.test.tsx

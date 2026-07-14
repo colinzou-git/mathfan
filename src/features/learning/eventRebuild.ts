@@ -16,7 +16,7 @@ import { makeItemFromId } from '../curriculum/makeItemFromId';
 import { detectMistakes } from '../mastery/misconceptionEngine';
 import { deriveMasteryFromEvents } from '../multiplication/masteryEngine';
 import type { MultiplicationFactKey } from '../multiplication/types';
-import { classifyResponse } from '../practice/answerChecker';
+import { legacyClassifyByLatency } from '../practice/answerChecker';
 import type { ReviewGrade } from '../../types/math';
 
 /**
@@ -27,7 +27,7 @@ import type { ReviewGrade } from '../../types/math';
  */
 function gradeFromEvent(event: MathAnswerEvent): ReviewGrade {
   if (event.reviewGrade) return event.reviewGrade;
-  return classifyResponse(event.isCorrect, event.latencyMs);
+  return legacyClassifyByLatency(event.isCorrect, event.latencyMs);
 }
 
 /**

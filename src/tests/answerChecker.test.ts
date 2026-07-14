@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { checkAnswer, classifyResponse } from '../features/practice/answerChecker';
+import { checkAnswer, classifyResponse, legacyClassifyByLatency } from '../features/practice/answerChecker';
+import type { StudentFluencyBaseline } from '../features/fluency/fluencyEngine';
 import type { PracticeItem } from '../types/math';
 
 const item: PracticeItem = {
@@ -86,12 +87,103 @@ describe('checkAnswer — choice/string answers', () => {
   });
 });
 
-describe('classifyResponse', () => {
-  it('wrong → again', () => expect(classifyResponse(false, 1000)).toBe('again'));
-  it('correct fast → easy', () => expect(classifyResponse(true, 1000)).toBe('easy'));
-  it('correct normal → good', () => expect(classifyResponse(true, 2500)).toBe('good'));
-  it('correct slow → hard', () => expect(classifyResponse(true, 5000)).toBe('hard'));
-  // Correct answers are never 'again', regardless of latency — slow-but-correct = 'hard'
-  it('correct very slow → hard (not again)', () => expect(classifyResponse(true, 11000)).toBe('hard'));
-  it('wrong slow → again', () => expect(classifyResponse(false, 11000)).toBe('again'));
+// ── Task-aware classification (issue #27) ──────────────────────────────────────
+
+const mulFact: PracticeItem = { ...item, id: 'MUL_7x8', prompt: '7 × 8', answer: 56 };
+const subItem: PracticeItem = {
+  id: 'SUB_532m174', skillId: 'SKILL_SUB', itemType: 'subtraction_fact',
+  prompt: '532 − 174', answer: 358, tags: [], difficulty: 0.6,
+};
+const elapsedTimeItem: PracticeItem = {
+  id: 'ETIME_3_15_5_0', skillId: 'SKILL_TIME', itemType: 'elapsed_time',
+  prompt: 'Elapsed time?', answer: 105, tags: [], difficulty: 0.5,
+};
+const twoStepItem: PracticeItem = {
+  id: 'WRD2_muls_5_6_10', skillId: 'SKILL_WORD2', itemType: 'word_problem',
+  prompt: 'Two-step word problem', answer: 20, tags: [], difficulty: 0.7,
+};
+
+function noHint(isCorrect: boolean, latencyMs: number, studentFluency?: StudentFluencyBaseline | null) {
+  return { isCorrect, latencyMs, hintUsed: false, studentFluency };
+}
+
+describe('classifyResponse — atomic_fluency (multiplication/division facts)', () => {
+  it('7×8 correct in 900ms with no baseline → good, not easy (unproven fluency)', () => {
+    const r = classifyResponse(mulFact, noHint(true, 900));
+    expect(r.reviewGrade).toBe('good');
+    expect(r.fluencyBand).toBe('fast');
+    expect(r.policyKind).toBe('atomic_fluency');
+  });
+  it('7×8 correct in 3s (expected range) → good', () => {
+    expect(classifyResponse(mulFact, noHint(true, 3000)).reviewGrade).toBe('good');
+  });
+  it('7×8 correct in 8s (slow) → hard, not again', () => {
+    const r = classifyResponse(mulFact, noHint(true, 8000));
+    expect(r.reviewGrade).toBe('hard');
+    expect(r.ratingReason).toBe('slow_fluent_correct');
+  });
+  it('awards easy only with an established personal baseline', () => {
+    const baseline: StudentFluencyBaseline = { cardFamily: 'fact:mul:7x8', sampleCount: 10, medianMs: 1000, p25Ms: 700, p75Ms: 1400 };
+    const r = classifyResponse(mulFact, noHint(true, 500, baseline));
+    expect(r.reviewGrade).toBe('easy');
+    expect(r.ratingReason).toBe('fast_fluent_correct');
+  });
+  it('incorrect always produces again', () => {
+    expect(classifyResponse(mulFact, noHint(false, 1000)).reviewGrade).toBe('again');
+    expect(classifyResponse(mulFact, noHint(false, 1000)).ratingReason).toBe('incorrect');
+  });
+});
+
+describe('classifyResponse — non-atomic policies never use the old universal 4s/1.5s cutoffs', () => {
+  it('three-digit subtraction correct in 30s → good, not hard', () => {
+    const r = classifyResponse(subItem, noHint(true, 30_000));
+    expect(r.reviewGrade).toBe('good');
+    expect(r.policyKind).not.toBe('atomic_fluency');
+  });
+  it('elapsed-time correct in 15s → good', () => {
+    expect(classifyResponse(elapsedTimeItem, noHint(true, 15_000)).reviewGrade).toBe('good');
+    expect(classifyResponse(elapsedTimeItem, noHint(true, 15_000)).policyKind).toBe('visual_interpretation');
+  });
+  it('two-step word problem correct in 40s → good', () => {
+    expect(classifyResponse(twoStepItem, noHint(true, 40_000)).reviewGrade).toBe('good');
+    expect(classifyResponse(twoStepItem, noHint(true, 40_000)).policyKind).toBe('multi_step');
+  });
+  it('incorrect on a non-atomic policy still produces again', () => {
+    expect(classifyResponse(subItem, noHint(false, 30_000)).reviewGrade).toBe('again');
+  });
+});
+
+describe('classifyResponse — supported/retry answers are non-scheduling evidence', () => {
+  it('a hinted correct answer stays direct evidence but is not scheduling-eligible', () => {
+    const r = classifyResponse(mulFact, { isCorrect: true, latencyMs: 1000, hintUsed: true });
+    expect(r.isCorrect).toBe(true);
+    expect(r.schedulingEligible).toBe(false);
+    expect(r.ratingReason).toBe('supported_correct');
+  });
+  it('an unhinted correct answer is scheduling-eligible', () => {
+    expect(classifyResponse(mulFact, noHint(true, 1000)).schedulingEligible).toBe(true);
+  });
+});
+
+describe('checkAnswer — carries the full response evidence', () => {
+  it('exposes ratingReason, fluencyBand, policyKind, and schedulingEligible', () => {
+    const r = checkAnswer(mulFact, '56', 900);
+    expect(r.ratingReason).toBeDefined();
+    expect(r.fluencyBand).toBeDefined();
+    expect(r.policyKind).toBe('atomic_fluency');
+    expect(r.schedulingEligible).toBe(true);
+  });
+  it('passes hintUsed through to a non-scheduling-eligible grade', () => {
+    const r = checkAnswer(mulFact, '56', 900, { hintUsed: true });
+    expect(r.schedulingEligible).toBe(false);
+  });
+});
+
+describe('legacyClassifyByLatency — exact pre-#27 behavior, for historical event replay only', () => {
+  it('wrong → again', () => expect(legacyClassifyByLatency(false, 1000)).toBe('again'));
+  it('correct fast → easy', () => expect(legacyClassifyByLatency(true, 1000)).toBe('easy'));
+  it('correct normal → good', () => expect(legacyClassifyByLatency(true, 2500)).toBe('good'));
+  it('correct slow → hard', () => expect(legacyClassifyByLatency(true, 5000)).toBe('hard'));
+  it('correct very slow → hard (not again)', () => expect(legacyClassifyByLatency(true, 11000)).toBe('hard'));
+  it('wrong slow → again', () => expect(legacyClassifyByLatency(false, 11000)).toBe('again'));
 });

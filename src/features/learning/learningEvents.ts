@@ -51,6 +51,17 @@ export interface MathAnswerEvent {
   itemInstanceId?: string;
   /** Coarse structural schema of the item, for analytics and question variety. */
   schemaId?: string;
+  /**
+   * Why this event's reviewGrade was assigned — see RatingReason in
+   * features/practice/answerChecker. Kept as an inline literal union (not
+   * imported) to avoid a dependency cycle through fluencyEngine.
+   */
+  ratingReason?: 'incorrect' | 'independent_correct' | 'fast_fluent_correct' | 'slow_fluent_correct'
+    | 'supported_correct' | 'same_session_repeat' | 'not_scheduling_eligible';
+  /** Task-complexity policy applied — see ResponsePolicyKind in features/scheduler/responsePolicy. */
+  responsePolicy?: 'atomic_fluency' | 'procedural' | 'conceptual' | 'multi_step' | 'visual_interpretation';
+  /** Speed classification — see FluencyBand in features/fluency/fluencyEngine. Only meaningful for atomic_fluency cards. */
+  fluencyBand?: 'fast' | 'expected' | 'slow' | 'not_applicable';
   createdAt: string;
 }
 

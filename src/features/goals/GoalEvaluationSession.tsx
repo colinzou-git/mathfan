@@ -8,7 +8,9 @@ import type { MathAnswerEvent } from '../learning/learningEvents';
 import { GRADE3_MASTERY_MAP, getGrade3Skill } from '../mastery/grade3MasteryMap';
 import { inferGrade3SkillId } from '../mastery/skillMapping';
 import { planPracticeForSkill } from '../mastery/skillPracticePlanner';
-import { checkAnswer } from '../practice/answerChecker';
+import { checkAnswer, type RatingReason } from '../practice/answerChecker';
+import type { ResponsePolicyKind } from '../scheduler/responsePolicy';
+import type { FluencyBand } from '../fluency/fluencyEngine';
 import { QuestionRenderer } from '../practice/QuestionRenderer';
 import { applyReview, createInitialState } from '../scheduler/scheduler';
 import { deriveCardKey } from '../scheduler/cardModel';
@@ -50,6 +52,9 @@ interface PendingWrite {
   studentAnswer: string | number;
   isCorrect: boolean;
   reviewGrade: ReviewGrade;
+  ratingReason: RatingReason;
+  responsePolicy: ResponsePolicyKind;
+  fluencyBand: FluencyBand;
   item: PracticeItem;
   skillId: string;
 }
@@ -287,6 +292,8 @@ export function GoalEvaluationSession({ studentId, onCancel, onReturnToGoals, on
         studentId,
         sessionId: evaluation.id,
         itemId: pending.item.id,
+        cardKey: updatedState.cardKey,
+        schemaId: pending.item.schemaId,
         mode: 'goal_evaluation',
         promptShown: pending.item.prompt,
         correctAnswer: pending.item.answer,
@@ -295,6 +302,9 @@ export function GoalEvaluationSession({ studentId, onCancel, onReturnToGoals, on
         isRetry: false,
         hintUsed: false,
         latencyMs: pending.latencyMs,
+        ratingReason: pending.ratingReason,
+        responsePolicy: pending.responsePolicy,
+        fluencyBand: pending.fluencyBand,
         reviewGrade: pending.reviewGrade,
         factStatusBefore: existing?.masteryLevel ?? 'new',
         factStatusAfter: updatedState.masteryLevel,
@@ -387,6 +397,9 @@ export function GoalEvaluationSession({ studentId, onCancel, onReturnToGoals, on
       studentAnswer: checked.studentAnswer,
       isCorrect: checked.isCorrect,
       reviewGrade: checked.reviewGrade,
+      ratingReason: checked.ratingReason,
+      responsePolicy: checked.policyKind,
+      fluencyBand: checked.fluencyBand,
       item: currentItem,
       skillId: selection.skillId,
     };
