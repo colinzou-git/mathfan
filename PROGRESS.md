@@ -42,7 +42,7 @@ Capstone. Depends on nearly everything above (#25-#29, #30-#34, #35).
 | # | Title | Branch | Status |
 |---|-------|--------|--------|
 | 25 | Learner identity + restore-first setup | A | done (commit 7c8159a on feature/learner-identity-fsrs-core, pushed) |
-| 26 | Hybrid FSRS card model + migration | A | not started |
+| 26 | Hybrid FSRS card model + migration | A | done (commit fe5b5d8 on feature/learner-identity-fsrs-core, pushed) |
 | 27 | Task-aware FSRS ratings | A | not started |
 | 28 | One scheduling update per card/session | A | not started |
 | 30 | Area & perimeter redesign | B | not started |
@@ -56,13 +56,15 @@ Capstone. Depends on nearly everything above (#25-#29, #30-#34, #35).
 
 ## Current focus
 
-**Active branch:** `feature/learner-identity-fsrs-core` (created from main, pushed, 1 commit so far)
-**Active issue:** #26 — hybrid atomic-fact/template FSRS cards + event-replay migration
-**Next concrete step:** Read `src/features/scheduler/`, `src/types/math.ts` (`StudentItemState`,
-`PracticeItem`), `src/db/repositories.ts` (`itemStateRepo`), `src/features/learning/eventRebuild.ts`,
-`src/features/adaptive/adaptiveItemSelector.ts`, `src/features/practice/usePracticeSession.ts` in full
-(via `gh issue view 26` for the complete spec), then create `src/features/scheduler/cardModel.ts`.
-`npm run ci` was green as of commit 7c8159a; re-baseline before starting new work if resuming.
+**Active branch:** `feature/learner-identity-fsrs-core` (created from main, pushed, 2 commits so far)
+**Active issue:** #27 — task-aware FSRS ratings, separate fluency from correctness
+**Next concrete step:** Read `src/features/practice/answerChecker.ts` (`checkAnswer`, `classifyResponse`)
+in full, `src/features/practice/usePracticeSession.ts` `submitAnswer()`, and `gh issue view 27` for the
+complete spec. Create `src/features/scheduler/responsePolicy.ts` (policy registry) and
+`src/features/fluency/fluencyEngine.ts` (student-relative baselines), then refactor `classifyResponse`
+to return structured `ResponseEvidence` and thread `LearningCardDescriptor`/policy kind through
+`checkAnswer()`'s callers. `npm run ci` was green as of commit fe5b5d8; re-baseline before starting new
+work if resuming.
 
 ## Known gaps / follow-ups (not blocking, revisit if time allows)
 
@@ -70,6 +72,18 @@ Capstone. Depends on nearly everything above (#25-#29, #30-#34, #35).
   restore scenario and a same-name separate-learner scenario. Not done — `npm run ci` does not run the
   Python E2E suite, so this did not block the merge bar, but it's a real coverage gap worth closing
   later, ideally alongside #26/#29's own E2E requirements.
+- #26 scoping decision: only multiplication and division facts became true `atomic_fact` cards this
+  round (canonical commutative folding for MUL, separate non-canonicalized DIV). Every other item type
+  (ADD, SUB, AREA_*, WORD_*, PERIM_*, fractions, measurement, etc.) got a degenerate 1:1 `template:<itemId>`
+  card — same granularity as before, just rekeyed — because the issue's own text defers real template
+  generators to the curriculum-redesign issues (#30-#34): "The first implementation should support the
+  Grade 3 templates introduced by the curriculum issues." When implementing #30-#34, register real
+  template generators in `src/features/curriculum/templateRegistry.ts` (referenced but not yet created)
+  and give those item types real multi-instance template cardKeys instead of the 1:1 fallback — that is
+  the intended second half of #26's card model, not a bug to fix in #27/#28.
+- #26's `LearningCardDescriptor.gradeLevel` defaults to 3 when `PracticeItem.gradeLevel` is absent (which
+  is always, today — no generator sets it yet). Harmless while the app is Grade-3-only; revisit if/when
+  Grade 4-5 content is added.
 
 ## Resume protocol for each /loop wake-up
 
