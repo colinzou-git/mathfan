@@ -51,6 +51,10 @@ export interface MathAnswerEvent {
   itemInstanceId?: string;
   /** Coarse structural schema of the item, for analytics and question variety. */
   schemaId?: string;
+  /** 1-based count of how many times this card has been presented so far in the session — see SessionSchedulingGuard. */
+  presentationIndex?: number;
+  /** False when this presentation could not update long-term FSRS state — see SessionSchedulingGuard (issue #28). */
+  schedulingEligible?: boolean;
   /**
    * Why this event's reviewGrade was assigned — see RatingReason in
    * features/practice/answerChecker. Kept as an inline literal union (not

@@ -400,3 +400,64 @@ describe('usePracticeSession — adaptive selection', () => {
     expect(cur!.factA === 8 && cur!.factB === 7).toBe(true);
   });
 });
+
+// ── Issue #28: one long-term scheduling update per card per session ───────────
+
+describe('usePracticeSession — one scheduling update per card per session', () => {
+  it('a card presented more than once in a session (pool smaller than sessionLength cycles) schedules only once', async () => {
+    const { result } = renderHook(() => usePracticeSession(STUDENT_ID));
+    await act(async () => {
+      // A single-item pool with sessionLength 3 forces selectAdaptiveItems to
+      // cycle the same card to fill the queue.
+      await result.current.startSession({
+        mode: 'area',
+        sessionLength: 3,
+        specificItemIds: ['AREA_RECT_3x4'],
+      });
+    });
+    expect(result.current.state.totalPlanned).toBe(3);
+
+    for (let i = 0; i < 3; i++) {
+      const cur = result.current.state.currentItem!;
+      expect(cur.id).toBe('AREA_RECT_3x4');
+      await act(async () => { await result.current.submitAnswer(String(cur.answer)); });
+      await act(async () => { await result.current.nextQuestion(); });
+    }
+
+    const calls = vi.mocked(recordPracticeAnswer).mock.calls;
+    expect(calls).toHaveLength(3);
+
+    // Only the first presentation actually schedules (updatedState written).
+    expect(calls[0][0].updatedState).toBeDefined();
+    expect(calls[1][0].updatedState).toBeUndefined();
+    expect(calls[2][0].updatedState).toBeUndefined();
+
+    // The repeats are recorded as direct evidence, explicitly marked non-scheduling.
+    expect(calls[0][0].event.schedulingEligible).toBe(true);
+    expect(calls[1][0].event.schedulingEligible).toBe(false);
+    expect(calls[1][0].event.ratingReason).toBe('same_session_repeat');
+    expect(calls[2][0].event.schedulingEligible).toBe(false);
+    expect(calls[2][0].event.ratingReason).toBe('same_session_repeat');
+
+    // presentationIndex increments across repeats of the same card.
+    expect(calls[0][0].event.presentationIndex).toBe(1);
+    expect(calls[1][0].event.presentationIndex).toBe(2);
+    expect(calls[2][0].event.presentationIndex).toBe(3);
+  });
+
+  it('a wrong retry within one presentation is still marked isRetry and does not schedule', async () => {
+    const { result } = renderHook(() => usePracticeSession(STUDENT_ID));
+    await act(async () => {
+      await result.current.startSession(SESSION_CONFIG);
+    });
+
+    await act(async () => { await result.current.submitAnswer('wrong'); }); // wrong first attempt
+    await act(async () => { await result.current.submitAnswer('56'); }); // correct retry
+
+    const calls = vi.mocked(recordPracticeAnswer).mock.calls;
+    expect(calls[0][0].event.isRetry).toBe(false);
+    expect(calls[0][0].updatedState).toBeDefined();
+    expect(calls[1][0].event.isRetry).toBe(true);
+    expect(calls[1][0].updatedState).toBeUndefined();
+  });
+});

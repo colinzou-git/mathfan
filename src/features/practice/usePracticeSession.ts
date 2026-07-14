@@ -6,6 +6,8 @@ import { checkAnswer } from './answerChecker';
 import { classifyAttempts } from './metrics';
 import { applyReview, createInitialState, planSession, planTableSession } from '../scheduler/scheduler';
 import { deriveCardKey, stateForItem } from '../scheduler/cardModel';
+import { createSessionSchedulingGuard } from '../scheduler/sessionSchedulingGuard';
+import { buildDailyReviewQueue } from '../scheduler/dailyReviewQueue';
 import {
   generateSingleTableItems, generateMultipleTablesItems, generateMultiplicationRangeItems,
   ALL_ITEMS, ITEM_MAP,
@@ -29,7 +31,7 @@ import { selectAdaptiveItems } from '../adaptive/adaptiveItemSelector';
 import { enrichRelatedMetadata } from '../adaptive/relatedItemMapping';
 import { buildWordProblemCandidates, buildFactorCandidates } from '../adaptive/candidatePools';
 import { allMeasurementItemIds, allDataItemIds } from '../../components/opSpecs';
-import { mulberry32, randomSeed, shuffled } from '../../utils/rng';
+import { mulberry32, randomSeed } from '../../utils/rng';
 import type { PracticeItem as PItem } from '../../types/math';
 
 // ── Public types ──────────────────────────────────────────────────────────────
@@ -119,6 +121,12 @@ export function usePracticeSession(studentId: string) {
   const currentAttemptsRef = useRef<number>(0);
   // Holds dynamically generated items (arithmetic/fractions) not in the static ITEM_MAP
   const dynamicItemsRef = useRef<Map<string, PItem>>(new Map());
+  // Enforces "at most one long-term scheduling update per card per session" (issue #28) —
+  // a card may be presented more than once, but only its first scheduling-eligible
+  // presentation may update FSRS state.
+  const schedulingGuardRef = useRef(createSessionSchedulingGuard());
+  // 1-based count of how many times the *current* item's card has been presented so far.
+  const currentPresentationIndexRef = useRef<number>(1);
 
   const resolveItem = useCallback((id: string): PItem => {
     return dynamicItemsRef.current.get(id) ?? getStaticItem(id);
@@ -130,6 +138,7 @@ export function usePracticeSession(studentId: string) {
     configRef.current = config;
     const now = appNow();
     sessionStartRef.current = Date.now();
+    schedulingGuardRef.current.reset();
 
     const allStates = await itemStateRepo.getForStudent(studentId);
     const stateMap = new Map(allStates.map(s => [s.cardKey, s]));
@@ -185,15 +194,24 @@ export function usePracticeSession(studentId: string) {
         if (ITEM_MAP.has(id) || dynamicItemsRef.current.has(id)) validIds.push(id);
       }
       if (mode === 'daily_review') {
-        // Today Plan / due-review: every listed item is already due, so keep them
-        // all — just shuffled and repeated to fill the session. Never demote a
-        // due review item below an adaptive score.
-        const order = shuffled(validIds, rng);
-        queue = [];
-        while (queue.length < sessionLength && order.length > 0) {
-          for (const id of order) {
-            if (queue.length >= sessionLength) break;
-            queue.push(id);
+        // Today Plan / due-review: include every due card at most once (issue #28)
+        // — never repeat a due card just to fill sessionLength. Backfills with
+        // other distinct eligible cards from the student's history when the
+        // requested set is smaller than sessionLength; returns a shorter queue
+        // rather than a repeat when no distinct backfill exists.
+        queue = buildDailyReviewQueue({
+          requestedItemIds: validIds,
+          states: stateMap,
+          sessionLength,
+          now,
+          rng,
+        });
+        // Backfill candidates may come from outside the original specificItemIds —
+        // register any not already known so resolveItem() can find them.
+        for (const id of queue) {
+          if (!ITEM_MAP.has(id) && !dynamicItemsRef.current.has(id)) {
+            const backfillItem = makeItemFromId(id);
+            if (backfillItem) dynamicItemsRef.current.set(id, backfillItem);
           }
         }
       } else {
@@ -283,6 +301,7 @@ export function usePracticeSession(studentId: string) {
     const first = resolveItem(queueRef.current.shift()!);
     questionStartRef.current = Date.now();
     currentAttemptsRef.current = 0;
+    currentPresentationIndexRef.current = schedulingGuardRef.current.presentationStarted(deriveCardKey(first));
     const s = {
       ...INITIAL, phase: 'active' as const,
       currentItem: first,
@@ -312,12 +331,16 @@ export function usePracticeSession(studentId: string) {
     const cardKey = deriveCardKey(item);
     const existing = stateForItem(item, statesRef.current) ?? createInitialState(studentId, item);
 
-    // Only the first attempt at each question presentation updates long-term
-    // FSRS scheduling. Retries are logged for stats but don't distort the
-    // spaced-repetition schedule.
-    const isFirstAttempt = isFirstAttemptAtPresentation;
+    // Presentation-first-attempt (stats: first-try accuracy, misconceptions, retry
+    // classification) is distinct from scheduling-first-attempt (issue #28): a card
+    // may be presented more than once in a session (e.g. daily-review backfill), but
+    // only its first scheduling-eligible presentation may update long-term FSRS state.
+    const isFirstSchedulingAttemptInSession = schedulingGuardRef.current.canSchedule(cardKey, attemptNo);
     let updated: StudentItemState;
-    if (isFirstAttempt) {
+    if (isFirstSchedulingAttemptInSession) {
+      // Reserve synchronously, before the async write below, so a rapid double-submit
+      // cannot schedule the same card twice while the first write is still in flight.
+      schedulingGuardRef.current.markScheduled(cardKey);
       try {
         updated = applyReview(existing, result.reviewGrade, latencyMs, rawInput, now, { isCorrect: result.isCorrect });
       } catch (err) {
@@ -332,7 +355,7 @@ export function usePracticeSession(studentId: string) {
     }
 
     // On first wrong attempt, detect misconception patterns and merge into state.
-    if (isFirstAttempt && !result.isCorrect) {
+    if (isFirstAttemptAtPresentation && !result.isCorrect) {
       const newTags = detectMistakes(item, result.studentAnswer);
       if (newTags.length > 0) {
         const merged = Array.from(new Set([...(updated.mistakePatterns ?? []), ...newTags]));
@@ -341,7 +364,7 @@ export function usePracticeSession(studentId: string) {
     }
 
     // Mutate refs before setState — safe because this is a plain event handler, not an updater.
-    if (isFirstAttempt) {
+    if (isFirstAttemptAtPresentation) {
       statesRef.current.set(cardKey, updated);
     }
 
@@ -349,7 +372,7 @@ export function usePracticeSession(studentId: string) {
     // FSRS nudge to the calculation facts it embeds. Reinforce-only and FSRS-only
     // (no attempt log, no accuracy/speed change) — see adaptive/relatedEvidence.
     let relatedEvidence: RelatedEvidenceWrite[] | undefined;
-    if (isFirstAttempt && result.isCorrect) {
+    if (isFirstAttemptAtPresentation && result.isCorrect) {
       const updates = computeRelatedEvidence(item, statesRef.current, now);
       if (updates.length > 0) {
         relatedEvidence = updates.map(u => {
@@ -389,6 +412,12 @@ export function usePracticeSession(studentId: string) {
       }
     }
 
+    // A same-session repeat presentation's first attempt looks like a fresh
+    // attempt locally, but the card already updated FSRS state earlier this
+    // session — record why scheduling was skipped instead of misreporting it.
+    const isSameSessionRepeat = isFirstAttemptAtPresentation && !isFirstSchedulingAttemptInSession;
+    const eventRatingReason = isSameSessionRepeat ? 'same_session_repeat' : result.ratingReason;
+
     const payload: PracticeAnswerPayload = {
       event: {
         id: generateId(),
@@ -397,16 +426,18 @@ export function usePracticeSession(studentId: string) {
         itemId: item.id,
         cardKey,
         schemaId: item.schemaId,
+        presentationIndex: currentPresentationIndexRef.current,
+        schedulingEligible: isFirstSchedulingAttemptInSession,
         mode: 'practice',
         promptShown: item.prompt,
         correctAnswer: item.answer,
         studentAnswer: result.studentAnswer,
         isCorrect: result.isCorrect,
-        isRetry: !isFirstAttempt,
-        hintUsed: !isFirstAttempt,  // hints are shown automatically after first wrong answer
+        isRetry: !isFirstAttemptAtPresentation,
+        hintUsed: !isFirstAttemptAtPresentation,  // hints are shown automatically after first wrong answer
         latencyMs,
         reviewGrade: result.reviewGrade,
-        ratingReason: result.ratingReason,
+        ratingReason: eventRatingReason,
         responsePolicy: result.policyKind,
         fluencyBand: result.fluencyBand,
         factStatusBefore: existing.masteryLevel,
@@ -419,8 +450,9 @@ export function usePracticeSession(studentId: string) {
         goalLearningKind: configRef.current?.goalLearningKind,
         createdAt,
       },
-      // Retries do not change FSRS state — pass undefined to skip the itemStates write.
-      updatedState: isFirstAttempt ? updated : undefined,
+      // Same-session repeats and mid-presentation retries do not change FSRS
+      // state — pass undefined to skip the itemStates write.
+      updatedState: isFirstSchedulingAttemptInSession ? updated : undefined,
       relatedEvidence,
       attempt: {
         id: generateId(),
@@ -495,6 +527,10 @@ export function usePracticeSession(studentId: string) {
         await recordPracticeAnswer(payload);
       } catch (retryErr) {
         console.error('[usePracticeSession] event write failed after retry; event lost:', retryErr);
+        // Release the scheduling reservation so a later presentation of this
+        // card in the same session can still schedule it, since this write
+        // never actually persisted.
+        if (isFirstSchedulingAttemptInSession) schedulingGuardRef.current.releaseScheduled(cardKey);
       }
     }
   }, [studentId]);
@@ -540,10 +576,12 @@ export function usePracticeSession(studentId: string) {
     } else {
       questionStartRef.current = Date.now();
       currentAttemptsRef.current = 0;
+      const nextItem = resolveItem(nextId);
+      currentPresentationIndexRef.current = schedulingGuardRef.current.presentationStarted(deriveCardKey(nextItem));
       nextState = {
         ...prev,
         phase: 'active',
-        currentItem: resolveItem(nextId),
+        currentItem: nextItem,
         retryKey: 0,
         errorText: null,
         correctResult: null,
@@ -559,6 +597,7 @@ export function usePracticeSession(studentId: string) {
   const resetSession = useCallback(() => {
     queueRef.current = [];
     configRef.current = null;
+    schedulingGuardRef.current.reset();
     stateRef.current = INITIAL;
     setState(INITIAL);
   }, []);

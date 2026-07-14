@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-14T07:09:03.885460+00:00",
+  "generated_at": "2026-07-14T07:26:57.251633+00:00",
   "repo_root": "/home/ubuntu/mathfan",
   "package": {
     "name": "mathfan",
@@ -421,9 +421,9 @@
     {
       "path": "PROGRESS.md",
       "ext": ".md",
-      "bytes": 6488,
-      "lines": 97,
-      "sha1": "6c7dc0cef1bb",
+      "bytes": 6906,
+      "lines": 101,
+      "sha1": "b484388d7757",
       "imports": [],
       "exports": [],
       "functions": [],
@@ -3236,9 +3236,9 @@
     {
       "path": "src/features/learning/learningEvents.ts",
       "ext": ".ts",
-      "bytes": 4220,
-      "lines": 101,
-      "sha1": "c616b72d396b",
+      "bytes": 4526,
+      "lines": 105,
+      "sha1": "10302e5bde61",
       "imports": [
         "../../db/dexie",
         "../../types/math",
@@ -4255,9 +4255,9 @@
     {
       "path": "src/features/practice/usePracticeSession.ts",
       "ext": ".ts",
-      "bytes": 24651,
-      "lines": 574,
-      "sha1": "fc8ac9e3a5e6",
+      "bytes": 27504,
+      "lines": 613,
+      "sha1": "9dc9056df34c",
       "imports": [
         "../../components/opSpecs",
         "../../db/dexie",
@@ -4278,7 +4278,9 @@
         "../learning/recordAnswer",
         "../mastery/misconceptionEngine",
         "../scheduler/cardModel",
+        "../scheduler/dailyReviewQueue",
         "../scheduler/scheduler",
+        "../scheduler/sessionSchedulingGuard",
         "../time/clock",
         "./answerChecker",
         "./metrics",
@@ -4430,6 +4432,39 @@
       "read_error": null
     },
     {
+      "path": "src/features/scheduler/dailyReviewQueue.ts",
+      "ext": ".ts",
+      "bytes": 2907,
+      "lines": 74,
+      "sha1": "2649217a6c1b",
+      "imports": [
+        "../../types/math",
+        "../../utils/rng",
+        "../curriculum/makeItemFromId",
+        "./cardModel"
+      ],
+      "exports": [
+        "buildDailyReviewQueue",
+        "DailyReviewQueueArgs"
+      ],
+      "functions": [
+        "buildDailyReviewQueue",
+        "isDueNow"
+      ],
+      "classes": [],
+      "interfaces": [
+        "DailyReviewQueueArgs"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "FSRS spaced-repetition scheduler: session planning and card state updates.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/features/scheduler/fsrsAdapter.ts",
       "ext": ".ts",
       "bytes": 4144,
@@ -4538,6 +4573,33 @@
       "interfaces": [
         "ApplyReviewOptions",
         "SessionPlan"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "FSRS spaced-repetition scheduler: session planning and card state updates.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/scheduler/sessionSchedulingGuard.ts",
+      "ext": ".ts",
+      "bytes": 2057,
+      "lines": 51,
+      "sha1": "2c8001053b44",
+      "imports": [],
+      "exports": [
+        "createSessionSchedulingGuard",
+        "SessionSchedulingGuard"
+      ],
+      "functions": [
+        "createSessionSchedulingGuard"
+      ],
+      "classes": [],
+      "interfaces": [
+        "SessionSchedulingGuard"
       ],
       "types": [],
       "components": [],
@@ -6143,6 +6205,34 @@
       "read_error": null
     },
     {
+      "path": "src/tests/dailyReviewQueue.test.ts",
+      "ext": ".ts",
+      "bytes": 3935,
+      "lines": 123,
+      "sha1": "c4317ed9963d",
+      "imports": [
+        "../features/scheduler/cardModel",
+        "../features/scheduler/dailyReviewQueue",
+        "../types/math",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [
+        "rng",
+        "state"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/tests/describeItem.test.ts",
       "ext": ".ts",
       "bytes": 4493,
@@ -7160,9 +7250,9 @@
     {
       "path": "src/tests/practiceSession.test.ts",
       "ext": ".ts",
-      "bytes": 15892,
-      "lines": 403,
-      "sha1": "a2a7e79a7251",
+      "bytes": 18692,
+      "lines": 464,
+      "sha1": "bdd0f270e51d",
       "imports": [
         "../db/repositories",
         "../features/curriculum/makeItemFromId",
@@ -7427,6 +7517,29 @@
       "css_classes": [],
       "json_keys": [],
       "purpose": "FSRS spaced-repetition scheduler: session planning and card state updates.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/sessionSchedulingGuard.test.ts",
+      "ext": ".ts",
+      "bytes": 2442,
+      "lines": 62,
+      "sha1": "43a2c9bf1525",
+      "imports": [
+        "../features/scheduler/sessionSchedulingGuard",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
       "too_large": false,
       "read_error": null
     },

@@ -4,7 +4,7 @@
 
 | Package | Import count |
 | --- | --- |
-| vitest | 71 |
+| vitest | 73 |
 | react | 35 |
 | @testing-library/react | 14 |
 | pathlib | 8 |
@@ -402,7 +402,9 @@
 | src/features/practice/usePracticeSession.ts | ../learning/recordAnswer |
 | src/features/practice/usePracticeSession.ts | ../mastery/misconceptionEngine |
 | src/features/practice/usePracticeSession.ts | ../scheduler/cardModel |
+| src/features/practice/usePracticeSession.ts | ../scheduler/dailyReviewQueue |
 | src/features/practice/usePracticeSession.ts | ../scheduler/scheduler |
+| src/features/practice/usePracticeSession.ts | ../scheduler/sessionSchedulingGuard |
 | src/features/practice/usePracticeSession.ts | ../time/clock |
 | src/features/practice/usePracticeSession.ts | ./answerChecker |
 | src/features/practice/usePracticeSession.ts | ./metrics |
@@ -410,6 +412,10 @@
 | src/features/profile/profileBootstrap.ts | ../../types/math |
 | src/features/scheduler/cardModel.ts | ../../types/math |
 | src/features/scheduler/cardModel.ts | ../learning/learningEvents |
+| src/features/scheduler/dailyReviewQueue.ts | ../../types/math |
+| src/features/scheduler/dailyReviewQueue.ts | ../../utils/rng |
+| src/features/scheduler/dailyReviewQueue.ts | ../curriculum/makeItemFromId |
+| src/features/scheduler/dailyReviewQueue.ts | ./cardModel |
 | src/features/scheduler/fsrsAdapter.ts | ../../types/math |
 | src/features/scheduler/responsePolicy.ts | ../../types/math |
 | src/features/scheduler/responsePolicy.ts | ./cardModel |
@@ -550,6 +556,9 @@
 | src/tests/dailyNewGoalPlanner.test.ts | ../features/mastery/skillPracticePlanner |
 | src/tests/dailyNewGoalPlanner.test.ts | ../features/scheduler/cardModel |
 | src/tests/dailyNewGoalPlanner.test.ts | ../types/math |
+| src/tests/dailyReviewQueue.test.ts | ../features/scheduler/cardModel |
+| src/tests/dailyReviewQueue.test.ts | ../features/scheduler/dailyReviewQueue |
+| src/tests/dailyReviewQueue.test.ts | ../types/math |
 | src/tests/describeItem.test.ts | ../features/curriculum/describeItem |
 | src/tests/diagnosticPlanner.test.ts | ../features/diagnosis/diagnosticPlanner |
 | src/tests/diagnosticPlanner.test.ts | ../features/practice/answerChecker |
@@ -717,6 +726,7 @@
 | src/tests/scheduler.test.ts | ../features/scheduler/cardModel |
 | src/tests/scheduler.test.ts | ../features/scheduler/scheduler |
 | src/tests/scheduler.test.ts | ../types/math |
+| src/tests/sessionSchedulingGuard.test.ts | ../features/scheduler/sessionSchedulingGuard |
 | src/tests/settingsDailyNewLimits.test.tsx | ../features/settings/SettingsPage |
 | src/tests/settingsDailyNewLimits.test.tsx | ../types/math |
 | src/tests/settingsExportUserData.test.tsx | ../features/export/userDataExport |
