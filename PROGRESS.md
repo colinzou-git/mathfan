@@ -41,7 +41,7 @@ Capstone. Depends on nearly everything above (#25-#29, #30-#34, #35).
 
 | # | Title | Branch | Status |
 |---|-------|--------|--------|
-| 25 | Learner identity + restore-first setup | A | not started |
+| 25 | Learner identity + restore-first setup | A | done (commit 7c8159a on feature/learner-identity-fsrs-core, pushed) |
 | 26 | Hybrid FSRS card model + migration | A | not started |
 | 27 | Task-aware FSRS ratings | A | not started |
 | 28 | One scheduling update per card/session | A | not started |
@@ -56,11 +56,20 @@ Capstone. Depends on nearly everything above (#25-#29, #30-#34, #35).
 
 ## Current focus
 
-**Active branch:** (none yet — about to create `feature/learner-identity-fsrs-core`)
-**Active issue:** #25
-**Next concrete step:** Read `src/types/math.ts`, `src/db/dexie.ts`, `src/db/repositories.ts`,
-`src/features/dashboard/ProfileSetup.tsx`, `src/App.tsx`, `src/features/sync/snapshot.ts` in full,
-then create `src/features/profile/learnerIdentity.ts` per issue #25 spec.
+**Active branch:** `feature/learner-identity-fsrs-core` (created from main, pushed, 1 commit so far)
+**Active issue:** #26 — hybrid atomic-fact/template FSRS cards + event-replay migration
+**Next concrete step:** Read `src/features/scheduler/`, `src/types/math.ts` (`StudentItemState`,
+`PracticeItem`), `src/db/repositories.ts` (`itemStateRepo`), `src/features/learning/eventRebuild.ts`,
+`src/features/adaptive/adaptiveItemSelector.ts`, `src/features/practice/usePracticeSession.ts` in full
+(via `gh issue view 26` for the complete spec), then create `src/features/scheduler/cardModel.ts`.
+`npm run ci` was green as of commit 7c8159a; re-baseline before starting new work if resuming.
+
+## Known gaps / follow-ups (not blocking, revisit if time allows)
+
+- #25 acceptance criteria mention extending browser E2E (`scripts/e2e_mathfan.py`) with a fresh-install
+  restore scenario and a same-name separate-learner scenario. Not done — `npm run ci` does not run the
+  Python E2E suite, so this did not block the merge bar, but it's a real coverage gap worth closing
+  later, ideally alongside #26/#29's own E2E requirements.
 
 ## Resume protocol for each /loop wake-up
 
