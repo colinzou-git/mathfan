@@ -47,6 +47,9 @@ export function inferGrade3SkillId(item: PracticeItem): string | null {
 
   // ── Addition regrouping ───────────────────────────────────────────────────
   if (itemType === 'addition_fact') {
+    if (item.arithmeticSpec && item.arithmeticSpec.structure.regrouping !== 'none') {
+      return item.arithmeticSpec.structure.digits === 3 ? 'g3-add-3digit-regrouping' : 'g3-add-2digit-regrouping';
+    }
     const a = factA ?? 0;
     const b = factB ?? 0;
     if (a >= 10 && a <= 99 && b >= 10 && b <= 99 && (a % 10) + (b % 10) >= 10) {
@@ -62,6 +65,12 @@ export function inferGrade3SkillId(item: PracticeItem): string | null {
 
   // ── Subtraction regrouping ────────────────────────────────────────────────
   if (itemType === 'subtraction_fact') {
+    if (item.arithmeticSpec && (item.arithmeticSpec.structure.regrouping === 'across_zero' || item.arithmeticSpec.structure.regrouping === 'multiple_zeroes')) {
+      return 'g3-sub-across-zero';
+    }
+    if (item.arithmeticSpec && item.arithmeticSpec.structure.regrouping !== 'none') {
+      return item.arithmeticSpec.structure.digits === 3 ? 'g3-sub-3digit-regrouping' : 'g3-sub-2digit-regrouping';
+    }
     // makeSubtractionItem always sets factA = minuend (larger), factB = subtrahend (smaller)
     const a = factA ?? 0;
     const b = factB ?? 0;

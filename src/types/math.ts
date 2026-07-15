@@ -1,5 +1,6 @@
 import type { VisualSpec } from '../features/visuals/types';
 import type { FractionQuestionSpec } from '../features/fractions/types';
+import type { ArithmeticQuestionSpec } from '../features/curriculum/regrouping';
 
 export type GradeLevel = 3 | 4 | 5;
 export type ReviewGrade = 'again' | 'hard' | 'good' | 'easy';
@@ -162,6 +163,8 @@ export interface PracticeItem {
   reasoningSpec?: PerimeterReasoningSpec;
   /** Structured fraction quantities and strategy; renderers and analytics prefer this over prompt parsing. */
   fractionSpec?: FractionQuestionSpec;
+  /** Structured column arithmetic and regrouping evidence for multi-digit tasks. */
+  arithmeticSpec?: ArithmeticQuestionSpec;
 }
 
 export interface PerimeterReasoningSpec {

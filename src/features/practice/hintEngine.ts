@@ -33,6 +33,8 @@ export function getHint(item: PracticeItem, wrongAttempts: number): HintResult |
     };
   }
 
+  if (item.arithmeticSpec) return arithmeticRegroupHint(item, wrongAttempts);
+
   switch (itemType) {
     case 'multiplication_fact':
       return mulHint(a, b, wrongAttempts);
@@ -83,6 +85,26 @@ export function getHint(item: PracticeItem, wrongAttempts: number): HintResult |
     default:
       return genericHint(wrongAttempts);
   }
+}
+
+function arithmeticRegroupHint(item: PracticeItem, attempt: number): HintResult {
+  const spec = item.arithmeticSpec!;
+  const firstAction = spec.structure.columnActions.find(column => column.action !== 'none');
+  if (attempt === 1) {
+    return hint(firstAction
+      ? `Start with the ${firstAction.place} column. Can you work in that column without regrouping?`
+      : 'Line up each digit by place value and start with the ones column.');
+  }
+  if (attempt === 2) {
+    if (!firstAction) return hint('No regrouping is needed. Work one column at a time from right to left.');
+    return hint(firstAction.action === 'compose'
+      ? `The ${firstAction.place} column makes 10 or more. Compose 10 into one unit in the next column.`
+      : `The ${firstAction.place} column needs more. Decompose one unit from the next column into 10 smaller units.`);
+  }
+  const actions = spec.structure.columnActions.filter(column => column.action !== 'none');
+  return hint(actions.length
+    ? `Update the place-value columns after ${actions.map(action => `${action.action} in ${action.place}`).join(' and ')}. Then compute each column.`
+    : 'Compute the ones, tens, and hundreds columns in order, then check with an estimate.');
 }
 
 function hint(text: string): HintResult {

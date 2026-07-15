@@ -4,9 +4,9 @@
 
 | Package | Import count |
 | --- | --- |
-| vitest | 75 |
+| vitest | 76 |
 | react | 35 |
-| @testing-library/react | 16 |
+| @testing-library/react | 17 |
 | pathlib | 8 |
 | __future__ | 7 |
 | sys | 7 |
@@ -131,6 +131,7 @@
 | src/features/curriculum/areaItems.ts | ../../utils/grammar |
 | src/features/curriculum/areaItems.ts | ../visuals/types |
 | src/features/curriculum/arithmeticItems.ts | ../../types/math |
+| src/features/curriculum/arithmeticItems.ts | ./regrouping |
 | src/features/curriculum/decimalItems.ts | ../../types/math |
 | src/features/curriculum/describeItem.ts | ../../types/math |
 | src/features/curriculum/describeItem.ts | ./multiplicationItems |
@@ -149,6 +150,7 @@
 | src/features/curriculum/makeItemFromId.ts | ./multiplicationItems |
 | src/features/curriculum/makeItemFromId.ts | ./numberTheoryItems |
 | src/features/curriculum/makeItemFromId.ts | ./patternItems |
+| src/features/curriculum/makeItemFromId.ts | ./regrouping |
 | src/features/curriculum/makeItemFromId.ts | ./roundingItems |
 | src/features/curriculum/makeItemFromId.ts | ./twoStepItems |
 | src/features/curriculum/makeItemFromId.ts | ./wordProblemItems |
@@ -157,6 +159,8 @@
 | src/features/curriculum/multiplicationItems.ts | ../../types/math |
 | src/features/curriculum/numberTheoryItems.ts | ../../types/math |
 | src/features/curriculum/patternItems.ts | ../../types/math |
+| src/features/curriculum/regrouping.ts | ../../types/math |
+| src/features/curriculum/regrouping.ts | ../../utils/rng |
 | src/features/curriculum/roundingItems.ts | ../../types/math |
 | src/features/curriculum/twoStepItems.ts | ../../types/math |
 | src/features/curriculum/wordProblemItems.ts | ../../types/math |
@@ -308,6 +312,7 @@
 | src/features/mastery/Grade3MasteryMapPage.tsx | ./SkillTile |
 | src/features/mastery/Grade3MasteryMapPage.tsx | ./todayPlanEngine |
 | src/features/mastery/misconceptionEngine.ts | ../../types/math |
+| src/features/mastery/misconceptionEngine.ts | ../curriculum/regrouping |
 | src/features/mastery/ParentNextActionCard.tsx | ../../types/math |
 | src/features/mastery/ParentNextActionCard.tsx | ./grade3MasteryMap |
 | src/features/mastery/ParentNextActionCard.tsx | ./skillMasteryEngine |
@@ -327,6 +332,7 @@
 | src/features/mastery/skillPracticePlanner.ts | ../curriculum/mulPropertiesItems |
 | src/features/mastery/skillPracticePlanner.ts | ../curriculum/multiplicationItems |
 | src/features/mastery/skillPracticePlanner.ts | ../curriculum/patternItems |
+| src/features/mastery/skillPracticePlanner.ts | ../curriculum/regrouping |
 | src/features/mastery/skillPracticePlanner.ts | ../curriculum/roundingItems |
 | src/features/mastery/skillPracticePlanner.ts | ../curriculum/twoStepItems |
 | src/features/mastery/skillPracticePlanner.ts | ../curriculum/wordProblemItems |
@@ -415,6 +421,7 @@
 | src/features/profile/learnerIdentity.ts | ../../types/math |
 | src/features/profile/profileBootstrap.ts | ../../types/math |
 | src/features/scheduler/cardModel.ts | ../../types/math |
+| src/features/scheduler/cardModel.ts | ../curriculum/regrouping |
 | src/features/scheduler/cardModel.ts | ../learning/learningEvents |
 | src/features/scheduler/dailyReviewQueue.ts | ../../types/math |
 | src/features/scheduler/dailyReviewQueue.ts | ../../utils/rng |
@@ -509,6 +516,7 @@
 | src/features/visuals/MathPrompt.tsx | ./FractionText |
 | src/features/visuals/MathPrompt.tsx | ./visualModelUtils |
 | src/features/visuals/PerimeterPathModel.tsx | ./types |
+| src/features/visuals/PlaceValueRegroupModel.tsx | ../curriculum/regrouping |
 | src/features/visuals/VisualModel.tsx | ../../types/math |
 | src/features/visuals/VisualModel.tsx | ./AreaGrid |
 | src/features/visuals/VisualModel.tsx | ./AreaPerimeterCompareModel |
@@ -520,6 +528,7 @@
 | src/features/visuals/VisualModel.tsx | ./FractionEquivalenceModel |
 | src/features/visuals/VisualModel.tsx | ./FractionNumberLine |
 | src/features/visuals/VisualModel.tsx | ./PerimeterPathModel |
+| src/features/visuals/VisualModel.tsx | ./PlaceValueRegroupModel |
 | src/features/visuals/VisualModel.tsx | ./RectangleMeasureModel |
 | src/features/visuals/VisualModel.tsx | ./RectilinearAreaModel |
 | src/features/visuals/VisualModel.tsx | ./ShapeModel |
@@ -745,6 +754,18 @@
 | src/tests/rangeSelection.test.ts | ../features/curriculum/arithmeticItems |
 | src/tests/rangeSelection.test.ts | ../features/curriculum/fractionItems |
 | src/tests/rangeSelection.test.ts | ../features/curriculum/multiplicationItems |
+| src/tests/regroupingRedesign.test.tsx | ../features/curriculum/arithmeticItems |
+| src/tests/regroupingRedesign.test.tsx | ../features/curriculum/makeItemFromId |
+| src/tests/regroupingRedesign.test.tsx | ../features/curriculum/regrouping |
+| src/tests/regroupingRedesign.test.tsx | ../features/mastery/misconceptionEngine |
+| src/tests/regroupingRedesign.test.tsx | ../features/mastery/skillMapping |
+| src/tests/regroupingRedesign.test.tsx | ../features/mastery/skillMasteryEngine |
+| src/tests/regroupingRedesign.test.tsx | ../features/mastery/skillPracticePlanner |
+| src/tests/regroupingRedesign.test.tsx | ../features/practice/hintEngine |
+| src/tests/regroupingRedesign.test.tsx | ../features/scheduler/cardModel |
+| src/tests/regroupingRedesign.test.tsx | ../features/scheduler/responsePolicy |
+| src/tests/regroupingRedesign.test.tsx | ../features/visuals/VisualModel |
+| src/tests/regroupingRedesign.test.tsx | ../utils/rng |
 | src/tests/relatedEvidence.test.ts | ../features/adaptive/relatedEvidence |
 | src/tests/relatedEvidence.test.ts | ../features/curriculum/makeItemFromId |
 | src/tests/relatedEvidence.test.ts | ../features/learning/learningEvents |
@@ -804,6 +825,7 @@
 | src/tests/visualModel.test.ts | ../features/curriculum/wordProblemItems |
 | src/tests/visualModel.test.ts | ../features/visuals/VisualModel |
 | src/tests/visualModel.test.ts | ../features/visuals/visualModelUtils |
+| src/types/math.ts | ../features/curriculum/regrouping |
 | src/types/math.ts | ../features/fractions/types |
 | src/types/math.ts | ../features/visuals/types |
 | src/utils/masteryColors.ts | ../features/learning/learningEvents |

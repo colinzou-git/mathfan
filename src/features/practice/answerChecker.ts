@@ -63,7 +63,7 @@ export function checkAnswer(
   if (item.answerInput === 'choice' || typeof correctAnswer === 'string') {
     // String/choice comparison (e.g. fraction compare: '<', '=', '>')
     studentAnswer = normalizedInput;
-    isCorrect = normalizedInput === String(correctAnswer).trim();
+    isCorrect = normalizedInput === String(correctAnswer).trim().replace(/\s+/g, '');
   } else {
     // Numeric comparison — validate format before parsing to reject "12abc", "1.2.3", etc.
     const expected = Number(correctAnswer);

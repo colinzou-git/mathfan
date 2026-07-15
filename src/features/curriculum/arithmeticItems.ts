@@ -1,4 +1,6 @@
 import type { PracticeItem } from '../../types/math';
+import type { ArithmeticGenerationConstraints, ArithmeticGeneratorContext, ArithmeticQuestionSpec } from './regrouping';
+import { analyzeArithmeticStructure, arithmeticTemplateKey, generateArithmeticOperands } from './regrouping';
 
 const SKILL_ADD = 'SKILL_ADD';
 const SKILL_SUB = 'SKILL_SUB';
@@ -31,10 +33,16 @@ export function divIdStd(dividend: number, divisor: number): string { return `DI
 // ── Addition ──────────────────────────────────────────────────────────────────
 
 export function makeAdditionItem(a: number, b: number): PracticeItem {
+  const structure = analyzeArithmeticStructure('addition', a, b);
+  const arithmeticSpec: ArithmeticQuestionSpec = { operation: 'addition', a, b, structure, mode: 'compute' };
+  const structured = Math.max(a, b) >= 10
+    ? { arithmeticSpec, cardKey: arithmeticTemplateKey(arithmeticSpec), schemaId: `addition_${structure.digits}digit_${structure.regrouping}_compute` }
+    : {};
   return {
     id: addId(a, b),
     skillId: SKILL_ADD,
     itemType: 'addition_fact',
+    ...structured,
     prompt: `${a} + ${b}`,
     answer: a + b,
     answerInput: 'numeric',
@@ -76,10 +84,16 @@ export function makeSubtractionItem(a: number, b: number): PracticeItem {
   // Ensure a >= b so the answer is non-negative
   const hi = Math.max(a, b);
   const lo = Math.min(a, b);
+  const structure = analyzeArithmeticStructure('subtraction', hi, lo);
+  const arithmeticSpec: ArithmeticQuestionSpec = { operation: 'subtraction', a: hi, b: lo, structure, mode: 'compute' };
+  const structured = hi >= 10
+    ? { arithmeticSpec, cardKey: arithmeticTemplateKey(arithmeticSpec), schemaId: `subtraction_${structure.digits}digit_${structure.regrouping}_compute` }
+    : {};
   return {
     id: subId(hi, lo),
     skillId: SKILL_SUB,
     itemType: 'subtraction_fact',
+    ...structured,
     prompt: `${hi} − ${lo}`,
     answer: hi - lo,
     answerInput: 'numeric',
@@ -88,6 +102,14 @@ export function makeSubtractionItem(a: number, b: number): PracticeItem {
     factA: hi,
     factB: lo,
   };
+}
+
+export function generateArithmeticItem(
+  constraints: ArithmeticGenerationConstraints,
+  context: ArithmeticGeneratorContext = {},
+): PracticeItem {
+  const { a, b } = generateArithmeticOperands(constraints, context);
+  return constraints.operation === 'addition' ? makeAdditionItem(a, b) : makeSubtractionItem(a, b);
 }
 
 /**

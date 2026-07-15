@@ -1,6 +1,7 @@
 import type { PracticeItem } from '../../types/math';
 import { ITEM_MAP, makeMultiplicationItem } from './multiplicationItems';
 import { makeAdditionItem, makeSubtractionItem, makeDivisionItem } from './arithmeticItems';
+import { generateArithmeticErrorAnalysis, type ArithmeticMisconceptionCode } from './regrouping';
 import { makeFractionEquivalentItem, makeFractionMissingDenominatorItem, makeFractionCompareItem, makeFractionNumberLineItem, makeFractionStrategyChoiceItem, makeUnitFractionModelItem } from './fractionItems';
 import { makeRoundingItem } from './roundingItems';
 import { makePrimeItem, makeFactorItem } from './numberTheoryItems';
@@ -30,6 +31,13 @@ export function makeItemFromId(itemId: string): PracticeItem | null {
   if (geoItem) return geoItem;
 
   let m: RegExpMatchArray | null;
+
+  m = itemId.match(/^ARERR_(addition|subtraction)_(\d+)_(\d+)_(.+)$/);
+  if (m) {
+    const base = m[1] === 'addition' ? makeAdditionItem(+m[2], +m[3]) : makeSubtractionItem(+m[2], +m[3]);
+    if (!base.arithmeticSpec) return null;
+    return generateArithmeticErrorAnalysis(base.arithmeticSpec, m[4] as ArithmeticMisconceptionCode);
+  }
 
   m = itemId.match(/^MUL_(\d+)x(\d+)$/);
   if (m) return makeMultiplicationItem(+m[1], +m[2]);

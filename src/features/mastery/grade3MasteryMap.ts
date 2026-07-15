@@ -208,6 +208,14 @@ export const GRADE3_MASTERY_MAP: readonly MasterySkillNode[] = [
     prerequisites: ['g3-sub-2digit-regrouping'],
     californiaStandardIds: ['3.NBT.A.2'],
   },
+  {
+    id: 'g3-sub-across-zero',
+    domain: 'addition_subtraction',
+    title: 'Subtract Across Zero',
+    description: 'Decompose hundreds and tens to subtract when a zero blocks regrouping.',
+    prerequisites: ['g3-sub-3digit-regrouping'],
+    californiaStandardIds: ['3.NBT.A.2'],
+  },
   // ── Geometry ────────────────────────────────────────────────────────────────
   {
     id: 'g3-geo-categories',

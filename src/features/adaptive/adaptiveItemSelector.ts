@@ -117,7 +117,11 @@ export function misconceptionBridgeBoost(item: PracticeItem, state?: StudentItem
     || ((patterns.has('fraction:compare_larger_denominator_means_larger') || patterns.has('frac_compare:larger_denominator'))
       && schema === 'compare_same_numerator')
     || ((patterns.has('fraction:equivalent_wrong_multiplier') || patterns.has('frac_equiv:wrong_multiplier'))
-      && (schema === 'equivalent_visual' || schema === 'equivalent_missing_numerator'));
+      && (schema === 'equivalent_visual' || schema === 'equivalent_missing_numerator'))
+    || ([...patterns].some(pattern => pattern.includes('sub_across_zero_error'))
+      && !!schema?.includes('subtraction_3digit_') && (schema.includes('across_zero') || schema.includes('multiple_zeroes')))
+    || ([...patterns].some(pattern => pattern.includes('failed_to_regroup') || pattern.includes('failed_to_carry'))
+      && !!schema && ['ones_only', 'tens_only', 'ones_and_tens'].some(profile => schema.includes(profile)));
   return matches ? MISCONCEPTION_BRIDGE_BOOST : 0;
 }
 

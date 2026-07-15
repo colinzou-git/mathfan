@@ -54,6 +54,7 @@ export function hasVisualModel(item: PracticeItem): boolean {
 
   if (item.visualSpec) return true;
   if (item.fractionSpec) return true;
+  if (item.arithmeticSpec) return true;
 
   if ((itemType === 'multiplication_fact' || itemType === 'unknown_factor') &&
       factA != null && factB != null &&

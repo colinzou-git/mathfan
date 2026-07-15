@@ -13,6 +13,7 @@ import { geoItemIds } from '../curriculum/geometryItems';
 import { mulPropertyItemIds } from '../curriculum/mulPropertiesItems';
 import { fracNlId } from '../curriculum/fractionItems';
 import { addId, subId } from '../curriculum/arithmeticItems';
+import { analyzeArithmeticStructure } from '../curriculum/regrouping';
 import { roundId } from '../curriculum/roundingItems';
 import {
   clckId, etimeId, bargId, lplotId, mwrdId,
@@ -54,9 +55,26 @@ export function planFractionFocusSequence(skillId: string, misconceptions: strin
   };
 }
 
+export function buildRegroupingFocusSequence(skillId: string, misconceptions: string[] = []): FocusSequence {
+  const ids = skillId === 'g3-add-2digit-regrouping' ? add2DigitRegroupingItemIds()
+    : skillId === 'g3-add-3digit-regrouping' ? add3DigitRegroupingItemIds()
+      : skillId === 'g3-sub-2digit-regrouping' ? sub2DigitBorrowingItemIds()
+        : skillId === 'g3-sub-across-zero' ? subAcrossZeroItemIds()
+          : sub3DigitBorrowingItemIds().filter(id => !subAcrossZeroItemIds().includes(id));
+  const needsErrorBridge = misconceptions.some(code => code.includes('across_zero') || code.includes('place_value'));
+  return {
+    skillId,
+    itemIds: ids,
+    representations: needsErrorBridge
+      ? ['place_value_activation', 'worked_error_repair', 'scaffolded_compute', 'near_transfer', 'independent']
+      : ['place_value_activation', 'scaffolded_compute', 'near_transfer', 'independent'],
+  };
+}
+
 /** Ordered conceptual sequence consumed by focused practice and the adaptive lesson planner (#29). */
 export function buildFocusSequence(skillId: string): FocusSequence {
   if (skillId.startsWith('g3-frac-')) return planFractionFocusSequence(skillId);
+  if (skillId.startsWith('g3-add-') || skillId.startsWith('g3-sub-')) return buildRegroupingFocusSequence(skillId);
   if (skillId === 'g3-area-concept') {
     return { skillId, itemIds: areaSquaresItemIds(), representations: ['unit_squares'] };
   }
@@ -270,6 +288,22 @@ function sub3DigitBorrowingItemIds(): string[] {
     [614, 258], [735, 469], [821, 347], [943, 256], [532, 174],
   ];
   return pairs.map(([hi, lo]) => subId(hi, lo));
+}
+
+function subAcrossZeroItemIds(): string[] {
+  return sub3DigitBorrowingItemIds().filter(id => {
+    const match = id.match(/^SUB_(\d+)m(\d+)$/)!;
+    const profile = analyzeArithmeticStructure('subtraction', +match[1], +match[2]).regrouping;
+    return profile === 'across_zero' || profile === 'multiple_zeroes';
+  });
+}
+
+function subAcrossZeroErrorAnalysisIds(): string[] {
+  return [
+    'ARERR_subtraction_703_458_sub_across_zero_error',
+    'ARERR_subtraction_900_376_sub_failed_to_regroup_ones',
+    'ARERR_subtraction_804_576_sub_borrowed_without_reducing_source',
+  ];
 }
 
 // ── Two-step word problems ────────────────────────────────────────────────────
@@ -697,7 +731,18 @@ export function planPracticeForSkill(
   if (skillId === 'g3-sub-3digit-regrouping') {
     return {
       mode: 'subtraction',
-      specificItemIds: sub3DigitBorrowingItemIds(),
+      specificItemIds: sub3DigitBorrowingItemIds().filter(id => !subAcrossZeroItemIds().includes(id)),
+      sessionLength,
+    };
+  }
+
+
+  if (skillId === 'g3-sub-across-zero') {
+    // Keep the default ten-question pool bounded so every fresh focused session
+    // includes the planned error-analysis bridge as well as independent practice.
+    return {
+      mode: 'subtraction',
+      specificItemIds: [...subAcrossZeroErrorAnalysisIds(), ...subAcrossZeroItemIds().slice(0, 7)],
       sessionLength,
     };
   }

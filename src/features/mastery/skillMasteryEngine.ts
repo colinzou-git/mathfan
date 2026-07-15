@@ -141,9 +141,11 @@ export function deriveGrade3SkillSummaries(
     // Broad perimeter/comparison mastery needs transfer across at least two
     // representations; repeated dimension variants of one schema are not enough.
     const needsDiversity = skillId === 'g3-perimeter' || skillId === 'g3-area-perimeter-compare' || skillId === 'g3-frac-compare';
+    const isRegroupingSkill = (/^g3-(add|sub)-/.test(skillId) && skillId.includes('regrouping')) || skillId === 'g3-sub-across-zero';
     const needsDelayedEvidence = skillId === 'g3-frac-compare';
     const eventDays = new Set(events.map(event => event.createdAt.slice(0, 10)));
     const hasDelayedEvidence = eventDays.size >= 2 || states.some(state => (state.reps ?? 0) >= 2);
+    const hasMultipleSessions = new Set(events.map(event => event.sessionId)).size >= 2;
     const unresolvedFractionMisconception = skillId.startsWith('g3-frac-')
       && mistakePatterns.some(pattern => pattern.startsWith('fraction:') || pattern.startsWith('frac_'));
 
@@ -155,8 +157,8 @@ export function deriveGrade3SkillSummaries(
         accuracy,
         dueItemCount,
         skillItemIds.size,
-        !needsDiversity || representationCount >= 2,
-        !needsDelayedEvidence || hasDelayedEvidence,
+        (!needsDiversity && !isRegroupingSkill) || representationCount >= 2,
+        (!needsDelayedEvidence || hasDelayedEvidence) && (!isRegroupingSkill || hasMultipleSessions),
         unresolvedFractionMisconception,
       ),
       attemptCount,

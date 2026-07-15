@@ -85,6 +85,14 @@ describe('checkAnswer — choice/string answers', () => {
   it('numeric input against a string answer → incorrect', () => {
     expect(checkAnswer(choiceItem, '5', 900).isCorrect).toBe(false);
   });
+  it('matches a multi-word choice after symmetric whitespace normalization', () => {
+    const explanation = { ...choiceItem, answer: 'Compare equal-sized pieces first.' };
+    expect(checkAnswer(explanation, 'Compare equal-sized pieces first.', 900).isCorrect).toBe(true);
+  });
+  it('matches equation choices containing spaces', () => {
+    const equation = { ...choiceItem, answer: '4 + 7 + 5 + x = 22' };
+    expect(checkAnswer(equation, '4 + 7 + 5 + x = 22', 900).isCorrect).toBe(true);
+  });
 });
 
 // ── Task-aware classification (issue #27) ──────────────────────────────────────

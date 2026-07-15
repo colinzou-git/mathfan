@@ -1,5 +1,6 @@
 import type { PracticeItem, StudentItemState, GradeLevel } from '../../types/math';
 import type { MathAnswerEvent } from '../learning/learningEvents';
+import { analyzeArithmeticStructure } from '../curriculum/regrouping';
 
 /**
  * Canonical learning-card layer sitting above concrete item instances.
@@ -76,6 +77,14 @@ export function deriveCardKeyFromItemId(itemId: string): string {
   }
   if ((m = itemId.match(/^FCWHY_(same_denominator|same_numerator|benchmark_half)_/))) {
     return `template:g3-fraction:compare_${m[1]}`;
+  }
+  if ((m = itemId.match(/^ADD_(\d+)p(\d+)$/)) && Math.max(+m[1], +m[2]) >= 10) {
+    const structure = analyzeArithmeticStructure('addition', +m[1], +m[2]);
+    return `template:g3-add-${structure.digits}digit-${structure.regrouping}-compute`;
+  }
+  if ((m = itemId.match(/^SUB_(\d+)m(\d+)$/)) && Math.max(+m[1], +m[2]) >= 10) {
+    const structure = analyzeArithmeticStructure('subtraction', +m[1], +m[2]);
+    return `template:g3-sub-${structure.digits}digit-${structure.regrouping}-compute`;
   }
   return `template:${itemId}`;
 }

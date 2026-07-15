@@ -30,6 +30,7 @@ import { RectangleMeasureModel } from './RectangleMeasureModel';
 import { AreaPerimeterCompareModel } from './AreaPerimeterCompareModel';
 import { FractionEquivalenceModel } from './FractionEquivalenceModel';
 import { FractionComparisonModel } from './FractionComparisonModel';
+import { PlaceValueRegroupModel } from './PlaceValueRegroupModel';
 
 interface Props {
   item: PracticeItem;
@@ -47,6 +48,10 @@ function parseEqualGroupsFromId(itemId: string): { groups: number; perGroup: num
 
 export function VisualModel({ item, color, revealAnswer = false }: Props) {
   const { itemType, factA, factB, id, prompt, visualSpec } = item;
+
+  if (item.arithmeticSpec) {
+    return <PlaceValueRegroupModel spec={item.arithmeticSpec} revealAnswer={revealAnswer} color={color} />;
+  }
 
   if (item.fractionSpec) {
     const spec = item.fractionSpec;

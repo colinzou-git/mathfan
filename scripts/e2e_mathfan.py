@@ -368,6 +368,33 @@ def fraction_same_numerator_lesson(page: Page) -> None:
     expect(page.get_by_text(re.compile(r"Correct!|New personal best!"))).to_be_visible()
 
 
+def subtraction_across_zero_lesson(page: Page) -> None:
+    create_profile(page, "RegroupTester", "e2e-subtraction-across-zero")
+    set_one_question_sessions(page)
+    open_mastery_skill(page, "Subtract Across Zero")
+    completed_error_analysis = False
+    for _ in range(10):
+        prompt_locator = page.locator(".drill-q > div").first
+        prompt = prompt_locator.inner_text()
+        values = [int(value) for value in re.findall(r"\d+", prompt)]
+        a, b = values[:2]
+        if prompt.startswith("A learner wrote"):
+            shown = values[2]
+            correct = a - b
+            place = "ones" if shown == correct - 10 else "tens" if shown == correct - 100 else "regrouping"
+            page.get_by_role("button", name=place, exact=True).click()
+            completed_error_analysis = True
+        else:
+            page.get_by_label("Your answer", exact=True).fill(str(a - b))
+            page.get_by_label("Your answer", exact=True).press("Enter")
+        expect(page.get_by_text(re.compile(r"Correct!|New personal best!"))).to_be_visible()
+        if completed_error_analysis:
+            break
+        page.wait_for_timeout(1400)
+    if not completed_error_analysis:
+        raise AssertionError("Across-zero lesson did not include its planned error-analysis item")
+
+
 def run_scenario(
     browser: Browser,
     name: str,
@@ -455,6 +482,7 @@ def main() -> int:
             ("area-perimeter-comparison", {"width": 1024, "height": 768}, area_perimeter_comparison_lesson, False),
             ("fraction-equivalence-visual", {"width": 390, "height": 844}, fraction_equivalence_visual_lesson, False),
             ("fraction-same-numerator", {"width": 1024, "height": 768}, fraction_same_numerator_lesson, False),
+            ("subtraction-across-zero", {"width": 390, "height": 844}, subtraction_across_zero_lesson, False),
         ]
         for name, viewport, scenario, standalone_share in scenarios:
             try:

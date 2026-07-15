@@ -1,6 +1,6 @@
 # Code Map Overview
 
-Generated: 2026-07-15 05:55:52 UTC
+Generated: 2026-07-15 06:21:40 UTC
 
 Repo root: `/home/ubuntu/mathfan`  
 Output folder: `/home/ubuntu/mathfan/docs/code-map`
@@ -14,9 +14,9 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 - Package name: `mathfan`
 - Version: `1.2.0`
 - Module type: `module`
-- Scanned files: **249**
-- Scanned lines: **47,497**
-- Scanned bytes: **1,900,041**
+- Scanned files: **252**
+- Scanned lines: **48,127**
+- Scanned bytes: **1,933,647**
 
 ## NPM scripts
 
@@ -97,7 +97,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 | src/features/visuals/ShapeModel.tsx | 137 | Reusable SVG visual model components (area grids, shape diagrams, fraction bars, arrays). | SVGWrap, ShapeModel, ShapeName, pts, regularPoly, rightAnglePath, ShapeModel, SVGWrap |
 | src/features/stats/QuizStatsView.tsx | 135 | Progress/statistics screens or calculations. | FactGroup, QuizStatsView, avgSecStr, FactGroup, fmt, QuizStatsView |
 | src/features/stats/TodayAchievementSection.tsx | 125 | Progress/statistics screens or calculations. | AchievementTile, TodayAchievementSection, AchievementTile, TodayAchievementSection |
-| src/features/mastery/skillPracticePlanner.ts | 792 | Grade 3 skill practice planner: maps skill IDs to SessionConfig for the mastery map. | buildFocusSequence, FocusSequence, planFractionFocusSequence, PlanOptions, planPracticeForSkill, add2DigitRegroupingItemIds, add3DigitRegroupingItemIds, arithmeticPatternItemIds |
+| src/features/mastery/skillPracticePlanner.ts | 837 | Grade 3 skill practice planner: maps skill IDs to SessionConfig for the mastery map. | buildFocusSequence, buildRegroupingFocusSequence, FocusSequence, planFractionFocusSequence, PlanOptions, planPracticeForSkill, add2DigitRegroupingItemIds, add3DigitRegroupingItemIds |
 | src/features/goals/GoalEvaluationSession.tsx | 643 | Exports reusable code: GoalEvaluationSession. | GoalEvaluationSession, buildNewLearningCandidates, buildReviewFindings, buildUpdatedState, confirmCancel, continueNext, evaluationArgs, GoalEvaluationSession |
 | src/features/practice/usePracticeSession.ts | 613 | Local persistence/database layer. | usePracticeSession, CorrectResult, LastSessionSummary, SessionState, usePracticeSession, getStaticItem, usePracticeSession |
 | src/features/curriculum/areaItems.ts | 609 | Practice item definitions and ID generators for a math curriculum topic. | apChoiceId, areaPerimCmpId, areaPerimCompareItemIds, areaPerimeterChoiceItemIds, AreaPerimeterChoiceKind, AreaPerimeterSchema, AreaPerimVariant, areaRectangleItemIds |
@@ -169,6 +169,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   │   ├── multiplicationItems.ts
 │   │   │   ├── numberTheoryItems.ts
 │   │   │   ├── patternItems.ts
+│   │   │   ├── regrouping.ts
 │   │   │   ├── roundingItems.ts
 │   │   │   ├── twoStepItems.ts
 │   │   │   └── wordProblemItems.ts
@@ -280,6 +281,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │       ├── FractionText.tsx
 │   │       ├── MathPrompt.tsx
 │   │       ├── PerimeterPathModel.tsx
+│   │       ├── PlaceValueRegroupModel.tsx
 │   │       ├── RectangleMeasureModel.tsx
 │   │       ├── RectilinearAreaModel.tsx
 │   │       ├── ShapeModel.tsx
@@ -342,6 +344,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   ├── questionGenerator.test.ts
 │   │   ├── quizAutoAdvance.test.tsx
 │   │   ├── rangeSelection.test.ts
+│   │   ├── regroupingRedesign.test.tsx
 │   │   ├── relatedEvidence.test.ts
 │   │   ├── responsePolicy.test.ts
 │   │   ├── rng.test.ts

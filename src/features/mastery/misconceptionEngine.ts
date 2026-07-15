@@ -1,5 +1,6 @@
 import Fraction from 'fraction.js';
 import type { PracticeItem } from '../../types/math';
+import { simulateArithmeticMisconception, type ArithmeticMisconceptionCode } from '../curriculum/regrouping';
 
 /**
  * Detects common misconception patterns in a wrong student answer.
@@ -24,6 +25,9 @@ export function detectMistakes(
       return detectMultiplication(item, studentAnswer);
     case 'division_fact':
       return detectDivision(item, studentAnswer);
+    case 'addition_fact':
+    case 'subtraction_fact':
+      return detectArithmetic(item, studentAnswer);
     case 'fraction_compare':
       return detectFractionCompare(item, String(studentAnswer));
     case 'fraction_equivalent':
@@ -42,6 +46,21 @@ export function detectMistakes(
     default:
       return [];
   }
+}
+
+const ARITHMETIC_MISCONCEPTIONS: ArithmeticMisconceptionCode[] = [
+  'sub_failed_to_regroup_ones', 'sub_failed_to_regroup_tens', 'sub_across_zero_error',
+  'sub_borrowed_without_reducing_source', 'sub_place_value_shift_10', 'sub_place_value_shift_100',
+  'add_failed_to_carry_ones', 'add_failed_to_carry_tens', 'add_double_carried',
+  'copied_operand_or_partial_result',
+];
+
+function detectArithmetic(item: PracticeItem, raw: string | number): string[] {
+  if (!item.arithmeticSpec || item.arithmeticSpec.mode === 'error_analysis') return [];
+  const answer = Number(raw);
+  if (!Number.isFinite(answer) || answer === Number(item.answer)) return [];
+  return ARITHMETIC_MISCONCEPTIONS.filter(code => simulateArithmeticMisconception(item.arithmeticSpec!, code) === answer)
+    .map(code => `arithmetic:${code}`);
 }
 
 // ── Multiplication / unknown-factor ───────────────────────────────────────────

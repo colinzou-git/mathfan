@@ -47,7 +47,7 @@ Capstone. Depends on nearly everything above (#25-#29, #30-#34, #35).
 | 28 | One scheduling update per card/session | A | **merged to main** (eb36360) |
 | 30 | Area & perimeter redesign | B | **implemented and validated; committed on Branch B** |
 | 31 | Fractions redesign | B | **implemented and validated; committed on Branch B** |
-| 32 | Multi-digit regrouping | B | not started |
+| 32 | Multi-digit regrouping | B | **implemented and validated; committed on Branch B** |
 | 33 | Division fact vs reasoning split | B | not started |
 | 34 | Time/measurement/graphs redesign | B | not started |
 | 35 | Goal consolidation + workload cap | C | not started |
@@ -66,12 +66,12 @@ session). They remain open on GitHub despite being merged. If you want them clos
 explicitly ask Claude to close them in a future session.
 
 **Active branch:** `feature/grade3-curriculum-redesign` (ahead of `origin/feature/grade3-curriculum-redesign`).
-**Active issue:** #32 — multi-digit addition/subtraction regrouping with place-value subskills.
+**Active issue:** #33 — division fact fluency vs decomposition and unknown-factor reasoning.
 **Next concrete step:**
-1. Continue from `gh issue view 32` and add `regrouping.ts` plus typed `arithmeticSpec` data.
-2. Generate by explicit regrouping profile, add a responsive place-value regrouping visual,
-   worked/error-analysis modes, counterfactual misconception simulation, and focused subskill sequences.
-3. Preserve legacy arithmetic IDs, add unit/mastery/planner coverage, and add across-zero browser coverage.
+1. Read issue #33 and map its requirements to the existing division generators, mastery skills, and
+   focused-practice planner.
+2. Separate fact fluency from decomposition and unknown-factor reasoning while preserving legacy IDs.
+3. Add regression and built-app browser coverage, then run the normal validation gates.
 
 Issue #30 validation completed on 2026-07-15: `npm run ci` (73 files / 1,279 tests),
 `npm run test:e2e` (desktop, mobile, iPad, missing-side, comparison, and update flows), and
@@ -80,6 +80,10 @@ Issue #30 validation completed on 2026-07-15: `npm run ci` (73 files / 1,279 tes
 Issue #31 validation completed on 2026-07-15: `npm run ci` (74 files / 1,291 tests),
 `npm run test:e2e` (including phone equivalence and iPad same-numerator comparison), and
 `python tools/generate_code_maps.py` all passed.
+
+Issue #32 validation completed on 2026-07-15: `npm run ci` (75 files / 1,305 tests),
+`npm run test:e2e` (including deterministic across-zero computation and error analysis in the real
+built app), and `python tools/generate_code_maps.py` all passed.
 
 ## Known gaps / follow-ups (not blocking, revisit if time allows)
 
