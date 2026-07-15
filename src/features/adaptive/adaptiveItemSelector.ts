@@ -113,7 +113,11 @@ export function misconceptionBridgeBoost(item: PracticeItem, state?: StudentItem
       && (schema === 'perimeter_sum_sides' || schema === 'perimeter_rectangle_structure'))
     || ((patterns.has('area_perim:copied_given_perimeter') || patterns.has('area_perim:summed_non_boundary_values')
       || patterns.has('area_perim:missing_side_subtraction_error'))
-      && schema === 'perimeter_missing_side' && (tags.has('equation') || tags.has('sum_known_sides')));
+      && schema === 'perimeter_missing_side' && (tags.has('equation') || tags.has('sum_known_sides')))
+    || ((patterns.has('fraction:compare_larger_denominator_means_larger') || patterns.has('frac_compare:larger_denominator'))
+      && schema === 'compare_same_numerator')
+    || ((patterns.has('fraction:equivalent_wrong_multiplier') || patterns.has('frac_equiv:wrong_multiplier'))
+      && (schema === 'equivalent_visual' || schema === 'equivalent_missing_numerator'));
   return matches ? MISCONCEPTION_BRIDGE_BOOST : 0;
 }
 

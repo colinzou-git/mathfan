@@ -1,7 +1,7 @@
 import type { PracticeItem } from '../../types/math';
 import { ITEM_MAP, makeMultiplicationItem } from './multiplicationItems';
 import { makeAdditionItem, makeSubtractionItem, makeDivisionItem } from './arithmeticItems';
-import { makeFractionEquivalentItem, makeFractionCompareItem, makeFractionNumberLineItem } from './fractionItems';
+import { makeFractionEquivalentItem, makeFractionMissingDenominatorItem, makeFractionCompareItem, makeFractionNumberLineItem, makeFractionStrategyChoiceItem, makeUnitFractionModelItem } from './fractionItems';
 import { makeRoundingItem } from './roundingItems';
 import { makePrimeItem, makeFactorItem } from './numberTheoryItems';
 import { makeDecimalAddItem, makeDecimalSubItem } from './decimalItems';
@@ -51,8 +51,21 @@ export function makeItemFromId(itemId: string): PracticeItem | null {
     return makeFractionEquivalentItem(+m[1], d, mult);
   }
 
+  m = itemId.match(/^FEQD_(\d+)_(\d+)_(\d+)$/);
+  if (m && +m[1] > 0 && +m[3] % +m[1] === 0) {
+    return makeFractionMissingDenominatorItem(+m[1], +m[2], +m[3] / +m[1]);
+  }
+
   m = itemId.match(/^FCMP_(\d+)_(\d+)_(\d+)_(\d+)$/);
   if (m) return makeFractionCompareItem(+m[1], +m[2], +m[3], +m[4]);
+
+  m = itemId.match(/^FCWHY_(same_denominator|same_numerator|benchmark_half)_(\d+)_(\d+)_(\d+)_(\d+)$/);
+  if (m) return makeFractionStrategyChoiceItem(
+    { numerator: +m[2], denominator: +m[3] },
+    { numerator: +m[4], denominator: +m[5] },
+    m[1] as 'same_denominator' | 'same_numerator' | 'benchmark_half',
+    () => 0.5,
+  );
 
   m = itemId.match(/^ROUND_(\d+)_(\d+)$/);
   if (m) return makeRoundingItem(+m[1], +m[2]);
@@ -93,6 +106,9 @@ export function makeItemFromId(itemId: string): PracticeItem | null {
   // FNL_n_d — fraction number line
   m = itemId.match(/^FNL_(\d+)_(\d+)$/);
   if (m) return makeFractionNumberLineItem(+m[1], +m[2]);
+
+  m = itemId.match(/^FUNIT_1_(\d+)$/);
+  if (m) return makeUnitFractionModelItem(+m[1], () => 0.5);
 
   // RECTI_a1xb1_a2xb2 — rectilinear area (two rectangles)
   m = itemId.match(/^RECTI_(\d+)x(\d+)_(\d+)x(\d+)$/);

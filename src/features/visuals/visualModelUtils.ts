@@ -53,6 +53,7 @@ export function hasVisualModel(item: PracticeItem): boolean {
   const { itemType, factA, factB, id, prompt } = item;
 
   if (item.visualSpec) return true;
+  if (item.fractionSpec) return true;
 
   if ((itemType === 'multiplication_fact' || itemType === 'unknown_factor') &&
       factA != null && factB != null &&

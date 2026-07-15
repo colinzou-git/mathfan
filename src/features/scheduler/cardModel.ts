@@ -65,6 +65,18 @@ export function deriveCardKeyFromItemId(itemId: string): string {
   if (/^RECTI_/.test(itemId)) return `${AREA_PERIM_TEMPLATE_PREFIX}rectilinear_area_decompose`;
   if (/^AREA_PERIM_CMP_sadp_/.test(itemId)) return `${AREA_PERIM_TEMPLATE_PREFIX}same_area_diff_perimeter`;
   if (/^AREA_PERIM_CMP_spad_/.test(itemId)) return `${AREA_PERIM_TEMPLATE_PREFIX}same_perimeter_diff_area`;
+  if (/^FNL_/.test(itemId)) return 'template:g3-fraction:number_line_location';
+  if (/^FUNIT_/.test(itemId)) return 'template:g3-fraction:unit_fraction_model';
+  if (/^FEQD_/.test(itemId)) return 'template:g3-fraction:equivalent_missing_denominator';
+  if (/^FEQ_/.test(itemId)) return 'template:g3-fraction:equivalent_missing_numerator';
+  if ((m = itemId.match(/^FCMP_(\d+)_(\d+)_(\d+)_(\d+)$/))) {
+    if (+m[2] === +m[4]) return 'template:g3-fraction:compare_same_denominator';
+    if (+m[1] === +m[3]) return 'template:g3-fraction:compare_same_numerator';
+    return 'template:g3-fraction:compare_mixed';
+  }
+  if ((m = itemId.match(/^FCWHY_(same_denominator|same_numerator|benchmark_half)_/))) {
+    return `template:g3-fraction:compare_${m[1]}`;
+  }
   return `template:${itemId}`;
 }
 

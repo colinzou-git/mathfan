@@ -28,6 +28,8 @@ export function detectMistakes(
       return detectFractionCompare(item, String(studentAnswer));
     case 'fraction_equivalent':
       return detectFractionEquivalent(item, studentAnswer);
+    case 'fraction_number_line':
+      return detectFractionNumberLine(item, studentAnswer);
     case 'perimeter_rectangle':
       return detectPerimeterRectangle(item, studentAnswer);
     case 'area_rectangle':
@@ -116,13 +118,15 @@ function detectDivision(item: PracticeItem, raw: string | number): string[] {
 // fraction_compare: ID = FCMP_n1_d1_n2_d2, answer = '<' | '=' | '>'
 
 function detectFractionCompare(item: PracticeItem, sa: string): string[] {
+  const structured = item.fractionSpec?.kind === 'compare' ? item.fractionSpec : null;
   const m = item.id.match(/^FCMP_(\d+)_(\d+)_(\d+)_(\d+)$/);
-  if (!m) return [];
+  if (!structured && !m) return [];
 
-  const n1 = parseInt(m[1], 10);
-  const d1 = parseInt(m[2], 10);
-  const n2 = parseInt(m[3], 10);
-  const d2 = parseInt(m[4], 10);
+  const n1 = structured?.left.numerator ?? parseInt(m![1], 10);
+  const d1 = structured?.left.denominator ?? parseInt(m![2], 10);
+  const n2 = structured?.right.numerator ?? parseInt(m![3], 10);
+  const d2 = structured?.right.denominator ?? parseInt(m![4], 10);
+  if (sa.includes('different-sized wholes')) return ['fraction:fraction_not_same_whole'];
 
   // Use fraction.js for exact comparison (avoids floating-point errors)
   const f1 = new Fraction(n1, d1);
@@ -140,6 +144,7 @@ function detectFractionCompare(item: PracticeItem, sa: string): string[] {
     const denominatorAnswer = d1 > d2 ? '>' : '<';
     if (sa === denominatorAnswer) {
       patterns.push('frac_compare:larger_denominator');
+      patterns.push('fraction:compare_larger_denominator_means_larger');
     }
   }
 
@@ -149,22 +154,37 @@ function detectFractionCompare(item: PracticeItem, sa: string): string[] {
     const numeratorAnswer = n1 > n2 ? '>' : '<';
     if (sa === numeratorAnswer && numeratorAnswer !== trueAnswer) {
       patterns.push('frac_compare:numerator_only');
+      patterns.push('fraction:compare_numerator_only');
     }
   }
 
+  if ((trueAnswer === '<' && sa === '>') || (trueAnswer === '>' && sa === '<')) {
+    patterns.push('fraction:compare_reversed_symbol');
+  }
+
   return patterns;
+}
+
+function detectFractionNumberLine(item: PracticeItem, raw: string | number): string[] {
+  const spec = item.fractionSpec?.kind === 'locate_number_line' ? item.fractionSpec : null;
+  const expected = spec?.value.numerator ?? item.factA;
+  const answer = Number(raw);
+  return expected != null && answer === expected + 1
+    ? ['fraction:number_line_counted_tick_marks_not_intervals']
+    : [];
 }
 
 // ── Equivalent fractions ───────────────────────────────────────────────────────
 // fraction_equivalent: ID = FEQ_n_d_targetDen, answer = n * (targetDen / d)
 
 function detectFractionEquivalent(item: PracticeItem, raw: string | number): string[] {
+  const structured = item.fractionSpec?.kind === 'equivalent_visual' ? item.fractionSpec : null;
   const m = item.id.match(/^FEQ_(\d+)_(\d+)_(\d+)$/);
-  if (!m) return [];
+  if (!structured && !m) return [];
 
-  const n = parseInt(m[1], 10);
-  const d = parseInt(m[2], 10);
-  const targetDen = parseInt(m[3], 10);
+  const n = structured?.left.numerator ?? parseInt(m![1], 10);
+  const d = structured?.left.denominator ?? parseInt(m![2], 10);
+  const targetDen = structured?.right.denominator ?? parseInt(m![3], 10);
 
   if (d === 0 || targetDen % d !== 0) return [];
 
@@ -179,6 +199,8 @@ function detectFractionEquivalent(item: PracticeItem, raw: string | number): str
   if (sa >= 0 && new Fraction(n, d).equals(new Fraction(sa, targetDen))) return [];
 
   const patterns: string[] = [];
+  if (sa === n) patterns.push('fraction:equivalent_changed_denominator_only');
+  if (sa === targetDen) patterns.push('fraction:equivalent_changed_numerator_only');
 
   // Additive error: student added the scale difference to the numerator instead of multiplying
   // e.g., 2/3 = ?/6 (mult=2): student computes 2 + (6−3) = 5 instead of 2×2 = 4
@@ -193,6 +215,7 @@ function detectFractionEquivalent(item: PracticeItem, raw: string | number): str
     const usedMult = sa / n;
     if (usedMult !== mult) {
       patterns.push('frac_equiv:wrong_multiplier');
+      patterns.push('fraction:equivalent_wrong_multiplier');
     }
   }
 

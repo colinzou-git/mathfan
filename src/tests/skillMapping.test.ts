@@ -139,8 +139,8 @@ describe('inferGrade3SkillId — fraction items', () => {
   it('fraction_equivalent with n=3 → g3-frac-equivalent', () =>
     expect(inferGrade3SkillId(makeFractionEquivalentItem(3, 4, 2))).toBe('g3-frac-equivalent'));
 
-  it('fraction_compare → g3-frac-compare', () =>
-    expect(inferGrade3SkillId(makeFractionCompareItem(1, 2, 1, 3))).toBe('g3-frac-compare'));
+  it('same-numerator comparison → its distinct skill', () =>
+    expect(inferGrade3SkillId(makeFractionCompareItem(1, 2, 1, 3))).toBe('g3-frac-compare-same-numerator'));
 
   it('fraction_compare equal fractions', () =>
     expect(inferGrade3SkillId(makeFractionCompareItem(2, 4, 1, 2))).toBe('g3-frac-compare'));

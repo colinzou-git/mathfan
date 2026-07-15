@@ -78,12 +78,18 @@ export function inferGrade3SkillId(item: PracticeItem): string | null {
 
   // ── Fractions ─────────────────────────────────────────────────────────────
   if (itemType === 'fraction_equivalent') {
+    if (item.fractionSpec?.kind === 'unit_fraction_model') return 'g3-frac-unit';
     // Unit fractions (numerator = 1) map to the unit-fraction skill.
     // FEQ ID format: FEQ_${n}_${d}_${targetDen}; parse n from the ID.
     const m = id.match(/^FEQ_(\d+)_/);
     return m && m[1] === '1' ? 'g3-frac-unit' : 'g3-frac-equivalent';
   }
-  if (itemType === 'fraction_compare') return 'g3-frac-compare';
+  if (itemType === 'fraction_compare') {
+    const strategy = item.fractionSpec?.kind === 'compare' ? item.fractionSpec.strategy : 'general';
+    if (strategy === 'same_denominator') return 'g3-frac-compare-same-denominator';
+    if (strategy === 'same_numerator') return 'g3-frac-compare-same-numerator';
+    return 'g3-frac-compare';
+  }
   if (itemType === 'fraction_number_line') return 'g3-frac-number-line';
 
   // ── Area and perimeter ────────────────────────────────────────────────────

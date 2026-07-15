@@ -1,6 +1,6 @@
 # Code Map Overview
 
-Generated: 2026-07-15 05:35:13 UTC
+Generated: 2026-07-15 05:55:52 UTC
 
 Repo root: `/home/ubuntu/mathfan`  
 Output folder: `/home/ubuntu/mathfan/docs/code-map`
@@ -14,9 +14,9 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 - Package name: `mathfan`
 - Version: `1.2.0`
 - Module type: `module`
-- Scanned files: **245**
-- Scanned lines: **46,863**
-- Scanned bytes: **1,867,456**
+- Scanned files: **249**
+- Scanned lines: **47,497**
+- Scanned bytes: **1,900,041**
 
 ## NPM scripts
 
@@ -97,7 +97,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 | src/features/visuals/ShapeModel.tsx | 137 | Reusable SVG visual model components (area grids, shape diagrams, fraction bars, arrays). | SVGWrap, ShapeModel, ShapeName, pts, regularPoly, rightAnglePath, ShapeModel, SVGWrap |
 | src/features/stats/QuizStatsView.tsx | 135 | Progress/statistics screens or calculations. | FactGroup, QuizStatsView, avgSecStr, FactGroup, fmt, QuizStatsView |
 | src/features/stats/TodayAchievementSection.tsx | 125 | Progress/statistics screens or calculations. | AchievementTile, TodayAchievementSection, AchievementTile, TodayAchievementSection |
-| src/features/mastery/skillPracticePlanner.ts | 747 | Grade 3 skill practice planner: maps skill IDs to SessionConfig for the mastery map. | buildFocusSequence, FocusSequence, PlanOptions, planPracticeForSkill, add2DigitRegroupingItemIds, add3DigitRegroupingItemIds, arithmeticPatternItemIds, buildFocusSequence |
+| src/features/mastery/skillPracticePlanner.ts | 792 | Grade 3 skill practice planner: maps skill IDs to SessionConfig for the mastery map. | buildFocusSequence, FocusSequence, planFractionFocusSequence, PlanOptions, planPracticeForSkill, add2DigitRegroupingItemIds, add3DigitRegroupingItemIds, arithmeticPatternItemIds |
 | src/features/goals/GoalEvaluationSession.tsx | 643 | Exports reusable code: GoalEvaluationSession. | GoalEvaluationSession, buildNewLearningCandidates, buildReviewFindings, buildUpdatedState, confirmCancel, continueNext, evaluationArgs, GoalEvaluationSession |
 | src/features/practice/usePracticeSession.ts | 613 | Local persistence/database layer. | usePracticeSession, CorrectResult, LastSessionSummary, SessionState, usePracticeSession, getStaticItem, usePracticeSession |
 | src/features/curriculum/areaItems.ts | 609 | Practice item definitions and ID generators for a math curriculum topic. | apChoiceId, areaPerimCmpId, areaPerimCompareItemIds, areaPerimeterChoiceItemIds, AreaPerimeterChoiceKind, AreaPerimeterSchema, AreaPerimVariant, areaRectangleItemIds |
@@ -184,6 +184,8 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   │   └── userDataExport.ts
 │   │   ├── fluency
 │   │   │   └── fluencyEngine.ts
+│   │   ├── fractions
+│   │   │   └── types.ts
 │   │   ├── goals
 │   │   │   ├── dailyNewGoalLimits.ts
 │   │   │   ├── dailyNewGoalPlanner.ts
@@ -272,6 +274,8 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │       ├── EqualGroupsModel.tsx
 │   │       ├── equalGroupsUtils.ts
 │   │       ├── FractionBar.tsx
+│   │       ├── FractionComparisonModel.tsx
+│   │       ├── FractionEquivalenceModel.tsx
 │   │       ├── FractionNumberLine.tsx
 │   │       ├── FractionText.tsx
 │   │       ├── MathPrompt.tsx
@@ -303,6 +307,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   ├── eventRebuild.test.ts
 │   │   ├── fluencyEngine.test.ts
 │   │   ├── fractionItems.test.ts
+│   │   ├── fractionRedesign.test.tsx
 │   │   ├── goalDexieSchema.test.ts
 │   │   ├── goalEngine.test.ts
 │   │   ├── goalEvaluationEngine.test.tsx

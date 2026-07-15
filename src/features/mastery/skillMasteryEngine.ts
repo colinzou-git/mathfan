@@ -44,6 +44,8 @@ function classifyStatus(
   dueItemCount: number,
   itemCount: number,
   hasRequiredRepresentationDiversity = true,
+  hasRequiredDelayedEvidence = true,
+  hasUnresolvedMisconception = false,
 ): SkillSummaryStatus {
   if (attemptCount === 0) return 'new';
   if (dueItemCount > 0) return 'review_due';
@@ -52,7 +54,9 @@ function classifyStatus(
     accuracy >= ACCURACY_MASTERED &&
     attemptCount >= ATTEMPTS_MASTERED &&
     itemCount >= MIN_ITEMS_MASTERED &&
-    hasRequiredRepresentationDiversity
+    hasRequiredRepresentationDiversity &&
+    hasRequiredDelayedEvidence &&
+    !hasUnresolvedMisconception
   ) return 'mastered';
   return 'strong';
 }
@@ -136,12 +140,25 @@ export function deriveGrade3SkillSummaries(
     ).size;
     // Broad perimeter/comparison mastery needs transfer across at least two
     // representations; repeated dimension variants of one schema are not enough.
-    const needsDiversity = skillId === 'g3-perimeter' || skillId === 'g3-area-perimeter-compare';
+    const needsDiversity = skillId === 'g3-perimeter' || skillId === 'g3-area-perimeter-compare' || skillId === 'g3-frac-compare';
+    const needsDelayedEvidence = skillId === 'g3-frac-compare';
+    const eventDays = new Set(events.map(event => event.createdAt.slice(0, 10)));
+    const hasDelayedEvidence = eventDays.size >= 2 || states.some(state => (state.reps ?? 0) >= 2);
+    const unresolvedFractionMisconception = skillId.startsWith('g3-frac-')
+      && mistakePatterns.some(pattern => pattern.startsWith('fraction:') || pattern.startsWith('frac_'));
 
     return {
       skillId,
       studentId,
-      status: classifyStatus(attemptCount, accuracy, dueItemCount, skillItemIds.size, !needsDiversity || representationCount >= 2),
+      status: classifyStatus(
+        attemptCount,
+        accuracy,
+        dueItemCount,
+        skillItemIds.size,
+        !needsDiversity || representationCount >= 2,
+        !needsDelayedEvidence || hasDelayedEvidence,
+        unresolvedFractionMisconception,
+      ),
       attemptCount,
       correctCount,
       accuracy,

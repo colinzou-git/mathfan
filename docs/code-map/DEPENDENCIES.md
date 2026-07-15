@@ -4,9 +4,9 @@
 
 | Package | Import count |
 | --- | --- |
-| vitest | 74 |
+| vitest | 75 |
 | react | 35 |
-| @testing-library/react | 15 |
+| @testing-library/react | 16 |
 | pathlib | 8 |
 | __future__ | 7 |
 | sys | 7 |
@@ -135,6 +135,8 @@
 | src/features/curriculum/describeItem.ts | ../../types/math |
 | src/features/curriculum/describeItem.ts | ./multiplicationItems |
 | src/features/curriculum/fractionItems.ts | ../../types/math |
+| src/features/curriculum/fractionItems.ts | ../../utils/rng |
+| src/features/curriculum/fractionItems.ts | ../fractions/types |
 | src/features/curriculum/geometryItems.ts | ../../types/math |
 | src/features/curriculum/makeItemFromId.ts | ../../types/math |
 | src/features/curriculum/makeItemFromId.ts | ./areaItems |
@@ -498,6 +500,10 @@
 | src/features/visuals/AreaPerimeterCompareModel.tsx | ./types |
 | src/features/visuals/FractionBar.tsx | ../audio/mathSpeech |
 | src/features/visuals/FractionBar.tsx | ./FractionText |
+| src/features/visuals/FractionComparisonModel.tsx | ../fractions/types |
+| src/features/visuals/FractionComparisonModel.tsx | ./FractionBar |
+| src/features/visuals/FractionEquivalenceModel.tsx | ../fractions/types |
+| src/features/visuals/FractionEquivalenceModel.tsx | ./FractionBar |
 | src/features/visuals/FractionNumberLine.tsx | ./FractionText |
 | src/features/visuals/FractionText.tsx | ../audio/mathSpeech |
 | src/features/visuals/MathPrompt.tsx | ./FractionText |
@@ -510,6 +516,8 @@
 | src/features/visuals/VisualModel.tsx | ./ClockModel |
 | src/features/visuals/VisualModel.tsx | ./EqualGroupsModel |
 | src/features/visuals/VisualModel.tsx | ./FractionBar |
+| src/features/visuals/VisualModel.tsx | ./FractionComparisonModel |
+| src/features/visuals/VisualModel.tsx | ./FractionEquivalenceModel |
 | src/features/visuals/VisualModel.tsx | ./FractionNumberLine |
 | src/features/visuals/VisualModel.tsx | ./PerimeterPathModel |
 | src/features/visuals/VisualModel.tsx | ./RectangleMeasureModel |
@@ -589,6 +597,15 @@
 | src/tests/fluencyEngine.test.ts | ../features/learning/learningEvents |
 | src/tests/fluencyEngine.test.ts | ../features/scheduler/responsePolicy |
 | src/tests/fractionItems.test.ts | ../features/curriculum/fractionItems |
+| src/tests/fractionRedesign.test.tsx | ../features/curriculum/fractionItems |
+| src/tests/fractionRedesign.test.tsx | ../features/curriculum/makeItemFromId |
+| src/tests/fractionRedesign.test.tsx | ../features/mastery/misconceptionEngine |
+| src/tests/fractionRedesign.test.tsx | ../features/mastery/skillMapping |
+| src/tests/fractionRedesign.test.tsx | ../features/mastery/skillMasteryEngine |
+| src/tests/fractionRedesign.test.tsx | ../features/mastery/skillPracticePlanner |
+| src/tests/fractionRedesign.test.tsx | ../features/practice/hintEngine |
+| src/tests/fractionRedesign.test.tsx | ../features/scheduler/cardModel |
+| src/tests/fractionRedesign.test.tsx | ../features/visuals/VisualModel |
 | src/tests/goalDexieSchema.test.ts | ../db/dexie |
 | src/tests/goalEngine.test.ts | ../features/goals/goalEngine |
 | src/tests/goalEngine.test.ts | ../features/goals/types |
@@ -787,6 +804,7 @@
 | src/tests/visualModel.test.ts | ../features/curriculum/wordProblemItems |
 | src/tests/visualModel.test.ts | ../features/visuals/VisualModel |
 | src/tests/visualModel.test.ts | ../features/visuals/visualModelUtils |
+| src/types/math.ts | ../features/fractions/types |
 | src/types/math.ts | ../features/visuals/types |
 | src/utils/masteryColors.ts | ../features/learning/learningEvents |
 | src/utils/masteryColors.ts | ../types/math |

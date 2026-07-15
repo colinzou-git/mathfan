@@ -289,6 +289,8 @@ def standalone_pwa_share_flow(page: Page) -> None:
 def set_one_question_sessions(page: Page) -> None:
     page.get_by_test_id("open-settings").click()
     page.get_by_label("Default questions per session", exact=True).fill("1")
+    page.get_by_label("Default questions per session", exact=True).press("Tab")
+    page.wait_for_timeout(250)
     page.get_by_role("button", name="← Back", exact=True).click()
 
 
@@ -296,7 +298,7 @@ def open_mastery_skill(page: Page, skill_name: str) -> None:
     page.get_by_role("button", name=re.compile(r"Grade 3 Math Map")).click()
     page.get_by_role("button", name=re.compile(rf"^{re.escape(skill_name)}:")).click()
     page.get_by_role("button", name=re.compile(r"Practice this skill")).click()
-    expect(page.get_by_role("img")).to_be_visible()
+    expect(page.get_by_role("img").last).to_be_visible()
     assert_no_horizontal_overflow(page, skill_name)
 
 
@@ -330,6 +332,39 @@ def area_perimeter_comparison_lesson(page: Page) -> None:
         answer = numbers[2] * numbers[3]
     page.get_by_label("Your answer", exact=True).fill(str(answer))
     page.get_by_label("Your answer", exact=True).press("Enter")
+    expect(page.get_by_text(re.compile(r"Correct!|New personal best!"))).to_be_visible()
+
+
+def fraction_equivalence_visual_lesson(page: Page) -> None:
+    create_profile(page, "FractionEquivalentTester", "e2e-fraction-equivalent")
+    set_one_question_sessions(page)
+    open_mastery_skill(page, "Equivalent Fractions")
+    prompt = page.locator(".drill-q > div").first.inner_text()
+    values = [int(value) for value in re.findall(r"\d+", prompt)]
+    numerator, denominator, target_denominator = values[:3]
+    answer = numerator * target_denominator // denominator
+    page.get_by_label("Your answer", exact=True).fill(str(answer))
+    page.get_by_label("Your answer", exact=True).press("Enter")
+    expect(page.get_by_text(re.compile(r"Correct!|New personal best!"))).to_be_visible()
+
+
+def fraction_same_numerator_lesson(page: Page) -> None:
+    create_profile(page, "FractionCompareTester", "e2e-fraction-same-numerator")
+    set_one_question_sessions(page)
+    open_mastery_skill(page, "Compare Same Numerators")
+    prompt = page.locator(".drill-q > div").first.inner_text()
+    n1, d1, n2, d2 = [int(value) for value in re.findall(r"\d+", prompt)][:4]
+    if prompt.startswith("Why is"):
+        page.get_by_role(
+            "button",
+            name="The numerators match, so fewer equal pieces means larger pieces.",
+            exact=True,
+        ).click()
+        expect(page.get_by_text(re.compile(r"Correct!|New personal best!"))).to_be_visible()
+        return
+    left, right = n1 * d2, n2 * d1
+    answer = "=" if left == right else "<" if left < right else ">"
+    page.get_by_role("button", name=answer, exact=True).click()
     expect(page.get_by_text(re.compile(r"Correct!|New personal best!"))).to_be_visible()
 
 
@@ -418,6 +453,8 @@ def main() -> int:
             ("standalone-pwa-share", {"width": 1024, "height": 768}, standalone_pwa_share_flow, True),
             ("missing-side-lesson", {"width": 390, "height": 844}, area_perimeter_missing_side_lesson, False),
             ("area-perimeter-comparison", {"width": 1024, "height": 768}, area_perimeter_comparison_lesson, False),
+            ("fraction-equivalence-visual", {"width": 390, "height": 844}, fraction_equivalence_visual_lesson, False),
+            ("fraction-same-numerator", {"width": 1024, "height": 768}, fraction_same_numerator_lesson, False),
         ]
         for name, viewport, scenario, standalone_share in scenarios:
             try:

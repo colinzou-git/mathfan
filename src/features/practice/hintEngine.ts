@@ -56,10 +56,10 @@ export function getHint(item: PracticeItem, wrongAttempts: number): HintResult |
       return measurementWordHint(item, wrongAttempts);
 
     case 'fraction_equivalent':
-      return fracEquivHint(wrongAttempts);
+      return fracEquivHint(item, wrongAttempts);
 
     case 'fraction_compare':
-      return fracCmpHint(wrongAttempts);
+      return fracCmpHint(item, wrongAttempts);
 
     case 'fraction_number_line':
       return fracNlHint(b, wrongAttempts);
@@ -290,21 +290,26 @@ function measurementWordHint(item: PracticeItem, attempt: number): HintResult {
 
 // ── Fraction: equivalent ──────────────────────────────────────────────────────
 
-function fracEquivHint(attempt: number): HintResult {
+function fracEquivHint(item: PracticeItem, attempt: number): HintResult {
+  const spec = item.fractionSpec?.kind === 'equivalent_visual' ? item.fractionSpec : null;
   if (attempt === 1) {
-    return hint('Equivalent fractions look different but are the same size. Multiply top and bottom by the same number.');
+    return hint(spec ? `What number changes ${spec.left.denominator} into ${spec.right.denominator}?` : 'Equivalent fractions look different but are the same size. Multiply top and bottom by the same number.');
   }
   if (attempt === 2) {
-    return hint('Ask: what number times the old denominator equals the new denominator? Use that same number for the numerator.');
+    return hint(spec ? `${spec.left.denominator} × ${spec.multiplier} = ${spec.right.denominator}. Use that same multiplier on the numerator.` : 'Ask: what number times the old denominator equals the new denominator? Use that same number for the numerator.');
   }
-  return hint('Example: 1/2 = ?/6. Since 2 × 3 = 6, multiply the top too: 1 × 3 = 3. So 1/2 = 3/6.');
+  return hint(spec ? 'Picture both fraction bars aligned to the same whole. Matching lengths name equivalent fractions.' : 'Picture both fractions using equal-sized bars. Multiply the top and bottom by the same number.');
 }
 
 // ── Fraction: compare ─────────────────────────────────────────────────────────
 
-function fracCmpHint(attempt: number): HintResult {
+function fracCmpHint(item: PracticeItem, attempt: number): HintResult {
+  const spec = item.fractionSpec?.kind === 'compare' ? item.fractionSpec : null;
   if (attempt === 1) {
-    return hint('To compare fractions, look at the size of the parts (denominator) and how many parts (numerator).');
+    if (spec?.strategy === 'same_denominator') return hint('The denominators match, so the pieces are the same size. Compare how many pieces each fraction has.');
+    if (spec?.strategy === 'same_numerator') return hint('The numerators match. Compare the size of each equal piece.');
+    if (spec?.strategy === 'benchmark_half') return hint('Compare each fraction with one-half first.');
+    return hint('To compare fractions, look at the size of the parts and how many parts there are.');
   }
   if (attempt === 2) {
     return hint('Same denominator? The bigger numerator wins. Same numerator? The bigger denominator means smaller pieces.');

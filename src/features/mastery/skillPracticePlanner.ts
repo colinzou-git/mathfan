@@ -2,7 +2,7 @@ import type { SessionConfig } from '../../types/math';
 import {
   mulId, divId,
 } from '../curriculum/multiplicationItems';
-import { fracEqId, fracCmpId } from '../curriculum/fractionItems';
+import { fracEqId, fracCmpId, fractionStrategyChoiceItemIds, unitFractionModelItemIds } from '../curriculum/fractionItems';
 import { wordId } from '../curriculum/wordProblemItems';
 import {
   areaSquaresItemIds, areaRectangleItemIds, perimeterRectangleItemIds, rectilinearAreaItemIds,
@@ -31,8 +31,32 @@ export interface FocusSequence {
   representations: string[];
 }
 
+export function planFractionFocusSequence(skillId: string, misconceptions: string[] = []): FocusSequence {
+  const codes = new Set(misconceptions);
+  const sameDenominator = fractionComparisonIds('same_denominator');
+  const sameNumerator = fractionComparisonIds('same_numerator');
+  const mixed = fractionComparisonIds('mixed');
+  if (skillId === 'g3-frac-equivalent') {
+    return { skillId, itemIds: fracEquivItemIds(), representations: ['aligned_bars', 'symbolic_multiplier'] };
+  }
+  if (skillId === 'g3-frac-compare-same-denominator') {
+    return { skillId, itemIds: sameDenominator, representations: ['equal_wholes', 'same_denominator'] };
+  }
+  if (skillId === 'g3-frac-compare-same-numerator') {
+    return { skillId, itemIds: sameNumerator, representations: ['equal_wholes', 'piece_size'] };
+  }
+  const bridgeFirst = codes.has('fraction:compare_larger_denominator_means_larger')
+    || codes.has('frac_compare:larger_denominator');
+  return {
+    skillId,
+    itemIds: bridgeFirst ? [...sameNumerator, ...sameDenominator, ...mixed] : [...sameDenominator, ...sameNumerator, ...mixed],
+    representations: ['same_denominator', 'same_numerator', 'benchmark_half', 'mixed'],
+  };
+}
+
 /** Ordered conceptual sequence consumed by focused practice and the adaptive lesson planner (#29). */
 export function buildFocusSequence(skillId: string): FocusSequence {
+  if (skillId.startsWith('g3-frac-')) return planFractionFocusSequence(skillId);
   if (skillId === 'g3-area-concept') {
     return { skillId, itemIds: areaSquaresItemIds(), representations: ['unit_squares'] };
   }
@@ -136,6 +160,17 @@ function fracCmpItemIds(): string[] {
     [3, 8, 3, 4], [2, 6, 1, 3], [5, 8, 5, 6],
   ];
   return pairs.map(([n1, d1, n2, d2]) => fracCmpId(n1, d1, n2, d2));
+}
+
+function fractionComparisonIds(kind: 'same_denominator' | 'same_numerator' | 'mixed'): string[] {
+  return fracCmpItemIds().filter(id => {
+    const match = id.match(/^FCMP_(\d+)_(\d+)_(\d+)_(\d+)$/)!;
+    const sameDenominator = match[2] === match[4];
+    const sameNumerator = match[1] === match[3];
+    return kind === 'same_denominator' ? sameDenominator
+      : kind === 'same_numerator' ? sameNumerator && !sameDenominator
+        : !sameDenominator && !sameNumerator;
+  });
 }
 
 function equalGroupsWordItemIds(): string[] {
@@ -431,6 +466,14 @@ export function planPracticeForSkill(
     };
   }
 
+  if (skillId === 'g3-frac-compare-same-denominator') {
+    return { mode: 'fraction', specificItemIds: [...fractionComparisonIds('same_denominator'), ...fractionStrategyChoiceItemIds().filter(id => id.includes('same_denominator'))], fractionMode: 'compare', sessionLength };
+  }
+
+  if (skillId === 'g3-frac-compare-same-numerator') {
+    return { mode: 'fraction', specificItemIds: [...fractionComparisonIds('same_numerator'), ...fractionStrategyChoiceItemIds().filter(id => id.includes('same_numerator'))], fractionMode: 'compare', sessionLength };
+  }
+
   // ── G3_OA_MUL_FACTS_3_4 ──────────────────────────────────────────────────────
   if (skillId === 'G3_OA_MUL_FACTS_3_4') {
     return {
@@ -494,7 +537,9 @@ export function planPracticeForSkill(
   ) {
     return {
       mode: 'fraction',
-      specificItemIds: fracCmpItemIds(),
+      specificItemIds: skillId === 'g3-frac-compare'
+        ? [...fractionComparisonIds('mixed'), ...fractionStrategyChoiceItemIds().filter(id => id.includes('benchmark_half'))]
+        : fracCmpItemIds(),
       fractionMode: 'compare',
       sessionLength,
     };
@@ -527,7 +572,7 @@ export function planPracticeForSkill(
   if (skillId === 'g3-frac-unit') {
     return {
       mode: 'fraction',
-      specificItemIds: fracUnitItemIds(),
+      specificItemIds: [...unitFractionModelItemIds(), ...fracUnitItemIds()],
       fractionMode: 'equivalent',
       sessionLength,
     };

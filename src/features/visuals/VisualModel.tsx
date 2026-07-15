@@ -28,6 +28,8 @@ import { RectilinearAreaModel } from './RectilinearAreaModel';
 import { PerimeterPathModel } from './PerimeterPathModel';
 import { RectangleMeasureModel } from './RectangleMeasureModel';
 import { AreaPerimeterCompareModel } from './AreaPerimeterCompareModel';
+import { FractionEquivalenceModel } from './FractionEquivalenceModel';
+import { FractionComparisonModel } from './FractionComparisonModel';
 
 interface Props {
   item: PracticeItem;
@@ -45,6 +47,22 @@ function parseEqualGroupsFromId(itemId: string): { groups: number; perGroup: num
 
 export function VisualModel({ item, color, revealAnswer = false }: Props) {
   const { itemType, factA, factB, id, prompt, visualSpec } = item;
+
+  if (item.fractionSpec) {
+    const spec = item.fractionSpec;
+    if (spec.kind === 'equivalent_visual') {
+      return <FractionEquivalenceModel left={spec.left} right={spec.right} revealAnswer={revealAnswer} color={color} />;
+    }
+    if (spec.kind === 'compare') {
+      return <FractionComparisonModel left={spec.left} right={spec.right} strategy={spec.strategy} revealAnswer={revealAnswer} color={color} />;
+    }
+    if (spec.kind === 'locate_number_line') {
+      return <FractionNumberLine denominator={spec.subdivisions} numerator={revealAnswer ? spec.value.numerator : undefined} showLabel={revealAnswer} />;
+    }
+    if (spec.kind === 'unit_fraction_model') {
+      return <FractionBar numerator={spec.value.numerator} denominator={spec.value.denominator} fillColor={color} />;
+    }
+  }
 
   // ── Structured visual spec (issue #30) — preferred over id/type parsing ───
   if (visualSpec) {

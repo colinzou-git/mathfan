@@ -46,7 +46,7 @@ Capstone. Depends on nearly everything above (#25-#29, #30-#34, #35).
 | 27 | Task-aware FSRS ratings | A | **merged to main** (eb36360) |
 | 28 | One scheduling update per card/session | A | **merged to main** (eb36360) |
 | 30 | Area & perimeter redesign | B | **implemented and validated; committed on Branch B** |
-| 31 | Fractions redesign | B | not started |
+| 31 | Fractions redesign | B | **implemented and validated; committed on Branch B** |
 | 32 | Multi-digit regrouping | B | not started |
 | 33 | Division fact vs reasoning split | B | not started |
 | 34 | Time/measurement/graphs redesign | B | not started |
@@ -65,18 +65,20 @@ Capstone. Depends on nearly everything above (#25-#29, #30-#34, #35).
 session). They remain open on GitHub despite being merged. If you want them closed, do it manually or
 explicitly ask Claude to close them in a future session.
 
-**Active branch:** none yet — about to create `feature/grade3-curriculum-redesign` from the just-updated
-main (which now has the full Branch A card model / response policy / cardKey infrastructure).
-**Active issue:** #31 — fraction visual equivalence, number-line reasoning, and comparison redesign.
+**Active branch:** `feature/grade3-curriculum-redesign` (ahead of `origin/feature/grade3-curriculum-redesign`).
+**Active issue:** #32 — multi-digit addition/subtraction regrouping with place-value subskills.
 **Next concrete step:**
-1. Continue from `gh issue view 31` and the current `fractionItems.ts`, `FractionBar.tsx`,
-   `FractionNumberLine.tsx`, `VisualModel.tsx`, mastery mapping/planning, misconception, and hint files.
-2. Add typed `fractionSpec` data, schema template generators/cards, relationship-focused visuals,
-   exact fraction validation helpers, distinct comparison skills, and targeted bridge planning.
-3. Add unit/component/mastery/planner coverage plus equivalence and same-numerator browser journeys.
+1. Continue from `gh issue view 32` and add `regrouping.ts` plus typed `arithmeticSpec` data.
+2. Generate by explicit regrouping profile, add a responsive place-value regrouping visual,
+   worked/error-analysis modes, counterfactual misconception simulation, and focused subskill sequences.
+3. Preserve legacy arithmetic IDs, add unit/mastery/planner coverage, and add across-zero browser coverage.
 
 Issue #30 validation completed on 2026-07-15: `npm run ci` (73 files / 1,279 tests),
 `npm run test:e2e` (desktop, mobile, iPad, missing-side, comparison, and update flows), and
+`python tools/generate_code_maps.py` all passed.
+
+Issue #31 validation completed on 2026-07-15: `npm run ci` (74 files / 1,291 tests),
+`npm run test:e2e` (including phone equivalence and iPad same-numerator comparison), and
 `python tools/generate_code_maps.py` all passed.
 
 ## Known gaps / follow-ups (not blocking, revisit if time allows)
