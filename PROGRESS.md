@@ -45,7 +45,7 @@ Capstone. Depends on nearly everything above (#25-#29, #30-#34, #35).
 | 26 | Hybrid FSRS card model + migration | A | **merged to main** (eb36360) |
 | 27 | Task-aware FSRS ratings | A | **merged to main** (eb36360) |
 | 28 | One scheduling update per card/session | A | **merged to main** (eb36360) |
-| 30 | Area & perimeter redesign | B | not started |
+| 30 | Area & perimeter redesign | B | **implemented and validated; committed on Branch B** |
 | 31 | Fractions redesign | B | not started |
 | 32 | Multi-digit regrouping | B | not started |
 | 33 | Division fact vs reasoning split | B | not started |
@@ -67,18 +67,17 @@ explicitly ask Claude to close them in a future session.
 
 **Active branch:** none yet — about to create `feature/grade3-curriculum-redesign` from the just-updated
 main (which now has the full Branch A card model / response policy / cardKey infrastructure).
-**Active issue:** #30 — area & perimeter redesign (first in Branch B's order: 30, 31, then 32→33→34)
+**Active issue:** #31 — fraction visual equivalence, number-line reasoning, and comparison redesign.
 **Next concrete step:**
-1. `git checkout main && git pull && git checkout -b feature/grade3-curriculum-redesign`
-2. `gh issue view 30` for the complete spec.
-3. Read `src/features/curriculum/areaItems.ts`, `src/features/visuals/` (AreaGrid, RectilinearAreaModel,
-   VisualModel, visualModelUtils), `src/features/mastery/grade3MasteryMap.ts`, `skillMapping.ts`,
-   `skillPracticePlanner.ts`, `src/features/mastery/misconceptionEngine.ts`, `hintEngine` (find its file).
-4. This is the issue that should register the FIRST real entries in
-   `src/features/curriculum/templateRegistry.ts` (referenced by #26 but not yet created) — see the
-   "#26 scoping decision" note below before starting. Add `VisualSpec` to `PracticeItem`
-   (src/types/math.ts) per the issue's proposed `src/features/visuals/types.ts`.
-`npm run ci` was green as of merge commit eb36360; re-baseline before starting new work if resuming.
+1. Continue from `gh issue view 31` and the current `fractionItems.ts`, `FractionBar.tsx`,
+   `FractionNumberLine.tsx`, `VisualModel.tsx`, mastery mapping/planning, misconception, and hint files.
+2. Add typed `fractionSpec` data, schema template generators/cards, relationship-focused visuals,
+   exact fraction validation helpers, distinct comparison skills, and targeted bridge planning.
+3. Add unit/component/mastery/planner coverage plus equivalence and same-numerator browser journeys.
+
+Issue #30 validation completed on 2026-07-15: `npm run ci` (73 files / 1,279 tests),
+`npm run test:e2e` (desktop, mobile, iPad, missing-side, comparison, and update flows), and
+`python tools/generate_code_maps.py` all passed.
 
 ## Known gaps / follow-ups (not blocking, revisit if time allows)
 

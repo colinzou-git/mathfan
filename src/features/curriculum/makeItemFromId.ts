@@ -9,6 +9,8 @@ import { makeWordProblem, type Schema } from './wordProblemItems';
 import {
   makeAreaUnitSquaresItem, makeAreaRectangleItem, makePerimeterRectangleItem, makeRectilinearAreaItem,
   makePerimeterPolygonItem, makePerimeterUnknownSideItem, makeAreaPerimCompareItem, type AreaPerimVariant,
+  makePerimeterEquationChoiceItem, makePerimeterSumKnownSidesItem, makePerimeterMixedReasoningItem,
+  makeAreaPerimeterOperationChoiceItem, makeAreaPerimeterExpressionChoiceItem,
 } from './areaItems';
 import { GEO_ITEM_MAP } from './geometryItems';
 import { makePropCommutativityItem, makePropIdentityItem, makePropZeroItem, makePropAssociativeItem, makePropDistributiveItem } from './mulPropertiesItems';
@@ -100,13 +102,31 @@ export function makeItemFromId(itemId: string): PracticeItem | null {
   m = itemId.match(/^PERIM_POLY_(\d+(?:-\d+)*)$/);
   if (m) return makePerimeterPolygonItem(m[1].split('-').map(Number));
 
-  // PERIM_UNKSIDE_total_s1-s2-... — perimeter with unknown side
+  // PERIM_UNKSIDE_EQ|SUM|MIX_total_s1-s2-... — missing-side reasoning progression
+  m = itemId.match(/^PERIM_UNKSIDE_(EQ|SUM|MIX)_(\d+)_(\d+(?:-\d+)*)$/);
+  if (m) {
+    const total = +m[2];
+    const knownSides = m[3].split('-').map(Number);
+    if (m[1] === 'EQ') return makePerimeterEquationChoiceItem(total, knownSides);
+    if (m[1] === 'SUM') return makePerimeterSumKnownSidesItem(total, knownSides);
+    return makePerimeterMixedReasoningItem(total, knownSides);
+  }
+
+  // PERIM_UNKSIDE_total_s1-s2-... — perimeter with unknown side (legacy "find the number" mode)
   m = itemId.match(/^PERIM_UNKSIDE_(\d+)_(\d+(?:-\d+)*)$/);
   if (m) return makePerimeterUnknownSideItem(+m[1], m[2].split('-').map(Number));
 
   // AREA_PERIM_CMP_sadp|spad_N — area/perimeter comparison
   m = itemId.match(/^AREA_PERIM_CMP_(sadp|spad)_(\d+)$/);
   if (m) return makeAreaPerimCompareItem(m[1] as AreaPerimVariant, +m[2]);
+
+  // AP_CHOICE_operation|expression_LxW — area-vs-perimeter operation/expression choice
+  m = itemId.match(/^AP_CHOICE_(operation|expression)_(\d+)x(\d+)$/);
+  if (m) {
+    return m[1] === 'operation'
+      ? makeAreaPerimeterOperationChoiceItem(+m[2], +m[3])
+      : makeAreaPerimeterExpressionChoiceItem(+m[2], +m[3]);
+  }
 
   // PROP_CMT_AxB — commutative property
   m = itemId.match(/^PROP_CMT_(\d+)x(\d+)$/);

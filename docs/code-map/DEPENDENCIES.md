@@ -4,9 +4,9 @@
 
 | Package | Import count |
 | --- | --- |
-| vitest | 73 |
+| vitest | 74 |
 | react | 35 |
-| @testing-library/react | 14 |
+| @testing-library/react | 15 |
 | pathlib | 8 |
 | __future__ | 7 |
 | sys | 7 |
@@ -128,6 +128,8 @@
 | src/features/ai/TutorChat.tsx | ./gemini |
 | src/features/audio/speech.ts | ./mathSpeech |
 | src/features/curriculum/areaItems.ts | ../../types/math |
+| src/features/curriculum/areaItems.ts | ../../utils/grammar |
+| src/features/curriculum/areaItems.ts | ../visuals/types |
 | src/features/curriculum/arithmeticItems.ts | ../../types/math |
 | src/features/curriculum/decimalItems.ts | ../../types/math |
 | src/features/curriculum/describeItem.ts | ../../types/math |
@@ -493,19 +495,24 @@
 | src/features/sync/SyncWidget.tsx | ./driveSync |
 | src/features/sync/useSync.ts | ../auth/googleAuth |
 | src/features/sync/useSync.ts | ./driveSync |
+| src/features/visuals/AreaPerimeterCompareModel.tsx | ./types |
 | src/features/visuals/FractionBar.tsx | ../audio/mathSpeech |
 | src/features/visuals/FractionBar.tsx | ./FractionText |
 | src/features/visuals/FractionNumberLine.tsx | ./FractionText |
 | src/features/visuals/FractionText.tsx | ../audio/mathSpeech |
 | src/features/visuals/MathPrompt.tsx | ./FractionText |
 | src/features/visuals/MathPrompt.tsx | ./visualModelUtils |
+| src/features/visuals/PerimeterPathModel.tsx | ./types |
 | src/features/visuals/VisualModel.tsx | ../../types/math |
 | src/features/visuals/VisualModel.tsx | ./AreaGrid |
+| src/features/visuals/VisualModel.tsx | ./AreaPerimeterCompareModel |
 | src/features/visuals/VisualModel.tsx | ./ArrayModel |
 | src/features/visuals/VisualModel.tsx | ./ClockModel |
 | src/features/visuals/VisualModel.tsx | ./EqualGroupsModel |
 | src/features/visuals/VisualModel.tsx | ./FractionBar |
 | src/features/visuals/VisualModel.tsx | ./FractionNumberLine |
+| src/features/visuals/VisualModel.tsx | ./PerimeterPathModel |
+| src/features/visuals/VisualModel.tsx | ./RectangleMeasureModel |
 | src/features/visuals/VisualModel.tsx | ./RectilinearAreaModel |
 | src/features/visuals/VisualModel.tsx | ./ShapeModel |
 | src/features/visuals/VisualModel.tsx | ./visualModelUtils |
@@ -527,6 +534,15 @@
 | src/tests/appDiagnosticCompletion.test.ts | ../features/diagnosis/diagnosticCompletion |
 | src/tests/appGoalEvaluationNavigation.test.tsx | ../App |
 | src/tests/appGoalEvaluationNavigation.test.tsx | ../types/math |
+| src/tests/areaPerimeterRedesign.test.tsx | ../features/adaptive/adaptiveItemSelector |
+| src/tests/areaPerimeterRedesign.test.tsx | ../features/curriculum/areaItems |
+| src/tests/areaPerimeterRedesign.test.tsx | ../features/curriculum/makeItemFromId |
+| src/tests/areaPerimeterRedesign.test.tsx | ../features/mastery/misconceptionEngine |
+| src/tests/areaPerimeterRedesign.test.tsx | ../features/mastery/skillPracticePlanner |
+| src/tests/areaPerimeterRedesign.test.tsx | ../features/practice/hintEngine |
+| src/tests/areaPerimeterRedesign.test.tsx | ../features/scheduler/cardModel |
+| src/tests/areaPerimeterRedesign.test.tsx | ../features/visuals/VisualModel |
+| src/tests/areaPerimeterRedesign.test.tsx | ../features/visuals/visualModelUtils |
 | src/tests/arithmeticItems.test.ts | ../features/curriculum/arithmeticItems |
 | src/tests/cardModel.test.ts | ../features/curriculum/makeItemFromId |
 | src/tests/cardModel.test.ts | ../features/learning/learningEvents |
@@ -771,5 +787,6 @@
 | src/tests/visualModel.test.ts | ../features/curriculum/wordProblemItems |
 | src/tests/visualModel.test.ts | ../features/visuals/VisualModel |
 | src/tests/visualModel.test.ts | ../features/visuals/visualModelUtils |
+| src/types/math.ts | ../features/visuals/types |
 | src/utils/masteryColors.ts | ../features/learning/learningEvents |
 | src/utils/masteryColors.ts | ../types/math |

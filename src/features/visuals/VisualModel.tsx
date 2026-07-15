@@ -25,6 +25,9 @@ import { ShapeModel } from './ShapeModel';
 import { ClockModel } from './ClockModel';
 import { parseFractionFromPrompt, geoShapeFromItemId } from './visualModelUtils';
 import { RectilinearAreaModel } from './RectilinearAreaModel';
+import { PerimeterPathModel } from './PerimeterPathModel';
+import { RectangleMeasureModel } from './RectangleMeasureModel';
+import { AreaPerimeterCompareModel } from './AreaPerimeterCompareModel';
 
 interface Props {
   item: PracticeItem;
@@ -41,7 +44,54 @@ function parseEqualGroupsFromId(itemId: string): { groups: number; perGroup: num
 }
 
 export function VisualModel({ item, color, revealAnswer = false }: Props) {
-  const { itemType, factA, factB, id, prompt } = item;
+  const { itemType, factA, factB, id, prompt, visualSpec } = item;
+
+  // ── Structured visual spec (issue #30) — preferred over id/type parsing ───
+  if (visualSpec) {
+    switch (visualSpec.kind) {
+      case 'area_grid':
+        return (
+          <AreaGrid
+            rows={visualSpec.rows} cols={visualSpec.cols}
+            mode={visualSpec.showTiles ? 'unit_squares' : 'rectangle'}
+            color={color} revealAnswer={revealAnswer}
+          />
+        );
+      case 'perimeter_path':
+        return (
+          <PerimeterPathModel
+            vertices={visualSpec.vertices} sideLabels={visualSpec.sideLabels}
+            color={color} revealAnswer={revealAnswer}
+            missingSideAnswer={typeof item.answer === 'number' ? item.answer : undefined}
+          />
+        );
+      case 'rectangle_measure':
+        return (
+          <RectangleMeasureModel
+            length={visualSpec.length} width={visualSpec.width}
+            emphasize={visualSpec.emphasize} color={color} revealAnswer={revealAnswer}
+          />
+        );
+      case 'rectilinear_area':
+        if (visualSpec.rectangles.length === 2) {
+          const [r1, r2] = visualSpec.rectangles;
+          return (
+            <RectilinearAreaModel
+              a1={r1.length} b1={r1.width} a2={r2.length} b2={r2.width}
+              color={color} revealAnswer={revealAnswer}
+            />
+          );
+        }
+        break;
+      case 'area_perimeter_compare':
+        return (
+          <AreaPerimeterCompareModel
+            rectangles={visualSpec.rectangles} comparison={visualSpec.comparison}
+            color={color} revealAnswer={revealAnswer}
+          />
+        );
+    }
+  }
 
   // ── Multiplication array ──────────────────────────────────────────────────
   if (

@@ -12,7 +12,7 @@
  * IMPORTANT: hints on rungs 1–3 must never reveal the final answer.
  */
 
-import type { PracticeItem } from '../../types/math';
+import type { PracticeItem, PerimeterReasoningSpec } from '../../types/math';
 
 export interface HintResult {
   text: string;
@@ -72,8 +72,13 @@ export function getHint(item: PracticeItem, wrongAttempts: number): HintResult |
 
     case 'perimeter_rectangle':
     case 'perimeter_polygon':
-    case 'perimeter_unknown_side':
       return perimHint(a, b, wrongAttempts, itemType);
+
+    case 'perimeter_unknown_side':
+      return item.reasoningSpec ? perimeterUnknownSideHint(item.reasoningSpec, wrongAttempts) : perimHint(a, b, wrongAttempts, itemType);
+
+    case 'area_perimeter_choice':
+      return areaPerimeterChoiceHint(item, wrongAttempts);
 
     default:
       return genericHint(wrongAttempts);
@@ -361,6 +366,39 @@ function perimHint(a: number, b: number, attempt: number, itemType: string): Hin
     return hint(`Two long sides: ${a} + ${a} = ${2 * a}. Two short sides: ${b} + ${b} = ${2 * b}. Now add those two results.`);
   }
   return hint('List all the sides: write each length, then add them step by step.');
+}
+
+// ── Missing-side perimeter reasoning (issue #30) ────────────────────────────
+
+function perimeterUnknownSideHint(spec: PerimeterReasoningSpec, attempt: number): HintResult {
+  const sumKnown = spec.knownSides.reduce((s, n) => s + n, 0);
+  if (attempt === 1) {
+    return hint('Perimeter is the total distance AROUND the shape, not the space inside it. You know the total perimeter and some of the side lengths.');
+  }
+  if (attempt === 2) {
+    return hint(`Add up the known sides: ${spec.knownSides.join(' + ')}. Compare that sum to the total perimeter, ${spec.totalPerimeter}.`);
+  }
+  // attempt === 3: show the equation structure without the final result
+  return hint(`Use the equation ${spec.equation}. The known sides add to ${sumKnown}. What number completes the equation?`);
+}
+
+// ── Area-vs-perimeter operation/expression choice (issue #30) ──────────────
+
+function areaPerimeterChoiceHint(item: PracticeItem, attempt: number): HintResult {
+  const isExpression = item.id.startsWith('AP_CHOICE_expression_');
+  const l = item.factA ?? 0;
+  const w = item.factB ?? 0;
+  if (attempt === 1) {
+    return hint('Area is the space INSIDE a shape. Perimeter is the distance AROUND the outside edge.');
+  }
+  if (attempt === 2) {
+    return hint('Look at the highlighted part of the picture — is it the filled-in inside, or the outlined edge?');
+  }
+  // attempt === 3: show the equation structure without the final result
+  if (isExpression) {
+    return hint(`Perimeter means adding all four sides: length + width + length + width, or 2×length + 2×width. Length is ${l}, width is ${w}.`);
+  }
+  return hint(`If you are covering a surface, that's area (length × width). If you are going around an edge, that's perimeter (add all the sides). Length is ${l}, width is ${w}.`);
 }
 
 // ── Generic fallback ──────────────────────────────────────────────────────────

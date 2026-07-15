@@ -1,6 +1,6 @@
 # Code Map Overview
 
-Generated: 2026-07-14 07:26:57 UTC
+Generated: 2026-07-15 05:35:13 UTC
 
 Repo root: `/home/ubuntu/mathfan`  
 Output folder: `/home/ubuntu/mathfan/docs/code-map`
@@ -14,9 +14,9 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 - Package name: `mathfan`
 - Version: `1.2.0`
 - Module type: `module`
-- Scanned files: **239**
-- Scanned lines: **45,795**
-- Scanned bytes: **1,819,258**
+- Scanned files: **245**
+- Scanned lines: **46,863**
+- Scanned bytes: **1,867,456**
 
 ## NPM scripts
 
@@ -97,11 +97,11 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 | src/features/visuals/ShapeModel.tsx | 137 | Reusable SVG visual model components (area grids, shape diagrams, fraction bars, arrays). | SVGWrap, ShapeModel, ShapeName, pts, regularPoly, rightAnglePath, ShapeModel, SVGWrap |
 | src/features/stats/QuizStatsView.tsx | 135 | Progress/statistics screens or calculations. | FactGroup, QuizStatsView, avgSecStr, FactGroup, fmt, QuizStatsView |
 | src/features/stats/TodayAchievementSection.tsx | 125 | Progress/statistics screens or calculations. | AchievementTile, TodayAchievementSection, AchievementTile, TodayAchievementSection |
-| src/features/mastery/skillPracticePlanner.ts | 702 | Grade 3 skill practice planner: maps skill IDs to SessionConfig for the mastery map. | PlanOptions, planPracticeForSkill, add2DigitRegroupingItemIds, add3DigitRegroupingItemIds, arithmeticPatternItemIds, divisionWordItemIds, divItemIds, elapsedTimeItemIds |
+| src/features/mastery/skillPracticePlanner.ts | 747 | Grade 3 skill practice planner: maps skill IDs to SessionConfig for the mastery map. | buildFocusSequence, FocusSequence, PlanOptions, planPracticeForSkill, add2DigitRegroupingItemIds, add3DigitRegroupingItemIds, arithmeticPatternItemIds, buildFocusSequence |
 | src/features/goals/GoalEvaluationSession.tsx | 643 | Exports reusable code: GoalEvaluationSession. | GoalEvaluationSession, buildNewLearningCandidates, buildReviewFindings, buildUpdatedState, confirmCancel, continueNext, evaluationArgs, GoalEvaluationSession |
 | src/features/practice/usePracticeSession.ts | 613 | Local persistence/database layer. | usePracticeSession, CorrectResult, LastSessionSummary, SessionState, usePracticeSession, getStaticItem, usePracticeSession |
+| src/features/curriculum/areaItems.ts | 609 | Practice item definitions and ID generators for a math curriculum topic. | apChoiceId, areaPerimCmpId, areaPerimCompareItemIds, areaPerimeterChoiceItemIds, AreaPerimeterChoiceKind, AreaPerimeterSchema, AreaPerimVariant, areaRectangleItemIds |
 | src/features/goals/goalEvaluationEngine.ts | 575 | Exports reusable code: ADAPTIVE_GOAL_EVALUATION_CONFIRMATION_COUNT, ADAPTIVE_GOAL_EVALUATION_HISTORICAL_PRIOR_CAP, ADAPTIVE_GOAL_EVALUATION_QUESTION_COUNT, AdaptiveGoalEvaluationArgs, AdaptiveGoalEvaluationItem. | ADAPTIVE_GOAL_EVALUATION_CONFIRMATION_COUNT, ADAPTIVE_GOAL_EVALUATION_HISTORICAL_PRIOR_CAP, ADAPTIVE_GOAL_EVALUATION_QUESTION_COUNT, AdaptiveGoalEvaluationArgs, AdaptiveGoalEvaluationItem, AdaptiveGoalEvaluationPhase, AdaptiveGoalEvaluationResponse, AdaptiveGoalEvaluationResult |
-| src/features/diagnosis/DiagnosticSession.tsx | 566 | Exports reusable code: DiagnosticSession. | DiagnosticSession, complete, DiagnosticSession, onKey |
 
 ## Repository tree, filtered
 
@@ -265,6 +265,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   │   └── clock.ts
 │   │   └── visuals
 │   │       ├── AreaGrid.tsx
+│   │       ├── AreaPerimeterCompareModel.tsx
 │   │       ├── ArrayModel.tsx
 │   │       ├── ClockModel.tsx
 │   │       ├── DraggableEqualGroups.tsx
@@ -274,8 +275,11 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │       ├── FractionNumberLine.tsx
 │   │       ├── FractionText.tsx
 │   │       ├── MathPrompt.tsx
+│   │       ├── PerimeterPathModel.tsx
+│   │       ├── RectangleMeasureModel.tsx
 │   │       ├── RectilinearAreaModel.tsx
 │   │       ├── ShapeModel.tsx
+│   │       ├── types.ts
 │   │       ├── VisualModel.tsx
 │   │       └── visualModelUtils.ts
 │   ├── tests
@@ -284,6 +288,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   ├── answerChecker.test.ts
 │   │   ├── appDiagnosticCompletion.test.ts
 │   │   ├── appGoalEvaluationNavigation.test.tsx
+│   │   ├── areaPerimeterRedesign.test.tsx
 │   │   ├── arithmeticItems.test.ts
 │   │   ├── cardModel.test.ts
 │   │   ├── cardStateMigration.test.ts
@@ -356,6 +361,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   ├── google.d.ts
 │   │   └── math.ts
 │   ├── utils
+│   │   ├── grammar.ts
 │   │   ├── id.ts
 │   │   ├── masteryColors.ts
 │   │   └── rng.ts

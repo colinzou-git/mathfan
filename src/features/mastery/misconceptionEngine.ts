@@ -28,6 +28,15 @@ export function detectMistakes(
       return detectFractionCompare(item, String(studentAnswer));
     case 'fraction_equivalent':
       return detectFractionEquivalent(item, studentAnswer);
+    case 'perimeter_rectangle':
+      return detectPerimeterRectangle(item, studentAnswer);
+    case 'area_rectangle':
+    case 'area_unit_squares':
+      return detectAreaRectangle(item, studentAnswer);
+    case 'perimeter_unknown_side':
+      return detectPerimeterUnknownSide(item, studentAnswer);
+    case 'area_perimeter_choice':
+      return detectAreaPerimeterChoice(item, studentAnswer);
     default:
       return [];
   }
@@ -188,4 +197,72 @@ function detectFractionEquivalent(item: PracticeItem, raw: string | number): str
   }
 
   return patterns;
+}
+
+// ── Area & perimeter (issue #30) ───────────────────────────────────────────
+// Pattern codes namespaced `area_perim:*`.
+
+function detectPerimeterRectangle(item: PracticeItem, raw: string | number): string[] {
+  const l = item.factA ?? 0;
+  const w = item.factB ?? 0;
+  if (l === 0 || w === 0) return [];
+  const sa = Number(raw);
+  if (!Number.isFinite(sa)) return [];
+  const correct = 2 * (l + w);
+  if (sa === correct) return [];
+
+  const patterns: string[] = [];
+  if (sa === l * w) patterns.push('area_perim:used_area_for_perimeter');
+  if (sa === l + w) patterns.push('area_perim:used_half_perimeter');
+  if (sa === 2 * l + w || sa === l + 2 * w) patterns.push('area_perim:forgot_one_pair_of_sides');
+  return patterns;
+}
+
+function detectAreaRectangle(item: PracticeItem, raw: string | number): string[] {
+  const l = item.factA ?? 0;
+  const w = item.factB ?? 0;
+  if (l === 0 || w === 0) return [];
+  const sa = Number(raw);
+  if (!Number.isFinite(sa)) return [];
+  const correct = l * w;
+  if (sa === correct) return [];
+
+  if (sa === 2 * (l + w)) return ['area_perim:used_perimeter_for_area'];
+  return [];
+}
+
+function detectPerimeterUnknownSide(item: PracticeItem, raw: string | number): string[] {
+  const spec = item.reasoningSpec;
+  if (!spec) return [];
+  const sa = Number(raw);
+  if (!Number.isFinite(sa)) return [];
+  const sumKnown = spec.knownSides.reduce((s, n) => s + n, 0);
+  const correct = spec.totalPerimeter - sumKnown;
+  if (sa === correct) return [];
+
+  const patterns: string[] = [];
+  if (sa === spec.totalPerimeter) patterns.push('area_perim:copied_given_perimeter');
+  if (sa === spec.totalPerimeter + sumKnown) patterns.push('area_perim:summed_non_boundary_values');
+  if (sa === sumKnown - spec.totalPerimeter && sa !== correct) patterns.push('area_perim:missing_side_subtraction_error');
+  return patterns;
+}
+
+function detectAreaPerimeterChoice(item: PracticeItem, raw: string | number): string[] {
+  const sa = String(raw).trim();
+  if (sa === String(item.answer)) return [];
+
+  const l = item.factA;
+  const w = item.factB;
+  if (l == null || w == null) return [];
+
+  // Operation-selection ("would you use area or perimeter?")
+  if (sa === 'area' && item.answer === 'perimeter') return ['area_perim:used_area_for_perimeter'];
+  if (sa === 'perimeter' && item.answer === 'area') return ['area_perim:used_perimeter_for_area'];
+
+  // Expression-selection ("which expression represents the boundary?")
+  if (sa === `${l}×${w}`) return ['area_perim:used_area_for_perimeter'];
+  if (sa === `${l} + ${w}`) return ['area_perim:used_half_perimeter'];
+  if (sa === `2×${l} + ${w}` || sa === `${l} + 2×${w}`) return ['area_perim:forgot_one_pair_of_sides'];
+
+  return [];
 }

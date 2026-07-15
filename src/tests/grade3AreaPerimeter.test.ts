@@ -92,9 +92,9 @@ describe('makePerimeterUnknownSideItem', () => {
     expect(makePerimeterUnknownSideItem(12, [3, 4]).itemType).toBe('perimeter_unknown_side');
   });
 
-  it('infers to g3-perimeter', () => {
+  it('infers to the distinct missing-side skill', () => {
     const item = makePerimeterUnknownSideItem(12, [3, 4]);
-    expect(inferGrade3SkillId(item)).toBe('g3-perimeter');
+    expect(inferGrade3SkillId(item)).toBe('g3-perimeter-missing-side');
   });
 
   it('reconstructs from ID', () => {
@@ -114,7 +114,7 @@ describe('perimeterUnknownSideItemIds — all IDs reconstruct with positive fini
       const ans = item!.answer as number;
       expect(Number.isFinite(ans), `"${id}" answer should be finite`).toBe(true);
       expect(ans, `"${id}" answer should be positive`).toBeGreaterThan(0);
-      expect(inferGrade3SkillId(item!)).toBe('g3-perimeter');
+      expect(inferGrade3SkillId(item!)).toBe('g3-perimeter-missing-side');
     }
   });
 });
@@ -201,9 +201,11 @@ describe('planPracticeForSkill — g3-perimeter', () => {
     expect(config.specificItemIds!.some(id => id.startsWith('PERIM_POLY_'))).toBe(true);
   });
 
-  it('includes PERIM_UNKSIDE items', () => {
+  it('keeps missing-side questions in their distinct skill', () => {
     const config = planPracticeForSkill('g3-perimeter');
-    expect(config.specificItemIds!.some(id => id.startsWith('PERIM_UNKSIDE_'))).toBe(true);
+    expect(config.specificItemIds!.some(id => id.startsWith('PERIM_UNKSIDE_'))).toBe(false);
+    const missingSide = planPracticeForSkill('g3-perimeter-missing-side');
+    expect(missingSide.specificItemIds!.some(id => id.startsWith('PERIM_UNKSIDE_'))).toBe(true);
   });
 
   it('still includes PERIM_RECT items', () => {

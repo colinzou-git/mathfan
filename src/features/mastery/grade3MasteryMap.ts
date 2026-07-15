@@ -136,11 +136,27 @@ export const GRADE3_MASTERY_MAP: readonly MasterySkillNode[] = [
     californiaStandardIds: ['3.MD.D.8'],
   },
   {
+    id: 'g3-area-perimeter-choice',
+    domain: 'area_perimeter',
+    title: 'Area or Perimeter?',
+    description: 'Decide whether a situation asks about the space inside or the distance around.',
+    prerequisites: ['g3-area-concept', 'g3-perimeter'],
+    californiaStandardIds: ['3.MD.D.8'],
+  },
+  {
+    id: 'g3-perimeter-missing-side',
+    domain: 'area_perimeter',
+    title: 'Missing-Side Perimeter',
+    description: 'Use a known perimeter and visible side lengths to find a missing side.',
+    prerequisites: ['g3-perimeter'],
+    californiaStandardIds: ['3.MD.D.8'],
+  },
+  {
     id: 'g3-area-perimeter-compare',
     domain: 'area_perimeter',
     title: 'Compare Area and Perimeter',
     description: 'Understand that rectangles can have the same area but different perimeters, or the same perimeter but different areas.',
-    prerequisites: ['g3-area-formula', 'g3-perimeter'],
+    prerequisites: ['g3-area-formula', 'g3-area-perimeter-choice', 'g3-perimeter-missing-side'],
     californiaStandardIds: ['3.MD.D.8'],
   },
   // ── Addition & Subtraction ──────────────────────────────────────────────────

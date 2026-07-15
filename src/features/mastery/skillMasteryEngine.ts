@@ -43,6 +43,7 @@ function classifyStatus(
   accuracy: number,
   dueItemCount: number,
   itemCount: number,
+  hasRequiredRepresentationDiversity = true,
 ): SkillSummaryStatus {
   if (attemptCount === 0) return 'new';
   if (dueItemCount > 0) return 'review_due';
@@ -50,7 +51,8 @@ function classifyStatus(
   if (
     accuracy >= ACCURACY_MASTERED &&
     attemptCount >= ATTEMPTS_MASTERED &&
-    itemCount >= MIN_ITEMS_MASTERED
+    itemCount >= MIN_ITEMS_MASTERED &&
+    hasRequiredRepresentationDiversity
   ) return 'mastered';
   return 'strong';
 }
@@ -72,17 +74,22 @@ export function deriveGrade3SkillSummaries(
 
   // Build itemId → Grade 3 skillId map
   const itemSkillMap = new Map<string, string>();
+  const itemRepresentationMap = new Map<string, string>();
+  const recordItem = (item: PracticeItem) => {
+    const skillId = inferGrade3SkillId(item);
+    if (skillId) itemSkillMap.set(item.id, skillId);
+    const comparison = item.visualSpec?.kind === 'area_perimeter_compare' ? item.visualSpec.comparison : undefined;
+    itemRepresentationMap.set(item.id, comparison ?? item.visualSpec?.kind ?? item.schemaId ?? item.itemType);
+  };
   if (Array.isArray(items)) {
     for (const item of items) {
-      const skillId = inferGrade3SkillId(item);
-      if (skillId) itemSkillMap.set(item.id, skillId);
+      recordItem(item);
     }
   } else {
     for (const itemId of allItemIds) {
       const item = items(itemId);
       if (item) {
-        const skillId = inferGrade3SkillId(item);
-        if (skillId) itemSkillMap.set(itemId, skillId);
+        recordItem(item);
       }
     }
   }
@@ -124,11 +131,17 @@ export function deriveGrade3SkillSummaries(
       ...events.map(e => e.itemId),
       ...states.map(s => s.lastItemId ?? s.cardKey),
     ]);
+    const representationCount = new Set(
+      [...skillItemIds].map(id => itemRepresentationMap.get(id)).filter(Boolean),
+    ).size;
+    // Broad perimeter/comparison mastery needs transfer across at least two
+    // representations; repeated dimension variants of one schema are not enough.
+    const needsDiversity = skillId === 'g3-perimeter' || skillId === 'g3-area-perimeter-compare';
 
     return {
       skillId,
       studentId,
-      status: classifyStatus(attemptCount, accuracy, dueItemCount, skillItemIds.size),
+      status: classifyStatus(attemptCount, accuracy, dueItemCount, skillItemIds.size, !needsDiversity || representationCount >= 2),
       attemptCount,
       correctCount,
       accuracy,

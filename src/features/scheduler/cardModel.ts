@@ -39,11 +39,14 @@ function divisionCardKey(dividend: number, divisor: number): string {
   return `fact:div:${dividend}/${divisor}`;
 }
 
+const AREA_PERIM_TEMPLATE_PREFIX = 'template:g3-area-perimeter:';
+
 /**
  * Derives a canonical card key from a concrete item id.
- * Multiplication and division facts resolve to atomic-fact keys; everything
- * else falls back to a 1:1 template key (`template:<itemId>`) until a real
- * template generator is registered for that schema.
+ * Multiplication and division facts resolve to atomic-fact keys; rectangle
+ * area/perimeter instances resolve to stable schema templates; everything else falls
+ * back to a 1:1 template key (`template:<itemId>`) until a real template
+ * generator is registered for that schema.
  */
 export function deriveCardKeyFromItemId(itemId: string): string {
   let m: RegExpMatchArray | null;
@@ -53,6 +56,15 @@ export function deriveCardKeyFromItemId(itemId: string): string {
   if ((m = itemId.match(/^DIV_(\d+)d(\d+)$/))) {
     return divisionCardKey(+m[1], +m[2]);
   }
+  if (/^AREA_SQ_\d+x\d+$/.test(itemId)) return `${AREA_PERIM_TEMPLATE_PREFIX}area_count_squares`;
+  if (/^AREA_RECT_\d+x\d+$/.test(itemId)) return `${AREA_PERIM_TEMPLATE_PREFIX}area_rows_columns`;
+  if (/^PERIM_RECT_\d+x\d+$/.test(itemId)) return `${AREA_PERIM_TEMPLATE_PREFIX}perimeter_rectangle_structure`;
+  if (/^PERIM_POLY_/.test(itemId)) return `${AREA_PERIM_TEMPLATE_PREFIX}perimeter_sum_sides`;
+  if (/^PERIM_UNKSIDE_/.test(itemId)) return `${AREA_PERIM_TEMPLATE_PREFIX}perimeter_missing_side`;
+  if (/^AP_CHOICE_/.test(itemId)) return `${AREA_PERIM_TEMPLATE_PREFIX}area_or_perimeter_choice`;
+  if (/^RECTI_/.test(itemId)) return `${AREA_PERIM_TEMPLATE_PREFIX}rectilinear_area_decompose`;
+  if (/^AREA_PERIM_CMP_sadp_/.test(itemId)) return `${AREA_PERIM_TEMPLATE_PREFIX}same_area_diff_perimeter`;
+  if (/^AREA_PERIM_CMP_spad_/.test(itemId)) return `${AREA_PERIM_TEMPLATE_PREFIX}same_perimeter_diff_area`;
   return `template:${itemId}`;
 }
 

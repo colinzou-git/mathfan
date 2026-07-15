@@ -7,6 +7,7 @@ import { wordId } from '../curriculum/wordProblemItems';
 import {
   areaSquaresItemIds, areaRectangleItemIds, perimeterRectangleItemIds, rectilinearAreaItemIds,
   perimeterPolygonItemIds, perimeterUnknownSideItemIds, areaPerimCompareItemIds,
+  perimeterReasoningItemIds, areaPerimeterChoiceItemIds,
 } from '../curriculum/areaItems';
 import { geoItemIds } from '../curriculum/geometryItems';
 import { mulPropertyItemIds } from '../curriculum/mulPropertiesItems';
@@ -22,6 +23,38 @@ import { apatId } from '../curriculum/patternItems';
 export interface PlanOptions {
   sessionLength?: number;
   rounds?: number;
+}
+
+export interface FocusSequence {
+  skillId: string;
+  itemIds: string[];
+  representations: string[];
+}
+
+/** Ordered conceptual sequence consumed by focused practice and the adaptive lesson planner (#29). */
+export function buildFocusSequence(skillId: string): FocusSequence {
+  if (skillId === 'g3-area-concept') {
+    return { skillId, itemIds: areaSquaresItemIds(), representations: ['unit_squares'] };
+  }
+  if (skillId === 'g3-area-formula') {
+    return { skillId, itemIds: [...areaSquaresItemIds(), ...areaRectangleItemIds()], representations: ['unit_squares', 'rows_columns'] };
+  }
+  if (skillId === 'g3-perimeter') {
+    return { skillId, itemIds: [...perimeterPolygonItemIds(), ...perimeterRectangleItemIds()], representations: ['boundary_path', 'rectangle_structure'] };
+  }
+  if (skillId === 'g3-area-perimeter-choice') {
+    return { skillId, itemIds: areaPerimeterChoiceItemIds(), representations: ['context', 'expression', 'inside_boundary'] };
+  }
+  if (skillId === 'g3-perimeter-missing-side') {
+    return { skillId, itemIds: [...perimeterReasoningItemIds(), ...perimeterUnknownSideItemIds()], representations: ['equation', 'known_side_sum', 'independent'] };
+  }
+  if (skillId === 'g3-geo-rectilinear-area') {
+    return { skillId, itemIds: rectilinearAreaItemIds(), representations: ['decomposition'] };
+  }
+  if (skillId === 'g3-area-perimeter-compare') {
+    return { skillId, itemIds: areaPerimCompareItemIds(), representations: ['same_area', 'same_perimeter'] };
+  }
+  return { skillId, itemIds: [], representations: [] };
 }
 
 // ── Skill ID constants matching the roadmap spec ─────────────────────────────
@@ -527,15 +560,27 @@ export function planPracticeForSkill(
     };
   }
 
-  // ── G3_MD_PERIMETER / g3-perimeter — perimeter of rectangles + polygons + unknown sides ──
+  // ── G3_MD_PERIMETER / g3-perimeter — trace/sum boundaries then rectangle structure ──
   if (skillId === 'G3_MD_PERIMETER' || skillId === 'g3-perimeter') {
     return {
       mode: 'area',
       specificItemIds: [
         ...perimeterRectangleItemIds(),
         ...perimeterPolygonItemIds(),
-        ...perimeterUnknownSideItemIds(),
       ],
+      sessionLength,
+    };
+  }
+
+
+  if (skillId === 'g3-area-perimeter-choice') {
+    return { mode: 'area', specificItemIds: areaPerimeterChoiceItemIds(), sessionLength };
+  }
+
+  if (skillId === 'g3-perimeter-missing-side') {
+    return {
+      mode: 'area',
+      specificItemIds: [...perimeterReasoningItemIds(), ...perimeterUnknownSideItemIds()],
       sessionLength,
     };
   }

@@ -91,7 +91,8 @@ export function inferGrade3SkillId(item: PracticeItem): string | null {
   if (itemType === 'area_rectangle') return 'g3-area-formula';
   if (itemType === 'perimeter_rectangle') return 'g3-perimeter';
   if (itemType === 'perimeter_polygon') return 'g3-perimeter';
-  if (itemType === 'perimeter_unknown_side') return 'g3-perimeter';
+  if (itemType === 'perimeter_unknown_side') return 'g3-perimeter-missing-side';
+  if (itemType === 'area_perimeter_choice') return 'g3-area-perimeter-choice';
   if (itemType === 'area_perimeter_compare') return 'g3-area-perimeter-compare';
   if (itemType === 'rectilinear_area') return 'g3-geo-rectilinear-area';
 

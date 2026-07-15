@@ -286,6 +286,53 @@ def standalone_pwa_share_flow(page: Page) -> None:
         raise AssertionError(f"Prepared file was not shared from the explicit click: {share_calls}")
 
 
+def set_one_question_sessions(page: Page) -> None:
+    page.get_by_test_id("open-settings").click()
+    page.get_by_label("Default questions per session", exact=True).fill("1")
+    page.get_by_role("button", name="← Back", exact=True).click()
+
+
+def open_mastery_skill(page: Page, skill_name: str) -> None:
+    page.get_by_role("button", name=re.compile(r"Grade 3 Math Map")).click()
+    page.get_by_role("button", name=re.compile(rf"^{re.escape(skill_name)}:")).click()
+    page.get_by_role("button", name=re.compile(r"Practice this skill")).click()
+    expect(page.get_by_role("img")).to_be_visible()
+    assert_no_horizontal_overflow(page, skill_name)
+
+
+def area_perimeter_missing_side_lesson(page: Page) -> None:
+    create_profile(page, "PerimeterTester", "e2e-perimeter-missing")
+    set_one_question_sessions(page)
+    open_mastery_skill(page, "Missing-Side Perimeter")
+    prompt = page.locator(".drill-q > div").first.inner_text()
+    numbers = [int(value) for value in re.findall(r"\d+", prompt)]
+    if "Which equation" in prompt:
+        total, *known = numbers
+        equation = " + ".join(str(value) for value in known) + f" + x = {total}"
+        page.get_by_role("button", name=equation, exact=True).click()
+    else:
+        total, *known = numbers
+        answer = sum(known) if "sum of the known sides" in prompt else total - sum(known)
+        page.get_by_label("Your answer", exact=True).fill(str(answer))
+        page.get_by_label("Your answer", exact=True).press("Enter")
+    expect(page.get_by_text(re.compile(r"Correct!|New personal best!"))).to_be_visible()
+
+
+def area_perimeter_comparison_lesson(page: Page) -> None:
+    create_profile(page, "ComparisonTester", "e2e-area-perimeter-compare")
+    set_one_question_sessions(page)
+    open_mastery_skill(page, "Compare Area and Perimeter")
+    prompt = page.locator(".drill-q > div").first.inner_text()
+    numbers = [int(value) for value in re.findall(r"\d+", prompt)]
+    if "perimeter of Rectangle A" in prompt:
+        answer = 2 * (numbers[0] + numbers[1])
+    else:
+        answer = numbers[2] * numbers[3]
+    page.get_by_label("Your answer", exact=True).fill(str(answer))
+    page.get_by_label("Your answer", exact=True).press("Enter")
+    expect(page.get_by_text(re.compile(r"Correct!|New personal best!"))).to_be_visible()
+
+
 def run_scenario(
     browser: Browser,
     name: str,
@@ -369,6 +416,8 @@ def main() -> int:
                 False,
             ),
             ("standalone-pwa-share", {"width": 1024, "height": 768}, standalone_pwa_share_flow, True),
+            ("missing-side-lesson", {"width": 390, "height": 844}, area_perimeter_missing_side_lesson, False),
+            ("area-perimeter-comparison", {"width": 1024, "height": 768}, area_perimeter_comparison_lesson, False),
         ]
         for name, viewport, scenario, standalone_share in scenarios:
             try:
