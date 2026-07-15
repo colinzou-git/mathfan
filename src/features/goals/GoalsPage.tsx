@@ -33,12 +33,14 @@ import {
 } from './goalRecommendationEngine';
 import {
   cancelGoal,
+  completeGoal,
   endGoal,
   evaluateGoalLifecycleAndPersist,
   pauseGoal,
   resumeGoal,
   updateGoal,
 } from './goalLifecycleService';
+import { analyzeGoalPortfolio } from './goalPortfolioEngine';
 import { normalizeDailyNewGoalLimits, validateDailyNewGoalLimits } from './dailyNewGoalLimits';
 import { planDailyNewForGoals } from './dailyNewGoalPlanner';
 
@@ -239,6 +241,8 @@ function GoalCard({
   onResume,
   onEnd,
   onCancel,
+  onRoleChange,
+  onComplete,
 }: {
   view: GoalView;
   history?: boolean;
@@ -247,6 +251,8 @@ function GoalCard({
   onResume: (goal: LearningGoal) => void;
   onEnd: (goal: LearningGoal) => void;
   onCancel: (goal: LearningGoal) => void;
+  onRoleChange: (goal: LearningGoal, role: 'primary' | 'maintenance') => void;
+  onComplete: (goal: LearningGoal) => void;
 }) {
   const { goal, progress } = view;
   const attempts = progress.targets.reduce((sum, target) => sum + target.firstAttemptCount, 0);
@@ -267,7 +273,7 @@ function GoalCard({
         <div>
           <h3 style={s.goalTitle}>{goal.title}</h3>
           <p style={s.goalMeta}>
-            {STATUS_LABELS[goal.status]} · {goal.startDate} to {goal.targetDate}
+            {(goal.portfolioRole ?? 'primary') === 'primary' ? 'Primary' : 'Maintenance'} · {STATUS_LABELS[goal.status]} · {goal.startDate} to {goal.targetDate}
             {!history && ` · ${Math.max(0, progress.daysRemaining)} day${Math.max(0, progress.daysRemaining) === 1 ? '' : 's'} left`}
           </p>
         </div>
@@ -287,6 +293,17 @@ function GoalCard({
           This goal may feel easier after reviewing: {unmetPrereqs.join(', ')}.
         </p>
       )}
+
+      {!history && <label style={s.label}>Portfolio role
+        <select aria-label={`Portfolio role for ${goal.title}`} value={goal.portfolioRole ?? 'primary'} onChange={event => onRoleChange(goal, event.target.value as 'primary' | 'maintenance')} style={s.input}>
+          <option value="primary">Primary</option><option value="maintenance">Maintenance</option>
+        </select>
+      </label>}
+
+      {!history && progress.isExpired && <div role="alert" style={s.advisory}>
+        <strong>Target date reached.</strong> This goal stays active until you choose what to do.
+        <div style={s.actions}><button style={s.secondaryBtn} onClick={() => onEdit(goal)}>Extend or edit</button><button style={s.secondaryBtn} onClick={() => onRoleChange(goal, 'maintenance')}>Move to maintenance</button><button style={s.secondaryBtn} onClick={() => onPause(goal)}>Pause</button><button style={s.secondaryBtn} onClick={() => onEnd(goal)}>End goal</button><button style={s.secondaryBtn}>Keep active unchanged</button></div>
+      </div>}
 
       <div style={s.targetList}>
         {progress.targets.map(target => (
@@ -313,6 +330,7 @@ function GoalCard({
             ? <button style={s.secondaryBtn} onClick={() => onResume(goal)}>Resume</button>
             : <button style={s.secondaryBtn} onClick={() => onPause(goal)}>Pause</button>}
           <button style={s.secondaryBtn} onClick={() => onEnd(goal)}>End</button>
+          {progress.targets.length > 0 && progress.targets.every(target => target.isComplete) && <button style={s.secondaryBtn} onClick={() => onComplete(goal)}>Complete</button>}
           <button style={s.textDangerBtn} onClick={() => onCancel(goal)}>Cancel</button>
         </div>
       )}
@@ -358,6 +376,11 @@ export function GoalsPage({ profile, lastSyncedAt, initialGoalSkillIds, onInitia
 
   const ready = page.status === 'ready' ? page.data : null;
   const views = useMemo(() => ready ? sectionedViews(ready, profile) : null, [ready, profile]);
+  const portfolio = useMemo(() => ready ? analyzeGoalPortfolio({
+    goals: ready.goals,
+    evidence: evidenceInput(ready, profile),
+    dailyNewGoalQuestionLimits: profile.settings.dailyNewGoalQuestionLimits,
+  }) : null, [ready, profile]);
 
   useEffect(() => {
     if (!initialGoalSkillIds || initialGoalSkillIds.length === 0) return;
@@ -375,6 +398,14 @@ export function GoalsPage({ profile, lastSyncedAt, initialGoalSkillIds, onInitia
     } catch (err) {
       setPage({ status: 'error', message: err instanceof Error ? err.message : 'Could not update this goal.' });
     }
+  };
+
+  const handleRoleChange = async (goal: LearningGoal, portfolioRole: 'primary' | 'maintenance') => {
+    await updateGoal(goal, { portfolioRole }, appNow().toISOString()); refresh();
+  };
+
+  const handleComplete = async (goal: LearningGoal) => {
+    await completeGoal(goal, appNow().toISOString()); refresh();
   };
 
   const summary = ready ? {
@@ -406,6 +437,14 @@ export function GoalsPage({ profile, lastSyncedAt, initialGoalSkillIds, onInitia
 
       {ready && views && summary && (
         <>
+          {portfolio && <section aria-label="Active plan" style={s.goalCard}>
+            <h2 style={s.sectionTitle}>Active plan</h2>
+            <p><strong>Primary:</strong> {portfolio.activeGoals.filter(goal => (goal.portfolioRole ?? 'primary') === 'primary').map(goal => goal.title).join(', ') || 'None'}</p>
+            <p><strong>Maintenance:</strong> {portfolio.activeGoals.filter(goal => goal.portfolioRole === 'maintenance').map(goal => goal.title).join(', ') || 'None'}</p>
+            <p>Estimated goal learning today: {portfolio.totalEstimatedDailyQuestions} questions · {portfolio.totalEstimatedMinutes} minutes</p>
+            {portfolio.consolidatedTargets.filter(target => target.contributions.length > 1).map(target => <p key={target.skillId} role="note" style={s.advisory}>{skillTitle(target.skillId)} advances {target.contributions.length} goals with one shared daily quota.</p>)}
+            {portfolio.warnings.map((warning, index) => <p key={`${warning.code}-${index}`} role="alert" style={s.advisory}>{warning.message}</p>)}
+          </section>}
           <div style={s.summaryGrid} aria-label="Goals summary">
             <SummaryCard label="Active goals" value={summary.active} />
             <SummaryCard label="Completed goals" value={summary.completed} />
@@ -432,6 +471,8 @@ export function GoalsPage({ profile, lastSyncedAt, initialGoalSkillIds, onInitia
                 onResume={goal => handleTransition(goal, 'resume')}
                 onEnd={goal => setConfirmAction({ kind: 'end', goal })}
                 onCancel={goal => setConfirmAction({ kind: 'cancel', goal })}
+                onRoleChange={handleRoleChange}
+                onComplete={handleComplete}
               />
             ))}
           </section>
@@ -449,6 +490,8 @@ export function GoalsPage({ profile, lastSyncedAt, initialGoalSkillIds, onInitia
                 onResume={goal => handleTransition(goal, 'resume')}
                 onEnd={goal => setConfirmAction({ kind: 'end', goal })}
                 onCancel={goal => setConfirmAction({ kind: 'cancel', goal })}
+                onRoleChange={handleRoleChange}
+                onComplete={handleComplete}
               />
             ))}
           </section>
@@ -467,6 +510,8 @@ export function GoalsPage({ profile, lastSyncedAt, initialGoalSkillIds, onInitia
                 onResume={() => {}}
                 onEnd={() => {}}
                 onCancel={() => {}}
+                onRoleChange={() => {}}
+                onComplete={() => {}}
               />
             ))}
           </section>
@@ -564,6 +609,8 @@ function GoalWizard({
     editing?.targets.map(target => target.skillId) ?? (mode.kind === 'create' ? mode.initialSkillIds ?? [] : []),
   );
   const [saving, setSaving] = useState(false);
+  const [portfolioRole, setPortfolioRole] = useState<'primary' | 'maintenance'>(editing?.portfolioRole ?? 'primary');
+  const [crowdedConfirmed, setCrowdedConfirmed] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [globalLimitsDraft, setGlobalLimitsDraft] = useState(() =>
     normalizeDailyNewGoalLimits(profile.settings.dailyNewGoalQuestionLimits));
@@ -614,6 +661,7 @@ function GoalWizard({
       createdAt: data.now, updatedAt: data.now,
     }),
     title: title.trim() || 'This goal', durationDays, startDate, targetDate, targets: previewTargets,
+    portfolioRole,
     dailyNewQuestionLimitsOverride: useGoalOverride ? goalLimitDraft : undefined,
   };
   const shortGoalWarning = step === 3 && previewTargets.length > 0
@@ -715,6 +763,7 @@ function GoalWizard({
           targetDate,
           targets,
           dailyNewQuestionLimitsOverride: useGoalOverride ? goalLimitDraft : undefined,
+          portfolioRole,
         }, now);
       } else {
         const targets: GoalSkillTarget[] = drafts.map(draft =>
@@ -732,6 +781,7 @@ function GoalWizard({
           targets,
           createdAt: now,
           updatedAt: now,
+          portfolioRole,
           dailyNewQuestionLimitsOverride: useGoalOverride ? goalLimitDraft : undefined,
         };
         await learningGoalRepo.create(goal, now);
@@ -862,6 +912,11 @@ function GoalWizard({
 
         {step === 3 && (
           <div>
+            <label style={s.label} htmlFor="goal-role">Portfolio role</label>
+            <select id="goal-role" value={portfolioRole} onChange={event => { setPortfolioRole(event.target.value as 'primary' | 'maintenance'); setCrowdedConfirmed(false); }} style={s.input}>
+              <option value="primary">Primary</option><option value="maintenance">Maintenance</option>
+            </select>
+            {!editing && portfolioRole === 'primary' && data.goals.filter(goal => goal.status === 'active' && (goal.portfolioRole ?? 'primary') === 'primary').length >= 2 && <p role="alert" style={s.advisory}>This would create a third primary goal. You can still create it after confirming.</p>}
             <label style={s.label} htmlFor="goal-title">Goal title</label>
             <input
               id="goal-title"
@@ -930,8 +985,8 @@ function GoalWizard({
           {step < 3 ? (
             <button style={s.primaryBtn} onClick={() => setStep(current => Math.min(3, current + 1) as 1 | 2 | 3)}>Next</button>
           ) : (
-            <button style={s.primaryBtn} disabled={saving} onClick={save}>
-              {saving ? 'Saving...' : 'Save Goal'}
+            <button style={s.primaryBtn} disabled={saving} onClick={!editing && portfolioRole === 'primary' && data.goals.filter(goal => goal.status === 'active' && (goal.portfolioRole ?? 'primary') === 'primary').length >= 2 && !crowdedConfirmed ? () => setCrowdedConfirmed(true) : save}>
+              {saving ? 'Saving...' : (!editing && portfolioRole === 'primary' && data.goals.filter(goal => goal.status === 'active' && (goal.portfolioRole ?? 'primary') === 'primary').length >= 2 && !crowdedConfirmed ? 'Create anyway' : 'Save Goal')}
             </button>
           )}
         </div>

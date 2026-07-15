@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-15T06:58:50.683252+00:00",
+  "generated_at": "2026-07-15T07:26:54.066281+00:00",
   "repo_root": "/home/ubuntu/mathfan",
   "package": {
     "name": "mathfan",
@@ -421,9 +421,9 @@
     {
       "path": "PROGRESS.md",
       "ext": ".md",
-      "bytes": 7925,
-      "lines": 120,
-      "sha1": "90e7a6c97e20",
+      "bytes": 8162,
+      "lines": 123,
+      "sha1": "c4c5a5790c94",
       "imports": [],
       "exports": [],
       "functions": [],
@@ -570,9 +570,9 @@
     {
       "path": "scripts/e2e_mathfan.py",
       "ext": ".py",
-      "bytes": 31085,
-      "lines": 644,
-      "sha1": "86c77464d175",
+      "bytes": 34445,
+      "lines": 694,
+      "sha1": "534a6e4d19a5",
       "imports": [
         "__future__",
         "json",
@@ -600,6 +600,7 @@
         "fractional_line_plot_lesson",
         "main",
         "open_mastery_skill",
+        "overlapping_goal_portfolio",
         "responsive_navigation",
         "run_practice_journey",
         "run_scenario",
@@ -626,6 +627,7 @@
         "fractional_line_plot_lesson",
         "main",
         "open_mastery_skill",
+        "overlapping_goal_portfolio",
         "responsive_navigation",
         "run_practice_journey",
         "run_scenario",
@@ -2953,9 +2955,9 @@
     {
       "path": "src/features/goals/dailyNewGoalPlanner.ts",
       "ext": ".ts",
-      "bytes": 15052,
-      "lines": 362,
-      "sha1": "c79aefee8957",
+      "bytes": 15836,
+      "lines": 371,
+      "sha1": "8a230e26ab91",
       "imports": [
         "../../types/math",
         "../curriculum/makeItemFromId",
@@ -2966,9 +2968,11 @@
         "../mastery/skillPracticePlanner",
         "./dailyNewGoalLimits",
         "./goalEngine",
+        "./goalPortfolioEngine",
         "./types"
       ],
       "exports": [
+        "buildGoalSkillGroups",
         "DailyNewGoalEmptyReason",
         "DailyNewGoalLearningKind",
         "DailyNewGoalPlan",
@@ -2977,9 +2981,11 @@
         "DailyNewGoalWarning",
         "DailyNewGoalWarningCode",
         "planDailyNewForGoals",
-        "PlanDailyNewGoalsArgs"
+        "PlanDailyNewGoalsArgs",
+        "SkillGroup"
       ],
       "functions": [
+        "buildGoalSkillGroups",
         "buildGroups",
         "buildWarnings",
         "chooseItemBatch",
@@ -3014,16 +3020,16 @@
       "hooks": [],
       "css_classes": [],
       "json_keys": [],
-      "purpose": "Exports reusable code: DailyNewGoalEmptyReason, DailyNewGoalLearningKind, DailyNewGoalPlan, DailyNewGoalTile, DailyNewGoalTileKind.",
+      "purpose": "Exports reusable code: buildGoalSkillGroups, DailyNewGoalEmptyReason, DailyNewGoalLearningKind, DailyNewGoalPlan, DailyNewGoalTile.",
       "too_large": false,
       "read_error": null
     },
     {
       "path": "src/features/goals/goalEngine.ts",
       "ext": ".ts",
-      "bytes": 17255,
-      "lines": 531,
-      "sha1": "bbcbcc00d29c",
+      "bytes": 16616,
+      "lines": 508,
+      "sha1": "15c645435a2e",
       "imports": [
         "../../types/math",
         "../curriculum/makeItemFromId",
@@ -3294,9 +3300,9 @@
     {
       "path": "src/features/goals/goalLifecycleService.ts",
       "ext": ".ts",
-      "bytes": 1854,
-      "lines": 49,
-      "sha1": "5ddc1cb33edd",
+      "bytes": 2030,
+      "lines": 53,
+      "sha1": "c24bfcccc884",
       "imports": [
         "../../db/repositories",
         "../../utils/id",
@@ -3306,6 +3312,7 @@
       "exports": [],
       "functions": [
         "cancelGoal",
+        "completeGoal",
         "endGoal",
         "evaluateGoalLifecycleAndPersist",
         "pauseGoal",
@@ -3325,11 +3332,71 @@
       "read_error": null
     },
     {
+      "path": "src/features/goals/goalPortfolioEngine.ts",
+      "ext": ".ts",
+      "bytes": 8703,
+      "lines": 82,
+      "sha1": "5c20274cfda7",
+      "imports": [
+        "../../types/math",
+        "./dailyNewGoalLimits",
+        "./goalEngine",
+        "./types"
+      ],
+      "exports": [
+        "allocateGoalWorkload",
+        "analyzeGoalPortfolio",
+        "AnalyzeGoalPortfolioArgs",
+        "ConsolidatedSkillTarget",
+        "dedupeGoalAttribution",
+        "GoalLifecycleRecommendation",
+        "GoalLifecycleRecommendationAction",
+        "GoalPortfolioAction",
+        "GoalPortfolioAnalysis",
+        "GoalPortfolioWarning",
+        "GoalPortfolioWarningCode",
+        "GoalTargetContribution",
+        "GoalWorkloadAllocation",
+        "GoalWorkloadBudget",
+        "recommendedGoalLifecycleActions"
+      ],
+      "functions": [
+        "allocateGoalWorkload",
+        "analyzeGoalPortfolio",
+        "dedupeGoalAttribution",
+        "recommendedGoalLifecycleActions",
+        "urgencyFor"
+      ],
+      "classes": [],
+      "interfaces": [
+        "AnalyzeGoalPortfolioArgs",
+        "ConsolidatedSkillTarget",
+        "GoalLifecycleRecommendation",
+        "GoalPortfolioAction",
+        "GoalPortfolioAnalysis",
+        "GoalPortfolioWarning",
+        "GoalTargetContribution",
+        "GoalWorkloadAllocation",
+        "GoalWorkloadBudget"
+      ],
+      "types": [
+        "GoalLifecycleRecommendationAction",
+        "GoalPortfolioWarningCode"
+      ],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Exports reusable code: allocateGoalWorkload, analyzeGoalPortfolio, AnalyzeGoalPortfolioArgs, ConsolidatedSkillTarget, dedupeGoalAttribution.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/features/goals/goalRecommendationEngine.ts",
       "ext": ".ts",
-      "bytes": 18845,
-      "lines": 494,
-      "sha1": "02edd10b40de",
+      "bytes": 19993,
+      "lines": 505,
+      "sha1": "cf34bf16f909",
       "imports": [
         "../../types/math",
         "../learning/learningEvents",
@@ -3342,8 +3409,10 @@
         "CandidateFeatures",
         "estimateGoalWorkload",
         "GoalRecommendation",
+        "GoalRecommendationAction",
         "GoalRecommendationArgs",
         "GoalRecommendationCandidate",
+        "GoalRecommendationOutcome",
         "GoalRecommendationResult",
         "GoalRecommendationTarget",
         "RecommendationReasonLabel",
@@ -3389,26 +3458,28 @@
         "GoalRecommendation",
         "GoalRecommendationArgs",
         "GoalRecommendationCandidate",
+        "GoalRecommendationOutcome",
         "GoalRecommendationResult",
         "GoalRecommendationTarget"
       ],
       "types": [
+        "GoalRecommendationAction",
         "RecommendationReasonLabel"
       ],
       "components": [],
       "hooks": [],
       "css_classes": [],
       "json_keys": [],
-      "purpose": "Exports reusable code: CandidateFeatures, estimateGoalWorkload, GoalRecommendation, GoalRecommendationArgs, GoalRecommendationCandidate.",
+      "purpose": "Exports reusable code: CandidateFeatures, estimateGoalWorkload, GoalRecommendation, GoalRecommendationAction, GoalRecommendationArgs.",
       "too_large": false,
       "read_error": null
     },
     {
       "path": "src/features/goals/GoalsPage.tsx",
       "ext": ".tsx",
-      "bytes": 43906,
-      "lines": 1001,
-      "sha1": "0ac771d7cfda",
+      "bytes": 48686,
+      "lines": 1056,
+      "sha1": "47eeff9174de",
       "imports": [
         "../../db/repositories",
         "../../types/math",
@@ -3422,6 +3493,7 @@
         "./dailyNewGoalPlanner",
         "./goalEngine",
         "./goalLifecycleService",
+        "./goalPortfolioEngine",
         "./goalRecommendationEngine",
         "./types",
         "react"
@@ -3442,6 +3514,8 @@
         "goalPracticeEvents",
         "GoalsPage",
         "GoalWizard",
+        "handleComplete",
+        "handleRoleChange",
         "handleTransition",
         "initialWizardFromSkills",
         "loadGoalsData",
@@ -3486,9 +3560,9 @@
     {
       "path": "src/features/goals/types.ts",
       "ext": ".ts",
-      "bytes": 2863,
-      "lines": 120,
-      "sha1": "54b2a7f5660c",
+      "bytes": 2984,
+      "lines": 123,
+      "sha1": "5fe32d349710",
       "imports": [
         "../../types/math",
         "../learning/learningEvents",
@@ -3501,6 +3575,7 @@
         "GoalEvaluationStatus",
         "GoalEvent",
         "GoalEventType",
+        "GoalPortfolioRole",
         "GoalSkillTarget",
         "GoalSource",
         "GoalTargetReason",
@@ -3520,6 +3595,7 @@
       "types": [
         "GoalEvaluationStatus",
         "GoalEventType",
+        "GoalPortfolioRole",
         "GoalSource",
         "GoalTargetReason",
         "LearningGoalStatus"
@@ -7306,9 +7382,9 @@
     {
       "path": "src/tests/goalEngine.test.ts",
       "ext": ".ts",
-      "bytes": 15690,
+      "bytes": 15718,
       "lines": 406,
-      "sha1": "892fdfb831dd",
+      "sha1": "31bbb07f4b18",
       "imports": [
         "../features/goals/goalEngine",
         "../features/goals/types",
@@ -7402,6 +7478,32 @@
         "renderEvaluation",
         "startEvaluation"
       ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/goalPortfolioEngine.test.ts",
+      "ext": ".ts",
+      "bytes": 4596,
+      "lines": 68,
+      "sha1": "1ed217a762e0",
+      "imports": [
+        "../features/goals/dailyNewGoalPlanner",
+        "../features/goals/goalEngine",
+        "../features/goals/goalPortfolioEngine",
+        "../features/goals/types",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [],
       "classes": [],
       "interfaces": [],
       "types": [],
@@ -7694,9 +7796,9 @@
     {
       "path": "src/tests/grade3NewSkills.test.ts",
       "ext": ".ts",
-      "bytes": 10965,
-      "lines": 282,
-      "sha1": "7767ae6763e5",
+      "bytes": 11060,
+      "lines": 281,
+      "sha1": "fb0e526befd3",
       "imports": [
         "../features/curriculum/makeItemFromId",
         "../features/mastery/grade3MasteryMap",

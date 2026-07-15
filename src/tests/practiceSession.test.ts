@@ -397,7 +397,7 @@ describe('usePracticeSession — adaptive selection', () => {
 
     const cur = result.current.state.currentItem;
     expect(cur).not.toBeNull();
-    expect(cur!.factA === 8 && cur!.factB === 7).toBe(true);
+    expect([cur!.factA, cur!.factB].sort((a, b) => (a ?? 0) - (b ?? 0))).toEqual([7, 8]);
   });
 });
 

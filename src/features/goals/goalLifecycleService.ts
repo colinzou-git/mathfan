@@ -39,6 +39,10 @@ export async function endGoal(goal: LearningGoal, now: string): Promise<Learning
   return persistEvaluation(transitionGoal(goal, 'ended', now, generateId));
 }
 
+export async function completeGoal(goal: LearningGoal, now: string): Promise<LearningGoal> {
+  return persistEvaluation(transitionGoal(goal, 'completed', now, generateId));
+}
+
 export async function updateGoal(
   goal: LearningGoal,
   changes: Partial<Omit<LearningGoal, 'id' | 'studentId' | 'createdAt'>>,

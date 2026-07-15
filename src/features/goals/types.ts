@@ -4,6 +4,7 @@ import type { DailyNewGoalQuestionLimits, ReviewGrade } from '../../types/math';
 
 export type LearningGoalStatus = 'active' | 'paused' | 'completed' | 'ended' | 'cancelled';
 export type GoalSource = 'recommended' | 'evaluation' | 'manual';
+export type GoalPortfolioRole = 'primary' | 'maintenance';
 
 export type GoalTargetReason =
   | 'review_due'
@@ -52,6 +53,8 @@ export interface LearningGoal {
   completedAt?: string;
   endedAt?: string;
   evaluationId?: string;
+  portfolioRole?: GoalPortfolioRole;
+  priorityRank?: number;
   dailyNewQuestionLimitsOverride?: Partial<Pick<DailyNewGoalQuestionLimits,
     'minQuestionsPerSkillTile' | 'maxQuestionsPerSkillTile'
   >>;

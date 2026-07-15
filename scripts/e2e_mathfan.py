@@ -527,6 +527,55 @@ def two_step_tape_lesson(page: Page) -> None:
     expect(page.get_by_text(re.compile(r"Correct!|New personal best!"))).to_be_visible()
 
 
+def overlapping_goal_portfolio(page: Page) -> None:
+    create_profile(page, "GoalPortfolioTester", "e2e-goal-portfolio")
+    page.evaluate("""async () => {
+        const db = await new Promise((resolve, reject) => {
+            const request = indexedDB.open('mathfan');
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+        const student = await new Promise((resolve, reject) => {
+            const tx = db.transaction('students', 'readonly');
+            const request = tx.objectStore('students').getAll();
+            request.onsuccess = () => resolve(request.result[0]);
+            request.onerror = () => reject(request.error);
+        });
+        const baseline = { capturedAt: '2026-06-01T00:00:00.000Z', status: 'new', attemptCount: 0, distinctItemCount: 0, recentAccuracy: 0, dueItemCount: 0, mistakePatterns: [], hintRate: 0 };
+        const makeGoal = (id, title, targetDate) => ({
+            id, studentId: student.id, title, source: 'manual', status: 'active', portfolioRole: 'primary',
+            durationDays: 14, startDate: '2026-06-01', targetDate,
+            targets: [{ id: `target-${id}`, skillId: 'g3-mul-meaning', reason: 'needs_evaluation', baseline, targetAccuracy: .8, minFirstAttempts: 8, minDistinctItems: 4, minActiveDays: 2, maxHintRate: .25, misconceptionTargets: [], weight: 1 }],
+            createdAt: '2026-06-01T00:00:00.000Z', updatedAt: '2026-06-01T00:00:00.000Z',
+        });
+        await new Promise((resolve, reject) => {
+            const tx = db.transaction('learningGoals', 'readwrite');
+            tx.objectStore('learningGoals').put(makeGoal('goal-a', 'Multiplication Foundation', '2026-07-01'));
+            tx.objectStore('learningGoals').put(makeGoal('goal-b', 'Array Practice', '2026-08-01'));
+            tx.oncomplete = resolve; tx.onerror = () => reject(tx.error);
+        });
+        db.close();
+    }""")
+    page.reload(wait_until="domcontentloaded")
+    page.get_by_role("button", name=re.compile(r"Goals")).click()
+    expect(page.get_by_role("heading", name="Goals", exact=True)).to_be_visible()
+    expect(page.get_by_role("region", name="Active plan")).to_contain_text("one shared daily quota")
+    expect(page.get_by_text(re.compile(r"past its target date and remains active"))).to_be_visible()
+    expect(page.get_by_text("Target date reached.", exact=True)).to_be_visible()
+
+    page.get_by_role("button", name="Add Goal", exact=True).click()
+    page.get_by_role("button", name="Next", exact=True).click()
+    page.get_by_role("button", name="Browse all skills", exact=True).click()
+    page.get_by_text("Meaning of Multiplication", exact=True).last.click()
+    page.get_by_role("button", name="Next", exact=True).click()
+    page.get_by_label("Goal title", exact=True).fill("Third Primary Goal")
+    expect(page.get_by_text(re.compile(r"third primary goal"))).to_be_visible()
+    page.get_by_role("button", name="Create anyway", exact=True).click()
+    page.get_by_role("button", name="Save Goal", exact=True).click()
+    expect(page.get_by_text("Third Primary Goal", exact=True)).to_be_visible()
+    expect(page.get_by_text(re.compile(r"More than two primary goals"))).to_be_visible()
+
+
 def run_scenario(
     browser: Browser,
     name: str,
@@ -621,6 +670,7 @@ def main() -> int:
             ("fractional-line-plot", {"width": 820, "height": 1180}, fractional_line_plot_lesson, False),
             ("elapsed-cross-hour", {"width": 390, "height": 844}, elapsed_cross_hour_lesson, False),
             ("two-step-tape", {"width": 820, "height": 1180}, two_step_tape_lesson, False),
+            ("overlapping-goal-portfolio", {"width": 820, "height": 1180}, overlapping_goal_portfolio, False),
         ]
         for name, viewport, scenario, standalone_share in scenarios:
             try:
