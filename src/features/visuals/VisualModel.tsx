@@ -25,6 +25,19 @@ import { ShapeModel } from './ShapeModel';
 import { ClockModel } from './ClockModel';
 import { parseFractionFromPrompt, geoShapeFromItemId } from './visualModelUtils';
 import { RectilinearAreaModel } from './RectilinearAreaModel';
+import { PerimeterPathModel } from './PerimeterPathModel';
+import { RectangleMeasureModel } from './RectangleMeasureModel';
+import { AreaPerimeterCompareModel } from './AreaPerimeterCompareModel';
+import { FractionEquivalenceModel } from './FractionEquivalenceModel';
+import { FractionComparisonModel } from './FractionComparisonModel';
+import { PlaceValueRegroupModel } from './PlaceValueRegroupModel';
+import { DivisionArrayModel } from './DivisionArrayModel';
+import { SharingGroupingModel } from './SharingGroupingModel';
+import { DivisionDecompositionModel } from './DivisionDecompositionModel';
+import { ScaledBarGraphModel } from './ScaledBarGraphModel';
+import { LinePlotModel } from './LinePlotModel';
+import { ElapsedTimeLineModel } from './ElapsedTimeLineModel';
+import { TapeDiagramModel } from './TapeDiagramModel';
 
 interface Props {
   item: PracticeItem;
@@ -41,7 +54,89 @@ function parseEqualGroupsFromId(itemId: string): { groups: number; perGroup: num
 }
 
 export function VisualModel({ item, color, revealAnswer = false }: Props) {
-  const { itemType, factA, factB, id, prompt } = item;
+  const { itemType, factA, factB, id, prompt, visualSpec } = item;
+
+  if (item.arithmeticSpec) {
+    return <PlaceValueRegroupModel spec={item.arithmeticSpec} revealAnswer={revealAnswer} color={color} />;
+  }
+
+  if (item.divisionSpec) {
+    const spec = item.divisionSpec;
+    if (spec.schema.startsWith('decompose_') || spec.schema === 'verify_with_multiplication') return <DivisionDecompositionModel spec={spec} revealAnswer={revealAnswer} />;
+    if (spec.context) return <SharingGroupingModel spec={spec} revealAnswer={revealAnswer} />;
+    return <DivisionArrayModel spec={spec} revealAnswer={revealAnswer} />;
+  }
+
+  if (item.measurementSpec) {
+    if (item.measurementSpec.kind === 'bar_graph') return <ScaledBarGraphModel spec={item.measurementSpec} revealAnswer={revealAnswer} />;
+    if (item.measurementSpec.kind === 'line_plot') return <LinePlotModel spec={item.measurementSpec} />;
+    if (item.measurementSpec.kind === 'elapsed_time') return <ElapsedTimeLineModel spec={item.measurementSpec} revealAnswer={revealAnswer} />;
+  }
+
+  if (item.wordProblemSpec?.suggestedModel === 'bar') return <TapeDiagramModel spec={item.wordProblemSpec} revealAnswer={revealAnswer} />;
+
+  if (item.fractionSpec) {
+    const spec = item.fractionSpec;
+    if (spec.kind === 'equivalent_visual') {
+      return <FractionEquivalenceModel left={spec.left} right={spec.right} revealAnswer={revealAnswer} color={color} />;
+    }
+    if (spec.kind === 'compare') {
+      return <FractionComparisonModel left={spec.left} right={spec.right} strategy={spec.strategy} revealAnswer={revealAnswer} color={color} />;
+    }
+    if (spec.kind === 'locate_number_line') {
+      return <FractionNumberLine denominator={spec.subdivisions} numerator={revealAnswer ? spec.value.numerator : undefined} showLabel={revealAnswer} />;
+    }
+    if (spec.kind === 'unit_fraction_model') {
+      return <FractionBar numerator={spec.value.numerator} denominator={spec.value.denominator} fillColor={color} />;
+    }
+  }
+
+  // ── Structured visual spec (issue #30) — preferred over id/type parsing ───
+  if (visualSpec) {
+    switch (visualSpec.kind) {
+      case 'area_grid':
+        return (
+          <AreaGrid
+            rows={visualSpec.rows} cols={visualSpec.cols}
+            mode={visualSpec.showTiles ? 'unit_squares' : 'rectangle'}
+            color={color} revealAnswer={revealAnswer}
+          />
+        );
+      case 'perimeter_path':
+        return (
+          <PerimeterPathModel
+            vertices={visualSpec.vertices} sideLabels={visualSpec.sideLabels}
+            color={color} revealAnswer={revealAnswer}
+            missingSideAnswer={typeof item.answer === 'number' ? item.answer : undefined}
+          />
+        );
+      case 'rectangle_measure':
+        return (
+          <RectangleMeasureModel
+            length={visualSpec.length} width={visualSpec.width}
+            emphasize={visualSpec.emphasize} color={color} revealAnswer={revealAnswer}
+          />
+        );
+      case 'rectilinear_area':
+        if (visualSpec.rectangles.length === 2) {
+          const [r1, r2] = visualSpec.rectangles;
+          return (
+            <RectilinearAreaModel
+              a1={r1.length} b1={r1.width} a2={r2.length} b2={r2.width}
+              color={color} revealAnswer={revealAnswer}
+            />
+          );
+        }
+        break;
+      case 'area_perimeter_compare':
+        return (
+          <AreaPerimeterCompareModel
+            rectangles={visualSpec.rectangles} comparison={visualSpec.comparison}
+            color={color} revealAnswer={revealAnswer}
+          />
+        );
+    }
+  }
 
   // ── Multiplication array ──────────────────────────────────────────────────
   if (

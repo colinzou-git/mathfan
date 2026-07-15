@@ -3,6 +3,7 @@ import type { PracticeOp } from '../features/dashboard/StudentDashboard';
 import {
   areaSquaresItemIds, areaRectangleItemIds, perimeterRectangleItemIds, rectilinearAreaItemIds,
   perimeterPolygonItemIds, perimeterUnknownSideItemIds, areaPerimCompareItemIds,
+  perimeterReasoningItemIds, areaPerimeterChoiceItemIds,
 } from '../features/curriculum/areaItems';
 import { geoItemIds } from '../features/curriculum/geometryItems';
 import { clckId, etimeId, mwrdId, bargId, lplotId } from '../features/curriculum/measurementItems';
@@ -18,6 +19,8 @@ export function allAreaItemIds(): string[] {
     ...perimeterRectangleItemIds(),
     ...perimeterPolygonItemIds(),
     ...perimeterUnknownSideItemIds(),
+    ...perimeterReasoningItemIds(),
+    ...areaPerimeterChoiceItemIds(),
     ...areaPerimCompareItemIds(),
   ];
 }

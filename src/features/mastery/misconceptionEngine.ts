@@ -1,5 +1,6 @@
 import Fraction from 'fraction.js';
 import type { PracticeItem } from '../../types/math';
+import { simulateArithmeticMisconception, type ArithmeticMisconceptionCode } from '../curriculum/regrouping';
 
 /**
  * Detects common misconception patterns in a wrong student answer.
@@ -18,19 +19,68 @@ export function detectMistakes(
   item: PracticeItem,
   studentAnswer: string | number,
 ): string[] {
+  if (item.measurementSpec) return detectMeasurement(item, studentAnswer);
   switch (item.itemType) {
     case 'multiplication_fact':
     case 'unknown_factor':
       return detectMultiplication(item, studentAnswer);
     case 'division_fact':
       return detectDivision(item, studentAnswer);
+    case 'addition_fact':
+    case 'subtraction_fact':
+      return detectArithmetic(item, studentAnswer);
     case 'fraction_compare':
       return detectFractionCompare(item, String(studentAnswer));
     case 'fraction_equivalent':
       return detectFractionEquivalent(item, studentAnswer);
+    case 'fraction_number_line':
+      return detectFractionNumberLine(item, studentAnswer);
+    case 'perimeter_rectangle':
+      return detectPerimeterRectangle(item, studentAnswer);
+    case 'area_rectangle':
+    case 'area_unit_squares':
+      return detectAreaRectangle(item, studentAnswer);
+    case 'perimeter_unknown_side':
+      return detectPerimeterUnknownSide(item, studentAnswer);
+    case 'area_perimeter_choice':
+      return detectAreaPerimeterChoice(item, studentAnswer);
     default:
       return [];
   }
+}
+
+function detectMeasurement(item: PracticeItem, raw: string | number): string[] {
+  const spec = item.measurementSpec!, answer = Number(raw), correct = Number(item.answer);
+  if (!Number.isFinite(answer) || answer === correct) return [];
+  const patterns: string[] = [];
+  if (spec.kind === 'elapsed_time') {
+    if (answer === Math.abs(spec.end.minute - spec.start.minute)) patterns.push('measurement:elapsed_subtracted_clock_digits');
+    if (answer === spec.end.minute) patterns.push('measurement:elapsed_copied_end_minutes');
+    if (spec.crossesHour && answer === spec.end.minute - spec.start.minute) patterns.push('measurement:elapsed_ignored_hour_crossing');
+    if (answer === spec.durationMinutes + 1) patterns.push('measurement:elapsed_counted_endpoints');
+  }
+  if (spec.kind === 'bar_graph' && spec.requestedIndex !== undefined) {
+    const value = spec.values[spec.requestedIndex];
+    if (answer === value / spec.scale) patterns.push('measurement:bar_height_read_without_scale');
+    if (spec.scale !== 1 && answer * spec.scale === value) patterns.push('measurement:graph_scale_ignored');
+  }
+  if (spec.kind === 'line_plot' && spec.denominator > 1 && answer === correct * spec.denominator) patterns.push('measurement:line_plot_ticks_vs_intervals');
+  return [...new Set(patterns)];
+}
+
+const ARITHMETIC_MISCONCEPTIONS: ArithmeticMisconceptionCode[] = [
+  'sub_failed_to_regroup_ones', 'sub_failed_to_regroup_tens', 'sub_across_zero_error',
+  'sub_borrowed_without_reducing_source', 'sub_place_value_shift_10', 'sub_place_value_shift_100',
+  'add_failed_to_carry_ones', 'add_failed_to_carry_tens', 'add_double_carried',
+  'copied_operand_or_partial_result',
+];
+
+function detectArithmetic(item: PracticeItem, raw: string | number): string[] {
+  if (!item.arithmeticSpec || item.arithmeticSpec.mode === 'error_analysis') return [];
+  const answer = Number(raw);
+  if (!Number.isFinite(answer) || answer === Number(item.answer)) return [];
+  return ARITHMETIC_MISCONCEPTIONS.filter(code => simulateArithmeticMisconception(item.arithmeticSpec!, code) === answer)
+    .map(code => `arithmetic:${code}`);
 }
 
 // ── Multiplication / unknown-factor ───────────────────────────────────────────
@@ -94,6 +144,21 @@ function detectDivision(item: PracticeItem, raw: string | number): string[] {
 
   const patterns: string[] = [];
 
+  if (item.divisionSpec) {
+    const spec = item.divisionSpec;
+    const candidates = {
+      div_swapped_dividend_divisor: divisor / dividend,
+      div_used_multiplication_result: dividend * divisor,
+      div_shared_vs_grouped_confusion: divisor,
+      div_partial_quotient_missing: spec.decomposition?.[0]?.quotientPart,
+      div_decomposition_sum_error: spec.decomposition?.reduce((sum, part) => sum + part.dividendPart, 0),
+      div_quotient_off_by_one: correct + 1,
+      div_used_related_fact_incorrectly: correct + divisor,
+      div_copied_dividend_or_divisor: dividend,
+    };
+    for (const [code, value] of Object.entries(candidates)) if (value !== undefined && sa === value) patterns.push(`div:${code}`);
+  }
+
   // Student gave the dividend instead of the quotient
   if (sa === dividend) patterns.push('div:gave_dividend');
 
@@ -107,13 +172,15 @@ function detectDivision(item: PracticeItem, raw: string | number): string[] {
 // fraction_compare: ID = FCMP_n1_d1_n2_d2, answer = '<' | '=' | '>'
 
 function detectFractionCompare(item: PracticeItem, sa: string): string[] {
+  const structured = item.fractionSpec?.kind === 'compare' ? item.fractionSpec : null;
   const m = item.id.match(/^FCMP_(\d+)_(\d+)_(\d+)_(\d+)$/);
-  if (!m) return [];
+  if (!structured && !m) return [];
 
-  const n1 = parseInt(m[1], 10);
-  const d1 = parseInt(m[2], 10);
-  const n2 = parseInt(m[3], 10);
-  const d2 = parseInt(m[4], 10);
+  const n1 = structured?.left.numerator ?? parseInt(m![1], 10);
+  const d1 = structured?.left.denominator ?? parseInt(m![2], 10);
+  const n2 = structured?.right.numerator ?? parseInt(m![3], 10);
+  const d2 = structured?.right.denominator ?? parseInt(m![4], 10);
+  if (sa.includes('different-sized wholes')) return ['fraction:fraction_not_same_whole'];
 
   // Use fraction.js for exact comparison (avoids floating-point errors)
   const f1 = new Fraction(n1, d1);
@@ -131,6 +198,7 @@ function detectFractionCompare(item: PracticeItem, sa: string): string[] {
     const denominatorAnswer = d1 > d2 ? '>' : '<';
     if (sa === denominatorAnswer) {
       patterns.push('frac_compare:larger_denominator');
+      patterns.push('fraction:compare_larger_denominator_means_larger');
     }
   }
 
@@ -140,22 +208,37 @@ function detectFractionCompare(item: PracticeItem, sa: string): string[] {
     const numeratorAnswer = n1 > n2 ? '>' : '<';
     if (sa === numeratorAnswer && numeratorAnswer !== trueAnswer) {
       patterns.push('frac_compare:numerator_only');
+      patterns.push('fraction:compare_numerator_only');
     }
   }
 
+  if ((trueAnswer === '<' && sa === '>') || (trueAnswer === '>' && sa === '<')) {
+    patterns.push('fraction:compare_reversed_symbol');
+  }
+
   return patterns;
+}
+
+function detectFractionNumberLine(item: PracticeItem, raw: string | number): string[] {
+  const spec = item.fractionSpec?.kind === 'locate_number_line' ? item.fractionSpec : null;
+  const expected = spec?.value.numerator ?? item.factA;
+  const answer = Number(raw);
+  return expected != null && answer === expected + 1
+    ? ['fraction:number_line_counted_tick_marks_not_intervals']
+    : [];
 }
 
 // ── Equivalent fractions ───────────────────────────────────────────────────────
 // fraction_equivalent: ID = FEQ_n_d_targetDen, answer = n * (targetDen / d)
 
 function detectFractionEquivalent(item: PracticeItem, raw: string | number): string[] {
+  const structured = item.fractionSpec?.kind === 'equivalent_visual' ? item.fractionSpec : null;
   const m = item.id.match(/^FEQ_(\d+)_(\d+)_(\d+)$/);
-  if (!m) return [];
+  if (!structured && !m) return [];
 
-  const n = parseInt(m[1], 10);
-  const d = parseInt(m[2], 10);
-  const targetDen = parseInt(m[3], 10);
+  const n = structured?.left.numerator ?? parseInt(m![1], 10);
+  const d = structured?.left.denominator ?? parseInt(m![2], 10);
+  const targetDen = structured?.right.denominator ?? parseInt(m![3], 10);
 
   if (d === 0 || targetDen % d !== 0) return [];
 
@@ -170,6 +253,8 @@ function detectFractionEquivalent(item: PracticeItem, raw: string | number): str
   if (sa >= 0 && new Fraction(n, d).equals(new Fraction(sa, targetDen))) return [];
 
   const patterns: string[] = [];
+  if (sa === n) patterns.push('fraction:equivalent_changed_denominator_only');
+  if (sa === targetDen) patterns.push('fraction:equivalent_changed_numerator_only');
 
   // Additive error: student added the scale difference to the numerator instead of multiplying
   // e.g., 2/3 = ?/6 (mult=2): student computes 2 + (6−3) = 5 instead of 2×2 = 4
@@ -184,8 +269,77 @@ function detectFractionEquivalent(item: PracticeItem, raw: string | number): str
     const usedMult = sa / n;
     if (usedMult !== mult) {
       patterns.push('frac_equiv:wrong_multiplier');
+      patterns.push('fraction:equivalent_wrong_multiplier');
     }
   }
 
   return patterns;
+}
+
+// ── Area & perimeter (issue #30) ───────────────────────────────────────────
+// Pattern codes namespaced `area_perim:*`.
+
+function detectPerimeterRectangle(item: PracticeItem, raw: string | number): string[] {
+  const l = item.factA ?? 0;
+  const w = item.factB ?? 0;
+  if (l === 0 || w === 0) return [];
+  const sa = Number(raw);
+  if (!Number.isFinite(sa)) return [];
+  const correct = 2 * (l + w);
+  if (sa === correct) return [];
+
+  const patterns: string[] = [];
+  if (sa === l * w) patterns.push('area_perim:used_area_for_perimeter');
+  if (sa === l + w) patterns.push('area_perim:used_half_perimeter');
+  if (sa === 2 * l + w || sa === l + 2 * w) patterns.push('area_perim:forgot_one_pair_of_sides');
+  return patterns;
+}
+
+function detectAreaRectangle(item: PracticeItem, raw: string | number): string[] {
+  const l = item.factA ?? 0;
+  const w = item.factB ?? 0;
+  if (l === 0 || w === 0) return [];
+  const sa = Number(raw);
+  if (!Number.isFinite(sa)) return [];
+  const correct = l * w;
+  if (sa === correct) return [];
+
+  if (sa === 2 * (l + w)) return ['area_perim:used_perimeter_for_area'];
+  return [];
+}
+
+function detectPerimeterUnknownSide(item: PracticeItem, raw: string | number): string[] {
+  const spec = item.reasoningSpec;
+  if (!spec) return [];
+  const sa = Number(raw);
+  if (!Number.isFinite(sa)) return [];
+  const sumKnown = spec.knownSides.reduce((s, n) => s + n, 0);
+  const correct = spec.totalPerimeter - sumKnown;
+  if (sa === correct) return [];
+
+  const patterns: string[] = [];
+  if (sa === spec.totalPerimeter) patterns.push('area_perim:copied_given_perimeter');
+  if (sa === spec.totalPerimeter + sumKnown) patterns.push('area_perim:summed_non_boundary_values');
+  if (sa === sumKnown - spec.totalPerimeter && sa !== correct) patterns.push('area_perim:missing_side_subtraction_error');
+  return patterns;
+}
+
+function detectAreaPerimeterChoice(item: PracticeItem, raw: string | number): string[] {
+  const sa = String(raw).trim();
+  if (sa === String(item.answer)) return [];
+
+  const l = item.factA;
+  const w = item.factB;
+  if (l == null || w == null) return [];
+
+  // Operation-selection ("would you use area or perimeter?")
+  if (sa === 'area' && item.answer === 'perimeter') return ['area_perim:used_area_for_perimeter'];
+  if (sa === 'perimeter' && item.answer === 'area') return ['area_perim:used_perimeter_for_area'];
+
+  // Expression-selection ("which expression represents the boundary?")
+  if (sa === `${l}×${w}`) return ['area_perim:used_area_for_perimeter'];
+  if (sa === `${l} + ${w}`) return ['area_perim:used_half_perimeter'];
+  if (sa === `2×${l} + ${w}` || sa === `${l} + 2×${w}`) return ['area_perim:forgot_one_pair_of_sides'];
+
+  return [];
 }

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-14T07:26:57.251633+00:00",
+  "generated_at": "2026-07-15T06:58:50.683252+00:00",
   "repo_root": "/home/ubuntu/mathfan",
   "package": {
     "name": "mathfan",
@@ -421,9 +421,9 @@
     {
       "path": "PROGRESS.md",
       "ext": ".md",
-      "bytes": 6906,
-      "lines": 101,
-      "sha1": "b484388d7757",
+      "bytes": 7925,
+      "lines": 120,
+      "sha1": "90e7a6c97e20",
       "imports": [],
       "exports": [],
       "functions": [],
@@ -570,9 +570,9 @@
     {
       "path": "scripts/e2e_mathfan.py",
       "ext": ".py",
-      "bytes": 17616,
-      "lines": 392,
-      "sha1": "46ce5b40c023",
+      "bytes": 31085,
+      "lines": 644,
+      "sha1": "86c77464d175",
       "imports": [
         "__future__",
         "json",
@@ -586,29 +586,55 @@
         "zipfile"
       ],
       "exports": [
+        "area_perimeter_comparison_lesson",
+        "area_perimeter_missing_side_lesson",
         "assert_no_horizontal_overflow",
         "create_profile",
         "desktop_student_journey",
+        "division_decomposition_lesson",
+        "division_model_choice_lesson",
+        "elapsed_cross_hour_lesson",
         "expect_dashboard_attempt_stats",
+        "fraction_equivalence_visual_lesson",
+        "fraction_same_numerator_lesson",
+        "fractional_line_plot_lesson",
         "main",
+        "open_mastery_skill",
         "responsive_navigation",
         "run_practice_journey",
         "run_scenario",
+        "scaled_bar_graph_lesson",
+        "set_one_question_sessions",
         "set_practice_preferences_and_verify_persistence",
         "standalone_pwa_share_flow",
+        "subtraction_across_zero_lesson",
+        "two_step_tape_lesson",
         "verify_local_user_data_exports"
       ],
       "functions": [
+        "area_perimeter_comparison_lesson",
+        "area_perimeter_missing_side_lesson",
         "assert_no_horizontal_overflow",
         "create_profile",
         "desktop_student_journey",
+        "division_decomposition_lesson",
+        "division_model_choice_lesson",
+        "elapsed_cross_hour_lesson",
         "expect_dashboard_attempt_stats",
+        "fraction_equivalence_visual_lesson",
+        "fraction_same_numerator_lesson",
+        "fractional_line_plot_lesson",
         "main",
+        "open_mastery_skill",
         "responsive_navigation",
         "run_practice_journey",
         "run_scenario",
+        "scaled_bar_graph_lesson",
+        "set_one_question_sessions",
         "set_practice_preferences_and_verify_persistence",
         "standalone_pwa_share_flow",
+        "subtraction_across_zero_lesson",
+        "two_step_tape_lesson",
         "verify_local_user_data_exports"
       ],
       "classes": [],
@@ -618,7 +644,7 @@
       "hooks": [],
       "css_classes": [],
       "json_keys": [],
-      "purpose": "Exports reusable code: assert_no_horizontal_overflow, create_profile, desktop_student_journey, expect_dashboard_attempt_stats, main.",
+      "purpose": "Exports reusable code: area_perimeter_comparison_lesson, area_perimeter_missing_side_lesson, assert_no_horizontal_overflow, create_profile, desktop_student_journey.",
       "too_large": false,
       "read_error": null
     },
@@ -932,9 +958,9 @@
     {
       "path": "src/components/opSpecs.ts",
       "ext": ".ts",
-      "bytes": 13984,
-      "lines": 358,
-      "sha1": "43370f880ff0",
+      "bytes": 14114,
+      "lines": 361,
+      "sha1": "4ad71fe8eda7",
       "imports": [
         "../features/curriculum/areaItems",
         "../features/curriculum/geometryItems",
@@ -1238,9 +1264,9 @@
     {
       "path": "src/features/adaptive/adaptiveItemSelector.ts",
       "ext": ".ts",
-      "bytes": 9155,
-      "lines": 235,
-      "sha1": "c6e2c9952933",
+      "bytes": 11159,
+      "lines": 261,
+      "sha1": "50ea46e5bbf8",
       "imports": [
         "../../types/math",
         "../../utils/rng",
@@ -1252,6 +1278,7 @@
         "AdaptiveQuotas",
         "isNeedyState",
         "lookupState",
+        "misconceptionBridgeBoost",
         "rankCandidateItems",
         "scoreCandidateItem",
         "selectAdaptiveItems"
@@ -1261,6 +1288,7 @@
         "isNeedyState",
         "itemTier",
         "lookupState",
+        "misconceptionBridgeBoost",
         "needScore",
         "rankCandidateItems",
         "scoreCandidateItem",
@@ -1279,16 +1307,16 @@
       "hooks": [],
       "css_classes": [],
       "json_keys": [],
-      "purpose": "Exports reusable code: AdaptiveOptions, AdaptiveQuotas, isNeedyState, lookupState, rankCandidateItems.",
+      "purpose": "Exports reusable code: AdaptiveOptions, AdaptiveQuotas, isNeedyState, lookupState, misconceptionBridgeBoost.",
       "too_large": false,
       "read_error": null
     },
     {
       "path": "src/features/adaptive/candidatePools.ts",
       "ext": ".ts",
-      "bytes": 6288,
-      "lines": 150,
-      "sha1": "7bd6feb98751",
+      "bytes": 7106,
+      "lines": 164,
+      "sha1": "aa62f9a00860",
       "imports": [
         "../../types/math",
         "../curriculum/numberTheoryItems",
@@ -1298,7 +1326,8 @@
       ],
       "exports": [
         "buildFactorCandidates",
-        "buildWordProblemCandidates"
+        "buildWordProblemCandidates",
+        "selectSchemaBalancedItems"
       ],
       "functions": [
         "add",
@@ -1307,7 +1336,8 @@
         "buildWordProblemCandidates",
         "factorMax",
         "factorsHi",
-        "inRange"
+        "inRange",
+        "selectSchemaBalancedItems"
       ],
       "classes": [],
       "interfaces": [],
@@ -1316,7 +1346,7 @@
       "hooks": [],
       "css_classes": [],
       "json_keys": [],
-      "purpose": "Exports reusable code: buildFactorCandidates, buildWordProblemCandidates.",
+      "purpose": "Exports reusable code: buildFactorCandidates, buildWordProblemCandidates, selectSchemaBalancedItems.",
       "too_large": false,
       "read_error": null
     },
@@ -1355,9 +1385,9 @@
     {
       "path": "src/features/adaptive/relatedItemMapping.ts",
       "ext": ".ts",
-      "bytes": 8862,
-      "lines": 199,
-      "sha1": "508ee97f853e",
+      "bytes": 9168,
+      "lines": 206,
+      "sha1": "bd4042791230",
       "imports": [
         "../../types/math",
         "../mastery/skillMapping"
@@ -1625,64 +1655,104 @@
     {
       "path": "src/features/curriculum/areaItems.ts",
       "ext": ".ts",
-      "bytes": 11482,
-      "lines": 303,
-      "sha1": "282615339c23",
+      "bytes": 24842,
+      "lines": 609,
+      "sha1": "d428a01540fa",
       "imports": [
-        "../../types/math"
+        "../../types/math",
+        "../../utils/grammar",
+        "../visuals/types"
       ],
       "exports": [
+        "apChoiceId",
         "areaPerimCmpId",
         "areaPerimCompareItemIds",
+        "areaPerimeterChoiceItemIds",
+        "AreaPerimeterChoiceKind",
+        "AreaPerimeterSchema",
         "AreaPerimVariant",
         "areaRectangleItemIds",
         "areaRectId",
         "areaSquaresId",
         "areaSquaresItemIds",
+        "canonicalRectangleDimensions",
+        "generateAreaPerimeterItem",
         "makeAreaPerimCompareItem",
+        "makeAreaPerimeterChoiceItem",
+        "makeAreaPerimeterExpressionChoiceItem",
+        "makeAreaPerimeterOperationChoiceItem",
         "makeAreaRectangleItem",
         "makeAreaUnitSquaresItem",
+        "makePerimeterEquationChoiceItem",
+        "makePerimeterMixedReasoningItem",
         "makePerimeterPolygonItem",
         "makePerimeterRectangleItem",
+        "makePerimeterSumKnownSidesItem",
         "makePerimeterUnknownSideItem",
         "makeRectilinearAreaItem",
         "perimeterPolygonItemIds",
+        "perimeterReasoningItemIds",
+        "PerimeterReasoningMode",
         "perimeterRectangleItemIds",
         "perimeterUnknownSideItemIds",
         "perimPolygonId",
+        "perimReasoningId",
         "perimRectId",
         "perimUnknownSideId",
         "rectiId",
-        "rectilinearAreaItemIds"
+        "rectilinearAreaItemIds",
+        "TemplateGeneratorContext"
       ],
       "functions": [
+        "apChoiceId",
         "areaPerimCmpId",
         "areaPerimCompareItemIds",
+        "areaPerimeterChoiceItemIds",
         "areaRectangleItemIds",
         "areaRectId",
         "areaSquaresId",
         "areaSquaresItemIds",
+        "canonicalRectangleDimensions",
         "difficulty",
+        "dimension",
+        "generateAreaPerimeterItem",
         "makeAreaPerimCompareItem",
+        "makeAreaPerimeterChoiceItem",
+        "makeAreaPerimeterExpressionChoiceItem",
+        "makeAreaPerimeterOperationChoiceItem",
         "makeAreaRectangleItem",
         "makeAreaUnitSquaresItem",
+        "makePerimeterEquationChoiceItem",
+        "makePerimeterMixedReasoningItem",
         "makePerimeterPolygonItem",
         "makePerimeterRectangleItem",
+        "makePerimeterSumKnownSidesItem",
         "makePerimeterUnknownSideItem",
         "makeRectilinearAreaItem",
         "perimeterPolygonItemIds",
+        "perimeterReasoningItemIds",
         "perimeterRectangleItemIds",
         "perimeterUnknownSideItemIds",
         "perimPolygonId",
+        "perimReasoningId",
         "perimRectId",
         "perimUnknownSideId",
+        "reasoningSpecFor",
+        "reasoningVisual",
         "rectiId",
-        "rectilinearAreaItemIds"
+        "rectilinearAreaItemIds",
+        "regularPolygonVertices",
+        "templateFields"
       ],
       "classes": [],
-      "interfaces": [],
+      "interfaces": [
+        "TemplateGeneratorContext"
+      ],
       "types": [
-        "AreaPerimVariant"
+        "AreaPerimeterChoiceKind",
+        "AreaPerimeterSchema",
+        "AreaPerimVariant",
+        "PerimeterReasoningMode"
       ],
       "components": [],
       "hooks": [],
@@ -1695,16 +1765,19 @@
     {
       "path": "src/features/curriculum/arithmeticItems.ts",
       "ext": ".ts",
-      "bytes": 6196,
-      "lines": 176,
-      "sha1": "ca2fb84ced34",
+      "bytes": 7385,
+      "lines": 188,
+      "sha1": "1f18be88a440",
       "imports": [
-        "../../types/math"
+        "../../types/math",
+        "./divisionItems",
+        "./regrouping"
       ],
       "exports": [
         "addId",
         "divIdStd",
         "generateAdditionItems",
+        "generateArithmeticItem",
         "generateDivisionItemsRange",
         "generateSubtractionItems",
         "makeAdditionItem",
@@ -1718,6 +1791,7 @@
         "clampRange",
         "divIdStd",
         "generateAdditionItems",
+        "generateArithmeticItem",
         "generateDivisionItemsRange",
         "generateSubtractionItems",
         "makeAdditionItem",
@@ -1810,42 +1884,130 @@
       "read_error": null
     },
     {
-      "path": "src/features/curriculum/fractionItems.ts",
+      "path": "src/features/curriculum/divisionItems.ts",
       "ext": ".ts",
-      "bytes": 4966,
-      "lines": 138,
-      "sha1": "0b638d40ee02",
+      "bytes": 9402,
+      "lines": 162,
+      "sha1": "4de3f4074282",
       "imports": [
-        "../../types/math"
+        "../../types/math",
+        "./regrouping"
       ],
       "exports": [
+        "divisionCardKey",
+        "DivisionDecomposition",
+        "DivisionGenerationConstraints",
+        "DivisionMisconceptionCode",
+        "DivisionQuestionSpec",
+        "DivisionSchema",
+        "FactFamily",
+        "factFamilyForDivision",
+        "findFriendlyDivisionDecomposition",
+        "generateDivisionItem",
+        "generateDivisionNearTransfer",
+        "makeStructuredDivisionItem",
+        "simulateDivisionMisconception",
+        "validateDivisionDecomposition"
+      ],
+      "functions": [
+        "divisionCardKey",
+        "factFamilyForDivision",
+        "findFriendlyDivisionDecomposition",
+        "generateDivisionItem",
+        "generateDivisionNearTransfer",
+        "makeStructuredDivisionItem",
+        "simulateDivisionMisconception",
+        "validateDivisionDecomposition"
+      ],
+      "classes": [],
+      "interfaces": [
+        "DivisionDecomposition",
+        "DivisionGenerationConstraints",
+        "DivisionQuestionSpec",
+        "FactFamily"
+      ],
+      "types": [
+        "DivisionMisconceptionCode",
+        "DivisionSchema"
+      ],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Practice item definitions and ID generators for a math curriculum topic.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/curriculum/fractionItems.ts",
+      "ext": ".ts",
+      "bytes": 14296,
+      "lines": 342,
+      "sha1": "5949ac343db4",
+      "imports": [
+        "../../types/math",
+        "../../utils/rng",
+        "../fractions/types"
+      ],
+      "exports": [
+        "compareFractions",
         "fracCmpId",
         "fracEqId",
         "fracNlId",
+        "FractionGeneratorContext",
+        "fractionsEqual",
+        "fractionStrategyChoiceItemIds",
+        "FractionValidationResult",
         "generateFractionCompareItems",
         "generateFractionEquivalentItems",
         "generateFractionItems",
+        "generateGrade3FractionItem",
+        "Grade3FractionSchema",
         "makeFractionCompareItem",
         "makeFractionEquivalentItem",
-        "makeFractionNumberLineItem"
+        "makeFractionMissingDenominatorItem",
+        "makeFractionNumberLineItem",
+        "makeFractionStrategyChoiceItem",
+        "makeUnitFractionModelItem",
+        "normalizeFraction",
+        "unitFractionModelItemIds",
+        "validateFractionItem"
       ],
       "functions": [
+        "compareFractions",
+        "denominator",
         "fracCmpId",
         "fracEqId",
         "fracNlId",
         "fracRanges",
+        "fractionsEqual",
+        "fractionStrategyChoiceItemIds",
+        "fractionTemplateFields",
         "gcd",
         "generateFractionCompareItems",
         "generateFractionEquivalentItems",
         "generateFractionItems",
+        "generateGrade3FractionItem",
         "makeFractionCompareItem",
         "makeFractionEquivalentItem",
+        "makeFractionMissingDenominatorItem",
         "makeFractionNumberLineItem",
-        "randInt"
+        "makeFractionStrategyChoiceItem",
+        "makeUnitFractionModelItem",
+        "normalizeFraction",
+        "properNumerator",
+        "randInt",
+        "unitFractionModelItemIds",
+        "validateFractionItem"
       ],
       "classes": [],
-      "interfaces": [],
-      "types": [],
+      "interfaces": [
+        "FractionGeneratorContext",
+        "FractionValidationResult"
+      ],
+      "types": [
+        "Grade3FractionSchema"
+      ],
       "components": [],
       "hooks": [],
       "css_classes": [],
@@ -1884,23 +2046,54 @@
       "read_error": null
     },
     {
+      "path": "src/features/curriculum/language.ts",
+      "ext": ".ts",
+      "bytes": 361,
+      "lines": 4,
+      "sha1": "4743ee575f44",
+      "imports": [],
+      "exports": [
+        "articleFor",
+        "formatQuantity",
+        "pluralize"
+      ],
+      "functions": [
+        "articleFor",
+        "formatQuantity",
+        "pluralize"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Curriculum module: item definitions, skill mappings, or content utilities.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/features/curriculum/makeItemFromId.ts",
       "ext": ".ts",
-      "bytes": 6609,
-      "lines": 161,
-      "sha1": "7c6a9501ce4a",
+      "bytes": 11995,
+      "lines": 244,
+      "sha1": "bf336f1418d7",
       "imports": [
         "../../types/math",
         "./areaItems",
         "./arithmeticItems",
         "./decimalItems",
+        "./divisionItems",
         "./fractionItems",
         "./geometryItems",
         "./measurementItems",
+        "./measurementTypes",
         "./mulPropertiesItems",
         "./multiplicationItems",
         "./numberTheoryItems",
         "./patternItems",
+        "./regrouping",
         "./roundingItems",
         "./twoStepItems",
         "./wordProblemItems"
@@ -1925,16 +2118,22 @@
     {
       "path": "src/features/curriculum/measurementItems.ts",
       "ext": ".ts",
-      "bytes": 5374,
-      "lines": 142,
-      "sha1": "f131c78a161e",
+      "bytes": 10901,
+      "lines": 209,
+      "sha1": "523098aed976",
       "imports": [
-        "../../types/math"
+        "../../types/math",
+        "./language",
+        "./measurementTypes",
+        "./regrouping"
       ],
       "exports": [
         "bargId",
+        "buildElapsedTimeJumps",
         "clckId",
+        "elapsedMinutes",
         "etimeId",
+        "generateMeasurementItem",
         "lplotId",
         "makeBarGraphItem",
         "makeElapsedTimeItem",
@@ -1942,20 +2141,27 @@
         "makeMeasurementWordProblem",
         "makeTimeItem",
         "MeasSchema",
+        "minutesSinceMidnight",
         "mwrdId"
       ],
       "functions": [
         "bargId",
+        "buildElapsedTimeJumps",
         "clckId",
+        "elapsedMinutes",
         "etimeId",
         "fmtTime",
+        "generateMeasurementItem",
         "lplotId",
         "makeBarGraphItem",
         "makeElapsedTimeItem",
         "makeLinePlotItem",
         "makeMeasurementWordProblem",
         "makeTimeItem",
+        "measurementCardKey",
+        "minutesSinceMidnight",
         "mwrdId",
+        "n",
         "pad",
         "wrapH",
         "wrapM"
@@ -1970,6 +2176,39 @@
       "css_classes": [],
       "json_keys": [],
       "purpose": "Practice item definitions and ID generators for a math curriculum topic.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/curriculum/measurementTypes.ts",
+      "ext": ".ts",
+      "bytes": 1352,
+      "lines": 16,
+      "sha1": "bc0f6ab87673",
+      "imports": [],
+      "exports": [
+        "BarGraphQuestionKind",
+        "ClockTime",
+        "LinePlotQuestionKind",
+        "MeasurementDataSpec",
+        "MeasurementSchema"
+      ],
+      "functions": [],
+      "classes": [],
+      "interfaces": [
+        "ClockTime"
+      ],
+      "types": [
+        "BarGraphQuestionKind",
+        "LinePlotQuestionKind",
+        "MeasurementDataSpec",
+        "MeasurementSchema"
+      ],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Curriculum module: item definitions, skill mappings, or content utilities.",
       "too_large": false,
       "read_error": null
     },
@@ -2022,11 +2261,12 @@
     {
       "path": "src/features/curriculum/multiplicationItems.ts",
       "ext": ".ts",
-      "bytes": 6539,
-      "lines": 210,
-      "sha1": "55801d4f46bc",
+      "bytes": 6473,
+      "lines": 203,
+      "sha1": "bc7b3c7d1fb3",
       "imports": [
-        "../../types/math"
+        "../../types/math",
+        "./divisionItems"
       ],
       "exports": [
         "ALL_ITEMS",
@@ -2140,6 +2380,62 @@
       "read_error": null
     },
     {
+      "path": "src/features/curriculum/regrouping.ts",
+      "ext": ".ts",
+      "bytes": 10639,
+      "lines": 220,
+      "sha1": "b87a0b35efe3",
+      "imports": [
+        "../../types/math",
+        "../../utils/rng"
+      ],
+      "exports": [
+        "analyzeArithmeticStructure",
+        "ArithmeticGenerationConstraints",
+        "ArithmeticGeneratorContext",
+        "ArithmeticMisconceptionCode",
+        "ArithmeticQuestionSpec",
+        "ArithmeticStructure",
+        "arithmeticTemplateKey",
+        "buildRegroupingWorkedExample",
+        "generateArithmeticErrorAnalysis",
+        "generateArithmeticInstructionItem",
+        "generateArithmeticOperands",
+        "RegroupingProfile",
+        "simulateArithmeticMisconception",
+        "WorkedStep"
+      ],
+      "functions": [
+        "analyzeArithmeticStructure",
+        "arithmeticTemplateKey",
+        "buildRegroupingWorkedExample",
+        "digit",
+        "generateArithmeticErrorAnalysis",
+        "generateArithmeticInstructionItem",
+        "generateArithmeticOperands",
+        "simulateArithmeticMisconception"
+      ],
+      "classes": [],
+      "interfaces": [
+        "ArithmeticGenerationConstraints",
+        "ArithmeticGeneratorContext",
+        "ArithmeticQuestionSpec",
+        "ArithmeticStructure",
+        "WorkedStep"
+      ],
+      "types": [
+        "ArithmeticMisconceptionCode",
+        "RegroupingProfile"
+      ],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Curriculum module: item definitions, skill mappings, or content utilities.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/features/curriculum/roundingItems.ts",
       "ext": ".ts",
       "bytes": 2299,
@@ -2177,11 +2473,12 @@
     {
       "path": "src/features/curriculum/twoStepItems.ts",
       "ext": ".ts",
-      "bytes": 2124,
-      "lines": 58,
-      "sha1": "38bfdc532d21",
+      "bytes": 3203,
+      "lines": 76,
+      "sha1": "bc76f4696317",
       "imports": [
-        "../../types/math"
+        "../../types/math",
+        "./wordProblemItems"
       ],
       "exports": [
         "makeTwoStepWordProblem",
@@ -2209,17 +2506,21 @@
     {
       "path": "src/features/curriculum/wordProblemItems.ts",
       "ext": ".ts",
-      "bytes": 3069,
-      "lines": 88,
-      "sha1": "d14490281146",
+      "bytes": 4977,
+      "lines": 110,
+      "sha1": "48b3610a15dd",
       "imports": [
-        "../../types/math"
+        "../../types/math",
+        "./divisionItems"
       ],
       "exports": [
         "generateWordProblemItems",
         "makeWordProblem",
         "Schema",
-        "wordId"
+        "UnknownPosition",
+        "wordId",
+        "WordProblemOperation",
+        "WordProblemSpec"
       ],
       "functions": [
         "factorMax",
@@ -2229,9 +2530,13 @@
         "wordId"
       ],
       "classes": [],
-      "interfaces": [],
+      "interfaces": [
+        "WordProblemSpec"
+      ],
       "types": [
-        "Schema"
+        "Schema",
+        "UnknownPosition",
+        "WordProblemOperation"
       ],
       "components": [],
       "hooks": [],
@@ -2577,6 +2882,35 @@
       "css_classes": [],
       "json_keys": [],
       "purpose": "Exports reusable code: classifyFluency, deriveFluencyBaseline, FluencyBand, MIN_BASELINE_SAMPLES, StudentFluencyBaseline.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/fractions/types.ts",
+      "ext": ".ts",
+      "bytes": 883,
+      "lines": 30,
+      "sha1": "52e5bc589c71",
+      "imports": [],
+      "exports": [
+        "FractionComparisonStrategy",
+        "FractionQuestionSpec",
+        "FractionValue"
+      ],
+      "functions": [],
+      "classes": [],
+      "interfaces": [
+        "FractionValue"
+      ],
+      "types": [
+        "FractionComparisonStrategy",
+        "FractionQuestionSpec"
+      ],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Exports reusable code: FractionComparisonStrategy, FractionQuestionSpec, FractionValue.",
       "too_large": false,
       "read_error": null
     },
@@ -3316,9 +3650,9 @@
     {
       "path": "src/features/mastery/grade3MasteryMap.ts",
       "ext": ".ts",
-      "bytes": 10784,
-      "lines": 283,
-      "sha1": "831ce659fd85",
+      "bytes": 13141,
+      "lines": 338,
+      "sha1": "2ae626d8215b",
       "imports": [],
       "exports": [
         "getGrade3Skill",
@@ -3400,22 +3734,30 @@
     {
       "path": "src/features/mastery/misconceptionEngine.ts",
       "ext": ".ts",
-      "bytes": 7002,
-      "lines": 192,
-      "sha1": "f49ae6435219",
+      "bytes": 14845,
+      "lines": 346,
+      "sha1": "a5d7cc5171a4",
       "imports": [
         "../../types/math",
+        "../curriculum/regrouping",
         "fraction.js"
       ],
       "exports": [
         "detectMistakes"
       ],
       "functions": [
+        "detectAreaPerimeterChoice",
+        "detectAreaRectangle",
+        "detectArithmetic",
         "detectDivision",
         "detectFractionCompare",
         "detectFractionEquivalent",
+        "detectFractionNumberLine",
+        "detectMeasurement",
         "detectMistakes",
-        "detectMultiplication"
+        "detectMultiplication",
+        "detectPerimeterRectangle",
+        "detectPerimeterUnknownSide"
       ],
       "classes": [],
       "interfaces": [],
@@ -3496,9 +3838,9 @@
     {
       "path": "src/features/mastery/skillMapping.ts",
       "ext": ".ts",
-      "bytes": 6944,
-      "lines": 119,
-      "sha1": "eb33a73d953f",
+      "bytes": 8817,
+      "lines": 145,
+      "sha1": "d4096b61ad72",
       "imports": [
         "../../types/math"
       ],
@@ -3524,9 +3866,9 @@
     {
       "path": "src/features/mastery/skillMasteryEngine.ts",
       "ext": ".ts",
-      "bytes": 5045,
-      "lines": 141,
-      "sha1": "9d933a2c1fb4",
+      "bytes": 7199,
+      "lines": 175,
+      "sha1": "6133b857da17",
       "imports": [
         "../../types/math",
         "../learning/learningEvents",
@@ -3540,7 +3882,8 @@
       ],
       "functions": [
         "classifyStatus",
-        "deriveGrade3SkillSummaries"
+        "deriveGrade3SkillSummaries",
+        "recordItem"
       ],
       "classes": [],
       "interfaces": [
@@ -3561,24 +3904,32 @@
     {
       "path": "src/features/mastery/skillPracticePlanner.ts",
       "ext": ".ts",
-      "bytes": 25710,
-      "lines": 702,
-      "sha1": "a79e91066b1b",
+      "bytes": 36104,
+      "lines": 880,
+      "sha1": "d94b54105938",
       "imports": [
         "../../types/math",
         "../curriculum/areaItems",
         "../curriculum/arithmeticItems",
+        "../curriculum/divisionItems",
         "../curriculum/fractionItems",
         "../curriculum/geometryItems",
         "../curriculum/measurementItems",
         "../curriculum/mulPropertiesItems",
         "../curriculum/multiplicationItems",
         "../curriculum/patternItems",
+        "../curriculum/regrouping",
         "../curriculum/roundingItems",
         "../curriculum/twoStepItems",
         "../curriculum/wordProblemItems"
       ],
       "exports": [
+        "buildDivisionFocusSequence",
+        "buildFocusSequence",
+        "buildRegroupingFocusSequence",
+        "FocusSequence",
+        "FocusSequenceContext",
+        "planFractionFocusSequence",
         "PlanOptions",
         "planPracticeForSkill"
       ],
@@ -3586,6 +3937,10 @@
         "add2DigitRegroupingItemIds",
         "add3DigitRegroupingItemIds",
         "arithmeticPatternItemIds",
+        "buildDivisionFocusSequence",
+        "buildFocusSequence",
+        "buildRegroupingFocusSequence",
+        "divisionReasoningIds",
         "divisionWordItemIds",
         "divItemIds",
         "elapsedTimeItemIds",
@@ -3593,6 +3948,7 @@
         "fracCmpItemIds",
         "fracEquivItemIds",
         "fracNumberLineItemIds",
+        "fractionComparisonIds",
         "fracUnitItemIds",
         "grade3AdvancedMulItemIds",
         "grade3BasicMulItemIds",
@@ -3600,16 +3956,22 @@
         "measurementWordItemIds",
         "mulItemIds",
         "mulMultipleOf10ItemIds",
+        "planFractionFocusSequence",
         "planPracticeForSkill",
+        "rng",
         "roundNearest10or100ItemIds",
         "scaledBarGraphItemIds",
         "sub2DigitBorrowingItemIds",
         "sub3DigitBorrowingItemIds",
+        "subAcrossZeroErrorAnalysisIds",
+        "subAcrossZeroItemIds",
         "timeToMinuteItemIds",
         "twoStepItemIds"
       ],
       "classes": [],
       "interfaces": [
+        "FocusSequence",
+        "FocusSequenceContext",
         "PlanOptions"
       ],
       "types": [],
@@ -4023,9 +4385,9 @@
     {
       "path": "src/features/practice/answerChecker.ts",
       "ext": ".ts",
-      "bytes": 6748,
+      "bytes": 6768,
       "lines": 197,
-      "sha1": "45244663dfa6",
+      "sha1": "293e7a7e0906",
       "imports": [
         "../../types/math",
         "../fluency/fluencyEngine",
@@ -4068,9 +4430,9 @@
     {
       "path": "src/features/practice/hintEngine.ts",
       "ext": ".ts",
-      "bytes": 18068,
-      "lines": 373,
-      "sha1": "e9b10f66fedf",
+      "bytes": 25396,
+      "lines": 476,
+      "sha1": "c6f701882d71",
       "imports": [
         "../../types/math"
       ],
@@ -4080,8 +4442,10 @@
       ],
       "functions": [
         "addHint",
+        "areaPerimeterChoiceHint",
         "areaRectHint",
         "areaSquaresHint",
+        "arithmeticRegroupHint",
         "divHint",
         "fracCmpHint",
         "fracEquivHint",
@@ -4090,10 +4454,13 @@
         "genericWordHint",
         "getHint",
         "hint",
+        "measurementDataHint",
         "measurementWordHint",
         "mulHint",
+        "perimeterUnknownSideHint",
         "perimHint",
         "singleStepWordHint",
+        "structuredDivisionHint",
         "subHint",
         "twoStepWordHint",
         "unknownFactorHint",
@@ -4387,11 +4754,12 @@
     {
       "path": "src/features/scheduler/cardModel.ts",
       "ext": ".ts",
-      "bytes": 3715,
-      "lines": 102,
-      "sha1": "81dd15839d6a",
+      "bytes": 6097,
+      "lines": 135,
+      "sha1": "6f395120022b",
       "imports": [
         "../../types/math",
+        "../curriculum/regrouping",
         "../learning/learningEvents"
       ],
       "exports": [
@@ -5426,6 +5794,34 @@
       "read_error": null
     },
     {
+      "path": "src/features/visuals/AreaPerimeterCompareModel.tsx",
+      "ext": ".tsx",
+      "bytes": 2272,
+      "lines": 61,
+      "sha1": "e0283f0c9a7c",
+      "imports": [
+        "./types"
+      ],
+      "exports": [
+        "AreaPerimeterCompareModel"
+      ],
+      "functions": [
+        "AreaPerimeterCompareModel"
+      ],
+      "classes": [],
+      "interfaces": [
+        "Props"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Reusable SVG visual model components (area grids, shape diagrams, fraction bars, arrays).",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/features/visuals/ArrayModel.tsx",
       "ext": ".tsx",
       "bytes": 1958,
@@ -5478,6 +5874,58 @@
       "read_error": null
     },
     {
+      "path": "src/features/visuals/DivisionArrayModel.tsx",
+      "ext": ".tsx",
+      "bytes": 819,
+      "lines": 12,
+      "sha1": "98511f989937",
+      "imports": [
+        "../curriculum/divisionItems"
+      ],
+      "exports": [
+        "DivisionArrayModel"
+      ],
+      "functions": [
+        "DivisionArrayModel"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Reusable SVG visual model components (area grids, shape diagrams, fraction bars, arrays).",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/visuals/DivisionDecompositionModel.tsx",
+      "ext": ".tsx",
+      "bytes": 1111,
+      "lines": 15,
+      "sha1": "bbdb465492f9",
+      "imports": [
+        "../curriculum/divisionItems"
+      ],
+      "exports": [
+        "DivisionDecompositionModel"
+      ],
+      "functions": [
+        "DivisionDecompositionModel"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Reusable SVG visual model components (area grids, shape diagrams, fraction bars, arrays).",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/features/visuals/DraggableEqualGroups.tsx",
       "ext": ".tsx",
       "bytes": 7563,
@@ -5508,6 +5956,36 @@
         "DraggableObject",
         "DropZone"
       ],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Reusable SVG visual model components (area grids, shape diagrams, fraction bars, arrays).",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/visuals/ElapsedTimeLineModel.tsx",
+      "ext": ".tsx",
+      "bytes": 1051,
+      "lines": 15,
+      "sha1": "1487a6f9e2c1",
+      "imports": [
+        "../curriculum/measurementItems",
+        "../curriculum/measurementTypes"
+      ],
+      "exports": [
+        "ElapsedTimeLineModel"
+      ],
+      "functions": [
+        "ElapsedTimeLineModel",
+        "fmt"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [
+        "Spec"
+      ],
+      "components": [],
       "hooks": [],
       "css_classes": [],
       "json_keys": [],
@@ -5597,6 +6075,64 @@
       "read_error": null
     },
     {
+      "path": "src/features/visuals/FractionComparisonModel.tsx",
+      "ext": ".tsx",
+      "bytes": 1121,
+      "lines": 19,
+      "sha1": "8fc5a136f1b4",
+      "imports": [
+        "../fractions/types",
+        "./FractionBar"
+      ],
+      "exports": [
+        "FractionComparisonModel"
+      ],
+      "functions": [
+        "FractionComparisonModel"
+      ],
+      "classes": [],
+      "interfaces": [
+        "Props"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Reusable SVG visual model components (area grids, shape diagrams, fraction bars, arrays).",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/visuals/FractionEquivalenceModel.tsx",
+      "ext": ".tsx",
+      "bytes": 926,
+      "lines": 17,
+      "sha1": "2585aa5705e0",
+      "imports": [
+        "../fractions/types",
+        "./FractionBar"
+      ],
+      "exports": [
+        "FractionEquivalenceModel"
+      ],
+      "functions": [
+        "FractionEquivalenceModel"
+      ],
+      "classes": [],
+      "interfaces": [
+        "Props"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Reusable SVG visual model components (area grids, shape diagrams, fraction bars, arrays).",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/features/visuals/FractionNumberLine.tsx",
       "ext": ".tsx",
       "bytes": 3571,
@@ -5655,6 +6191,34 @@
       "read_error": null
     },
     {
+      "path": "src/features/visuals/LinePlotModel.tsx",
+      "ext": ".tsx",
+      "bytes": 1205,
+      "lines": 17,
+      "sha1": "6138ac85f271",
+      "imports": [
+        "../curriculum/measurementTypes"
+      ],
+      "exports": [
+        "LinePlotModel"
+      ],
+      "functions": [
+        "LinePlotModel"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [
+        "Spec"
+      ],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Reusable SVG visual model components (area grids, shape diagrams, fraction bars, arrays).",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/features/visuals/MathPrompt.tsx",
       "ext": ".tsx",
       "bytes": 1177,
@@ -5670,6 +6234,91 @@
       ],
       "functions": [
         "MathPrompt"
+      ],
+      "classes": [],
+      "interfaces": [
+        "Props"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Reusable SVG visual model components (area grids, shape diagrams, fraction bars, arrays).",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/visuals/PerimeterPathModel.tsx",
+      "ext": ".tsx",
+      "bytes": 3103,
+      "lines": 79,
+      "sha1": "6a9cf763b877",
+      "imports": [
+        "./types"
+      ],
+      "exports": [
+        "PerimeterPathModel"
+      ],
+      "functions": [
+        "boundsOf",
+        "PerimeterPathModel",
+        "toSvg"
+      ],
+      "classes": [],
+      "interfaces": [
+        "Props"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Reusable SVG visual model components (area grids, shape diagrams, fraction bars, arrays).",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/visuals/PlaceValueRegroupModel.tsx",
+      "ext": ".tsx",
+      "bytes": 2435,
+      "lines": 38,
+      "sha1": "453e68c829cc",
+      "imports": [
+        "../curriculum/regrouping"
+      ],
+      "exports": [
+        "PlaceValueRegroupModel"
+      ],
+      "functions": [
+        "digitAt",
+        "PlaceValueRegroupModel"
+      ],
+      "classes": [],
+      "interfaces": [
+        "Props"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Reusable SVG visual model components (area grids, shape diagrams, fraction bars, arrays).",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/visuals/RectangleMeasureModel.tsx",
+      "ext": ".tsx",
+      "bytes": 2144,
+      "lines": 47,
+      "sha1": "b3c795bcb936",
+      "imports": [],
+      "exports": [
+        "RectangleMeasureModel"
+      ],
+      "functions": [
+        "RectangleMeasureModel"
       ],
       "classes": [],
       "interfaces": [
@@ -5702,6 +6351,34 @@
         "Props"
       ],
       "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Reusable SVG visual model components (area grids, shape diagrams, fraction bars, arrays).",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/visuals/ScaledBarGraphModel.tsx",
+      "ext": ".tsx",
+      "bytes": 1525,
+      "lines": 16,
+      "sha1": "aa471868f323",
+      "imports": [
+        "../curriculum/measurementTypes"
+      ],
+      "exports": [
+        "ScaledBarGraphModel"
+      ],
+      "functions": [
+        "ScaledBarGraphModel"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [
+        "Spec"
+      ],
       "components": [],
       "hooks": [],
       "css_classes": [],
@@ -5748,21 +6425,115 @@
       "read_error": null
     },
     {
+      "path": "src/features/visuals/SharingGroupingModel.tsx",
+      "ext": ".tsx",
+      "bytes": 1008,
+      "lines": 13,
+      "sha1": "42dbbfaac85f",
+      "imports": [
+        "../curriculum/divisionItems"
+      ],
+      "exports": [
+        "SharingGroupingModel"
+      ],
+      "functions": [
+        "SharingGroupingModel"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Reusable SVG visual model components (area grids, shape diagrams, fraction bars, arrays).",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/visuals/TapeDiagramModel.tsx",
+      "ext": ".tsx",
+      "bytes": 869,
+      "lines": 13,
+      "sha1": "b6011e0422c4",
+      "imports": [
+        "../curriculum/wordProblemItems"
+      ],
+      "exports": [
+        "TapeDiagramModel"
+      ],
+      "functions": [
+        "TapeDiagramModel"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Reusable SVG visual model components (area grids, shape diagrams, fraction bars, arrays).",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/visuals/types.ts",
+      "ext": ".ts",
+      "bytes": 989,
+      "lines": 25,
+      "sha1": "0df1b4feecb9",
+      "imports": [],
+      "exports": [
+        "Point",
+        "RectSpec",
+        "VisualSpec"
+      ],
+      "functions": [],
+      "classes": [],
+      "interfaces": [
+        "Point",
+        "RectSpec"
+      ],
+      "types": [
+        "VisualSpec"
+      ],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Reusable SVG visual model components (area grids, shape diagrams, fraction bars, arrays).",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/features/visuals/VisualModel.tsx",
       "ext": ".tsx",
-      "bytes": 6069,
-      "lines": 153,
-      "sha1": "1cb32d2b3003",
+      "bytes": 10445,
+      "lines": 248,
+      "sha1": "6985d33fb638",
       "imports": [
         "../../types/math",
         "./AreaGrid",
+        "./AreaPerimeterCompareModel",
         "./ArrayModel",
         "./ClockModel",
+        "./DivisionArrayModel",
+        "./DivisionDecompositionModel",
+        "./ElapsedTimeLineModel",
         "./EqualGroupsModel",
         "./FractionBar",
+        "./FractionComparisonModel",
+        "./FractionEquivalenceModel",
         "./FractionNumberLine",
+        "./LinePlotModel",
+        "./PerimeterPathModel",
+        "./PlaceValueRegroupModel",
+        "./RectangleMeasureModel",
         "./RectilinearAreaModel",
+        "./ScaledBarGraphModel",
         "./ShapeModel",
+        "./SharingGroupingModel",
+        "./TapeDiagramModel",
         "./visualModelUtils"
       ],
       "exports": [
@@ -5788,9 +6559,9 @@
     {
       "path": "src/features/visuals/visualModelUtils.ts",
       "ext": ".ts",
-      "bytes": 3120,
-      "lines": 81,
-      "sha1": "3d2498f0e754",
+      "bytes": 3436,
+      "lines": 88,
+      "sha1": "b98444325ddd",
       "imports": [
         "../../types/math",
         "./ShapeModel"
@@ -5898,9 +6669,9 @@
     {
       "path": "src/tests/adaptiveRelatedItemSelection.test.ts",
       "ext": ".ts",
-      "bytes": 17703,
+      "bytes": 17714,
       "lines": 375,
-      "sha1": "f03b161744ee",
+      "sha1": "0b6e7e047a86",
       "imports": [
         "../features/adaptive/adaptiveItemSelector",
         "../features/adaptive/candidatePools",
@@ -5955,9 +6726,9 @@
     {
       "path": "src/tests/answerChecker.test.ts",
       "ext": ".ts",
-      "bytes": 8286,
-      "lines": 190,
-      "sha1": "64225a863424",
+      "bytes": 8784,
+      "lines": 198,
+      "sha1": "280a6fbc98fb",
       "imports": [
         "../features/fluency/fluencyEngine",
         "../features/practice/answerChecker",
@@ -6028,6 +6799,38 @@
       "read_error": null
     },
     {
+      "path": "src/tests/areaPerimeterRedesign.test.tsx",
+      "ext": ".tsx",
+      "bytes": 6743,
+      "lines": 145,
+      "sha1": "6e67268089a7",
+      "imports": [
+        "../features/adaptive/adaptiveItemSelector",
+        "../features/curriculum/areaItems",
+        "../features/curriculum/makeItemFromId",
+        "../features/mastery/misconceptionEngine",
+        "../features/mastery/skillPracticePlanner",
+        "../features/practice/hintEngine",
+        "../features/scheduler/cardModel",
+        "../features/visuals/VisualModel",
+        "../features/visuals/visualModelUtils",
+        "@testing-library/react",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/tests/arithmeticItems.test.ts",
       "ext": ".ts",
       "bytes": 2113,
@@ -6053,9 +6856,9 @@
     {
       "path": "src/tests/cardModel.test.ts",
       "ext": ".ts",
-      "bytes": 5020,
-      "lines": 137,
-      "sha1": "f324147f69d1",
+      "bytes": 5995,
+      "lines": 155,
+      "sha1": "d96f05050a68",
       "imports": [
         "../features/curriculum/makeItemFromId",
         "../features/learning/learningEvents",
@@ -6308,6 +7111,41 @@
       "read_error": null
     },
     {
+      "path": "src/tests/divisionRedesign.test.tsx",
+      "ext": ".tsx",
+      "bytes": 6985,
+      "lines": 104,
+      "sha1": "5a4f3b495394",
+      "imports": [
+        "../features/adaptive/relatedItemMapping",
+        "../features/curriculum/arithmeticItems",
+        "../features/curriculum/divisionItems",
+        "../features/curriculum/makeItemFromId",
+        "../features/mastery/misconceptionEngine",
+        "../features/mastery/skillMapping",
+        "../features/mastery/skillPracticePlanner",
+        "../features/practice/hintEngine",
+        "../features/scheduler/cardModel",
+        "../features/scheduler/responsePolicy",
+        "../features/visuals/VisualModel",
+        "../utils/rng",
+        "@testing-library/react",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/tests/driveSyncErrors.test.ts",
       "ext": ".ts",
       "bytes": 1947,
@@ -6395,6 +7233,38 @@
       "sha1": "be49591f8b2d",
       "imports": [
         "../features/curriculum/fractionItems",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/fractionRedesign.test.tsx",
+      "ext": ".tsx",
+      "bytes": 8663,
+      "lines": 162,
+      "sha1": "d30e1a7848f8",
+      "imports": [
+        "../features/curriculum/fractionItems",
+        "../features/curriculum/makeItemFromId",
+        "../features/mastery/misconceptionEngine",
+        "../features/mastery/skillMapping",
+        "../features/mastery/skillMasteryEngine",
+        "../features/mastery/skillPracticePlanner",
+        "../features/practice/hintEngine",
+        "../features/scheduler/cardModel",
+        "../features/visuals/VisualModel",
+        "@testing-library/react",
         "vitest"
       ],
       "exports": [],
@@ -6546,9 +7416,9 @@
     {
       "path": "src/tests/goalRecommendationEngine.test.ts",
       "ext": ".ts",
-      "bytes": 12067,
+      "bytes": 12072,
       "lines": 318,
-      "sha1": "4a726744c951",
+      "sha1": "41f8d6cb045e",
       "imports": [
         "../features/goals/goalRecommendationEngine",
         "../features/goals/types",
@@ -6712,9 +7582,9 @@
     {
       "path": "src/tests/grade3AreaPerimeter.test.ts",
       "ext": ".ts",
-      "bytes": 10905,
-      "lines": 272,
-      "sha1": "3f89e35b709a",
+      "bytes": 11147,
+      "lines": 274,
+      "sha1": "84702ec44fba",
       "imports": [
         "../features/curriculum/areaItems",
         "../features/curriculum/makeItemFromId",
@@ -6745,7 +7615,7 @@
       "ext": ".ts",
       "bytes": 5193,
       "lines": 132,
-      "sha1": "d53c01258416",
+      "sha1": "483da712bed6",
       "imports": [
         "../features/mastery/grade3MasteryMap",
         "vitest"
@@ -7107,6 +7977,41 @@
       "read_error": null
     },
     {
+      "path": "src/tests/measurementRedesign.test.tsx",
+      "ext": ".tsx",
+      "bytes": 6111,
+      "lines": 110,
+      "sha1": "59e794f35ea1",
+      "imports": [
+        "../features/adaptive/candidatePools",
+        "../features/curriculum/language",
+        "../features/curriculum/makeItemFromId",
+        "../features/curriculum/measurementItems",
+        "../features/curriculum/twoStepItems",
+        "../features/curriculum/wordProblemItems",
+        "../features/mastery/misconceptionEngine",
+        "../features/mastery/skillPracticePlanner",
+        "../features/practice/hintEngine",
+        "../features/scheduler/cardModel",
+        "../features/visuals/VisualModel",
+        "../utils/rng",
+        "@testing-library/react",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/tests/misconceptionEngine.test.ts",
       "ext": ".ts",
       "bytes": 13069,
@@ -7409,6 +8314,43 @@
       "read_error": null
     },
     {
+      "path": "src/tests/regroupingRedesign.test.tsx",
+      "ext": ".tsx",
+      "bytes": 9621,
+      "lines": 177,
+      "sha1": "4b99194dd040",
+      "imports": [
+        "../features/curriculum/arithmeticItems",
+        "../features/curriculum/makeItemFromId",
+        "../features/curriculum/regrouping",
+        "../features/mastery/misconceptionEngine",
+        "../features/mastery/skillMapping",
+        "../features/mastery/skillMasteryEngine",
+        "../features/mastery/skillPracticePlanner",
+        "../features/practice/hintEngine",
+        "../features/scheduler/cardModel",
+        "../features/scheduler/responsePolicy",
+        "../features/visuals/VisualModel",
+        "../utils/rng",
+        "@testing-library/react",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [
+        "eventsFor"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/tests/relatedEvidence.test.ts",
       "ext": ".ts",
       "bytes": 5489,
@@ -7627,9 +8569,9 @@
     {
       "path": "src/tests/skillMapping.test.ts",
       "ext": ".ts",
-      "bytes": 10687,
+      "bytes": 10719,
       "lines": 246,
-      "sha1": "a6e8e67ce35b",
+      "sha1": "629c60b69e89",
       "imports": [
         "../features/curriculum/fractionItems",
         "../features/curriculum/multiplicationItems",
@@ -7688,9 +8630,9 @@
     {
       "path": "src/tests/skillPracticePlanner.test.ts",
       "ext": ".ts",
-      "bytes": 15482,
-      "lines": 361,
-      "sha1": "bd1d8ae2c430",
+      "bytes": 15625,
+      "lines": 363,
+      "sha1": "9a5830a251e6",
       "imports": [
         "../features/curriculum/makeItemFromId",
         "../features/mastery/grade3MasteryMap",
@@ -7934,9 +8876,9 @@
     {
       "path": "src/tests/visualModel.test.ts",
       "ext": ".ts",
-      "bytes": 6999,
+      "bytes": 7023,
       "lines": 167,
-      "sha1": "77b5e70aef6c",
+      "sha1": "9f174d2c0647",
       "imports": [
         "../features/curriculum/areaItems",
         "../features/curriculum/fractionItems",
@@ -7990,10 +8932,17 @@
     {
       "path": "src/types/math.ts",
       "ext": ".ts",
-      "bytes": 10837,
-      "lines": 340,
-      "sha1": "86450b6a63d6",
-      "imports": [],
+      "bytes": 12524,
+      "lines": 373,
+      "sha1": "dca53f52a906",
+      "imports": [
+        "../features/curriculum/divisionItems",
+        "../features/curriculum/measurementTypes",
+        "../features/curriculum/regrouping",
+        "../features/curriculum/wordProblemItems",
+        "../features/fractions/types",
+        "../features/visuals/types"
+      ],
       "exports": [
         "AnswerInput",
         "AttemptLog",
@@ -8008,6 +8957,7 @@
         "GrowthSummary",
         "ItemType",
         "MasteryLevel",
+        "PerimeterReasoningSpec",
         "PeriodComparison",
         "PeriodStats",
         "PerTableStats",
@@ -8033,6 +8983,7 @@
         "FactGrowth",
         "FactWindowStats",
         "GrowthSummary",
+        "PerimeterReasoningSpec",
         "PeriodComparison",
         "PeriodStats",
         "PerTableStats",
@@ -8063,6 +9014,32 @@
       "css_classes": [],
       "json_keys": [],
       "purpose": "Exports reusable code: AnswerInput, AttemptLog, DailyNewGoalQuestionLimits, DayStats, FactGrowth.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/utils/grammar.ts",
+      "ext": ".ts",
+      "bytes": 470,
+      "lines": 11,
+      "sha1": "cfe7053d3427",
+      "imports": [],
+      "exports": [
+        "formatMeasurement",
+        "pluralizeUnit"
+      ],
+      "functions": [
+        "formatMeasurement",
+        "pluralizeUnit"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Exports reusable code: formatMeasurement, pluralizeUnit.",
       "too_large": false,
       "read_error": null
     },

@@ -286,6 +286,247 @@ def standalone_pwa_share_flow(page: Page) -> None:
         raise AssertionError(f"Prepared file was not shared from the explicit click: {share_calls}")
 
 
+def set_one_question_sessions(page: Page) -> None:
+    page.get_by_test_id("open-settings").click()
+    page.get_by_label("Default questions per session", exact=True).fill("1")
+    page.get_by_label("Default questions per session", exact=True).press("Tab")
+    page.wait_for_timeout(250)
+    page.get_by_role("button", name="← Back", exact=True).click()
+
+
+def open_mastery_skill(page: Page, skill_name: str) -> None:
+    page.get_by_role("button", name=re.compile(r"Grade 3 Math Map")).click()
+    page.get_by_role("button", name=re.compile(rf"^{re.escape(skill_name)}:")).click()
+    page.get_by_role("button", name=re.compile(r"Practice this skill")).click()
+    expect(page.locator(".drill-q")).to_be_visible()
+    assert_no_horizontal_overflow(page, skill_name)
+
+
+def area_perimeter_missing_side_lesson(page: Page) -> None:
+    create_profile(page, "PerimeterTester", "e2e-perimeter-missing")
+    set_one_question_sessions(page)
+    open_mastery_skill(page, "Missing-Side Perimeter")
+    prompt = page.locator(".drill-q > div").first.inner_text()
+    numbers = [int(value) for value in re.findall(r"\d+", prompt)]
+    if "Which equation" in prompt:
+        total, *known = numbers
+        equation = " + ".join(str(value) for value in known) + f" + x = {total}"
+        page.get_by_role("button", name=equation, exact=True).click()
+    else:
+        total, *known = numbers
+        answer = sum(known) if "sum of the known sides" in prompt else total - sum(known)
+        page.get_by_label("Your answer", exact=True).fill(str(answer))
+        page.get_by_label("Your answer", exact=True).press("Enter")
+    expect(page.get_by_text(re.compile(r"Correct!|New personal best!"))).to_be_visible()
+
+
+def area_perimeter_comparison_lesson(page: Page) -> None:
+    create_profile(page, "ComparisonTester", "e2e-area-perimeter-compare")
+    set_one_question_sessions(page)
+    open_mastery_skill(page, "Compare Area and Perimeter")
+    prompt = page.locator(".drill-q > div").first.inner_text()
+    numbers = [int(value) for value in re.findall(r"\d+", prompt)]
+    if "perimeter of Rectangle A" in prompt:
+        answer = 2 * (numbers[0] + numbers[1])
+    else:
+        answer = numbers[2] * numbers[3]
+    page.get_by_label("Your answer", exact=True).fill(str(answer))
+    page.get_by_label("Your answer", exact=True).press("Enter")
+    expect(page.get_by_text(re.compile(r"Correct!|New personal best!"))).to_be_visible()
+
+
+def fraction_equivalence_visual_lesson(page: Page) -> None:
+    create_profile(page, "FractionEquivalentTester", "e2e-fraction-equivalent")
+    set_one_question_sessions(page)
+    open_mastery_skill(page, "Equivalent Fractions")
+    prompt = page.locator(".drill-q > div").first.inner_text()
+    values = [int(value) for value in re.findall(r"\d+", prompt)]
+    numerator, denominator, target_denominator = values[:3]
+    answer = numerator * target_denominator // denominator
+    page.get_by_label("Your answer", exact=True).fill(str(answer))
+    page.get_by_label("Your answer", exact=True).press("Enter")
+    expect(page.get_by_text(re.compile(r"Correct!|New personal best!"))).to_be_visible()
+
+
+def fraction_same_numerator_lesson(page: Page) -> None:
+    create_profile(page, "FractionCompareTester", "e2e-fraction-same-numerator")
+    set_one_question_sessions(page)
+    open_mastery_skill(page, "Compare Same Numerators")
+    prompt = page.locator(".drill-q > div").first.inner_text()
+    n1, d1, n2, d2 = [int(value) for value in re.findall(r"\d+", prompt)][:4]
+    if prompt.startswith("Why is"):
+        page.get_by_role(
+            "button",
+            name="The numerators match, so fewer equal pieces means larger pieces.",
+            exact=True,
+        ).click()
+        expect(page.get_by_text(re.compile(r"Correct!|New personal best!"))).to_be_visible()
+        return
+    left, right = n1 * d2, n2 * d1
+    answer = "=" if left == right else "<" if left < right else ">"
+    page.get_by_role("button", name=answer, exact=True).click()
+    expect(page.get_by_text(re.compile(r"Correct!|New personal best!"))).to_be_visible()
+
+
+def subtraction_across_zero_lesson(page: Page) -> None:
+    create_profile(page, "RegroupTester", "e2e-subtraction-across-zero")
+    set_one_question_sessions(page)
+    open_mastery_skill(page, "Subtract Across Zero")
+    completed_error_analysis = False
+    for _ in range(10):
+        prompt_locator = page.locator(".drill-q > div").first
+        prompt = prompt_locator.inner_text()
+        values = [int(value) for value in re.findall(r"\d+", prompt)]
+        a, b = values[:2]
+        if prompt.startswith("A learner wrote"):
+            shown = values[2]
+            correct = a - b
+            place = "ones" if shown == correct - 10 else "tens" if shown == correct - 100 else "regrouping"
+            page.get_by_role("button", name=place, exact=True).click()
+            completed_error_analysis = True
+        else:
+            page.get_by_label("Your answer", exact=True).fill(str(a - b))
+            page.get_by_label("Your answer", exact=True).press("Enter")
+        expect(page.get_by_text(re.compile(r"Correct!|New personal best!"))).to_be_visible()
+        if completed_error_analysis:
+            break
+        page.wait_for_timeout(1400)
+    if not completed_error_analysis:
+        raise AssertionError("Across-zero lesson did not include its planned error-analysis item")
+
+
+def division_decomposition_lesson(page: Page) -> None:
+    create_profile(page, "DivisionDecomposeTester", "e2e-division-decomposition")
+    open_mastery_skill(page, "Decompose Two-Digit Division")
+    found_target = False
+    for _ in range(10):
+        prompt = page.locator(".drill-q > div").first.inner_text()
+        values = [int(value) for value in re.findall(r"\d+", prompt)]
+        if prompt.startswith("Use"):
+            dividend, divisor = values[-2:]
+            expect(page.get_by_role("figure", name=re.compile(rf"decomposition model for {dividend} divided by {divisor}", re.I))).to_be_visible()
+            page.get_by_label("Your answer", exact=True).fill(str(dividend // divisor))
+            page.get_by_label("Your answer", exact=True).press("Enter")
+            found_target = found_target or (dividend == 84 and divisor == 3)
+        else:
+            dividend, divisor, quotient = values[:3]
+            page.get_by_role("button", name=f"{quotient} × {divisor} = {dividend}", exact=True).click()
+        expect(page.get_by_text(re.compile(r"Correct!|New personal best!"))).to_be_visible()
+        if found_target:
+            break
+        page.wait_for_timeout(1400)
+    if not found_target:
+        raise AssertionError("Decomposition lesson did not exercise 84 ÷ 3")
+
+
+def division_model_choice_lesson(page: Page) -> None:
+    create_profile(page, "DivisionModelTester", "e2e-division-model-choice")
+    open_mastery_skill(page, "Division Word Problems")
+    prompt = page.locator(".drill-q > div").first.inner_text()
+    dividend, divisor = [int(value) for value in re.findall(r"\d+", prompt)][:2]
+    expect(page.get_by_role("figure", name=re.compile(rf"sharing model for {dividend} objects", re.I))).to_be_visible()
+    page.get_by_role("button", name=f"{dividend} ÷ {divisor}", exact=True).click()
+    expect(page.get_by_text(re.compile(r"Correct!|New personal best!"))).to_be_visible()
+
+
+def scaled_bar_graph_lesson(page: Page) -> None:
+    create_profile(page, "BarGraphTester", "e2e-scaled-bar-graph")
+    open_mastery_skill(page, "Scaled Bar Graphs")
+    prompt = page.locator(".drill-q > div").first.inner_text()
+    figure = page.get_by_role("figure", name=re.compile(r"scaled bar graph.*vertical axis counts by", re.I))
+    expect(figure).to_be_visible()
+    scale = int(re.search(r"counts by (\d+)", figure.get_attribute("aria-label")).group(1))
+    bars = page.locator('[aria-label$=" bar"]')
+    values = []
+    for index in range(bars.count()):
+        height = float(bars.nth(index).evaluate("node => parseFloat(node.style.height)"))
+        values.append(height)
+    if "missing" in prompt:
+        bar_units = round(1 / (1 - values[1] / values[0]))
+        graph_values = [bar_units * scale, (bar_units - 1) * scale, (bar_units + 1) * scale]
+    else:
+        bar_units = round((values[0] / max(values)) / (1 - values[0] / max(values)))
+        graph_values = [round(height / max(values) * (bar_units + 1) * scale) for height in values]
+    if "Mia and Leo" in prompt:
+        answer = graph_values[0] + graph_values[1]
+    elif "more" in prompt:
+        answer = graph_values[0] - graph_values[1]
+    elif "missing" in prompt:
+        answer = graph_values[2]
+    else:
+        answer = graph_values[0]
+    page.get_by_label("Your answer", exact=True).fill(str(answer))
+    page.get_by_label("Your answer", exact=True).press("Enter")
+    expect(page.get_by_text(re.compile(r"Correct!|New personal best!"))).to_be_visible()
+
+
+def fractional_line_plot_lesson(page: Page) -> None:
+    create_profile(page, "LinePlotTester", "e2e-fractional-line-plot")
+    open_mastery_skill(page, "Line Plots")
+    for _ in range(10):
+        figure = page.get_by_role("figure").last
+        label = figure.get_attribute("aria-label") or ""
+        prompt = page.locator(".drill-q > div").first.inner_text()
+        if "halves" in label or "quarters" in label:
+            target_tick = int(re.findall(r"\d+", prompt)[0])
+            observation = page.locator(f'[aria-label$="observations at tick {target_tick}"]')
+            count = int(re.findall(r"\d+", observation.get_attribute("aria-label"))[0])
+            page.get_by_label("Your answer", exact=True).fill(str(count))
+            page.get_by_label("Your answer", exact=True).press("Enter")
+            expect(page.get_by_text(re.compile(r"Correct!|New personal best!"))).to_be_visible()
+            return
+        observations = figure.locator('[aria-label*=" observations at tick "]')
+        total = 0
+        observed_ticks = []
+        for index in range(observations.count()):
+            count, tick = [int(value) for value in re.findall(r"\d+", observations.nth(index).get_attribute("aria-label"))]
+            total += count * tick
+            if count:
+                observed_ticks.append(tick)
+        answer = max(observed_ticks) - min(observed_ticks) if "difference" in prompt else total
+        page.get_by_label("Your answer", exact=True).fill(str(answer))
+        page.get_by_label("Your answer", exact=True).press("Enter")
+        expect(page.get_by_text(re.compile(r"Correct!|New personal best!"))).to_be_visible()
+        page.wait_for_timeout(1400)
+    raise AssertionError("Line-plot lesson did not include fractional ticks")
+
+
+def elapsed_cross_hour_lesson(page: Page) -> None:
+    create_profile(page, "ElapsedTester", "e2e-elapsed-cross-hour")
+    open_mastery_skill(page, "Elapsed Time")
+    for _ in range(10):
+        figure = page.get_by_role("figure", name=re.compile(r"elapsed time line from", re.I))
+        label = figure.get_attribute("aria-label")
+        h1, m1, h2, m2 = [int(value) for value in re.findall(r"\d+", label)]
+        answer = h2 * 60 + m2 - (h1 * 60 + m1)
+        page.get_by_label("Your answer", exact=True).fill(str(answer))
+        page.get_by_label("Your answer", exact=True).press("Enter")
+        expect(page.get_by_text(re.compile(r"Correct!|New personal best!"))).to_be_visible()
+        if h1 != h2:
+            return
+        page.wait_for_timeout(1400)
+    raise AssertionError("Elapsed-time lesson did not cross an hour")
+
+
+def two_step_tape_lesson(page: Page) -> None:
+    create_profile(page, "TwoStepTester", "e2e-two-step-tape")
+    open_mastery_skill(page, "Two-Step Word Problems")
+    prompt = page.locator(".drill-q > div").first.inner_text()
+    expect(page.get_by_role("figure", name=re.compile(r"tape diagram for two_step", re.I))).to_be_visible()
+    a, b, c = [int(value) for value in re.findall(r"\d+", prompt)][:3]
+    if "rows" in prompt or "more" in prompt:
+        answer = a * b + c
+    elif "uses" in prompt:
+        answer = a * b - c
+    elif "gets" in prompt:
+        answer = a // b + c
+    else:
+        answer = a // b - c
+    page.get_by_label("Your answer", exact=True).fill(str(answer))
+    page.get_by_label("Your answer", exact=True).press("Enter")
+    expect(page.get_by_text(re.compile(r"Correct!|New personal best!"))).to_be_visible()
+
+
 def run_scenario(
     browser: Browser,
     name: str,
@@ -369,6 +610,17 @@ def main() -> int:
                 False,
             ),
             ("standalone-pwa-share", {"width": 1024, "height": 768}, standalone_pwa_share_flow, True),
+            ("missing-side-lesson", {"width": 390, "height": 844}, area_perimeter_missing_side_lesson, False),
+            ("area-perimeter-comparison", {"width": 1024, "height": 768}, area_perimeter_comparison_lesson, False),
+            ("fraction-equivalence-visual", {"width": 390, "height": 844}, fraction_equivalence_visual_lesson, False),
+            ("fraction-same-numerator", {"width": 1024, "height": 768}, fraction_same_numerator_lesson, False),
+            ("subtraction-across-zero", {"width": 390, "height": 844}, subtraction_across_zero_lesson, False),
+            ("division-decomposition", {"width": 390, "height": 844}, division_decomposition_lesson, False),
+            ("division-model-choice", {"width": 820, "height": 1180}, division_model_choice_lesson, False),
+            ("scaled-bar-graph", {"width": 390, "height": 844}, scaled_bar_graph_lesson, False),
+            ("fractional-line-plot", {"width": 820, "height": 1180}, fractional_line_plot_lesson, False),
+            ("elapsed-cross-hour", {"width": 390, "height": 844}, elapsed_cross_hour_lesson, False),
+            ("two-step-tape", {"width": 820, "height": 1180}, two_step_tape_lesson, False),
         ]
         for name, viewport, scenario, standalone_share in scenarios:
             try:

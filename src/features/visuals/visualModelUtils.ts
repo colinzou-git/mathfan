@@ -52,6 +52,13 @@ export function geoShapeFromItemId(id: string): ShapeName | null {
 export function hasVisualModel(item: PracticeItem): boolean {
   const { itemType, factA, factB, id, prompt } = item;
 
+  if (item.visualSpec) return true;
+  if (item.fractionSpec) return true;
+  if (item.arithmeticSpec) return true;
+  if (item.divisionSpec) return true;
+  if (item.measurementSpec && item.measurementSpec.kind !== 'measurement_context') return true;
+  if (item.wordProblemSpec?.suggestedModel === 'bar') return true;
+
   if ((itemType === 'multiplication_fact' || itemType === 'unknown_factor') &&
       factA != null && factB != null &&
       factA >= 1 && factA <= 10 && factB >= 1 && factB <= 10) return true;

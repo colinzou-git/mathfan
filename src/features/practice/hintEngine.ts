@@ -12,7 +12,7 @@
  * IMPORTANT: hints on rungs 1–3 must never reveal the final answer.
  */
 
-import type { PracticeItem } from '../../types/math';
+import type { PracticeItem, PerimeterReasoningSpec } from '../../types/math';
 
 export interface HintResult {
   text: string;
@@ -26,12 +26,17 @@ export function getHint(item: PracticeItem, wrongAttempts: number): HintResult |
   const a = factA ?? 0;
   const b = factB ?? 0;
 
+  if (item.divisionSpec) return structuredDivisionHint(item, wrongAttempts);
+  if (item.measurementSpec && item.measurementSpec.kind !== 'measurement_context') return measurementDataHint(item, wrongAttempts);
+
   if (wrongAttempts >= 4) {
     return {
       text: "Keep going — you're getting closer! Try one more time.",
       showExplanationButton: !!item.explanation,
     };
   }
+
+  if (item.arithmeticSpec) return arithmeticRegroupHint(item, wrongAttempts);
 
   switch (itemType) {
     case 'multiplication_fact':
@@ -56,10 +61,10 @@ export function getHint(item: PracticeItem, wrongAttempts: number): HintResult |
       return measurementWordHint(item, wrongAttempts);
 
     case 'fraction_equivalent':
-      return fracEquivHint(wrongAttempts);
+      return fracEquivHint(item, wrongAttempts);
 
     case 'fraction_compare':
-      return fracCmpHint(wrongAttempts);
+      return fracCmpHint(item, wrongAttempts);
 
     case 'fraction_number_line':
       return fracNlHint(b, wrongAttempts);
@@ -72,12 +77,72 @@ export function getHint(item: PracticeItem, wrongAttempts: number): HintResult |
 
     case 'perimeter_rectangle':
     case 'perimeter_polygon':
-    case 'perimeter_unknown_side':
       return perimHint(a, b, wrongAttempts, itemType);
+
+    case 'perimeter_unknown_side':
+      return item.reasoningSpec ? perimeterUnknownSideHint(item.reasoningSpec, wrongAttempts) : perimHint(a, b, wrongAttempts, itemType);
+
+    case 'area_perimeter_choice':
+      return areaPerimeterChoiceHint(item, wrongAttempts);
 
     default:
       return genericHint(wrongAttempts);
   }
+}
+
+function measurementDataHint(item: PracticeItem, attempt: number): HintResult {
+  const spec = item.measurementSpec!;
+  if (spec.kind === 'elapsed_time') {
+    if (attempt === 1) return hint(`Known: start at ${spec.start.hour}:${String(spec.start.minute).padStart(2, '0')}; unknown: minutes until the end time.`);
+    if (attempt === 2) return hint('Use the time line and make a jump to the next friendly hour.');
+    if (attempt === 3) return hint(`First jump ${60 - spec.start.minute} minutes to the next hour, then continue to ${spec.end.hour}:${String(spec.end.minute).padStart(2, '0')}.`);
+    return hint('Add the jump lengths; do not subtract the clock digits as ordinary numbers.');
+  }
+  if (spec.kind === 'bar_graph') {
+    if (attempt === 1) return hint('Find the requested category and trace its bar to the vertical scale.');
+    if (attempt === 2) return hint(`Each grid step represents ${spec.scale}, so count scale steps rather than just bar height.`);
+    return hint('Read the needed bar values first, then perform the comparison or total asked for.');
+  }
+  if (spec.kind === 'line_plot') {
+    if (attempt === 1) return hint(`Each X is one observation; the axis is divided into ${spec.denominator === 1 ? 'whole units' : spec.denominator === 2 ? 'halves' : 'quarters'}.`);
+    return hint('Use the tick labels for measurement values and count the X marks separately.');
+  }
+  return hint('Identify the known quantities, the unit, and the operation the question asks for.');
+}
+
+function structuredDivisionHint(item: PracticeItem, attempt: number): HintResult {
+  const spec = item.divisionSpec!;
+  const meaning = spec.context?.interpretation === 'grouping'
+    ? `${spec.dividend} is the total and ${spec.divisor} is how many go in each group.`
+    : `${spec.dividend} is the total shared among ${spec.divisor} equal groups.`;
+  if (attempt <= 1) return hint(meaning);
+  if (attempt === 2) return hint(`Picture ${spec.dividend} counters arranged in equal groups of ${spec.divisor}.`);
+  const parts = spec.decomposition;
+  if (attempt === 3 && parts) return hint(`Split ${spec.dividend} into ${parts.map(part => part.dividendPart).join(' + ')}. Each part divides evenly by ${spec.divisor}.`);
+  if (attempt === 4 && parts) return hint(`The partial quotients are ${parts.map(part => part.quotientPart).join(' and ')}. Add them to finish.`);
+  if (attempt <= 3) return hint(`Draw ${spec.divisor} equal groups and share the total one counter at a time.`);
+  if (attempt === 4) return hint(`Check your result with ? × ${spec.divisor} = ${spec.dividend}.`);
+  return { text: `${spec.dividend} ÷ ${spec.divisor} = ${spec.quotient}, because ${spec.quotient} × ${spec.divisor} = ${spec.dividend}.`, showExplanationButton: true };
+}
+
+function arithmeticRegroupHint(item: PracticeItem, attempt: number): HintResult {
+  const spec = item.arithmeticSpec!;
+  const firstAction = spec.structure.columnActions.find(column => column.action !== 'none');
+  if (attempt === 1) {
+    return hint(firstAction
+      ? `Start with the ${firstAction.place} column. Can you work in that column without regrouping?`
+      : 'Line up each digit by place value and start with the ones column.');
+  }
+  if (attempt === 2) {
+    if (!firstAction) return hint('No regrouping is needed. Work one column at a time from right to left.');
+    return hint(firstAction.action === 'compose'
+      ? `The ${firstAction.place} column makes 10 or more. Compose 10 into one unit in the next column.`
+      : `The ${firstAction.place} column needs more. Decompose one unit from the next column into 10 smaller units.`);
+  }
+  const actions = spec.structure.columnActions.filter(column => column.action !== 'none');
+  return hint(actions.length
+    ? `Update the place-value columns after ${actions.map(action => `${action.action} in ${action.place}`).join(' and ')}. Then compute each column.`
+    : 'Compute the ones, tens, and hundreds columns in order, then check with an estimate.');
 }
 
 function hint(text: string): HintResult {
@@ -285,21 +350,26 @@ function measurementWordHint(item: PracticeItem, attempt: number): HintResult {
 
 // ── Fraction: equivalent ──────────────────────────────────────────────────────
 
-function fracEquivHint(attempt: number): HintResult {
+function fracEquivHint(item: PracticeItem, attempt: number): HintResult {
+  const spec = item.fractionSpec?.kind === 'equivalent_visual' ? item.fractionSpec : null;
   if (attempt === 1) {
-    return hint('Equivalent fractions look different but are the same size. Multiply top and bottom by the same number.');
+    return hint(spec ? `What number changes ${spec.left.denominator} into ${spec.right.denominator}?` : 'Equivalent fractions look different but are the same size. Multiply top and bottom by the same number.');
   }
   if (attempt === 2) {
-    return hint('Ask: what number times the old denominator equals the new denominator? Use that same number for the numerator.');
+    return hint(spec ? `${spec.left.denominator} × ${spec.multiplier} = ${spec.right.denominator}. Use that same multiplier on the numerator.` : 'Ask: what number times the old denominator equals the new denominator? Use that same number for the numerator.');
   }
-  return hint('Example: 1/2 = ?/6. Since 2 × 3 = 6, multiply the top too: 1 × 3 = 3. So 1/2 = 3/6.');
+  return hint(spec ? 'Picture both fraction bars aligned to the same whole. Matching lengths name equivalent fractions.' : 'Picture both fractions using equal-sized bars. Multiply the top and bottom by the same number.');
 }
 
 // ── Fraction: compare ─────────────────────────────────────────────────────────
 
-function fracCmpHint(attempt: number): HintResult {
+function fracCmpHint(item: PracticeItem, attempt: number): HintResult {
+  const spec = item.fractionSpec?.kind === 'compare' ? item.fractionSpec : null;
   if (attempt === 1) {
-    return hint('To compare fractions, look at the size of the parts (denominator) and how many parts (numerator).');
+    if (spec?.strategy === 'same_denominator') return hint('The denominators match, so the pieces are the same size. Compare how many pieces each fraction has.');
+    if (spec?.strategy === 'same_numerator') return hint('The numerators match. Compare the size of each equal piece.');
+    if (spec?.strategy === 'benchmark_half') return hint('Compare each fraction with one-half first.');
+    return hint('To compare fractions, look at the size of the parts and how many parts there are.');
   }
   if (attempt === 2) {
     return hint('Same denominator? The bigger numerator wins. Same numerator? The bigger denominator means smaller pieces.');
@@ -361,6 +431,39 @@ function perimHint(a: number, b: number, attempt: number, itemType: string): Hin
     return hint(`Two long sides: ${a} + ${a} = ${2 * a}. Two short sides: ${b} + ${b} = ${2 * b}. Now add those two results.`);
   }
   return hint('List all the sides: write each length, then add them step by step.');
+}
+
+// ── Missing-side perimeter reasoning (issue #30) ────────────────────────────
+
+function perimeterUnknownSideHint(spec: PerimeterReasoningSpec, attempt: number): HintResult {
+  const sumKnown = spec.knownSides.reduce((s, n) => s + n, 0);
+  if (attempt === 1) {
+    return hint('Perimeter is the total distance AROUND the shape, not the space inside it. You know the total perimeter and some of the side lengths.');
+  }
+  if (attempt === 2) {
+    return hint(`Add up the known sides: ${spec.knownSides.join(' + ')}. Compare that sum to the total perimeter, ${spec.totalPerimeter}.`);
+  }
+  // attempt === 3: show the equation structure without the final result
+  return hint(`Use the equation ${spec.equation}. The known sides add to ${sumKnown}. What number completes the equation?`);
+}
+
+// ── Area-vs-perimeter operation/expression choice (issue #30) ──────────────
+
+function areaPerimeterChoiceHint(item: PracticeItem, attempt: number): HintResult {
+  const isExpression = item.id.startsWith('AP_CHOICE_expression_');
+  const l = item.factA ?? 0;
+  const w = item.factB ?? 0;
+  if (attempt === 1) {
+    return hint('Area is the space INSIDE a shape. Perimeter is the distance AROUND the outside edge.');
+  }
+  if (attempt === 2) {
+    return hint('Look at the highlighted part of the picture — is it the filled-in inside, or the outlined edge?');
+  }
+  // attempt === 3: show the equation structure without the final result
+  if (isExpression) {
+    return hint(`Perimeter means adding all four sides: length + width + length + width, or 2×length + 2×width. Length is ${l}, width is ${w}.`);
+  }
+  return hint(`If you are covering a surface, that's area (length × width). If you are going around an edge, that's perimeter (add all the sides). Length is ${l}, width is ${w}.`);
 }
 
 // ── Generic fallback ──────────────────────────────────────────────────────────

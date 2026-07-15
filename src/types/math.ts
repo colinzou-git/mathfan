@@ -1,3 +1,10 @@
+import type { VisualSpec } from '../features/visuals/types';
+import type { FractionQuestionSpec } from '../features/fractions/types';
+import type { ArithmeticQuestionSpec } from '../features/curriculum/regrouping';
+import type { DivisionQuestionSpec } from '../features/curriculum/divisionItems';
+import type { MeasurementDataSpec } from '../features/curriculum/measurementTypes';
+import type { WordProblemSpec } from '../features/curriculum/wordProblemItems';
+
 export type GradeLevel = 3 | 4 | 5;
 export type ReviewGrade = 'again' | 'hard' | 'good' | 'easy';
 export type MasteryLevel = 'new' | 'learning' | 'developing' | 'strong' | 'mastered';
@@ -36,7 +43,8 @@ export type ItemType =
   | 'arithmetic_pattern'
   | 'perimeter_polygon'
   | 'perimeter_unknown_side'
-  | 'area_perimeter_compare';
+  | 'area_perimeter_compare'
+  | 'area_perimeter_choice';
 
 export type SessionMode =
   | 'daily_review'
@@ -148,6 +156,31 @@ export interface PracticeItem {
   instanceKey?: string;
   /** Defaults to grade 3 when absent — see features/scheduler/cardModel. */
   gradeLevel?: GradeLevel;
+  /**
+   * Structured visual payload (issue #30) — prefer this over prompt/ID parsing.
+   * See features/visuals/types.ts. `visualModelType` is retained for compatibility
+   * until all consumers migrate.
+   */
+  visualSpec?: VisualSpec;
+  /** Structured missing-side perimeter reasoning (issue #30) — see features/curriculum/areaItems. */
+  reasoningSpec?: PerimeterReasoningSpec;
+  /** Structured fraction quantities and strategy; renderers and analytics prefer this over prompt parsing. */
+  fractionSpec?: FractionQuestionSpec;
+  /** Structured column arithmetic and regrouping evidence for multi-digit tasks. */
+  arithmeticSpec?: ArithmeticQuestionSpec;
+  /** Structured division meaning/strategy data; keeps fact recall separate from reasoning. */
+  divisionSpec?: DivisionQuestionSpec;
+  /** Exact clock, graph, line-plot, or measurement instance shown to the learner. */
+  measurementSpec?: MeasurementDataSpec;
+  /** Structured operations, quantities, unknown position, and model for story problems. */
+  wordProblemSpec?: WordProblemSpec;
+}
+
+export interface PerimeterReasoningSpec {
+  totalPerimeter: number;
+  knownSides: number[];
+  unknownSideIndex: number;
+  equation: string;
 }
 
 export interface StudentItemState {

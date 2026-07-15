@@ -176,7 +176,9 @@ describe('planPracticeForSkill — area skills return AREA_ items, not MUL_', ()
     expect(cfg.mode).toBe('area');
     expect(cfg.specificItemIds!.some(id => id.startsWith('PERIM_RECT_'))).toBe(true);
     expect(cfg.specificItemIds!.some(id => id.startsWith('PERIM_POLY_'))).toBe(true);
-    expect(cfg.specificItemIds!.some(id => id.startsWith('PERIM_UNKSIDE_'))).toBe(true);
+    expect(cfg.specificItemIds!.some(id => id.startsWith('PERIM_UNKSIDE_'))).toBe(false);
+    expect(planPracticeForSkill('g3-perimeter-missing-side').specificItemIds!
+      .some(id => id.startsWith('PERIM_UNKSIDE_'))).toBe(true);
   });
 });
 

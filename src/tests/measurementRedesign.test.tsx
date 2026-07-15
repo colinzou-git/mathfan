@@ -1,0 +1,109 @@
+import { cleanup, render, screen } from '@testing-library/react';
+import { afterEach, describe, expect, it } from 'vitest';
+import { selectSchemaBalancedItems } from '../features/adaptive/candidatePools';
+import {
+  buildElapsedTimeJumps, elapsedMinutes, generateMeasurementItem, makeBarGraphItem,
+  makeElapsedTimeItem, makeLinePlotItem, makeMeasurementWordProblem, minutesSinceMidnight,
+} from '../features/curriculum/measurementItems';
+import { articleFor, formatQuantity, pluralize } from '../features/curriculum/language';
+import { makeItemFromId } from '../features/curriculum/makeItemFromId';
+import { makeTwoStepWordProblem } from '../features/curriculum/twoStepItems';
+import { makeWordProblem } from '../features/curriculum/wordProblemItems';
+import { detectMistakes } from '../features/mastery/misconceptionEngine';
+import { planPracticeForSkill } from '../features/mastery/skillPracticePlanner';
+import { getHint } from '../features/practice/hintEngine';
+import { deriveCardKey } from '../features/scheduler/cardModel';
+import { VisualModel } from '../features/visuals/VisualModel';
+import { mulberry32 } from '../utils/rng';
+
+afterEach(cleanup);
+
+describe('authentic measurement and data instances', () => {
+  it('calculates elapsed time and friendly hour jumps', () => {
+    expect(minutesSinceMidnight({ hour: 9, minute: 45 })).toBe(585);
+    expect(elapsedMinutes({ hour: 9, minute: 45 }, { hour: 10, minute: 25 })).toBe(40);
+    expect(buildElapsedTimeJumps({ hour: 9, minute: 45 }, { hour: 10, minute: 25 })).toEqual([
+      { from: { hour: 9, minute: 45 }, to: { hour: 10, minute: 0 }, minutes: 15 },
+      { from: { hour: 10, minute: 0 }, to: { hour: 10, minute: 25 }, minutes: 25 },
+    ]);
+  });
+
+  it('renders a scaled bar graph without announcing the computed answer', () => {
+    const item = makeBarGraphItem(5, 6);
+    render(<VisualModel item={item} />);
+    expect(screen.getByRole('figure', { name: /vertical axis counts by 5/i })).toBeInTheDocument();
+    expect(item.answer).toBe(30);
+    expect(item.prompt).not.toContain('30');
+  });
+
+  it('renders repeated X marks at fractional integer ticks', () => {
+    const item = generateMeasurementItem('line_plot_fractional', { rng: mulberry32(44) });
+    render(<VisualModel item={item} />);
+    expect(screen.getByRole('figure', { name: /line plot.*halves|line plot.*quarters/i })).toBeInTheDocument();
+    const spec = item.measurementSpec!;
+    expect(spec.kind).toBe('line_plot');
+    if (spec.kind === 'line_plot') expect(screen.getAllByText('✕')).toHaveLength(spec.valuesInTicks.length);
+  });
+
+  it('renders elapsed-time reasoning without revealing jump lengths pre-answer', () => {
+    const item = makeElapsedTimeItem(9, 45, 10, 25);
+    render(<VisualModel item={item} />);
+    expect(screen.getByRole('figure', { name: /elapsed time line from 9:45 to 10:25/i })).toHaveTextContent('jump');
+    expect(screen.queryByText(/\+15 min/)).not.toBeInTheDocument();
+  });
+
+  it('generates deterministic stable template instances and reconstructs them', () => {
+    for (const schema of ['bar_compare', 'bar_total', 'bar_missing', 'line_plot_range', 'line_plot_fractional'] as const) {
+      const first = generateMeasurementItem(schema, { rng: mulberry32(91) });
+      const second = generateMeasurementItem(schema, { rng: mulberry32(91) });
+      expect(first).toEqual(second);
+      expect(makeItemFromId(first.id)?.answer).toBe(first.answer);
+      expect(deriveCardKey(first)).toBe(`template:g3-measurement:${schema}`);
+    }
+    expect(makeItemFromId('BARG_5_6')?.measurementSpec?.kind).toBe('bar_graph');
+    expect(makeItemFromId('LPLOT_1_2_2_3')?.measurementSpec?.kind).toBe('line_plot');
+  });
+});
+
+describe('measurement feedback, language, and balanced stories', () => {
+  it('detects elapsed and graph-scale counterfactuals', () => {
+    const elapsed = makeElapsedTimeItem(9, 45, 10, 25);
+    expect(detectMistakes(elapsed, 20)).toContain('measurement:elapsed_subtracted_clock_digits');
+    const graph = makeBarGraphItem(5, 6);
+    expect(detectMistakes(graph, 6)).toContain('measurement:bar_height_read_without_scale');
+  });
+
+  it('gives timeline and scale-specific progressive hints', () => {
+    const elapsed = makeElapsedTimeItem(9, 45, 10, 25);
+    expect(getHint(elapsed, 2)?.text).toMatch(/time line/i);
+    expect(getHint(elapsed, 3)?.text).toContain('15 minutes');
+    expect(getHint(makeBarGraphItem(5, 6), 2)?.text).toContain('Each grid step represents 5');
+  });
+
+  it('handles singular grammar and structured one/two-step models', () => {
+    expect(pluralize(1, 'row')).toBe('row');
+    expect(pluralize(2, 'row')).toBe('rows');
+    expect(articleFor('array')).toBe('an');
+    expect(formatQuantity(1, 'liter')).toBe('1 liter');
+    expect(makeMeasurementWordProblem('addl', 1, 2).prompt).toContain('1 liter');
+    expect(makeWordProblem('eg', 3, 4).wordProblemSpec?.steps[0]).toEqual({ operation: 'multiply', a: 3, b: 4, result: 12 });
+    const twoStep = makeTwoStepWordProblem('muls', 4, 5, 8);
+    expect(twoStep.wordProblemSpec?.steps.map(step => step.result)).toEqual([20, 12]);
+    expect(deriveCardKey(twoStep)).toBe('template:g3-word-problem:two-step-muls');
+  });
+
+  it('selects candidates to schema quotas deterministically', () => {
+    const candidates = ['eg', 'eg', 'ar', 'ar', 'dv', 'dv'].map((schema, index) => ({ ...makeWordProblem(schema as 'eg' | 'ar' | 'dv', index + 2, 2), id: `${schema}-${index}`, schemaId: schema }));
+    const selected = selectSchemaBalancedItems(candidates, 4, { eg: 1, ar: 1, dv: 1 }, mulberry32(8));
+    expect(selected).toHaveLength(4);
+    expect(new Set(selected.map(item => item.schemaId))).toEqual(new Set(['eg', 'ar', 'dv']));
+  });
+
+  it('plans only reconstructable authentic graph and line-plot evidence', () => {
+    for (const skillId of ['g3-scaled-bar-graphs', 'g3-line-plots']) {
+      const ids = planPracticeForSkill(skillId).specificItemIds!;
+      expect(ids.every(id => makeItemFromId(id)?.measurementSpec != null)).toBe(true);
+    }
+    expect(makeLinePlotItem(1, 2, 2, 3).prompt).not.toContain('shows these measurements');
+  });
+});

@@ -9,6 +9,8 @@ import type { PracticeItem } from '../../types/math';
 export function inferGrade3SkillId(item: PracticeItem): string | null {
   const { id, itemType, tags, factA, factB } = item;
 
+  if (item.divisionSpec?.schema === 'unknown_factor') return 'g3-div-mul-relationship';
+
   // ── Multiplication ────────────────────────────────────────────────────────
   if (itemType === 'multiplication_fact' || itemType === 'unknown_factor') {
     const a = factA ?? 0;
@@ -26,6 +28,9 @@ export function inferGrade3SkillId(item: PracticeItem): string | null {
 
   // ── Division ──────────────────────────────────────────────────────────────
   if (itemType === 'division_fact') {
+    const schema = item.divisionSpec?.schema;
+    if (schema?.startsWith('decompose_') || schema === 'verify_with_multiplication') return 'g3-div-decomposition';
+    if (schema === 'equal_sharing' || schema === 'measurement_grouping') return 'g3-div-sharing-grouping';
     // For DIV_{product}d{divisor} items, factB holds the divisor
     const divisor = factB ?? 0;
     // Divisors 1–5 target the basic-tables skill; 6+ require the mul-div relationship skill
@@ -34,6 +39,11 @@ export function inferGrade3SkillId(item: PracticeItem): string | null {
 
   // ── Word problems ─────────────────────────────────────────────────────────
   if (itemType === 'word_problem') {
+    // Preserve historical WORD_dv evidence under its original broad skill;
+    // new explicit sharing/grouping assessments use DIVQ_* IDs below.
+    if (id.startsWith('WORD_dv_')) return 'g3-div-meaning';
+    if (item.divisionSpec?.schema === 'word_problem_choose_model') return 'g3-div-word-problems';
+    if (item.divisionSpec?.schema === 'equal_sharing' || item.divisionSpec?.schema === 'measurement_grouping') return 'g3-div-sharing-grouping';
     // Two-step word problems (WRD2_ prefix) — check before single-step
     if (id.startsWith('WRD2_')) return 'g3-word-two-step';
     // Tags always include the schema: 'eg' | 'ar' | 'cmp' | 'dv'
@@ -47,6 +57,9 @@ export function inferGrade3SkillId(item: PracticeItem): string | null {
 
   // ── Addition regrouping ───────────────────────────────────────────────────
   if (itemType === 'addition_fact') {
+    if (item.arithmeticSpec && item.arithmeticSpec.structure.regrouping !== 'none') {
+      return item.arithmeticSpec.structure.digits === 3 ? 'g3-add-3digit-regrouping' : 'g3-add-2digit-regrouping';
+    }
     const a = factA ?? 0;
     const b = factB ?? 0;
     if (a >= 10 && a <= 99 && b >= 10 && b <= 99 && (a % 10) + (b % 10) >= 10) {
@@ -62,6 +75,12 @@ export function inferGrade3SkillId(item: PracticeItem): string | null {
 
   // ── Subtraction regrouping ────────────────────────────────────────────────
   if (itemType === 'subtraction_fact') {
+    if (item.arithmeticSpec && (item.arithmeticSpec.structure.regrouping === 'across_zero' || item.arithmeticSpec.structure.regrouping === 'multiple_zeroes')) {
+      return 'g3-sub-across-zero';
+    }
+    if (item.arithmeticSpec && item.arithmeticSpec.structure.regrouping !== 'none') {
+      return item.arithmeticSpec.structure.digits === 3 ? 'g3-sub-3digit-regrouping' : 'g3-sub-2digit-regrouping';
+    }
     // makeSubtractionItem always sets factA = minuend (larger), factB = subtrahend (smaller)
     const a = factA ?? 0;
     const b = factB ?? 0;
@@ -78,12 +97,18 @@ export function inferGrade3SkillId(item: PracticeItem): string | null {
 
   // ── Fractions ─────────────────────────────────────────────────────────────
   if (itemType === 'fraction_equivalent') {
+    if (item.fractionSpec?.kind === 'unit_fraction_model') return 'g3-frac-unit';
     // Unit fractions (numerator = 1) map to the unit-fraction skill.
     // FEQ ID format: FEQ_${n}_${d}_${targetDen}; parse n from the ID.
     const m = id.match(/^FEQ_(\d+)_/);
     return m && m[1] === '1' ? 'g3-frac-unit' : 'g3-frac-equivalent';
   }
-  if (itemType === 'fraction_compare') return 'g3-frac-compare';
+  if (itemType === 'fraction_compare') {
+    const strategy = item.fractionSpec?.kind === 'compare' ? item.fractionSpec.strategy : 'general';
+    if (strategy === 'same_denominator') return 'g3-frac-compare-same-denominator';
+    if (strategy === 'same_numerator') return 'g3-frac-compare-same-numerator';
+    return 'g3-frac-compare';
+  }
   if (itemType === 'fraction_number_line') return 'g3-frac-number-line';
 
   // ── Area and perimeter ────────────────────────────────────────────────────
@@ -91,7 +116,8 @@ export function inferGrade3SkillId(item: PracticeItem): string | null {
   if (itemType === 'area_rectangle') return 'g3-area-formula';
   if (itemType === 'perimeter_rectangle') return 'g3-perimeter';
   if (itemType === 'perimeter_polygon') return 'g3-perimeter';
-  if (itemType === 'perimeter_unknown_side') return 'g3-perimeter';
+  if (itemType === 'perimeter_unknown_side') return 'g3-perimeter-missing-side';
+  if (itemType === 'area_perimeter_choice') return 'g3-area-perimeter-choice';
   if (itemType === 'area_perimeter_compare') return 'g3-area-perimeter-compare';
   if (itemType === 'rectilinear_area') return 'g3-geo-rectilinear-area';
 

@@ -102,7 +102,7 @@ describe('inferGrade3SkillId — word problems', () => {
   it('schema cmp (comparison) → g3-mul-meaning', () =>
     expect(inferGrade3SkillId(makeWordProblem('cmp', 3, 4))).toBe('g3-mul-meaning'));
 
-  it('schema dv (division) → g3-div-meaning', () =>
+  it('legacy dv events remain under g3-div-meaning', () =>
     expect(inferGrade3SkillId(makeWordProblem('dv', 4, 3))).toBe('g3-div-meaning'));
 
   it('dv schema detected via tags when itemType is word_problem', () => {
@@ -139,8 +139,8 @@ describe('inferGrade3SkillId — fraction items', () => {
   it('fraction_equivalent with n=3 → g3-frac-equivalent', () =>
     expect(inferGrade3SkillId(makeFractionEquivalentItem(3, 4, 2))).toBe('g3-frac-equivalent'));
 
-  it('fraction_compare → g3-frac-compare', () =>
-    expect(inferGrade3SkillId(makeFractionCompareItem(1, 2, 1, 3))).toBe('g3-frac-compare'));
+  it('same-numerator comparison → its distinct skill', () =>
+    expect(inferGrade3SkillId(makeFractionCompareItem(1, 2, 1, 3))).toBe('g3-frac-compare-same-numerator'));
 
   it('fraction_compare equal fractions', () =>
     expect(inferGrade3SkillId(makeFractionCompareItem(2, 4, 1, 2))).toBe('g3-frac-compare'));

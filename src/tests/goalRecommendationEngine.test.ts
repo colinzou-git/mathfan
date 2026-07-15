@@ -231,7 +231,7 @@ describe('goal recommendation eligibility and ranking', () => {
     expect(equivalent.primaryReason).toBe('Ready to learn next');
     expect(compare).toBeDefined();
     expect(equivalent.score).toBeGreaterThan(compare.score);
-    expect(compare.prerequisiteAdvisories).toContain('Equivalent Fractions');
+    expect(compare.prerequisiteAdvisories).toContain('Compare Same Denominators');
   });
 
   it('penalizes active goal overlap', () => {

@@ -1,7 +1,9 @@
 import type { PracticeItem } from '../../types/math';
 import { ITEM_MAP, makeMultiplicationItem } from './multiplicationItems';
 import { makeAdditionItem, makeSubtractionItem, makeDivisionItem } from './arithmeticItems';
-import { makeFractionEquivalentItem, makeFractionCompareItem, makeFractionNumberLineItem } from './fractionItems';
+import { generateArithmeticErrorAnalysis, type ArithmeticMisconceptionCode } from './regrouping';
+import { findFriendlyDivisionDecomposition, makeStructuredDivisionItem, type DivisionSchema } from './divisionItems';
+import { makeFractionEquivalentItem, makeFractionMissingDenominatorItem, makeFractionCompareItem, makeFractionNumberLineItem, makeFractionStrategyChoiceItem, makeUnitFractionModelItem } from './fractionItems';
 import { makeRoundingItem } from './roundingItems';
 import { makePrimeItem, makeFactorItem } from './numberTheoryItems';
 import { makeDecimalAddItem, makeDecimalSubItem } from './decimalItems';
@@ -9,10 +11,13 @@ import { makeWordProblem, type Schema } from './wordProblemItems';
 import {
   makeAreaUnitSquaresItem, makeAreaRectangleItem, makePerimeterRectangleItem, makeRectilinearAreaItem,
   makePerimeterPolygonItem, makePerimeterUnknownSideItem, makeAreaPerimCompareItem, type AreaPerimVariant,
+  makePerimeterEquationChoiceItem, makePerimeterSumKnownSidesItem, makePerimeterMixedReasoningItem,
+  makeAreaPerimeterOperationChoiceItem, makeAreaPerimeterExpressionChoiceItem,
 } from './areaItems';
 import { GEO_ITEM_MAP } from './geometryItems';
 import { makePropCommutativityItem, makePropIdentityItem, makePropZeroItem, makePropAssociativeItem, makePropDistributiveItem } from './mulPropertiesItems';
 import { makeTimeItem, makeElapsedTimeItem, makeBarGraphItem, makeLinePlotItem, makeMeasurementWordProblem, type MeasSchema } from './measurementItems';
+import type { MeasurementSchema } from './measurementTypes';
 import { makeTwoStepWordProblem, type TwoStepSchema } from './twoStepItems';
 import { makeArithmeticPatternItem } from './patternItems';
 
@@ -28,6 +33,50 @@ export function makeItemFromId(itemId: string): PracticeItem | null {
   if (geoItem) return geoItem;
 
   let m: RegExpMatchArray | null;
+
+  m = itemId.match(/^MEAS_(bar_(?:read_value|compare|total|missing))_(\d+)_(\d+(?:-\d+)*)$/);
+  if (m) {
+    const schema = m[1] as MeasurementSchema, scale = +m[2], values = m[3].split('-').map(Number);
+    const item = makeBarGraphItem(scale, values[0] / scale);
+    const spec = item.measurementSpec as Extract<NonNullable<PracticeItem['measurementSpec']>, { kind: 'bar_graph' }>;
+    spec.values = values; item.id = itemId; item.cardKey = `template:g3-measurement:${schema}`;
+    if (schema === 'bar_compare') { spec.question = 'compare'; spec.comparedIndices = [0, 1]; item.prompt = 'Use the bar graph. How many more books did Mia read than Leo?'; item.answer = values[0] - values[1]; }
+    if (schema === 'bar_total') { spec.question = 'total'; spec.comparedIndices = [0, 1]; item.prompt = 'Use the bar graph. How many books did Mia and Leo read in all?'; item.answer = values[0] + values[1]; }
+    if (schema === 'bar_missing') { spec.question = 'missing'; spec.requestedIndex = 2; item.prompt = 'The Ava bar is missing. What value should it show?'; item.answer = values[2]; }
+    return item;
+  }
+
+  m = itemId.match(/^MEAS_(line_plot_(?:count|range|fractional))_(1|2|4)_(\d+(?:-\d+)*)$/);
+  if (m) {
+    const schema = m[1] as MeasurementSchema, denominator = +m[2] as 1 | 2 | 4, ticks = m[3].split('-').map(Number);
+    const item = makeLinePlotItem(ticks[0], ticks[1], ticks[2], ticks[3]);
+    item.id = itemId; item.cardKey = `template:g3-measurement:${schema}`;
+    item.measurementSpec = { kind: 'line_plot', unit: 'inch', denominator, valuesInTicks: ticks, question: schema === 'line_plot_range' ? 'range' : 'count_at_value', targetTick: ticks[0] };
+    item.prompt = schema === 'line_plot_range' ? 'Use the line plot. What is the difference between the longest and shortest measurements?' : `Use the line plot. How many measurements are at ${ticks[0]}/${denominator} inches?`;
+    item.answer = schema === 'line_plot_range' ? (Math.max(...ticks) - Math.min(...ticks)) / denominator : ticks.filter(tick => tick === ticks[0]).length;
+    return item;
+  }
+
+  m = itemId.match(/^DIVQ_([a-z_]+)_(\d+)_(\d+)$/);
+  if (m) {
+    const schema = m[1] as DivisionSchema, dividend = +m[2], divisor = +m[3], quotient = dividend / divisor;
+    const decomposition = schema.startsWith('decompose_') ? findFriendlyDivisionDecomposition(dividend, divisor) : null;
+    return makeStructuredDivisionItem({
+      schema, dividend, divisor, quotient,
+      ...(decomposition ? { decomposition: decomposition.parts.map((part, i) => ({ dividendPart: part, quotientPart: decomposition.partialQuotients[i] })) } : {}),
+      ...(['equal_sharing', 'measurement_grouping', 'word_problem_choose_model'].includes(schema) ? {
+        context: { interpretation: schema === 'measurement_grouping' ? 'grouping' as const : 'sharing' as const, noun: 'counters', groupNoun: schema === 'measurement_grouping' ? 'bag' : 'child' },
+        unknownPosition: schema === 'measurement_grouping' ? 'group_count' as const : 'group_size' as const,
+      } : {}),
+    });
+  }
+
+  m = itemId.match(/^ARERR_(addition|subtraction)_(\d+)_(\d+)_(.+)$/);
+  if (m) {
+    const base = m[1] === 'addition' ? makeAdditionItem(+m[2], +m[3]) : makeSubtractionItem(+m[2], +m[3]);
+    if (!base.arithmeticSpec) return null;
+    return generateArithmeticErrorAnalysis(base.arithmeticSpec, m[4] as ArithmeticMisconceptionCode);
+  }
 
   m = itemId.match(/^MUL_(\d+)x(\d+)$/);
   if (m) return makeMultiplicationItem(+m[1], +m[2]);
@@ -49,8 +98,21 @@ export function makeItemFromId(itemId: string): PracticeItem | null {
     return makeFractionEquivalentItem(+m[1], d, mult);
   }
 
+  m = itemId.match(/^FEQD_(\d+)_(\d+)_(\d+)$/);
+  if (m && +m[1] > 0 && +m[3] % +m[1] === 0) {
+    return makeFractionMissingDenominatorItem(+m[1], +m[2], +m[3] / +m[1]);
+  }
+
   m = itemId.match(/^FCMP_(\d+)_(\d+)_(\d+)_(\d+)$/);
   if (m) return makeFractionCompareItem(+m[1], +m[2], +m[3], +m[4]);
+
+  m = itemId.match(/^FCWHY_(same_denominator|same_numerator|benchmark_half)_(\d+)_(\d+)_(\d+)_(\d+)$/);
+  if (m) return makeFractionStrategyChoiceItem(
+    { numerator: +m[2], denominator: +m[3] },
+    { numerator: +m[4], denominator: +m[5] },
+    m[1] as 'same_denominator' | 'same_numerator' | 'benchmark_half',
+    () => 0.5,
+  );
 
   m = itemId.match(/^ROUND_(\d+)_(\d+)$/);
   if (m) return makeRoundingItem(+m[1], +m[2]);
@@ -92,6 +154,9 @@ export function makeItemFromId(itemId: string): PracticeItem | null {
   m = itemId.match(/^FNL_(\d+)_(\d+)$/);
   if (m) return makeFractionNumberLineItem(+m[1], +m[2]);
 
+  m = itemId.match(/^FUNIT_1_(\d+)$/);
+  if (m) return makeUnitFractionModelItem(+m[1], () => 0.5);
+
   // RECTI_a1xb1_a2xb2 — rectilinear area (two rectangles)
   m = itemId.match(/^RECTI_(\d+)x(\d+)_(\d+)x(\d+)$/);
   if (m) return makeRectilinearAreaItem(+m[1], +m[2], +m[3], +m[4]);
@@ -100,13 +165,31 @@ export function makeItemFromId(itemId: string): PracticeItem | null {
   m = itemId.match(/^PERIM_POLY_(\d+(?:-\d+)*)$/);
   if (m) return makePerimeterPolygonItem(m[1].split('-').map(Number));
 
-  // PERIM_UNKSIDE_total_s1-s2-... — perimeter with unknown side
+  // PERIM_UNKSIDE_EQ|SUM|MIX_total_s1-s2-... — missing-side reasoning progression
+  m = itemId.match(/^PERIM_UNKSIDE_(EQ|SUM|MIX)_(\d+)_(\d+(?:-\d+)*)$/);
+  if (m) {
+    const total = +m[2];
+    const knownSides = m[3].split('-').map(Number);
+    if (m[1] === 'EQ') return makePerimeterEquationChoiceItem(total, knownSides);
+    if (m[1] === 'SUM') return makePerimeterSumKnownSidesItem(total, knownSides);
+    return makePerimeterMixedReasoningItem(total, knownSides);
+  }
+
+  // PERIM_UNKSIDE_total_s1-s2-... — perimeter with unknown side (legacy "find the number" mode)
   m = itemId.match(/^PERIM_UNKSIDE_(\d+)_(\d+(?:-\d+)*)$/);
   if (m) return makePerimeterUnknownSideItem(+m[1], m[2].split('-').map(Number));
 
   // AREA_PERIM_CMP_sadp|spad_N — area/perimeter comparison
   m = itemId.match(/^AREA_PERIM_CMP_(sadp|spad)_(\d+)$/);
   if (m) return makeAreaPerimCompareItem(m[1] as AreaPerimVariant, +m[2]);
+
+  // AP_CHOICE_operation|expression_LxW — area-vs-perimeter operation/expression choice
+  m = itemId.match(/^AP_CHOICE_(operation|expression)_(\d+)x(\d+)$/);
+  if (m) {
+    return m[1] === 'operation'
+      ? makeAreaPerimeterOperationChoiceItem(+m[2], +m[3])
+      : makeAreaPerimeterExpressionChoiceItem(+m[2], +m[3]);
+  }
 
   // PROP_CMT_AxB — commutative property
   m = itemId.match(/^PROP_CMT_(\d+)x(\d+)$/);

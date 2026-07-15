@@ -77,6 +77,21 @@ export const GRADE3_MASTERY_MAP: readonly MasterySkillNode[] = [
     prerequisites: ['g3-div-meaning', 'g3-mul-tables-advanced'],
     californiaStandardIds: ['3.OA.B.6'],
   },
+  {
+    id: 'g3-div-sharing-grouping', domain: 'division', title: 'Sharing and Grouping',
+    description: 'Interpret division as sharing equally or making equal-size groups.',
+    prerequisites: ['g3-div-meaning'], californiaStandardIds: ['3.OA.A.2'],
+  },
+  {
+    id: 'g3-div-decomposition', domain: 'division', title: 'Decompose Two-Digit Division',
+    description: 'Split a dividend into friendly divisible parts and combine partial quotients.',
+    prerequisites: ['g3-div-mul-relationship'], californiaStandardIds: ['3.OA.B.6', '3.NBT.A.2'],
+  },
+  {
+    id: 'g3-div-word-problems', domain: 'division', title: 'Division Word Problems',
+    description: 'Choose and solve division models in one- and two-step situations.',
+    prerequisites: ['g3-div-sharing-grouping'], californiaStandardIds: ['3.OA.A.2', '3.OA.D.8'],
+  },
   // ── Fractions ───────────────────────────────────────────────────────────────
   {
     id: 'g3-frac-unit',
@@ -103,11 +118,27 @@ export const GRADE3_MASTERY_MAP: readonly MasterySkillNode[] = [
     californiaStandardIds: ['3.NF.A.3'],
   },
   {
+    id: 'g3-frac-compare-same-denominator',
+    domain: 'fractions',
+    title: 'Compare Same Denominators',
+    description: 'Compare fractions with equal-sized pieces by comparing numerators.',
+    prerequisites: ['g3-frac-equivalent'],
+    californiaStandardIds: ['3.NF.A.3'],
+  },
+  {
+    id: 'g3-frac-compare-same-numerator',
+    domain: 'fractions',
+    title: 'Compare Same Numerators',
+    description: 'Compare equal counts of pieces by reasoning about piece size.',
+    prerequisites: ['g3-frac-unit'],
+    californiaStandardIds: ['3.NF.A.3'],
+  },
+  {
     id: 'g3-frac-compare',
     domain: 'fractions',
-    title: 'Comparing Fractions',
-    description: 'Compare fractions with the same numerator or denominator using <, =, >.',
-    prerequisites: ['g3-frac-equivalent'],
+    title: 'Mixed Fraction Comparison',
+    description: 'Choose and explain a useful strategy for comparing fractions.',
+    prerequisites: ['g3-frac-compare-same-denominator', 'g3-frac-compare-same-numerator'],
     californiaStandardIds: ['3.NF.A.3'],
   },
   // ── Area and Perimeter ──────────────────────────────────────────────────────
@@ -136,11 +167,27 @@ export const GRADE3_MASTERY_MAP: readonly MasterySkillNode[] = [
     californiaStandardIds: ['3.MD.D.8'],
   },
   {
+    id: 'g3-area-perimeter-choice',
+    domain: 'area_perimeter',
+    title: 'Area or Perimeter?',
+    description: 'Decide whether a situation asks about the space inside or the distance around.',
+    prerequisites: ['g3-area-concept', 'g3-perimeter'],
+    californiaStandardIds: ['3.MD.D.8'],
+  },
+  {
+    id: 'g3-perimeter-missing-side',
+    domain: 'area_perimeter',
+    title: 'Missing-Side Perimeter',
+    description: 'Use a known perimeter and visible side lengths to find a missing side.',
+    prerequisites: ['g3-perimeter'],
+    californiaStandardIds: ['3.MD.D.8'],
+  },
+  {
     id: 'g3-area-perimeter-compare',
     domain: 'area_perimeter',
     title: 'Compare Area and Perimeter',
     description: 'Understand that rectangles can have the same area but different perimeters, or the same perimeter but different areas.',
-    prerequisites: ['g3-area-formula', 'g3-perimeter'],
+    prerequisites: ['g3-area-formula', 'g3-area-perimeter-choice', 'g3-perimeter-missing-side'],
     californiaStandardIds: ['3.MD.D.8'],
   },
   // ── Addition & Subtraction ──────────────────────────────────────────────────
@@ -174,6 +221,14 @@ export const GRADE3_MASTERY_MAP: readonly MasterySkillNode[] = [
     title: '3-Digit Subtraction with Borrowing',
     description: 'Subtract 3-digit numbers that require borrowing/regrouping across tens, hundreds, or zeros.',
     prerequisites: ['g3-sub-2digit-regrouping'],
+    californiaStandardIds: ['3.NBT.A.2'],
+  },
+  {
+    id: 'g3-sub-across-zero',
+    domain: 'addition_subtraction',
+    title: 'Subtract Across Zero',
+    description: 'Decompose hundreds and tens to subtract when a zero blocks regrouping.',
+    prerequisites: ['g3-sub-3digit-regrouping'],
     californiaStandardIds: ['3.NBT.A.2'],
   },
   // ── Geometry ────────────────────────────────────────────────────────────────

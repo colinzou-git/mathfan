@@ -2,19 +2,23 @@ import type { SessionConfig } from '../../types/math';
 import {
   mulId, divId,
 } from '../curriculum/multiplicationItems';
-import { fracEqId, fracCmpId } from '../curriculum/fractionItems';
+import { fracEqId, fracCmpId, fractionStrategyChoiceItemIds, unitFractionModelItemIds } from '../curriculum/fractionItems';
 import { wordId } from '../curriculum/wordProblemItems';
 import {
   areaSquaresItemIds, areaRectangleItemIds, perimeterRectangleItemIds, rectilinearAreaItemIds,
   perimeterPolygonItemIds, perimeterUnknownSideItemIds, areaPerimCompareItemIds,
+  perimeterReasoningItemIds, areaPerimeterChoiceItemIds,
 } from '../curriculum/areaItems';
 import { geoItemIds } from '../curriculum/geometryItems';
 import { mulPropertyItemIds } from '../curriculum/mulPropertiesItems';
 import { fracNlId } from '../curriculum/fractionItems';
 import { addId, subId } from '../curriculum/arithmeticItems';
+import { analyzeArithmeticStructure } from '../curriculum/regrouping';
+import { makeStructuredDivisionItem, type DivisionSchema } from '../curriculum/divisionItems';
 import { roundId } from '../curriculum/roundingItems';
 import {
   clckId, etimeId, bargId, lplotId, mwrdId,
+  generateMeasurementItem,
 } from '../curriculum/measurementItems';
 import { wrd2Id, type TwoStepSchema } from '../curriculum/twoStepItems';
 import { apatId } from '../curriculum/patternItems';
@@ -22,6 +26,112 @@ import { apatId } from '../curriculum/patternItems';
 export interface PlanOptions {
   sessionLength?: number;
   rounds?: number;
+}
+
+export interface FocusSequence {
+  skillId: string;
+  itemIds: string[];
+  representations: string[];
+}
+
+export interface FocusSequenceContext { recentItemIds?: string[] }
+
+function divisionReasoningIds(schema: DivisionSchema): string[] {
+  const values: Array<[number, number]> = schema.startsWith('decompose_')
+    ? [[84, 3], [96, 4], [72, 6], [63, 3], [88, 4]]
+    : [[24, 4], [30, 5], [42, 6], [56, 7], [72, 8]];
+  return values.map(([dividend, divisor]) => makeStructuredDivisionItem({
+    schema, dividend, divisor, quotient: dividend / divisor,
+    ...(schema.startsWith('decompose_') ? { decomposition: (() => {
+      const q = dividend / divisor; const firstQ = q >= 20 ? 20 : q >= 10 ? 10 : Math.max(2, q - 2);
+      return [{ dividendPart: firstQ * divisor, quotientPart: firstQ }, { dividendPart: dividend - firstQ * divisor, quotientPart: q - firstQ }];
+    })() } : {}),
+    ...(['equal_sharing', 'measurement_grouping', 'word_problem_choose_model'].includes(schema) ? {
+      context: { interpretation: schema === 'measurement_grouping' ? 'grouping' as const : 'sharing' as const, noun: 'counters', groupNoun: schema === 'measurement_grouping' ? 'bag' : 'child' },
+      unknownPosition: schema === 'measurement_grouping' ? 'group_count' as const : 'group_size' as const,
+    } : {}),
+  }).id);
+}
+
+export function buildDivisionFocusSequence(skillId: string, misconceptions: string[] = [], context: FocusSequenceContext = {}): FocusSequence {
+  let ids: string[];
+  if (skillId === 'g3-div-decomposition') {
+    ids = [mulId(3, 10), ...divisionReasoningIds('equal_sharing').slice(0, 1), ...divisionReasoningIds('decompose_tens_ones').slice(0, 3), ...divisionReasoningIds('verify_with_multiplication').slice(0, 1), ...divisionReasoningIds('word_problem_choose_model').slice(0, 1)];
+  } else if (skillId === 'g3-div-sharing-grouping') ids = [...divisionReasoningIds('equal_sharing'), ...divisionReasoningIds('measurement_grouping')];
+  else if (skillId === 'g3-div-mul-relationship') ids = divisionReasoningIds('unknown_factor');
+  else if (skillId === 'g3-div-word-problems') ids = divisionReasoningIds('word_problem_choose_model');
+  else ids = divItemIds([...BASIC_TABLES, ...ADVANCED_TABLES]);
+  const recent = new Set(context.recentItemIds ?? []);
+  ids = [...ids.filter(id => !recent.has(id)), ...ids.filter(id => recent.has(id))];
+  return { skillId, itemIds: ids, representations: misconceptions.some(code => code.includes('partial_quotient')) ? ['related_fact', 'model', 'scaffolded_decomposition', 'near_transfer', 'verify', 'word_problem'] : ['model', 'independent', 'verify'] };
+}
+
+export function planFractionFocusSequence(skillId: string, misconceptions: string[] = []): FocusSequence {
+  const codes = new Set(misconceptions);
+  const sameDenominator = fractionComparisonIds('same_denominator');
+  const sameNumerator = fractionComparisonIds('same_numerator');
+  const mixed = fractionComparisonIds('mixed');
+  if (skillId === 'g3-frac-equivalent') {
+    return { skillId, itemIds: fracEquivItemIds(), representations: ['aligned_bars', 'symbolic_multiplier'] };
+  }
+  if (skillId === 'g3-frac-compare-same-denominator') {
+    return { skillId, itemIds: sameDenominator, representations: ['equal_wholes', 'same_denominator'] };
+  }
+  if (skillId === 'g3-frac-compare-same-numerator') {
+    return { skillId, itemIds: sameNumerator, representations: ['equal_wholes', 'piece_size'] };
+  }
+  const bridgeFirst = codes.has('fraction:compare_larger_denominator_means_larger')
+    || codes.has('frac_compare:larger_denominator');
+  return {
+    skillId,
+    itemIds: bridgeFirst ? [...sameNumerator, ...sameDenominator, ...mixed] : [...sameDenominator, ...sameNumerator, ...mixed],
+    representations: ['same_denominator', 'same_numerator', 'benchmark_half', 'mixed'],
+  };
+}
+
+export function buildRegroupingFocusSequence(skillId: string, misconceptions: string[] = []): FocusSequence {
+  const ids = skillId === 'g3-add-2digit-regrouping' ? add2DigitRegroupingItemIds()
+    : skillId === 'g3-add-3digit-regrouping' ? add3DigitRegroupingItemIds()
+      : skillId === 'g3-sub-2digit-regrouping' ? sub2DigitBorrowingItemIds()
+        : skillId === 'g3-sub-across-zero' ? subAcrossZeroItemIds()
+          : sub3DigitBorrowingItemIds().filter(id => !subAcrossZeroItemIds().includes(id));
+  const needsErrorBridge = misconceptions.some(code => code.includes('across_zero') || code.includes('place_value'));
+  return {
+    skillId,
+    itemIds: ids,
+    representations: needsErrorBridge
+      ? ['place_value_activation', 'worked_error_repair', 'scaffolded_compute', 'near_transfer', 'independent']
+      : ['place_value_activation', 'scaffolded_compute', 'near_transfer', 'independent'],
+  };
+}
+
+/** Ordered conceptual sequence consumed by focused practice and the adaptive lesson planner (#29). */
+export function buildFocusSequence(skillId: string): FocusSequence {
+  if (skillId.startsWith('g3-frac-')) return planFractionFocusSequence(skillId);
+  if (skillId.startsWith('g3-add-') || skillId.startsWith('g3-sub-')) return buildRegroupingFocusSequence(skillId);
+  if (skillId.startsWith('g3-div-')) return buildDivisionFocusSequence(skillId);
+  if (skillId === 'g3-area-concept') {
+    return { skillId, itemIds: areaSquaresItemIds(), representations: ['unit_squares'] };
+  }
+  if (skillId === 'g3-area-formula') {
+    return { skillId, itemIds: [...areaSquaresItemIds(), ...areaRectangleItemIds()], representations: ['unit_squares', 'rows_columns'] };
+  }
+  if (skillId === 'g3-perimeter') {
+    return { skillId, itemIds: [...perimeterPolygonItemIds(), ...perimeterRectangleItemIds()], representations: ['boundary_path', 'rectangle_structure'] };
+  }
+  if (skillId === 'g3-area-perimeter-choice') {
+    return { skillId, itemIds: areaPerimeterChoiceItemIds(), representations: ['context', 'expression', 'inside_boundary'] };
+  }
+  if (skillId === 'g3-perimeter-missing-side') {
+    return { skillId, itemIds: [...perimeterReasoningItemIds(), ...perimeterUnknownSideItemIds()], representations: ['equation', 'known_side_sum', 'independent'] };
+  }
+  if (skillId === 'g3-geo-rectilinear-area') {
+    return { skillId, itemIds: rectilinearAreaItemIds(), representations: ['decomposition'] };
+  }
+  if (skillId === 'g3-area-perimeter-compare') {
+    return { skillId, itemIds: areaPerimCompareItemIds(), representations: ['same_area', 'same_perimeter'] };
+  }
+  return { skillId, itemIds: [], representations: [] };
 }
 
 // ── Skill ID constants matching the roadmap spec ─────────────────────────────
@@ -39,7 +149,6 @@ const ADVANCED_TABLES = [6, 7, 8, 9, 10];   // G3_OA_MUL_FACTS_6_9 (includes 10)
 // Division divisor sets — must stay >= TABLE_MIN (2) so every generated item ID
 // exists in the global ITEM_MAP or is parseable by makeItemFromId.
 const DIV_WITHIN_DIVISORS = [2, 3, 4, 5];      // g3-div-within-100
-const DIV_ADVANCED_DIVISORS = [6, 7, 8, 9, 10]; // g3-div-mul-relationship
 
 function mulItemIds(tables: number[], factors: number[]): string[] {
   const ids: string[] = [];
@@ -103,6 +212,17 @@ function fracCmpItemIds(): string[] {
     [3, 8, 3, 4], [2, 6, 1, 3], [5, 8, 5, 6],
   ];
   return pairs.map(([n1, d1, n2, d2]) => fracCmpId(n1, d1, n2, d2));
+}
+
+function fractionComparisonIds(kind: 'same_denominator' | 'same_numerator' | 'mixed'): string[] {
+  return fracCmpItemIds().filter(id => {
+    const match = id.match(/^FCMP_(\d+)_(\d+)_(\d+)_(\d+)$/)!;
+    const sameDenominator = match[2] === match[4];
+    const sameNumerator = match[1] === match[3];
+    return kind === 'same_denominator' ? sameDenominator
+      : kind === 'same_numerator' ? sameNumerator && !sameDenominator
+        : !sameDenominator && !sameNumerator;
+  });
 }
 
 function equalGroupsWordItemIds(): string[] {
@@ -202,6 +322,22 @@ function sub3DigitBorrowingItemIds(): string[] {
     [614, 258], [735, 469], [821, 347], [943, 256], [532, 174],
   ];
   return pairs.map(([hi, lo]) => subId(hi, lo));
+}
+
+function subAcrossZeroItemIds(): string[] {
+  return sub3DigitBorrowingItemIds().filter(id => {
+    const match = id.match(/^SUB_(\d+)m(\d+)$/)!;
+    const profile = analyzeArithmeticStructure('subtraction', +match[1], +match[2]).regrouping;
+    return profile === 'across_zero' || profile === 'multiple_zeroes';
+  });
+}
+
+function subAcrossZeroErrorAnalysisIds(): string[] {
+  return [
+    'ARERR_subtraction_703_458_sub_across_zero_error',
+    'ARERR_subtraction_900_376_sub_failed_to_regroup_ones',
+    'ARERR_subtraction_804_576_sub_borrowed_without_reducing_source',
+  ];
 }
 
 // ── Two-step word problems ────────────────────────────────────────────────────
@@ -348,7 +484,7 @@ function measurementWordItemIds(): string[] {
 // ── Scaled bar graphs ─────────────────────────────────────────────────────────
 
 function scaledBarGraphItemIds(): string[] {
-  return [
+  const legacy = [
     bargId(5, 3),  bargId(5, 4),  bargId(5, 6),  bargId(5, 7),  bargId(5, 8),
     bargId(10, 2), bargId(10, 3), bargId(10, 4), bargId(10, 5), bargId(10, 7),
     bargId(2, 5),  bargId(2, 7),  bargId(2, 9),
@@ -356,12 +492,14 @@ function scaledBarGraphItemIds(): string[] {
     bargId(3, 4),  bargId(3, 6),  bargId(3, 8),
     bargId(10, 8),
   ];
+  const rng = (() => { let n = 34; return () => ((n = (n * 1664525 + 1013904223) >>> 0) / 4294967296); })();
+  return [...legacy, ...(['bar_compare', 'bar_total', 'bar_missing'] as const).map(schema => generateMeasurementItem(schema, { rng }).id)];
 }
 
 // ── Line plots ────────────────────────────────────────────────────────────────
 
 function linePlotItemIds(): string[] {
-  return [
+  const legacy = [
     lplotId(1, 2, 2, 3), lplotId(2, 2, 3, 4), lplotId(1, 1, 3, 4),
     lplotId(2, 3, 3, 4), lplotId(1, 2, 4, 4), lplotId(2, 3, 4, 5),
     lplotId(1, 3, 3, 5), lplotId(2, 2, 4, 5), lplotId(3, 3, 3, 4),
@@ -370,6 +508,8 @@ function linePlotItemIds(): string[] {
     lplotId(3, 4, 4, 6), lplotId(2, 3, 6, 7), lplotId(4, 4, 5, 5),
     lplotId(3, 4, 5, 8), lplotId(2, 5, 6, 7),
   ];
+  const rng = (() => { let n = 71; return () => ((n = (n * 1664525 + 1013904223) >>> 0) / 4294967296); })();
+  return [...legacy, generateMeasurementItem('line_plot_fractional', { rng }).id, generateMeasurementItem('line_plot_range', { rng }).id];
 }
 
 /**
@@ -396,6 +536,14 @@ export function planPracticeForSkill(
         : mulItemIds(BASIC_TABLES, [1, 2, 3, 4, 5, 10]),
       sessionLength,
     };
+  }
+
+  if (skillId === 'g3-frac-compare-same-denominator') {
+    return { mode: 'fraction', specificItemIds: [...fractionComparisonIds('same_denominator'), ...fractionStrategyChoiceItemIds().filter(id => id.includes('same_denominator'))], fractionMode: 'compare', sessionLength };
+  }
+
+  if (skillId === 'g3-frac-compare-same-numerator') {
+    return { mode: 'fraction', specificItemIds: [...fractionComparisonIds('same_numerator'), ...fractionStrategyChoiceItemIds().filter(id => id.includes('same_numerator'))], fractionMode: 'compare', sessionLength };
   }
 
   // ── G3_OA_MUL_FACTS_3_4 ──────────────────────────────────────────────────────
@@ -436,10 +584,14 @@ export function planPracticeForSkill(
   if (skillId === 'g3-div-mul-relationship') {
     return {
       mode: 'division',
-      specificItemIds: divItemIds(DIV_ADVANCED_DIVISORS),
+      specificItemIds: divisionReasoningIds('unknown_factor'),
       sessionLength,
     };
   }
+
+  if (skillId === 'g3-div-sharing-grouping') return { mode: 'division', specificItemIds: [...divisionReasoningIds('equal_sharing'), ...divisionReasoningIds('measurement_grouping')], sessionLength };
+  if (skillId === 'g3-div-decomposition') return { mode: 'division', specificItemIds: [...divisionReasoningIds('decompose_tens_ones'), ...divisionReasoningIds('verify_with_multiplication')], sessionLength };
+  if (skillId === 'g3-div-word-problems') return { mode: 'word_problem', specificItemIds: divisionReasoningIds('word_problem_choose_model'), grade: 3, sessionLength };
 
   // ── G3_NF_EQUIVALENT_FRACTIONS (also: g3-frac-equivalent) ────────────────────
   if (
@@ -461,7 +613,9 @@ export function planPracticeForSkill(
   ) {
     return {
       mode: 'fraction',
-      specificItemIds: fracCmpItemIds(),
+      specificItemIds: skillId === 'g3-frac-compare'
+        ? [...fractionComparisonIds('mixed'), ...fractionStrategyChoiceItemIds().filter(id => id.includes('benchmark_half'))]
+        : fracCmpItemIds(),
       fractionMode: 'compare',
       sessionLength,
     };
@@ -494,7 +648,7 @@ export function planPracticeForSkill(
   if (skillId === 'g3-frac-unit') {
     return {
       mode: 'fraction',
-      specificItemIds: fracUnitItemIds(),
+      specificItemIds: [...unitFractionModelItemIds(), ...fracUnitItemIds()],
       fractionMode: 'equivalent',
       sessionLength,
     };
@@ -527,15 +681,27 @@ export function planPracticeForSkill(
     };
   }
 
-  // ── G3_MD_PERIMETER / g3-perimeter — perimeter of rectangles + polygons + unknown sides ──
+  // ── G3_MD_PERIMETER / g3-perimeter — trace/sum boundaries then rectangle structure ──
   if (skillId === 'G3_MD_PERIMETER' || skillId === 'g3-perimeter') {
     return {
       mode: 'area',
       specificItemIds: [
         ...perimeterRectangleItemIds(),
         ...perimeterPolygonItemIds(),
-        ...perimeterUnknownSideItemIds(),
       ],
+      sessionLength,
+    };
+  }
+
+
+  if (skillId === 'g3-area-perimeter-choice') {
+    return { mode: 'area', specificItemIds: areaPerimeterChoiceItemIds(), sessionLength };
+  }
+
+  if (skillId === 'g3-perimeter-missing-side') {
+    return {
+      mode: 'area',
+      specificItemIds: [...perimeterReasoningItemIds(), ...perimeterUnknownSideItemIds()],
       sessionLength,
     };
   }
@@ -607,7 +773,18 @@ export function planPracticeForSkill(
   if (skillId === 'g3-sub-3digit-regrouping') {
     return {
       mode: 'subtraction',
-      specificItemIds: sub3DigitBorrowingItemIds(),
+      specificItemIds: sub3DigitBorrowingItemIds().filter(id => !subAcrossZeroItemIds().includes(id)),
+      sessionLength,
+    };
+  }
+
+
+  if (skillId === 'g3-sub-across-zero') {
+    // Keep the default ten-question pool bounded so every fresh focused session
+    // includes the planned error-analysis bridge as well as independent practice.
+    return {
+      mode: 'subtraction',
+      specificItemIds: [...subAcrossZeroErrorAnalysisIds(), ...subAcrossZeroItemIds().slice(0, 7)],
       sessionLength,
     };
   }
@@ -686,9 +863,10 @@ export function planPracticeForSkill(
 
   // ── g3-line-plots — read line plots ──────────────────────────────────────────
   if (skillId === 'g3-line-plots') {
+    const linePlots = linePlotItemIds();
     return {
       mode: 'measurement',
-      specificItemIds: linePlotItemIds(),
+      specificItemIds: [...linePlots.slice(-2), ...linePlots.slice(0, 8)],
       sessionLength,
     };
   }

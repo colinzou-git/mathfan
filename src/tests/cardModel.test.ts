@@ -35,10 +35,28 @@ describe('deriveCardKeyFromItemId — division facts', () => {
   });
 });
 
+describe('deriveCardKeyFromItemId — rectangle area/perimeter templates (issue #30)', () => {
+  it('canonicalizes area-by-formula rectangle orientation', () => {
+    expect(deriveCardKeyFromItemId('AREA_RECT_3x4')).toBe(deriveCardKeyFromItemId('AREA_RECT_4x3'));
+  });
+  it('canonicalizes unit-square counting rectangle orientation', () => {
+    expect(deriveCardKeyFromItemId('AREA_SQ_3x4')).toBe(deriveCardKeyFromItemId('AREA_SQ_4x3'));
+  });
+  it('canonicalizes rectangle perimeter orientation', () => {
+    expect(deriveCardKeyFromItemId('PERIM_RECT_3x4')).toBe(deriveCardKeyFromItemId('PERIM_RECT_4x3'));
+  });
+  it('area, unit-square, and perimeter templates remain distinct cards from each other', () => {
+    const area = deriveCardKeyFromItemId('AREA_RECT_3x4');
+    const sq = deriveCardKeyFromItemId('AREA_SQ_3x4');
+    const perim = deriveCardKeyFromItemId('PERIM_RECT_3x4');
+    expect(new Set([area, sq, perim]).size).toBe(3);
+  });
+});
+
 describe('deriveCardKeyFromItemId — everything else', () => {
   it('falls back to a 1:1 template key', () => {
     expect(deriveCardKeyFromItemId('ADD_5p7')).toBe('template:ADD_5p7');
-    expect(deriveCardKeyFromItemId('AREA_RECT_3x4')).toBe('template:AREA_RECT_3x4');
+    expect(deriveCardKeyFromItemId('AREA_RECT_3x4')).toBe('template:g3-area-perimeter:area_rows_columns');
   });
 
   it('does not canonicalize subtraction by sorting operands', () => {

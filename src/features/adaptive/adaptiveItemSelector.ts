@@ -53,6 +53,7 @@ const DEFAULT_QUOTAS: AdaptiveQuotas = { priority: 0.75, variety: 0.15, maintena
 
 /** Unseen candidate items get a mild positive score so new content still surfaces. */
 const UNSEEN_OWN_SCORE = 10;
+const MISCONCEPTION_BRIDGE_BOOST = 60;
 
 type Tier = 'priority' | 'variety' | 'maintenance';
 
@@ -99,6 +100,31 @@ function needScore(state: StudentItemState, nowStr: string): number {
   return s;
 }
 
+/** Prefer an instructional bridge that directly addresses a recent area/perimeter misconception. */
+export function misconceptionBridgeBoost(item: PracticeItem, state?: StudentItemState): number {
+  if (!state?.mistakePatterns.length) return 0;
+  const patterns = new Set(state.mistakePatterns);
+  const schema = item.schemaId;
+  const tags = new Set(item.tags);
+  const matches =
+    ((patterns.has('area_perim:used_area_for_perimeter') || patterns.has('area_perim:used_perimeter_for_area'))
+      && (schema === 'area_or_perimeter_choice' || schema === 'area_count_squares'))
+    || ((patterns.has('area_perim:used_half_perimeter') || patterns.has('area_perim:forgot_one_pair_of_sides'))
+      && (schema === 'perimeter_sum_sides' || schema === 'perimeter_rectangle_structure'))
+    || ((patterns.has('area_perim:copied_given_perimeter') || patterns.has('area_perim:summed_non_boundary_values')
+      || patterns.has('area_perim:missing_side_subtraction_error'))
+      && schema === 'perimeter_missing_side' && (tags.has('equation') || tags.has('sum_known_sides')))
+    || ((patterns.has('fraction:compare_larger_denominator_means_larger') || patterns.has('frac_compare:larger_denominator'))
+      && schema === 'compare_same_numerator')
+    || ((patterns.has('fraction:equivalent_wrong_multiplier') || patterns.has('frac_equiv:wrong_multiplier'))
+      && (schema === 'equivalent_visual' || schema === 'equivalent_missing_numerator'))
+    || ([...patterns].some(pattern => pattern.includes('sub_across_zero_error'))
+      && !!schema?.includes('subtraction_3digit_') && (schema.includes('across_zero') || schema.includes('multiple_zeroes')))
+    || ([...patterns].some(pattern => pattern.includes('failed_to_regroup') || pattern.includes('failed_to_carry'))
+      && !!schema && ['ones_only', 'tens_only', 'ones_and_tens'].some(profile => schema.includes(profile)));
+  return matches ? MISCONCEPTION_BRIDGE_BOOST : 0;
+}
+
 // ── Scoring ─────────────────────────────────────────────────────────────────────
 
 /**
@@ -113,7 +139,7 @@ export function scoreCandidateItem(
 ): number {
   const nowStr = now.toISOString();
   const own = stateForItem(item, stateMap);
-  const score = own ? needScore(own, nowStr) : UNSEEN_OWN_SCORE;
+  const score = (own ? needScore(own, nowStr) : UNSEEN_OWN_SCORE) + misconceptionBridgeBoost(item, own);
 
   let relatedBoost = 0;
   let hasRelatedState = false;
