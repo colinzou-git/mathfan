@@ -359,6 +359,13 @@ describe('usePracticeSession — adaptive selection', () => {
     expect(sessionRepo.save).toHaveBeenCalledWith(expect.objectContaining({ lessonPlanId: 'lesson-plan', lessonKind: 'adaptive_daily_lesson', focusSkillId: 'g3-mul-tables-basic' }));
     await act(async () => { await result.current.submitAnswer('12'); });
     expect(vi.mocked(recordPracticeAnswer).mock.calls[0][0].event).toEqual(expect.objectContaining({ lessonPlanId: 'lesson-plan', lessonSegment: 'retrieval', lessonRationale: 'Due retrieval.' }));
+    expect(vi.mocked(recordPracticeAnswer).mock.calls[0][0].event.schedulingTelemetry).toMatchObject({
+      version: 1, cardKey: 'fact:mul:3x4', presentationIndex: 1, attemptNo: 1,
+      schedulingEligible: true, evidenceKind: 'direct',
+      selection: { origin: 'due_retrieval', plannerVersion: 'daily-lesson-v1', lessonPlanId: 'lesson-plan' },
+      before: { stabilityDays: 0 },
+      rating: { reviewGrade: expect.any(String) },
+    });
   });
 
   it('non-daily_review specificItemIds still produce a valid, reconstructable queue', async () => {

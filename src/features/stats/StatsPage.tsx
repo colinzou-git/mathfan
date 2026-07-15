@@ -10,12 +10,17 @@ import { computeDayStats, addDays, startOfLocalDay, startOfWeek, startOfMonth, l
 import { mathAnswerEventRepo, sessionRepo } from '../../db/repositories';
 import { appNow } from '../time/clock';
 import type { AttemptLog, PracticeSession, SessionConfig } from '../../types/math';
+import type { MathAnswerEvent } from '../learning/learningEvents';
+import { buildSchedulingCalibrationReport } from '../analytics/schedulingCalibration';
+import { buildLearningQualityReport } from '../analytics/learningQuality';
+import { FSRS_CONFIG_VERSION } from '../scheduler/fsrsAdapter';
 
 interface Props {
   studentId: string;
   lastSyncedAt?: string | null;
   onBack: () => void;
   onStartPractice?: (config: SessionConfig) => void;
+  parentMode?: boolean;
 }
 
 type PeriodPreset = 'today' | 'week' | 'month' | 'custom';
@@ -42,7 +47,7 @@ function daysBetween(start: string, end: string): number {
   return Math.round((new Date(end + 'T12:00:00').getTime() - new Date(start + 'T12:00:00').getTime()) / 86400000) + 1;
 }
 
-export function StatsPage({ studentId, lastSyncedAt, onBack, onStartPractice }: Props) {
+export function StatsPage({ studentId, lastSyncedAt, onBack, onStartPractice, parentMode = false }: Props) {
   const [preset, setPreset] = useState<PeriodPreset>('week');
   const [customRange, setCustomRange] = useState<DateRange>(() => {
     const today = toYMD(appNow());
@@ -52,14 +57,15 @@ export function StatsPage({ studentId, lastSyncedAt, onBack, onStartPractice }: 
   const [detailTab, setDetailTab] = useState<DetailTab>('growth');
   const [attempts, setAttempts] = useState<AttemptLog[]>([]);
   const [sessions, setSessions] = useState<PracticeSession[]>([]);
+  const [events, setEvents] = useState<MathAnswerEvent[]>([]);
 
   useEffect(() => {
     // Load canonical events and adapt to AttemptLog for statsEngine functions.
     // mathAnswerEvents is the source of truth; attemptRepo is a compat cache.
     Promise.all([
-      mathAnswerEventRepo.getAll(studentId).then(eventsToAttemptLogs),
+      mathAnswerEventRepo.getAll(studentId),
       sessionRepo.getAll(studentId),
-    ]).then(([a, s]) => { setAttempts(a); setSessions(s); });
+    ]).then(([e, s]) => { setEvents(e); setAttempts(eventsToAttemptLogs(e)); setSessions(s); });
   }, [studentId, lastSyncedAt]);
 
   const range = buildRange(preset, customRange);
@@ -213,7 +219,28 @@ export function StatsPage({ studentId, lastSyncedAt, onBack, onStartPractice }: 
           <QuizStatsView studentId={studentId} dateRange={range} />
         )}
       </div>
+      {parentMode && <SchedulingDiagnostics events={events} />}
     </div>
+  );
+}
+
+function SchedulingDiagnostics({ events }: { events: MathAnswerEvent[] }) {
+  const [open, setOpen] = useState(false);
+  const quality = useMemo(() => buildLearningQualityReport(events), [events]);
+  const calibration = useMemo(() => buildSchedulingCalibrationReport(events), [events]);
+  const calibrated = calibration.overall.filter(bucket => bucket.sufficientData);
+  return (
+    <section aria-label="Learning and Scheduling Diagnostics" style={{ ...s.graphBox, marginTop: 16 }}>
+      <button style={s.calToggle} onClick={() => setOpen(value => !value)}>{open ? 'Hide' : 'Open'} Learning & Scheduling Diagnostics</button>
+      {open && <div>
+        <p>These parent-facing details keep accuracy, support, practice variety, and scheduling quality separate.</p>
+        <p>Direct first-attempt accuracy: {quality.directFirstAttemptAccuracy === null ? 'Not enough data' : `${Math.round(quality.directFirstAttemptAccuracy * 100)}%`}</p>
+        <p>Same-session reinforcement: {quality.sameSessionRepeatCount} · Representations practiced: {quality.representationDiversity}</p>
+        <p>Predicted versus observed retention: {calibrated.length ? `${calibrated.length} reliable range${calibrated.length === 1 ? '' : 's'}` : 'More delayed reviews are needed'}</p>
+        <p>Data-quality warnings: {quality.dataQualityWarningCount}</p>
+        <small>Scheduling configuration: {FSRS_CONFIG_VERSION}. Full details are included in data exports.</small>
+      </div>}
+    </section>
   );
 }
 

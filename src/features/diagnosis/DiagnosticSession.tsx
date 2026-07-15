@@ -24,6 +24,7 @@ import { detectMistakes } from '../mastery/misconceptionEngine';
 import { itemStateRepo } from '../../db/repositories';
 import { generateId } from '../../utils/id';
 import { appNow } from '../time/clock';
+import { buildSchedulingTelemetry } from '../learning/schedulingTelemetry';
 
 interface Props {
   studentId: string;
@@ -150,6 +151,12 @@ export function DiagnosticSession({ studentId, onComplete, onCancel }: Props) {
         fluencyBand: checked.fluencyBand,
         factStatusBefore: existing.masteryLevel,
         factStatusAfter: updated.masteryLevel,
+        schedulingTelemetry: buildSchedulingTelemetry({
+          item, stateBefore: existing, stateAfter: updated,
+          response: { reviewGrade, ratingReason: checked.ratingReason, responsePolicy: checked.policyKind, fluencyBand: checked.fluencyBand, hintUsed: false, isRetry: false, schedulingEligible: true },
+          selection: { origin: 'diagnostic', rationaleCodes: ['diagnostic_coverage'] },
+          presentationIndex: 1, attemptNo: 1, now,
+        }),
         createdAt,
       };
 

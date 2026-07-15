@@ -4,7 +4,7 @@
 
 | Package | Import count |
 | --- | --- |
-| vitest | 80 |
+| vitest | 81 |
 | react | 35 |
 | @testing-library/react | 19 |
 | pathlib | 8 |
@@ -126,6 +126,9 @@
 | src/features/ai/gemini.ts | ./aiConfig |
 | src/features/ai/TutorChat.tsx | ./aiConfig |
 | src/features/ai/TutorChat.tsx | ./gemini |
+| src/features/analytics/learningQuality.ts | ../learning/eventValidation |
+| src/features/analytics/learningQuality.ts | ../learning/learningEvents |
+| src/features/analytics/schedulingCalibration.ts | ../learning/learningEvents |
 | src/features/audio/speech.ts | ./mathSpeech |
 | src/features/curriculum/areaItems.ts | ../../types/math |
 | src/features/curriculum/areaItems.ts | ../../utils/grammar |
@@ -202,6 +205,7 @@
 | src/features/diagnosis/DiagnosticSession.tsx | ../../types/math |
 | src/features/diagnosis/DiagnosticSession.tsx | ../../utils/id |
 | src/features/diagnosis/DiagnosticSession.tsx | ../learning/learningEvents |
+| src/features/diagnosis/DiagnosticSession.tsx | ../learning/schedulingTelemetry |
 | src/features/diagnosis/DiagnosticSession.tsx | ../mastery/misconceptionEngine |
 | src/features/diagnosis/DiagnosticSession.tsx | ../practice/answerChecker |
 | src/features/diagnosis/DiagnosticSession.tsx | ../practice/QuestionRenderer |
@@ -210,6 +214,8 @@
 | src/features/diagnosis/DiagnosticSession.tsx | ../time/clock |
 | src/features/diagnosis/DiagnosticSession.tsx | ./diagnosticPersistence |
 | src/features/diagnosis/DiagnosticSession.tsx | ./diagnosticPlanner |
+| src/features/export/userDataExport.ts | ../learning/schedulingTelemetry |
+| src/features/export/userDataExport.ts | ../scheduler/fsrsAdapter |
 | src/features/export/userDataExport.ts | ../sync/snapshot |
 | src/features/fluency/fluencyEngine.ts | ../learning/learningEvents |
 | src/features/fluency/fluencyEngine.ts | ../scheduler/responsePolicy |
@@ -254,6 +260,7 @@
 | src/features/goals/GoalEvaluationSession.tsx | ../curriculum/makeItemFromId |
 | src/features/goals/GoalEvaluationSession.tsx | ../fluency/fluencyEngine |
 | src/features/goals/GoalEvaluationSession.tsx | ../learning/learningEvents |
+| src/features/goals/GoalEvaluationSession.tsx | ../learning/schedulingTelemetry |
 | src/features/goals/GoalEvaluationSession.tsx | ../mastery/grade3MasteryMap |
 | src/features/goals/GoalEvaluationSession.tsx | ../mastery/misconceptionEngine |
 | src/features/goals/GoalEvaluationSession.tsx | ../mastery/skillMapping |
@@ -310,14 +317,22 @@
 | src/features/learning/eventRebuild.ts | ../scheduler/cardModel |
 | src/features/learning/eventRebuild.ts | ../scheduler/scheduler |
 | src/features/learning/eventRebuild.ts | ./learningEvents |
+| src/features/learning/eventValidation.ts | ./learningEvents |
 | src/features/learning/learningEvents.ts | ../../db/dexie |
 | src/features/learning/learningEvents.ts | ../../types/math |
 | src/features/learning/learningEvents.ts | ../multiplication/types |
+| src/features/learning/learningEvents.ts | ./schedulingTelemetry |
 | src/features/learning/recordAnswer.ts | ../../db/dexie |
 | src/features/learning/recordAnswer.ts | ../../db/repositories |
 | src/features/learning/recordAnswer.ts | ../../types/math |
 | src/features/learning/recordAnswer.ts | ../multiplication/types |
 | src/features/learning/recordAnswer.ts | ./learningEvents |
+| src/features/learning/schedulingTelemetry.ts | ../../types/math |
+| src/features/learning/schedulingTelemetry.ts | ../fluency/fluencyEngine |
+| src/features/learning/schedulingTelemetry.ts | ../practice/answerChecker |
+| src/features/learning/schedulingTelemetry.ts | ../scheduler/cardModel |
+| src/features/learning/schedulingTelemetry.ts | ../scheduler/fsrsAdapter |
+| src/features/learning/schedulingTelemetry.ts | ../scheduler/responsePolicy |
 | src/features/learningPlan/dailyLessonPlanner.ts | ../../types/math |
 | src/features/learningPlan/dailyLessonPlanner.ts | ../adaptive/relatedItemMapping |
 | src/features/learningPlan/dailyLessonPlanner.ts | ../curriculum/makeItemFromId |
@@ -399,6 +414,7 @@
 | src/features/multiplication/MultiplicationQuizPage.tsx | ../../utils/id |
 | src/features/multiplication/MultiplicationQuizPage.tsx | ../audio/speech |
 | src/features/multiplication/MultiplicationQuizPage.tsx | ../learning/recordAnswer |
+| src/features/multiplication/MultiplicationQuizPage.tsx | ../learning/schedulingTelemetry |
 | src/features/multiplication/MultiplicationQuizPage.tsx | ../time/clock |
 | src/features/multiplication/MultiplicationQuizPage.tsx | ./masteryEngine |
 | src/features/multiplication/MultiplicationQuizPage.tsx | ./multiplicationFacts |
@@ -448,6 +464,7 @@
 | src/features/practice/usePracticeSession.ts | ../curriculum/multiplicationItems |
 | src/features/practice/usePracticeSession.ts | ../curriculum/roundingItems |
 | src/features/practice/usePracticeSession.ts | ../learning/recordAnswer |
+| src/features/practice/usePracticeSession.ts | ../learning/schedulingTelemetry |
 | src/features/practice/usePracticeSession.ts | ../mastery/misconceptionEngine |
 | src/features/practice/usePracticeSession.ts | ../scheduler/cardModel |
 | src/features/practice/usePracticeSession.ts | ../scheduler/dailyReviewQueue |
@@ -512,6 +529,10 @@
 | src/features/stats/StatsPage.tsx | ../../components/StatsGraph |
 | src/features/stats/StatsPage.tsx | ../../db/repositories |
 | src/features/stats/StatsPage.tsx | ../../types/math |
+| src/features/stats/StatsPage.tsx | ../analytics/learningQuality |
+| src/features/stats/StatsPage.tsx | ../analytics/schedulingCalibration |
+| src/features/stats/StatsPage.tsx | ../learning/learningEvents |
+| src/features/stats/StatsPage.tsx | ../scheduler/fsrsAdapter |
 | src/features/stats/StatsPage.tsx | ../stats/statsEngine |
 | src/features/stats/StatsPage.tsx | ../time/clock |
 | src/features/stats/StatsPage.tsx | ./DrillHistory |
@@ -868,6 +889,12 @@
 | src/tests/scheduler.test.ts | ../features/scheduler/cardModel |
 | src/tests/scheduler.test.ts | ../features/scheduler/scheduler |
 | src/tests/scheduler.test.ts | ../types/math |
+| src/tests/schedulingTelemetry.test.ts | ../features/analytics/learningQuality |
+| src/tests/schedulingTelemetry.test.ts | ../features/analytics/schedulingCalibration |
+| src/tests/schedulingTelemetry.test.ts | ../features/learning/eventValidation |
+| src/tests/schedulingTelemetry.test.ts | ../features/learning/learningEvents |
+| src/tests/schedulingTelemetry.test.ts | ../features/learning/schedulingTelemetry |
+| src/tests/schedulingTelemetry.test.ts | ../types/math |
 | src/tests/sessionSchedulingGuard.test.ts | ../features/scheduler/sessionSchedulingGuard |
 | src/tests/settingsDailyNewLimits.test.tsx | ../features/settings/SettingsPage |
 | src/tests/settingsDailyNewLimits.test.tsx | ../types/math |

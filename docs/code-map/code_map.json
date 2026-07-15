@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-15T07:57:33.777615+00:00",
+  "generated_at": "2026-07-15T08:32:24.356871+00:00",
   "repo_root": "/home/ubuntu/mathfan",
   "package": {
     "name": "mathfan",
@@ -421,9 +421,9 @@
     {
       "path": "PROGRESS.md",
       "ext": ".md",
-      "bytes": 8440,
-      "lines": 129,
-      "sha1": "68a9927d424d",
+      "bytes": 8542,
+      "lines": 131,
+      "sha1": "e2f7170024da",
       "imports": [],
       "exports": [],
       "functions": [],
@@ -570,9 +570,9 @@
     {
       "path": "scripts/e2e_mathfan.py",
       "ext": ".py",
-      "bytes": 38152,
-      "lines": 740,
-      "sha1": "f194ee0da960",
+      "bytes": 39943,
+      "lines": 755,
+      "sha1": "51f9e4f77359",
       "imports": [
         "__future__",
         "json",
@@ -803,9 +803,9 @@
     {
       "path": "src/App.tsx",
       "ext": ".tsx",
-      "bytes": 12464,
-      "lines": 362,
-      "sha1": "f82c878ee984",
+      "bytes": 12520,
+      "lines": 363,
+      "sha1": "56e372f8227d",
       "imports": [
         "./components/opSpecs",
         "./components/RangeSetup",
@@ -1532,6 +1532,70 @@
       "css_classes": [],
       "json_keys": [],
       "purpose": "Exports reusable code: TutorChat.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/analytics/learningQuality.ts",
+      "ext": ".ts",
+      "bytes": 2214,
+      "lines": 37,
+      "sha1": "528857109913",
+      "imports": [
+        "../learning/eventValidation",
+        "../learning/learningEvents"
+      ],
+      "exports": [
+        "buildLearningQualityReport",
+        "LearningQualityReport"
+      ],
+      "functions": [
+        "buildLearningQualityReport",
+        "ratio"
+      ],
+      "classes": [],
+      "interfaces": [
+        "LearningQualityReport"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Exports reusable code: buildLearningQualityReport, LearningQualityReport.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/analytics/schedulingCalibration.ts",
+      "ext": ".ts",
+      "bytes": 2816,
+      "lines": 39,
+      "sha1": "7e2339f92d82",
+      "imports": [
+        "../learning/learningEvents"
+      ],
+      "exports": [
+        "buildSchedulingCalibrationReport",
+        "CalibrationBucket",
+        "SchedulingCalibrationReport"
+      ],
+      "functions": [
+        "buckets",
+        "buildSchedulingCalibrationReport",
+        "group"
+      ],
+      "classes": [],
+      "interfaces": [
+        "CalibrationBucket",
+        "SchedulingCalibrationReport"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Exports reusable code: buildSchedulingCalibrationReport, CalibrationBucket, SchedulingCalibrationReport.",
       "too_large": false,
       "read_error": null
     },
@@ -2728,15 +2792,16 @@
     {
       "path": "src/features/diagnosis/DiagnosticSession.tsx",
       "ext": ".tsx",
-      "bytes": 18049,
-      "lines": 566,
-      "sha1": "a38c8fec0317",
+      "bytes": 18594,
+      "lines": 573,
+      "sha1": "5b7a706d9026",
       "imports": [
         "../../components/NumPad",
         "../../db/repositories",
         "../../types/math",
         "../../utils/id",
         "../learning/learningEvents",
+        "../learning/schedulingTelemetry",
         "../mastery/misconceptionEngine",
         "../practice/answerChecker",
         "../practice/QuestionRenderer",
@@ -2775,10 +2840,12 @@
     {
       "path": "src/features/export/userDataExport.ts",
       "ext": ".ts",
-      "bytes": 11883,
-      "lines": 373,
-      "sha1": "1b1d6ec236e5",
+      "bytes": 12786,
+      "lines": 386,
+      "sha1": "d8c0cf18d156",
       "imports": [
+        "../learning/schedulingTelemetry",
+        "../scheduler/fsrsAdapter",
         "../sync/snapshot",
         "jszip"
       ],
@@ -3238,9 +3305,9 @@
     {
       "path": "src/features/goals/GoalEvaluationSession.tsx",
       "ext": ".tsx",
-      "bytes": 29391,
-      "lines": 643,
-      "sha1": "053b3283923f",
+      "bytes": 30055,
+      "lines": 651,
+      "sha1": "ad2d0954ab76",
       "imports": [
         "../../components/NumPad",
         "../../db/repositories",
@@ -3250,6 +3317,7 @@
         "../curriculum/makeItemFromId",
         "../fluency/fluencyEngine",
         "../learning/learningEvents",
+        "../learning/schedulingTelemetry",
         "../mastery/grade3MasteryMap",
         "../mastery/misconceptionEngine",
         "../mastery/skillMapping",
@@ -3651,15 +3719,50 @@
       "read_error": null
     },
     {
+      "path": "src/features/learning/eventValidation.ts",
+      "ext": ".ts",
+      "bytes": 3128,
+      "lines": 44,
+      "sha1": "052a8885151a",
+      "imports": [
+        "./learningEvents"
+      ],
+      "exports": [
+        "auditEventLog",
+        "EventLogAudit",
+        "EventValidationIssue",
+        "validateAnswerEvent"
+      ],
+      "functions": [
+        "add",
+        "auditEventLog",
+        "validateAnswerEvent"
+      ],
+      "classes": [],
+      "interfaces": [
+        "EventLogAudit",
+        "EventValidationIssue"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Exports reusable code: auditEventLog, EventLogAudit, EventValidationIssue, validateAnswerEvent.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/features/learning/learningEvents.ts",
       "ext": ".ts",
-      "bytes": 4633,
-      "lines": 108,
-      "sha1": "6c1e517c5777",
+      "bytes": 4817,
+      "lines": 111,
+      "sha1": "9765d1122d80",
       "imports": [
         "../../db/dexie",
         "../../types/math",
-        "../multiplication/types"
+        "../multiplication/types",
+        "./schedulingTelemetry"
       ],
       "exports": [
         "canonicalStatusToLegacyMasteryLevel",
@@ -3727,6 +3830,63 @@
       "css_classes": [],
       "json_keys": [],
       "purpose": "Local persistence/database layer.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/learning/schedulingTelemetry.ts",
+      "ext": ".ts",
+      "bytes": 6176,
+      "lines": 133,
+      "sha1": "1a0e9cbf3ea7",
+      "imports": [
+        "../../types/math",
+        "../fluency/fluencyEngine",
+        "../practice/answerChecker",
+        "../scheduler/cardModel",
+        "../scheduler/fsrsAdapter",
+        "../scheduler/responsePolicy"
+      ],
+      "exports": [
+        "ADAPTIVE_SELECTOR_VERSION",
+        "buildSchedulingTelemetry",
+        "CARD_MODEL_VERSION",
+        "DAILY_LESSON_PLANNER_VERSION",
+        "GOAL_PORTFOLIO_VERSION",
+        "ItemInstanceTelemetry",
+        "RESPONSE_POLICY_VERSION",
+        "ResponseTelemetryEvidence",
+        "SCHEDULING_TELEMETRY_VERSION",
+        "SchedulingStateSnapshot",
+        "SchedulingTelemetry",
+        "SelectionContext",
+        "SelectionOrigin",
+        "snapshotSchedulingState",
+        "telemetryForItem"
+      ],
+      "functions": [
+        "buildSchedulingTelemetry",
+        "flattenParameters",
+        "snapshotSchedulingState",
+        "telemetryForItem"
+      ],
+      "classes": [],
+      "interfaces": [
+        "ItemInstanceTelemetry",
+        "ResponseTelemetryEvidence",
+        "SchedulingStateSnapshot",
+        "SchedulingTelemetry",
+        "SelectionContext"
+      ],
+      "types": [
+        "ParameterValue",
+        "SelectionOrigin"
+      ],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Exports reusable code: ADAPTIVE_SELECTOR_VERSION, buildSchedulingTelemetry, CARD_MODEL_VERSION, DAILY_LESSON_PLANNER_VERSION, GOAL_PORTFOLIO_VERSION.",
       "too_large": false,
       "read_error": null
     },
@@ -4415,15 +4575,16 @@
     {
       "path": "src/features/multiplication/MultiplicationQuizPage.tsx",
       "ext": ".tsx",
-      "bytes": 30119,
-      "lines": 845,
-      "sha1": "1214311663df",
+      "bytes": 31219,
+      "lines": 861,
+      "sha1": "8513a350426e",
       "imports": [
         "../../db/dexie",
         "../../types/math",
         "../../utils/id",
         "../audio/speech",
         "../learning/recordAnswer",
+        "../learning/schedulingTelemetry",
         "../time/clock",
         "./masteryEngine",
         "./multiplicationFacts",
@@ -4802,9 +4963,9 @@
     {
       "path": "src/features/practice/usePracticeSession.ts",
       "ext": ".ts",
-      "bytes": 28573,
-      "lines": 628,
-      "sha1": "5d31d531fe45",
+      "bytes": 30575,
+      "lines": 656,
+      "sha1": "9a55080d9a1c",
       "imports": [
         "../../components/opSpecs",
         "../../db/dexie",
@@ -4823,6 +4984,7 @@
         "../curriculum/multiplicationItems",
         "../curriculum/roundingItems",
         "../learning/recordAnswer",
+        "../learning/schedulingTelemetry",
         "../mastery/misconceptionEngine",
         "../scheduler/cardModel",
         "../scheduler/dailyReviewQueue",
@@ -5015,19 +5177,22 @@
     {
       "path": "src/features/scheduler/fsrsAdapter.ts",
       "ext": ".ts",
-      "bytes": 4144,
-      "lines": 114,
-      "sha1": "943fb8fbf61e",
+      "bytes": 4618,
+      "lines": 126,
+      "sha1": "24248f0de648",
       "imports": [
         "../../types/math",
         "ts-fsrs"
       ],
       "exports": [
         "applyFsrsReview",
+        "currentRetrievability",
+        "FSRS_CONFIG_VERSION",
         "FsrsStatePatch"
       ],
       "functions": [
         "applyFsrsReview",
+        "currentRetrievability",
         "stateToCard"
       ],
       "classes": [],
@@ -5508,15 +5673,19 @@
     {
       "path": "src/features/stats/StatsPage.tsx",
       "ext": ".tsx",
-      "bytes": 9936,
-      "lines": 246,
-      "sha1": "b726365517b7",
+      "bytes": 11897,
+      "lines": 273,
+      "sha1": "85fecc7e4bc1",
       "imports": [
         "../../components/MasteryGrid",
         "../../components/MiniCalendar",
         "../../components/StatsGraph",
         "../../db/repositories",
         "../../types/math",
+        "../analytics/learningQuality",
+        "../analytics/schedulingCalibration",
+        "../learning/learningEvents",
+        "../scheduler/fsrsAdapter",
         "../stats/statsEngine",
         "../time/clock",
         "./DrillHistory",
@@ -5531,6 +5700,7 @@
       "functions": [
         "buildRange",
         "daysBetween",
+        "SchedulingDiagnostics",
         "StatsPage",
         "SummaryPill",
         "toYMD"
@@ -5544,6 +5714,7 @@
         "PeriodPreset"
       ],
       "components": [
+        "SchedulingDiagnostics",
         "SummaryPill"
       ],
       "hooks": [],
@@ -8392,9 +8563,9 @@
     {
       "path": "src/tests/practiceSession.test.ts",
       "ext": ".ts",
-      "bytes": 19976,
-      "lines": 481,
-      "sha1": "f3e888c810cc",
+      "bytes": 20419,
+      "lines": 488,
+      "sha1": "4d9e1f0f1cdd",
       "imports": [
         "../db/repositories",
         "../features/curriculum/makeItemFromId",
@@ -8696,6 +8867,36 @@
       "css_classes": [],
       "json_keys": [],
       "purpose": "FSRS spaced-repetition scheduler: session planning and card state updates.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/schedulingTelemetry.test.ts",
+      "ext": ".ts",
+      "bytes": 4885,
+      "lines": 68,
+      "sha1": "6d2a4122ac6d",
+      "imports": [
+        "../features/analytics/learningQuality",
+        "../features/analytics/schedulingCalibration",
+        "../features/learning/eventValidation",
+        "../features/learning/learningEvents",
+        "../features/learning/schedulingTelemetry",
+        "../types/math",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [
+        "event"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
       "too_large": false,
       "read_error": null
     },
@@ -9085,9 +9286,9 @@
     {
       "path": "src/tests/userDataExport.test.ts",
       "ext": ".ts",
-      "bytes": 12911,
-      "lines": 266,
-      "sha1": "84f77f2d6010",
+      "bytes": 13099,
+      "lines": 268,
+      "sha1": "27a587b2ba53",
       "imports": [
         "../features/export/userDataExport",
         "../features/sync/snapshot",

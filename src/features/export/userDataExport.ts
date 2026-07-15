@@ -1,4 +1,6 @@
 import { buildSnapshot, type AppSnapshot } from '../sync/snapshot';
+import { ADAPTIVE_SELECTOR_VERSION, CARD_MODEL_VERSION, DAILY_LESSON_PLANNER_VERSION, GOAL_PORTFOLIO_VERSION, RESPONSE_POLICY_VERSION } from '../learning/schedulingTelemetry';
+import { FSRS_CONFIG_VERSION } from '../scheduler/fsrsAdapter';
 
 export type UserDataExportFormat = 'json' | 'zip';
 export type UserDataExportDelivery = 'download' | 'share';
@@ -16,6 +18,7 @@ export interface UserDataExportMetadata {
   buildTime: string;
   snapshotVersion: AppSnapshot['snapshotVersion'];
   tableCounts: Record<SnapshotTableName, number>;
+  modelVersions: Record<string, string>;
 }
 
 export interface UserDataExportPayload {
@@ -118,6 +121,11 @@ export function buildExportMetadata(
     buildTime: __BUILD_TIME__,
     snapshotVersion: snapshot.snapshotVersion,
     tableCounts,
+    modelVersions: {
+      cardModel: CARD_MODEL_VERSION, responsePolicy: RESPONSE_POLICY_VERSION,
+      adaptiveSelector: ADAPTIVE_SELECTOR_VERSION, dailyLessonPlanner: DAILY_LESSON_PLANNER_VERSION,
+      goalPortfolio: GOAL_PORTFOLIO_VERSION, fsrsConfig: FSRS_CONFIG_VERSION,
+    },
   };
 }
 
@@ -194,6 +202,7 @@ export async function createZipArtifact(
     'manifest.json',
     'mathfan-user-data.json',
     ...tables.map(table => `csv/${table.csvName}`),
+    'csv/scheduling-telemetry.csv',
   ];
   const manifest = {
     exportMetadata: payload.exportMetadata,
@@ -206,6 +215,10 @@ export async function createZipArtifact(
   const csvFolder = root.folder('csv');
   if (!csvFolder) throw new Error('Could not create CSV folder');
   for (const table of tables) csvFolder.file(table.csvName, serializeCsv(table.rows));
+  const telemetryRows = (payload.snapshot.mathAnswerEvents ?? [])
+    .filter(event => event.schedulingTelemetry)
+    .map(event => ({ eventId: event.id, ...event.schedulingTelemetry } as unknown as Record<string, unknown>));
+  csvFolder.file('scheduling-telemetry.csv', serializeCsv(telemetryRows));
 
   return {
     blob: await zip.generateAsync({ type: 'blob', mimeType: 'application/zip' }),
