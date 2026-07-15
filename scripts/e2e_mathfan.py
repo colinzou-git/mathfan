@@ -429,6 +429,104 @@ def division_model_choice_lesson(page: Page) -> None:
     expect(page.get_by_text(re.compile(r"Correct!|New personal best!"))).to_be_visible()
 
 
+def scaled_bar_graph_lesson(page: Page) -> None:
+    create_profile(page, "BarGraphTester", "e2e-scaled-bar-graph")
+    open_mastery_skill(page, "Scaled Bar Graphs")
+    prompt = page.locator(".drill-q > div").first.inner_text()
+    figure = page.get_by_role("figure", name=re.compile(r"scaled bar graph.*vertical axis counts by", re.I))
+    expect(figure).to_be_visible()
+    scale = int(re.search(r"counts by (\d+)", figure.get_attribute("aria-label")).group(1))
+    bars = page.locator('[aria-label$=" bar"]')
+    values = []
+    for index in range(bars.count()):
+        height = float(bars.nth(index).evaluate("node => parseFloat(node.style.height)"))
+        values.append(height)
+    if "missing" in prompt:
+        bar_units = round(1 / (1 - values[1] / values[0]))
+        graph_values = [bar_units * scale, (bar_units - 1) * scale, (bar_units + 1) * scale]
+    else:
+        bar_units = round((values[0] / max(values)) / (1 - values[0] / max(values)))
+        graph_values = [round(height / max(values) * (bar_units + 1) * scale) for height in values]
+    if "Mia and Leo" in prompt:
+        answer = graph_values[0] + graph_values[1]
+    elif "more" in prompt:
+        answer = graph_values[0] - graph_values[1]
+    elif "missing" in prompt:
+        answer = graph_values[2]
+    else:
+        answer = graph_values[0]
+    page.get_by_label("Your answer", exact=True).fill(str(answer))
+    page.get_by_label("Your answer", exact=True).press("Enter")
+    expect(page.get_by_text(re.compile(r"Correct!|New personal best!"))).to_be_visible()
+
+
+def fractional_line_plot_lesson(page: Page) -> None:
+    create_profile(page, "LinePlotTester", "e2e-fractional-line-plot")
+    open_mastery_skill(page, "Line Plots")
+    for _ in range(10):
+        figure = page.get_by_role("figure").last
+        label = figure.get_attribute("aria-label") or ""
+        prompt = page.locator(".drill-q > div").first.inner_text()
+        if "halves" in label or "quarters" in label:
+            target_tick = int(re.findall(r"\d+", prompt)[0])
+            observation = page.locator(f'[aria-label$="observations at tick {target_tick}"]')
+            count = int(re.findall(r"\d+", observation.get_attribute("aria-label"))[0])
+            page.get_by_label("Your answer", exact=True).fill(str(count))
+            page.get_by_label("Your answer", exact=True).press("Enter")
+            expect(page.get_by_text(re.compile(r"Correct!|New personal best!"))).to_be_visible()
+            return
+        observations = figure.locator('[aria-label*=" observations at tick "]')
+        total = 0
+        observed_ticks = []
+        for index in range(observations.count()):
+            count, tick = [int(value) for value in re.findall(r"\d+", observations.nth(index).get_attribute("aria-label"))]
+            total += count * tick
+            if count:
+                observed_ticks.append(tick)
+        answer = max(observed_ticks) - min(observed_ticks) if "difference" in prompt else total
+        page.get_by_label("Your answer", exact=True).fill(str(answer))
+        page.get_by_label("Your answer", exact=True).press("Enter")
+        expect(page.get_by_text(re.compile(r"Correct!|New personal best!"))).to_be_visible()
+        page.wait_for_timeout(1400)
+    raise AssertionError("Line-plot lesson did not include fractional ticks")
+
+
+def elapsed_cross_hour_lesson(page: Page) -> None:
+    create_profile(page, "ElapsedTester", "e2e-elapsed-cross-hour")
+    open_mastery_skill(page, "Elapsed Time")
+    for _ in range(10):
+        figure = page.get_by_role("figure", name=re.compile(r"elapsed time line from", re.I))
+        label = figure.get_attribute("aria-label")
+        h1, m1, h2, m2 = [int(value) for value in re.findall(r"\d+", label)]
+        answer = h2 * 60 + m2 - (h1 * 60 + m1)
+        page.get_by_label("Your answer", exact=True).fill(str(answer))
+        page.get_by_label("Your answer", exact=True).press("Enter")
+        expect(page.get_by_text(re.compile(r"Correct!|New personal best!"))).to_be_visible()
+        if h1 != h2:
+            return
+        page.wait_for_timeout(1400)
+    raise AssertionError("Elapsed-time lesson did not cross an hour")
+
+
+def two_step_tape_lesson(page: Page) -> None:
+    create_profile(page, "TwoStepTester", "e2e-two-step-tape")
+    open_mastery_skill(page, "Two-Step Word Problems")
+    prompt = page.locator(".drill-q > div").first.inner_text()
+    expect(page.get_by_role("figure", name=re.compile(r"tape diagram for two_step", re.I))).to_be_visible()
+    a, b, c = [int(value) for value in re.findall(r"\d+", prompt)][:3]
+    if "rows" in prompt or "more" in prompt:
+        answer = a * b + c
+    elif "uses" in prompt:
+        answer = a * b - c
+    elif "gets" in prompt:
+        answer = a // b + c
+    else:
+        answer = a // b - c
+    page.get_by_label("Your answer", exact=True).fill(str(answer))
+    page.get_by_label("Your answer", exact=True).press("Enter")
+    expect(page.get_by_text(re.compile(r"Correct!|New personal best!"))).to_be_visible()
+
+
 def run_scenario(
     browser: Browser,
     name: str,
@@ -519,6 +617,10 @@ def main() -> int:
             ("subtraction-across-zero", {"width": 390, "height": 844}, subtraction_across_zero_lesson, False),
             ("division-decomposition", {"width": 390, "height": 844}, division_decomposition_lesson, False),
             ("division-model-choice", {"width": 820, "height": 1180}, division_model_choice_lesson, False),
+            ("scaled-bar-graph", {"width": 390, "height": 844}, scaled_bar_graph_lesson, False),
+            ("fractional-line-plot", {"width": 820, "height": 1180}, fractional_line_plot_lesson, False),
+            ("elapsed-cross-hour", {"width": 390, "height": 844}, elapsed_cross_hour_lesson, False),
+            ("two-step-tape", {"width": 820, "height": 1180}, two_step_tape_lesson, False),
         ]
         for name, viewport, scenario, standalone_share in scenarios:
             try:

@@ -2,6 +2,8 @@ import type { VisualSpec } from '../features/visuals/types';
 import type { FractionQuestionSpec } from '../features/fractions/types';
 import type { ArithmeticQuestionSpec } from '../features/curriculum/regrouping';
 import type { DivisionQuestionSpec } from '../features/curriculum/divisionItems';
+import type { MeasurementDataSpec } from '../features/curriculum/measurementTypes';
+import type { WordProblemSpec } from '../features/curriculum/wordProblemItems';
 
 export type GradeLevel = 3 | 4 | 5;
 export type ReviewGrade = 'again' | 'hard' | 'good' | 'easy';
@@ -168,6 +170,10 @@ export interface PracticeItem {
   arithmeticSpec?: ArithmeticQuestionSpec;
   /** Structured division meaning/strategy data; keeps fact recall separate from reasoning. */
   divisionSpec?: DivisionQuestionSpec;
+  /** Exact clock, graph, line-plot, or measurement instance shown to the learner. */
+  measurementSpec?: MeasurementDataSpec;
+  /** Structured operations, quantities, unknown position, and model for story problems. */
+  wordProblemSpec?: WordProblemSpec;
 }
 
 export interface PerimeterReasoningSpec {

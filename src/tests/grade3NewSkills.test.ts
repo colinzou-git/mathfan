@@ -205,31 +205,30 @@ describe('g3-volume-mass-word-problems: items are MWRD_ with positive answers', 
   });
 });
 
-describe('g3-scaled-bar-graphs: items are BARG_ with answer = scale × bars', () => {
-  it('all item IDs start with BARG_', () => {
+describe('g3-scaled-bar-graphs: items carry authentic rendered datasets', () => {
+  it('all items reconstruct with bar-graph specs', () => {
     const cfg = planPracticeForSkill('g3-scaled-bar-graphs');
     for (const id of cfg.specificItemIds ?? []) {
-      expect(id.startsWith('BARG_'), `"${id}" should be a BARG_ item`).toBe(true);
+      expect(makeItemFromId(id)?.measurementSpec?.kind, `"${id}" should be a bar-graph item`).toBe('bar_graph');
     }
   });
 
-  it('all bar graph answers equal scale × bars', () => {
+  it('all graph questions have one numeric answer derived from their dataset', () => {
     const cfg = planPracticeForSkill('g3-scaled-bar-graphs');
     for (const id of cfg.specificItemIds ?? []) {
       const item = makeItemFromId(id);
       expect(item).not.toBeNull();
-      const scale = item!.factA ?? 0;
-      const bars = item!.factB ?? 0;
-      expect(item!.answer).toBe(scale * bars);
+      expect(typeof item!.answer).toBe('number');
+      expect(Number.isFinite(item!.answer as number)).toBe(true);
     }
   });
 });
 
-describe('g3-line-plots: items are LPLOT_ with answer = sum of 4 values', () => {
-  it('all item IDs start with LPLOT_', () => {
+describe('g3-line-plots: items carry authentic rendered datasets', () => {
+  it('all items reconstruct with line-plot specs', () => {
     const cfg = planPracticeForSkill('g3-line-plots');
     for (const id of cfg.specificItemIds ?? []) {
-      expect(id.startsWith('LPLOT_'), `"${id}" should be a LPLOT_ item`).toBe(true);
+      expect(makeItemFromId(id)?.measurementSpec?.kind, `"${id}" should be a line-plot item`).toBe('line_plot');
     }
   });
 

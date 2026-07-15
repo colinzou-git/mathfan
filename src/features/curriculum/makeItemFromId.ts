@@ -17,6 +17,7 @@ import {
 import { GEO_ITEM_MAP } from './geometryItems';
 import { makePropCommutativityItem, makePropIdentityItem, makePropZeroItem, makePropAssociativeItem, makePropDistributiveItem } from './mulPropertiesItems';
 import { makeTimeItem, makeElapsedTimeItem, makeBarGraphItem, makeLinePlotItem, makeMeasurementWordProblem, type MeasSchema } from './measurementItems';
+import type { MeasurementSchema } from './measurementTypes';
 import { makeTwoStepWordProblem, type TwoStepSchema } from './twoStepItems';
 import { makeArithmeticPatternItem } from './patternItems';
 
@@ -32,6 +33,29 @@ export function makeItemFromId(itemId: string): PracticeItem | null {
   if (geoItem) return geoItem;
 
   let m: RegExpMatchArray | null;
+
+  m = itemId.match(/^MEAS_(bar_(?:read_value|compare|total|missing))_(\d+)_(\d+(?:-\d+)*)$/);
+  if (m) {
+    const schema = m[1] as MeasurementSchema, scale = +m[2], values = m[3].split('-').map(Number);
+    const item = makeBarGraphItem(scale, values[0] / scale);
+    const spec = item.measurementSpec as Extract<NonNullable<PracticeItem['measurementSpec']>, { kind: 'bar_graph' }>;
+    spec.values = values; item.id = itemId; item.cardKey = `template:g3-measurement:${schema}`;
+    if (schema === 'bar_compare') { spec.question = 'compare'; spec.comparedIndices = [0, 1]; item.prompt = 'Use the bar graph. How many more books did Mia read than Leo?'; item.answer = values[0] - values[1]; }
+    if (schema === 'bar_total') { spec.question = 'total'; spec.comparedIndices = [0, 1]; item.prompt = 'Use the bar graph. How many books did Mia and Leo read in all?'; item.answer = values[0] + values[1]; }
+    if (schema === 'bar_missing') { spec.question = 'missing'; spec.requestedIndex = 2; item.prompt = 'The Ava bar is missing. What value should it show?'; item.answer = values[2]; }
+    return item;
+  }
+
+  m = itemId.match(/^MEAS_(line_plot_(?:count|range|fractional))_(1|2|4)_(\d+(?:-\d+)*)$/);
+  if (m) {
+    const schema = m[1] as MeasurementSchema, denominator = +m[2] as 1 | 2 | 4, ticks = m[3].split('-').map(Number);
+    const item = makeLinePlotItem(ticks[0], ticks[1], ticks[2], ticks[3]);
+    item.id = itemId; item.cardKey = `template:g3-measurement:${schema}`;
+    item.measurementSpec = { kind: 'line_plot', unit: 'inch', denominator, valuesInTicks: ticks, question: schema === 'line_plot_range' ? 'range' : 'count_at_value', targetTick: ticks[0] };
+    item.prompt = schema === 'line_plot_range' ? 'Use the line plot. What is the difference between the longest and shortest measurements?' : `Use the line plot. How many measurements are at ${ticks[0]}/${denominator} inches?`;
+    item.answer = schema === 'line_plot_range' ? (Math.max(...ticks) - Math.min(...ticks)) / denominator : ticks.filter(tick => tick === ticks[0]).length;
+    return item;
+  }
 
   m = itemId.match(/^DIVQ_([a-z_]+)_(\d+)_(\d+)$/);
   if (m) {

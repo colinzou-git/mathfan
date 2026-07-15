@@ -18,6 +18,7 @@ import { makeStructuredDivisionItem, type DivisionSchema } from '../curriculum/d
 import { roundId } from '../curriculum/roundingItems';
 import {
   clckId, etimeId, bargId, lplotId, mwrdId,
+  generateMeasurementItem,
 } from '../curriculum/measurementItems';
 import { wrd2Id, type TwoStepSchema } from '../curriculum/twoStepItems';
 import { apatId } from '../curriculum/patternItems';
@@ -483,7 +484,7 @@ function measurementWordItemIds(): string[] {
 // ── Scaled bar graphs ─────────────────────────────────────────────────────────
 
 function scaledBarGraphItemIds(): string[] {
-  return [
+  const legacy = [
     bargId(5, 3),  bargId(5, 4),  bargId(5, 6),  bargId(5, 7),  bargId(5, 8),
     bargId(10, 2), bargId(10, 3), bargId(10, 4), bargId(10, 5), bargId(10, 7),
     bargId(2, 5),  bargId(2, 7),  bargId(2, 9),
@@ -491,12 +492,14 @@ function scaledBarGraphItemIds(): string[] {
     bargId(3, 4),  bargId(3, 6),  bargId(3, 8),
     bargId(10, 8),
   ];
+  const rng = (() => { let n = 34; return () => ((n = (n * 1664525 + 1013904223) >>> 0) / 4294967296); })();
+  return [...legacy, ...(['bar_compare', 'bar_total', 'bar_missing'] as const).map(schema => generateMeasurementItem(schema, { rng }).id)];
 }
 
 // ── Line plots ────────────────────────────────────────────────────────────────
 
 function linePlotItemIds(): string[] {
-  return [
+  const legacy = [
     lplotId(1, 2, 2, 3), lplotId(2, 2, 3, 4), lplotId(1, 1, 3, 4),
     lplotId(2, 3, 3, 4), lplotId(1, 2, 4, 4), lplotId(2, 3, 4, 5),
     lplotId(1, 3, 3, 5), lplotId(2, 2, 4, 5), lplotId(3, 3, 3, 4),
@@ -505,6 +508,8 @@ function linePlotItemIds(): string[] {
     lplotId(3, 4, 4, 6), lplotId(2, 3, 6, 7), lplotId(4, 4, 5, 5),
     lplotId(3, 4, 5, 8), lplotId(2, 5, 6, 7),
   ];
+  const rng = (() => { let n = 71; return () => ((n = (n * 1664525 + 1013904223) >>> 0) / 4294967296); })();
+  return [...legacy, generateMeasurementItem('line_plot_fractional', { rng }).id, generateMeasurementItem('line_plot_range', { rng }).id];
 }
 
 /**
@@ -858,9 +863,10 @@ export function planPracticeForSkill(
 
   // ── g3-line-plots — read line plots ──────────────────────────────────────────
   if (skillId === 'g3-line-plots') {
+    const linePlots = linePlotItemIds();
     return {
       mode: 'measurement',
-      specificItemIds: linePlotItemIds(),
+      specificItemIds: [...linePlots.slice(-2), ...linePlots.slice(0, 8)],
       sessionLength,
     };
   }

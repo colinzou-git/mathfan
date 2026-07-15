@@ -49,7 +49,7 @@ Capstone. Depends on nearly everything above (#25-#29, #30-#34, #35).
 | 31 | Fractions redesign | B | **implemented and validated; committed on Branch B** |
 | 32 | Multi-digit regrouping | B | **implemented and validated; committed on Branch B** |
 | 33 | Division fact vs reasoning split | B | **implemented and validated; committed on Branch B** |
-| 34 | Time/measurement/graphs redesign | B | not started |
+| 34 | Time/measurement/graphs redesign | B | **implemented and validated; ready to merge Branch B** |
 | 35 | Goal consolidation + workload cap | C | not started |
 | 29 | Adaptive "Start Today's Lesson" tile | C | not started |
 | 36 | Scheduling telemetry + analytics | D | not started |
@@ -65,13 +65,12 @@ Capstone. Depends on nearly everything above (#25-#29, #30-#34, #35).
 session). They remain open on GitHub despite being merged. If you want them closed, do it manually or
 explicitly ask Claude to close them in a future session.
 
-**Active branch:** `feature/grade3-curriculum-redesign` (ahead of `origin/feature/grade3-curriculum-redesign`).
-**Active issue:** #34 — time, measurement, and graph interpretation redesign.
+**Active branch:** `feature/grade3-curriculum-redesign` (Branch B complete and ready to publish/merge).
+**Active issue:** Branch B integration and merge, then #35 — goal consolidation and workload cap.
 **Next concrete step:**
-1. Read issue #34 and map its requirements to the existing time, measurement, graph, and line-plot items.
-2. Add structured representations, misconception feedback, and distinct mastery evidence without
-   changing legacy event reconstruction.
-3. Add regression and built-app browser coverage, then run the normal validation gates.
+1. Commit #34, publish Branch B, open/merge its pull request into `main`, and verify deployment.
+2. Close the merged Branch B issues and re-check the live issue queue.
+3. Start Branch C with #35, followed by the adaptive lesson tile in #29.
 
 Issue #30 validation completed on 2026-07-15: `npm run ci` (73 files / 1,279 tests),
 `npm run test:e2e` (desktop, mobile, iPad, missing-side, comparison, and update flows), and
@@ -88,6 +87,10 @@ built app), and `python tools/generate_code_maps.py` all passed.
 Issue #33 validation completed on 2026-07-15: `npm run ci` (76 files / 1,317 tests),
 `npm run test:e2e` (including phone `84 ÷ 3` decomposition and iPad sharing-model choice in the real
 built app), and `python tools/generate_code_maps.py` all passed.
+
+Issue #34 validation completed on 2026-07-15: `npm run ci` (77 files / 1,327 tests),
+`npm run test:e2e` (including real scaled bar graph, fractional line plot, cross-hour time line, and
+two-step tape-diagram journeys), and `python tools/generate_code_maps.py` all passed.
 
 ## Known gaps / follow-ups (not blocking, revisit if time allows)
 

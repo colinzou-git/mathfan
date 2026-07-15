@@ -19,6 +19,7 @@ export function detectMistakes(
   item: PracticeItem,
   studentAnswer: string | number,
 ): string[] {
+  if (item.measurementSpec) return detectMeasurement(item, studentAnswer);
   switch (item.itemType) {
     case 'multiplication_fact':
     case 'unknown_factor':
@@ -46,6 +47,25 @@ export function detectMistakes(
     default:
       return [];
   }
+}
+
+function detectMeasurement(item: PracticeItem, raw: string | number): string[] {
+  const spec = item.measurementSpec!, answer = Number(raw), correct = Number(item.answer);
+  if (!Number.isFinite(answer) || answer === correct) return [];
+  const patterns: string[] = [];
+  if (spec.kind === 'elapsed_time') {
+    if (answer === Math.abs(spec.end.minute - spec.start.minute)) patterns.push('measurement:elapsed_subtracted_clock_digits');
+    if (answer === spec.end.minute) patterns.push('measurement:elapsed_copied_end_minutes');
+    if (spec.crossesHour && answer === spec.end.minute - spec.start.minute) patterns.push('measurement:elapsed_ignored_hour_crossing');
+    if (answer === spec.durationMinutes + 1) patterns.push('measurement:elapsed_counted_endpoints');
+  }
+  if (spec.kind === 'bar_graph' && spec.requestedIndex !== undefined) {
+    const value = spec.values[spec.requestedIndex];
+    if (answer === value / spec.scale) patterns.push('measurement:bar_height_read_without_scale');
+    if (spec.scale !== 1 && answer * spec.scale === value) patterns.push('measurement:graph_scale_ignored');
+  }
+  if (spec.kind === 'line_plot' && spec.denominator > 1 && answer === correct * spec.denominator) patterns.push('measurement:line_plot_ticks_vs_intervals');
+  return [...new Set(patterns)];
 }
 
 const ARITHMETIC_MISCONCEPTIONS: ArithmeticMisconceptionCode[] = [

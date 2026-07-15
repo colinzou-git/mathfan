@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-15T06:42:06.832824+00:00",
+  "generated_at": "2026-07-15T06:58:50.683252+00:00",
   "repo_root": "/home/ubuntu/mathfan",
   "package": {
     "name": "mathfan",
@@ -421,9 +421,9 @@
     {
       "path": "PROGRESS.md",
       "ext": ".md",
-      "bytes": 7633,
-      "lines": 116,
-      "sha1": "77cc997ccbf0",
+      "bytes": 7925,
+      "lines": 120,
+      "sha1": "90e7a6c97e20",
       "imports": [],
       "exports": [],
       "functions": [],
@@ -570,9 +570,9 @@
     {
       "path": "scripts/e2e_mathfan.py",
       "ext": ".py",
-      "bytes": 25688,
-      "lines": 542,
-      "sha1": "8995c08837d7",
+      "bytes": 31085,
+      "lines": 644,
+      "sha1": "86c77464d175",
       "imports": [
         "__future__",
         "json",
@@ -593,18 +593,22 @@
         "desktop_student_journey",
         "division_decomposition_lesson",
         "division_model_choice_lesson",
+        "elapsed_cross_hour_lesson",
         "expect_dashboard_attempt_stats",
         "fraction_equivalence_visual_lesson",
         "fraction_same_numerator_lesson",
+        "fractional_line_plot_lesson",
         "main",
         "open_mastery_skill",
         "responsive_navigation",
         "run_practice_journey",
         "run_scenario",
+        "scaled_bar_graph_lesson",
         "set_one_question_sessions",
         "set_practice_preferences_and_verify_persistence",
         "standalone_pwa_share_flow",
         "subtraction_across_zero_lesson",
+        "two_step_tape_lesson",
         "verify_local_user_data_exports"
       ],
       "functions": [
@@ -615,18 +619,22 @@
         "desktop_student_journey",
         "division_decomposition_lesson",
         "division_model_choice_lesson",
+        "elapsed_cross_hour_lesson",
         "expect_dashboard_attempt_stats",
         "fraction_equivalence_visual_lesson",
         "fraction_same_numerator_lesson",
+        "fractional_line_plot_lesson",
         "main",
         "open_mastery_skill",
         "responsive_navigation",
         "run_practice_journey",
         "run_scenario",
+        "scaled_bar_graph_lesson",
         "set_one_question_sessions",
         "set_practice_preferences_and_verify_persistence",
         "standalone_pwa_share_flow",
         "subtraction_across_zero_lesson",
+        "two_step_tape_lesson",
         "verify_local_user_data_exports"
       ],
       "classes": [],
@@ -1306,9 +1314,9 @@
     {
       "path": "src/features/adaptive/candidatePools.ts",
       "ext": ".ts",
-      "bytes": 6288,
-      "lines": 150,
-      "sha1": "7bd6feb98751",
+      "bytes": 7106,
+      "lines": 164,
+      "sha1": "aa62f9a00860",
       "imports": [
         "../../types/math",
         "../curriculum/numberTheoryItems",
@@ -1318,7 +1326,8 @@
       ],
       "exports": [
         "buildFactorCandidates",
-        "buildWordProblemCandidates"
+        "buildWordProblemCandidates",
+        "selectSchemaBalancedItems"
       ],
       "functions": [
         "add",
@@ -1327,7 +1336,8 @@
         "buildWordProblemCandidates",
         "factorMax",
         "factorsHi",
-        "inRange"
+        "inRange",
+        "selectSchemaBalancedItems"
       ],
       "classes": [],
       "interfaces": [],
@@ -1336,7 +1346,7 @@
       "hooks": [],
       "css_classes": [],
       "json_keys": [],
-      "purpose": "Exports reusable code: buildFactorCandidates, buildWordProblemCandidates.",
+      "purpose": "Exports reusable code: buildFactorCandidates, buildWordProblemCandidates, selectSchemaBalancedItems.",
       "too_large": false,
       "read_error": null
     },
@@ -2036,11 +2046,39 @@
       "read_error": null
     },
     {
+      "path": "src/features/curriculum/language.ts",
+      "ext": ".ts",
+      "bytes": 361,
+      "lines": 4,
+      "sha1": "4743ee575f44",
+      "imports": [],
+      "exports": [
+        "articleFor",
+        "formatQuantity",
+        "pluralize"
+      ],
+      "functions": [
+        "articleFor",
+        "formatQuantity",
+        "pluralize"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Curriculum module: item definitions, skill mappings, or content utilities.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/features/curriculum/makeItemFromId.ts",
       "ext": ".ts",
-      "bytes": 9864,
-      "lines": 220,
-      "sha1": "55f0127e7ddb",
+      "bytes": 11995,
+      "lines": 244,
+      "sha1": "bf336f1418d7",
       "imports": [
         "../../types/math",
         "./areaItems",
@@ -2050,6 +2088,7 @@
         "./fractionItems",
         "./geometryItems",
         "./measurementItems",
+        "./measurementTypes",
         "./mulPropertiesItems",
         "./multiplicationItems",
         "./numberTheoryItems",
@@ -2079,16 +2118,22 @@
     {
       "path": "src/features/curriculum/measurementItems.ts",
       "ext": ".ts",
-      "bytes": 5374,
-      "lines": 142,
-      "sha1": "f131c78a161e",
+      "bytes": 10901,
+      "lines": 209,
+      "sha1": "523098aed976",
       "imports": [
-        "../../types/math"
+        "../../types/math",
+        "./language",
+        "./measurementTypes",
+        "./regrouping"
       ],
       "exports": [
         "bargId",
+        "buildElapsedTimeJumps",
         "clckId",
+        "elapsedMinutes",
         "etimeId",
+        "generateMeasurementItem",
         "lplotId",
         "makeBarGraphItem",
         "makeElapsedTimeItem",
@@ -2096,20 +2141,27 @@
         "makeMeasurementWordProblem",
         "makeTimeItem",
         "MeasSchema",
+        "minutesSinceMidnight",
         "mwrdId"
       ],
       "functions": [
         "bargId",
+        "buildElapsedTimeJumps",
         "clckId",
+        "elapsedMinutes",
         "etimeId",
         "fmtTime",
+        "generateMeasurementItem",
         "lplotId",
         "makeBarGraphItem",
         "makeElapsedTimeItem",
         "makeLinePlotItem",
         "makeMeasurementWordProblem",
         "makeTimeItem",
+        "measurementCardKey",
+        "minutesSinceMidnight",
         "mwrdId",
+        "n",
         "pad",
         "wrapH",
         "wrapM"
@@ -2124,6 +2176,39 @@
       "css_classes": [],
       "json_keys": [],
       "purpose": "Practice item definitions and ID generators for a math curriculum topic.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/curriculum/measurementTypes.ts",
+      "ext": ".ts",
+      "bytes": 1352,
+      "lines": 16,
+      "sha1": "bc0f6ab87673",
+      "imports": [],
+      "exports": [
+        "BarGraphQuestionKind",
+        "ClockTime",
+        "LinePlotQuestionKind",
+        "MeasurementDataSpec",
+        "MeasurementSchema"
+      ],
+      "functions": [],
+      "classes": [],
+      "interfaces": [
+        "ClockTime"
+      ],
+      "types": [
+        "BarGraphQuestionKind",
+        "LinePlotQuestionKind",
+        "MeasurementDataSpec",
+        "MeasurementSchema"
+      ],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Curriculum module: item definitions, skill mappings, or content utilities.",
       "too_large": false,
       "read_error": null
     },
@@ -2388,11 +2473,12 @@
     {
       "path": "src/features/curriculum/twoStepItems.ts",
       "ext": ".ts",
-      "bytes": 2124,
-      "lines": 58,
-      "sha1": "38bfdc532d21",
+      "bytes": 3203,
+      "lines": 76,
+      "sha1": "bc76f4696317",
       "imports": [
-        "../../types/math"
+        "../../types/math",
+        "./wordProblemItems"
       ],
       "exports": [
         "makeTwoStepWordProblem",
@@ -2420,9 +2506,9 @@
     {
       "path": "src/features/curriculum/wordProblemItems.ts",
       "ext": ".ts",
-      "bytes": 3399,
-      "lines": 95,
-      "sha1": "3c25644d277b",
+      "bytes": 4977,
+      "lines": 110,
+      "sha1": "48b3610a15dd",
       "imports": [
         "../../types/math",
         "./divisionItems"
@@ -2431,7 +2517,10 @@
         "generateWordProblemItems",
         "makeWordProblem",
         "Schema",
-        "wordId"
+        "UnknownPosition",
+        "wordId",
+        "WordProblemOperation",
+        "WordProblemSpec"
       ],
       "functions": [
         "factorMax",
@@ -2441,9 +2530,13 @@
         "wordId"
       ],
       "classes": [],
-      "interfaces": [],
+      "interfaces": [
+        "WordProblemSpec"
+      ],
       "types": [
-        "Schema"
+        "Schema",
+        "UnknownPosition",
+        "WordProblemOperation"
       ],
       "components": [],
       "hooks": [],
@@ -3641,9 +3734,9 @@
     {
       "path": "src/features/mastery/misconceptionEngine.ts",
       "ext": ".ts",
-      "bytes": 13471,
-      "lines": 326,
-      "sha1": "6cc6b65a4b27",
+      "bytes": 14845,
+      "lines": 346,
+      "sha1": "a5d7cc5171a4",
       "imports": [
         "../../types/math",
         "../curriculum/regrouping",
@@ -3660,6 +3753,7 @@
         "detectFractionCompare",
         "detectFractionEquivalent",
         "detectFractionNumberLine",
+        "detectMeasurement",
         "detectMistakes",
         "detectMultiplication",
         "detectPerimeterRectangle",
@@ -3772,9 +3866,9 @@
     {
       "path": "src/features/mastery/skillMasteryEngine.ts",
       "ext": ".ts",
-      "bytes": 6989,
-      "lines": 174,
-      "sha1": "541d5431c857",
+      "bytes": 7199,
+      "lines": 175,
+      "sha1": "6133b857da17",
       "imports": [
         "../../types/math",
         "../learning/learningEvents",
@@ -3810,9 +3904,9 @@
     {
       "path": "src/features/mastery/skillPracticePlanner.ts",
       "ext": ".ts",
-      "bytes": 35490,
-      "lines": 874,
-      "sha1": "1934c726a444",
+      "bytes": 36104,
+      "lines": 880,
+      "sha1": "d94b54105938",
       "imports": [
         "../../types/math",
         "../curriculum/areaItems",
@@ -3864,6 +3958,7 @@
         "mulMultipleOf10ItemIds",
         "planFractionFocusSequence",
         "planPracticeForSkill",
+        "rng",
         "roundNearest10or100ItemIds",
         "scaledBarGraphItemIds",
         "sub2DigitBorrowingItemIds",
@@ -4335,9 +4430,9 @@
     {
       "path": "src/features/practice/hintEngine.ts",
       "ext": ".ts",
-      "bytes": 23768,
-      "lines": 455,
-      "sha1": "f0d91db8cd67",
+      "bytes": 25396,
+      "lines": 476,
+      "sha1": "c6f701882d71",
       "imports": [
         "../../types/math"
       ],
@@ -4359,6 +4454,7 @@
         "genericWordHint",
         "getHint",
         "hint",
+        "measurementDataHint",
         "measurementWordHint",
         "mulHint",
         "perimeterUnknownSideHint",
@@ -5868,6 +5964,36 @@
       "read_error": null
     },
     {
+      "path": "src/features/visuals/ElapsedTimeLineModel.tsx",
+      "ext": ".tsx",
+      "bytes": 1051,
+      "lines": 15,
+      "sha1": "1487a6f9e2c1",
+      "imports": [
+        "../curriculum/measurementItems",
+        "../curriculum/measurementTypes"
+      ],
+      "exports": [
+        "ElapsedTimeLineModel"
+      ],
+      "functions": [
+        "ElapsedTimeLineModel",
+        "fmt"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [
+        "Spec"
+      ],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Reusable SVG visual model components (area grids, shape diagrams, fraction bars, arrays).",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/features/visuals/EqualGroupsModel.tsx",
       "ext": ".tsx",
       "bytes": 2212,
@@ -6065,6 +6191,34 @@
       "read_error": null
     },
     {
+      "path": "src/features/visuals/LinePlotModel.tsx",
+      "ext": ".tsx",
+      "bytes": 1205,
+      "lines": 17,
+      "sha1": "6138ac85f271",
+      "imports": [
+        "../curriculum/measurementTypes"
+      ],
+      "exports": [
+        "LinePlotModel"
+      ],
+      "functions": [
+        "LinePlotModel"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [
+        "Spec"
+      ],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Reusable SVG visual model components (area grids, shape diagrams, fraction bars, arrays).",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/features/visuals/MathPrompt.tsx",
       "ext": ".tsx",
       "bytes": 1177,
@@ -6206,6 +6360,34 @@
       "read_error": null
     },
     {
+      "path": "src/features/visuals/ScaledBarGraphModel.tsx",
+      "ext": ".tsx",
+      "bytes": 1525,
+      "lines": 16,
+      "sha1": "aa471868f323",
+      "imports": [
+        "../curriculum/measurementTypes"
+      ],
+      "exports": [
+        "ScaledBarGraphModel"
+      ],
+      "functions": [
+        "ScaledBarGraphModel"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [
+        "Spec"
+      ],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Reusable SVG visual model components (area grids, shape diagrams, fraction bars, arrays).",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/features/visuals/ShapeModel.tsx",
       "ext": ".tsx",
       "bytes": 4903,
@@ -6269,6 +6451,32 @@
       "read_error": null
     },
     {
+      "path": "src/features/visuals/TapeDiagramModel.tsx",
+      "ext": ".tsx",
+      "bytes": 869,
+      "lines": 13,
+      "sha1": "b6011e0422c4",
+      "imports": [
+        "../curriculum/wordProblemItems"
+      ],
+      "exports": [
+        "TapeDiagramModel"
+      ],
+      "functions": [
+        "TapeDiagramModel"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Reusable SVG visual model components (area grids, shape diagrams, fraction bars, arrays).",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/features/visuals/types.ts",
       "ext": ".ts",
       "bytes": 989,
@@ -6300,9 +6508,9 @@
     {
       "path": "src/features/visuals/VisualModel.tsx",
       "ext": ".tsx",
-      "bytes": 9655,
-      "lines": 236,
-      "sha1": "23904cb1041b",
+      "bytes": 10445,
+      "lines": 248,
+      "sha1": "6985d33fb638",
       "imports": [
         "../../types/math",
         "./AreaGrid",
@@ -6311,17 +6519,21 @@
         "./ClockModel",
         "./DivisionArrayModel",
         "./DivisionDecompositionModel",
+        "./ElapsedTimeLineModel",
         "./EqualGroupsModel",
         "./FractionBar",
         "./FractionComparisonModel",
         "./FractionEquivalenceModel",
         "./FractionNumberLine",
+        "./LinePlotModel",
         "./PerimeterPathModel",
         "./PlaceValueRegroupModel",
         "./RectangleMeasureModel",
         "./RectilinearAreaModel",
+        "./ScaledBarGraphModel",
         "./ShapeModel",
         "./SharingGroupingModel",
+        "./TapeDiagramModel",
         "./visualModelUtils"
       ],
       "exports": [
@@ -6347,9 +6559,9 @@
     {
       "path": "src/features/visuals/visualModelUtils.ts",
       "ext": ".ts",
-      "bytes": 3273,
-      "lines": 86,
-      "sha1": "72d67b1291df",
+      "bytes": 3436,
+      "lines": 88,
+      "sha1": "b98444325ddd",
       "imports": [
         "../../types/math",
         "./ShapeModel"
@@ -7765,6 +7977,41 @@
       "read_error": null
     },
     {
+      "path": "src/tests/measurementRedesign.test.tsx",
+      "ext": ".tsx",
+      "bytes": 6111,
+      "lines": 110,
+      "sha1": "59e794f35ea1",
+      "imports": [
+        "../features/adaptive/candidatePools",
+        "../features/curriculum/language",
+        "../features/curriculum/makeItemFromId",
+        "../features/curriculum/measurementItems",
+        "../features/curriculum/twoStepItems",
+        "../features/curriculum/wordProblemItems",
+        "../features/mastery/misconceptionEngine",
+        "../features/mastery/skillPracticePlanner",
+        "../features/practice/hintEngine",
+        "../features/scheduler/cardModel",
+        "../features/visuals/VisualModel",
+        "../utils/rng",
+        "@testing-library/react",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/tests/misconceptionEngine.test.ts",
       "ext": ".ts",
       "bytes": 13069,
@@ -8685,12 +8932,14 @@
     {
       "path": "src/types/math.ts",
       "ext": ".ts",
-      "bytes": 12104,
-      "lines": 367,
-      "sha1": "7495a498747d",
+      "bytes": 12524,
+      "lines": 373,
+      "sha1": "dca53f52a906",
       "imports": [
         "../features/curriculum/divisionItems",
+        "../features/curriculum/measurementTypes",
         "../features/curriculum/regrouping",
+        "../features/curriculum/wordProblemItems",
         "../features/fractions/types",
         "../features/visuals/types"
       ],

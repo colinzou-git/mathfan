@@ -27,6 +27,7 @@ export function getHint(item: PracticeItem, wrongAttempts: number): HintResult |
   const b = factB ?? 0;
 
   if (item.divisionSpec) return structuredDivisionHint(item, wrongAttempts);
+  if (item.measurementSpec && item.measurementSpec.kind !== 'measurement_context') return measurementDataHint(item, wrongAttempts);
 
   if (wrongAttempts >= 4) {
     return {
@@ -87,6 +88,26 @@ export function getHint(item: PracticeItem, wrongAttempts: number): HintResult |
     default:
       return genericHint(wrongAttempts);
   }
+}
+
+function measurementDataHint(item: PracticeItem, attempt: number): HintResult {
+  const spec = item.measurementSpec!;
+  if (spec.kind === 'elapsed_time') {
+    if (attempt === 1) return hint(`Known: start at ${spec.start.hour}:${String(spec.start.minute).padStart(2, '0')}; unknown: minutes until the end time.`);
+    if (attempt === 2) return hint('Use the time line and make a jump to the next friendly hour.');
+    if (attempt === 3) return hint(`First jump ${60 - spec.start.minute} minutes to the next hour, then continue to ${spec.end.hour}:${String(spec.end.minute).padStart(2, '0')}.`);
+    return hint('Add the jump lengths; do not subtract the clock digits as ordinary numbers.');
+  }
+  if (spec.kind === 'bar_graph') {
+    if (attempt === 1) return hint('Find the requested category and trace its bar to the vertical scale.');
+    if (attempt === 2) return hint(`Each grid step represents ${spec.scale}, so count scale steps rather than just bar height.`);
+    return hint('Read the needed bar values first, then perform the comparison or total asked for.');
+  }
+  if (spec.kind === 'line_plot') {
+    if (attempt === 1) return hint(`Each X is one observation; the axis is divided into ${spec.denominator === 1 ? 'whole units' : spec.denominator === 2 ? 'halves' : 'quarters'}.`);
+    return hint('Use the tick labels for measurement values and count the X marks separately.');
+  }
+  return hint('Identify the known quantities, the unit, and the operation the question asks for.');
 }
 
 function structuredDivisionHint(item: PracticeItem, attempt: number): HintResult {

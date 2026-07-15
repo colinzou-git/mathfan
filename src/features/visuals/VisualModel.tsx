@@ -34,6 +34,10 @@ import { PlaceValueRegroupModel } from './PlaceValueRegroupModel';
 import { DivisionArrayModel } from './DivisionArrayModel';
 import { SharingGroupingModel } from './SharingGroupingModel';
 import { DivisionDecompositionModel } from './DivisionDecompositionModel';
+import { ScaledBarGraphModel } from './ScaledBarGraphModel';
+import { LinePlotModel } from './LinePlotModel';
+import { ElapsedTimeLineModel } from './ElapsedTimeLineModel';
+import { TapeDiagramModel } from './TapeDiagramModel';
 
 interface Props {
   item: PracticeItem;
@@ -62,6 +66,14 @@ export function VisualModel({ item, color, revealAnswer = false }: Props) {
     if (spec.context) return <SharingGroupingModel spec={spec} revealAnswer={revealAnswer} />;
     return <DivisionArrayModel spec={spec} revealAnswer={revealAnswer} />;
   }
+
+  if (item.measurementSpec) {
+    if (item.measurementSpec.kind === 'bar_graph') return <ScaledBarGraphModel spec={item.measurementSpec} revealAnswer={revealAnswer} />;
+    if (item.measurementSpec.kind === 'line_plot') return <LinePlotModel spec={item.measurementSpec} />;
+    if (item.measurementSpec.kind === 'elapsed_time') return <ElapsedTimeLineModel spec={item.measurementSpec} revealAnswer={revealAnswer} />;
+  }
+
+  if (item.wordProblemSpec?.suggestedModel === 'bar') return <TapeDiagramModel spec={item.wordProblemSpec} revealAnswer={revealAnswer} />;
 
   if (item.fractionSpec) {
     const spec = item.fractionSpec;

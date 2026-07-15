@@ -25,6 +25,20 @@ const TARGET_CAP_FACTOR = 5;
 
 const WORD_MUL_SCHEMAS: Schema[] = ['eg', 'ar', 'cmp'];
 
+export function selectSchemaBalancedItems(
+  candidates: PracticeItem[], count: number, quotas: Record<string, number>, rng: () => number,
+): PracticeItem[] {
+  const shuffled = candidates.map(item => ({ item, order: rng() })).sort((a, b) => a.order - b.order).map(entry => entry.item);
+  const selected: PracticeItem[] = [], seen = new Set<string>();
+  for (const [schema, quota] of Object.entries(quotas)) {
+    for (const item of shuffled.filter(candidate => (candidate.schemaId ?? candidate.tags.find(tag => tag in quotas)) === schema).slice(0, quota)) {
+      if (!seen.has(item.id) && selected.length < count) { selected.push(item); seen.add(item.id); }
+    }
+  }
+  for (const item of shuffled) if (!seen.has(item.id) && selected.length < count) { selected.push(item); seen.add(item.id); }
+  return selected;
+}
+
 function factorMax(grade: GradeLevel): number {
   return grade === 3 ? 10 : 12;
 }
