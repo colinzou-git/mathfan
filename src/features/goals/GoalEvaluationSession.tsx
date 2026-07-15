@@ -32,6 +32,7 @@ import {
   recordGoalEvaluationAnswer,
 } from './goalEvaluationPersistence';
 import type { GoalEvaluation } from './types';
+import { buildSchedulingTelemetry } from '../learning/schedulingTelemetry';
 
 interface Props {
   studentId: string;
@@ -308,6 +309,13 @@ export function GoalEvaluationSession({ studentId, onCancel, onReturnToGoals, on
         reviewGrade: pending.reviewGrade,
         factStatusBefore: existing?.masteryLevel ?? 'new',
         factStatusAfter: updatedState.masteryLevel,
+        schedulingTelemetry: buildSchedulingTelemetry({
+          item: pending.item,
+          stateBefore: existing ?? createInitialState(studentId, pending.item), stateAfter: updatedState,
+          response: { reviewGrade: pending.reviewGrade, ratingReason: pending.ratingReason, responsePolicy: pending.responsePolicy, fluencyBand: pending.fluencyBand, hintUsed: false, isRetry: false, schedulingEligible: true },
+          selection: { origin: 'goal', rationaleCodes: ['active_goal', 'diagnostic_coverage'] },
+          presentationIndex: 1, attemptNo: 1, now: nowDate,
+        }),
         createdAt: answeredAt,
       };
       const attempt: AttemptLog = {

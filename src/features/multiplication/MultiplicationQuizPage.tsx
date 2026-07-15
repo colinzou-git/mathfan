@@ -6,7 +6,7 @@ import type {
   QuizSession,
   QuizQuestion,
 } from './types';
-import type { SessionConfig, StudentSettings } from '../../types/math';
+import type { PracticeItem, SessionConfig, StudentSettings } from '../../types/math';
 import { speakProblem, speakFeedback, stopSpeech } from '../audio/speech';
 import { parseFactKey, createInitialFactStats } from './multiplicationFacts';
 import { MultiplicationMasteryGrid } from './MultiplicationMasteryGrid';
@@ -17,6 +17,7 @@ import { db } from '../../db/dexie';
 import { generateId } from '../../utils/id';
 import { recordQuizFirstAttempt, recordQuizRetry, finalizeQuizSession } from '../learning/recordAnswer';
 import { appNow } from '../time/clock';
+import { buildSchedulingTelemetry } from '../learning/schedulingTelemetry';
 
 interface Props {
   studentId: string;
@@ -436,6 +437,11 @@ export function MultiplicationQuizPage({ studentId, settings, onDone, onStartPra
     // Compute timing before branching so retry events also get accurate latency.
     const responseTimeMs = Date.now() - questionStartTime.current;
     const answeredAt = appNow().toISOString();
+    const quizItem: PracticeItem = {
+      id: `MUL_${q.factKey}`, skillId: 'g3-mul-facts', itemType: 'multiplication_fact',
+      prompt: `${q.left} × ${q.right} = ?`, answer: q.answer, tags: ['quiz'], difficulty: 0.2,
+      factA: q.left, factB: q.right, schemaId: 'multiplication_fact',
+    };
 
     if (phase === 'retry') {
       // Record retry as a MathAnswerEvent with isRetry=true.
@@ -456,6 +462,11 @@ export function MultiplicationQuizPage({ studentId, settings, onDone, onStartPra
         latencyMs: responseTimeMs,
         factStatusBefore: currentStatus,
         factStatusAfter: currentStatus,
+        schedulingTelemetry: buildSchedulingTelemetry({
+          item: quizItem,
+          response: { reviewGrade: isCorrect ? 'good' : 'again', hintUsed: false, isRetry: true, schedulingEligible: false },
+          selection: { origin: 'quiz', rationaleCodes: ['quiz_retry'] }, presentationIndex: 1, attemptNo: 2, now: new Date(answeredAt),
+        }),
         createdAt: answeredAt,
       }).catch(console.warn);
 
@@ -520,6 +531,11 @@ export function MultiplicationQuizPage({ studentId, settings, onDone, onStartPra
       latencyMs: responseTimeMs,
       factStatusBefore: prevState,
       factStatusAfter: updated.masteryState,
+      schedulingTelemetry: buildSchedulingTelemetry({
+        item: quizItem,
+        response: { reviewGrade: isCorrect ? 'good' : 'again', hintUsed: false, isRetry: false, schedulingEligible: false },
+        selection: { origin: 'quiz', rationaleCodes: ['quiz_recommendation'] }, presentationIndex: 1, attemptNo: 1, now: new Date(answeredAt),
+      }),
       createdAt: answeredAt,
     }).catch(console.warn);
 

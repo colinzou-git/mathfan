@@ -1,6 +1,6 @@
 # Code Map Overview
 
-Generated: 2026-07-15 07:57:33 UTC
+Generated: 2026-07-15 08:32:24 UTC
 
 Repo root: `/home/ubuntu/mathfan`
 Output folder: `/home/ubuntu/mathfan/docs/code-map`
@@ -14,9 +14,9 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 - Package name: `mathfan`
 - Version: `1.2.0`
 - Module type: `module`
-- Scanned files: **269**
-- Scanned lines: **49,708**
-- Scanned bytes: **2,052,030**
+- Scanned files: **274**
+- Scanned lines: **50,170**
+- Scanned bytes: **2,081,662**
 
 ## NPM scripts
 
@@ -72,7 +72,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 
 | File | Lines | Likely purpose | Key symbols |
 | --- | --- | --- | --- |
-| src/App.tsx | 362 | Top-level React app shell: routes/screens, global state, and feature wiring. | App, handleQuizDone, handleSessionDone, pickOperation, runBootstrap, selectProfile, startPractice, updateProfile |
+| src/App.tsx | 363 | Top-level React app shell: routes/screens, global state, and feature wiring. | App, handleQuizDone, handleSessionDone, pickOperation, runBootstrap, selectProfile, startPractice, updateProfile |
 | src/features/sync/SyncWidget.tsx | 156 | Cloud sync/auth/data transfer logic. | GoogleIcon, SyncWidget, friendlyError, GoogleIcon, initials, SyncWidget, timeSince |
 | src/features/sync/snapshot.ts | 237 | Local persistence/database layer. | AppSnapshot, remoteHasNewerUpdatedAt, validateSnapshot, validTimeMs, buildSnapshot, mergeSnapshot, validateSnapshot |
 | vite.config.ts | 82 | Vite build/PWA configuration. | buildInfoPlugin |
@@ -83,13 +83,13 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 | src/features/sync/learnerKeyMerge.ts | 34 | Cloud sync/auth/data transfer logic. | resolveLearnerKeyDuplicate, resolveLearnerKeyDuplicate |
 | src/features/sync/timeUtil.ts | 13 | Cloud sync/auth/data transfer logic. | remoteHasNewerUpdatedAt, validTimeMs, remoteHasNewerUpdatedAt, validTimeMs |
 | src/features/goals/GoalsPage.tsx | 1056 | React UI component file: ConfirmDialog, EmptyState, GoalCard, GoalWizard. | ConfirmDialog, EmptyState, GoalCard, GoalWizard, ProgressBar, SummaryCard, GoalsPage, activeLearningDays |
-| src/features/multiplication/MultiplicationQuizPage.tsx | 845 | Local persistence/database layer. | FactChip, SetupScreen, StatBox, SummaryScreen, MultiplicationQuizPage, FactChip, MultiplicationQuizPage, recommendedPracticeConfig |
+| src/features/multiplication/MultiplicationQuizPage.tsx | 861 | Local persistence/database layer. | FactChip, SetupScreen, StatBox, SummaryScreen, MultiplicationQuizPage, FactChip, MultiplicationQuizPage, recommendedPracticeConfig |
 | src/features/settings/SettingsPage.tsx | 828 | Student/app settings UI or persistence. | Section, SyncRow, ToggleRow, SettingsPage, applyUpdate, buildId, buildLabel, checkForUpdates |
 | src/features/dashboard/StudentDashboard.tsx | 569 | Dashboard/profile setup/student navigation feature. | Chip, PracticeOp, StudentDashboard, Chip, completeSkillSummaries, handleStartReview, openExtra, startAdaptiveLesson |
 | src/features/practice/PracticeScreen.tsx | 556 | Local persistence/database layer. | KbChip, PracticeScreen, KbChip, onKey, PracticeScreen, run, submitChoice |
 | src/features/stats/FactStatsTable.tsx | 407 | Local persistence/database layer. | SortBtn, SummaryStat, FactStatsTable, bucketOf, FactStatsTable, idOf, SortBtn, startPractice |
 | src/features/mastery/Grade3MasteryMapPage.tsx | 366 | Grade 3 mastery map UI: skill display, detail panels, and parent action cards. | LegendItem, Grade3MasteryMapPage, buildCompleteSummaries, computeUnmetPrereqNames, Grade3MasteryMapPage, LegendItem |
-| src/features/stats/StatsPage.tsx | 246 | Progress/statistics screens or calculations. | SummaryPill, StatsPage, buildRange, daysBetween, StatsPage, SummaryPill, toYMD |
+| src/features/stats/StatsPage.tsx | 273 | Progress/statistics screens or calculations. | SchedulingDiagnostics, SummaryPill, StatsPage, buildRange, daysBetween, SchedulingDiagnostics, StatsPage, SummaryPill |
 | src/features/stats/DrillHistory.tsx | 238 | Progress/statistics screens or calculations. | AttemptDetail, MetricChip, Pill, DrillHistory, AttemptDetail, dateLabel, DrillHistory, durationLabel |
 | src/features/visuals/DraggableEqualGroups.tsx | 230 | Reusable SVG visual model components (area grids, shape diagrams, fraction bars, arrays). | DraggableObject, DropZone, DraggableEqualGroups, checkEqualGroups, DraggableEqualGroups, DraggableObject, DropZone, handleDragEnd |
 | src/features/stats/TodayAchievementDetail.tsx | 181 | Progress/statistics screens or calculations. | QuestionRow, TodayAchievementDetail, fmtSec, normalizeGroup, QuestionRow, TodayAchievementDetail |
@@ -98,8 +98,8 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 | src/features/stats/QuizStatsView.tsx | 135 | Progress/statistics screens or calculations. | FactGroup, QuizStatsView, avgSecStr, FactGroup, fmt, QuizStatsView |
 | src/features/stats/TodayAchievementSection.tsx | 125 | Progress/statistics screens or calculations. | AchievementTile, TodayAchievementSection, AchievementTile, TodayAchievementSection |
 | src/features/mastery/skillPracticePlanner.ts | 880 | Grade 3 skill practice planner: maps skill IDs to SessionConfig for the mastery map. | buildDivisionFocusSequence, buildFocusSequence, buildRegroupingFocusSequence, FocusSequence, FocusSequenceContext, planFractionFocusSequence, PlanOptions, planPracticeForSkill |
-| src/features/goals/GoalEvaluationSession.tsx | 643 | Exports reusable code: GoalEvaluationSession. | GoalEvaluationSession, buildNewLearningCandidates, buildReviewFindings, buildUpdatedState, confirmCancel, continueNext, evaluationArgs, GoalEvaluationSession |
-| src/features/practice/usePracticeSession.ts | 628 | Local persistence/database layer. | usePracticeSession, CorrectResult, LastSessionSummary, SessionState, usePracticeSession, getStaticItem, usePracticeSession |
+| src/features/practice/usePracticeSession.ts | 656 | Local persistence/database layer. | usePracticeSession, CorrectResult, LastSessionSummary, SessionState, usePracticeSession, getStaticItem, usePracticeSession |
+| src/features/goals/GoalEvaluationSession.tsx | 651 | Exports reusable code: GoalEvaluationSession. | GoalEvaluationSession, buildNewLearningCandidates, buildReviewFindings, buildUpdatedState, confirmCancel, continueNext, evaluationArgs, GoalEvaluationSession |
 | src/features/curriculum/areaItems.ts | 609 | Practice item definitions and ID generators for a math curriculum topic. | apChoiceId, areaPerimCmpId, areaPerimCompareItemIds, areaPerimeterChoiceItemIds, AreaPerimeterChoiceKind, AreaPerimeterSchema, AreaPerimVariant, areaRectangleItemIds |
 | src/features/goals/goalEvaluationEngine.ts | 575 | Exports reusable code: ADAPTIVE_GOAL_EVALUATION_CONFIRMATION_COUNT, ADAPTIVE_GOAL_EVALUATION_HISTORICAL_PRIOR_CAP, ADAPTIVE_GOAL_EVALUATION_QUESTION_COUNT, AdaptiveGoalEvaluationArgs, AdaptiveGoalEvaluationItem. | ADAPTIVE_GOAL_EVALUATION_CONFIRMATION_COUNT, ADAPTIVE_GOAL_EVALUATION_HISTORICAL_PRIOR_CAP, ADAPTIVE_GOAL_EVALUATION_QUESTION_COUNT, AdaptiveGoalEvaluationArgs, AdaptiveGoalEvaluationItem, AdaptiveGoalEvaluationPhase, AdaptiveGoalEvaluationResponse, AdaptiveGoalEvaluationResult |
 
@@ -151,6 +151,9 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   │   ├── aiConfig.ts
 │   │   │   ├── gemini.ts
 │   │   │   └── TutorChat.tsx
+│   │   ├── analytics
+│   │   │   ├── learningQuality.ts
+│   │   │   └── schedulingCalibration.ts
 │   │   ├── audio
 │   │   │   ├── mathSpeech.ts
 │   │   │   └── speech.ts
@@ -204,8 +207,10 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   │   └── types.ts
 │   │   ├── learning
 │   │   │   ├── eventRebuild.ts
+│   │   │   ├── eventValidation.ts
 │   │   │   ├── learningEvents.ts
-│   │   │   └── recordAnswer.ts
+│   │   │   ├── recordAnswer.ts
+│   │   │   └── schedulingTelemetry.ts
 │   │   ├── learningPlan
 │   │   │   ├── dailyLessonPlanner.ts
 │   │   │   └── focusSkillSelector.ts
@@ -367,6 +372,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   ├── responsePolicy.test.ts
 │   │   ├── rng.test.ts
 │   │   ├── scheduler.test.ts
+│   │   ├── schedulingTelemetry.test.ts
 │   │   ├── sessionSchedulingGuard.test.ts
 │   │   ├── settingsDailyNewLimits.test.tsx
 │   │   ├── settingsExportUserData.test.tsx
@@ -482,7 +488,7 @@ Purpose: Top-level React app shell: routes/screens, global state, and feature wi
   58:     setRestoreState(grantPersisted ? 'checking' : 'idle');
   59:     const result = await bootstrapProfiles({
   60:       loadLocalProfiles: () => studentRepo.getAll(),
-... (301 more lines)
+... (302 more lines)
 ```
 
 ### `src/features/sync/SyncWidget.tsx`
@@ -1051,7 +1057,7 @@ Purpose: Local persistence/database layer.
    6:   QuizSession,
    7:   QuizQuestion,
    8: } from './types';
-   9: import type { SessionConfig, StudentSettings } from '../../types/math';
+   9: import type { PracticeItem, SessionConfig, StudentSettings } from '../../types/math';
   10: import { speakProblem, speakFeedback, stopSpeech } from '../audio/speech';
   11: import { parseFactKey, createInitialFactStats } from './multiplicationFacts';
   12: import { MultiplicationMasteryGrid } from './MultiplicationMasteryGrid';
@@ -1062,46 +1068,46 @@ Purpose: Local persistence/database layer.
   17: import { generateId } from '../../utils/id';
   18: import { recordQuizFirstAttempt, recordQuizRetry, finalizeQuizSession } from '../learning/recordAnswer';
   19: import { appNow } from '../time/clock';
-  20:
-  21: interface Props {
-  22:   studentId: string;
-  23:   settings: StudentSettings;
-  24:   onDone: () => void;
-  25:   onStartPractice?: (config: SessionConfig) => void;
-  26: }
-  27:
-  28: type Phase = 'setup' | 'loading' | 'active' | 'feedback' | 'retry' | 'saving' | 'summary';
-  29:
-  30: const QUIZ_LENGTHS = [10, 20, 30, 50];
-  31: const DEFAULT_LENGTH = 20;
-  32: const FEEDBACK_PAUSE_MS = 600; // visual pause after the answer speech finishes
-  33:
+  20: import { buildSchedulingTelemetry } from '../learning/schedulingTelemetry';
+  21:
+  22: interface Props {
+  23:   studentId: string;
+  24:   settings: StudentSettings;
+  25:   onDone: () => void;
+  26:   onStartPractice?: (config: SessionConfig) => void;
+  27: }
+  28:
+  29: type Phase = 'setup' | 'loading' | 'active' | 'feedback' | 'retry' | 'saving' | 'summary';
+  30:
+  31: const QUIZ_LENGTHS = [10, 20, 30, 50];
+  32: const DEFAULT_LENGTH = 20;
+  33: const FEEDBACK_PAUSE_MS = 600; // visual pause after the answer speech finishes
   34:
-  35: // ── Sub-components ─────────────────────────────────────────────────────────────
-  36:
-  37: function FactChip({ label, bg, text }: { label: string; bg: string; text: string }) {
-  38:   return (
-  39:     <span style={{ background: bg, color: text, borderRadius: '8px', padding: '4px 10px', fontSize: '14px', fontWeight: '600', display: 'inline-block', margin: '3px' }}>
-  40:       {label}
-  41:     </span>
-  42:   );
-  43: }
-  44:
-  45: function StatBox({ label, value, color = '#111827' }: { label: string; value: string; color?: string }) {
-  46:   return (
-  47:     <div style={{ background: '#f9fafb', borderRadius: '10px', padding: '12px', textAlign: 'center', flex: 1 }}>
-  48:       <div style={{ fontSize: '22px', fontWeight: 'bold', color }}>{value}</div>
-  49:       <div style={{ fontSize: '12px', color: '#9ca3af', marginTop: '2px' }}>{label}</div>
-  50:     </div>
-  51:   );
-  52: }
-  53:
-  54: // ── Setup screen ───────────────────────────────────────────────────────────────
-  55:
-  56: function SetupScreen({
-  57:   quizLength, onSelectLength, onStart, onBack,
-  58: }: {
-  59:   quizLength: number;
-  60:   onSelectLength: (n: number) => void;
-... (784 more lines)
+  35:
+  36: // ── Sub-components ─────────────────────────────────────────────────────────────
+  37:
+  38: function FactChip({ label, bg, text }: { label: string; bg: string; text: string }) {
+  39:   return (
+  40:     <span style={{ background: bg, color: text, borderRadius: '8px', padding: '4px 10px', fontSize: '14px', fontWeight: '600', display: 'inline-block', margin: '3px' }}>
+  41:       {label}
+  42:     </span>
+  43:   );
+  44: }
+  45:
+  46: function StatBox({ label, value, color = '#111827' }: { label: string; value: string; color?: string }) {
+  47:   return (
+  48:     <div style={{ background: '#f9fafb', borderRadius: '10px', padding: '12px', textAlign: 'center', flex: 1 }}>
+  49:       <div style={{ fontSize: '22px', fontWeight: 'bold', color }}>{value}</div>
+  50:       <div style={{ fontSize: '12px', color: '#9ca3af', marginTop: '2px' }}>{label}</div>
+  51:     </div>
+  52:   );
+  53: }
+  54:
+  55: // ── Setup screen ───────────────────────────────────────────────────────────────
+  56:
+  57: function SetupScreen({
+  58:   quizLength, onSelectLength, onStart, onBack,
+  59: }: {
+  60:   quizLength: number;
+... (800 more lines)
 ```

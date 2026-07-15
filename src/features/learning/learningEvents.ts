@@ -1,5 +1,6 @@
 import type { ReviewGrade, MasteryLevel, PracticeOrigin, GoalLearningKind } from '../../types/math';
 import type { MasteryState } from '../multiplication/types';
+import type { SchedulingTelemetry } from './schedulingTelemetry';
 import { db } from '../../db/dexie';
 
 export type MathEventMode = 'quiz' | 'practice' | 'diagnostic' | 'goal_evaluation';
@@ -58,6 +59,8 @@ export interface MathAnswerEvent {
   presentationIndex?: number;
   /** False when this presentation could not update long-term FSRS state — see SessionSchedulingGuard (issue #28). */
   schedulingEligible?: boolean;
+  /** Versioned, immutable context captured at selection/review time. */
+  schedulingTelemetry?: SchedulingTelemetry;
   /**
    * Why this event's reviewGrade was assigned — see RatingReason in
    * features/practice/answerChecker. Kept as an inline literal union (not

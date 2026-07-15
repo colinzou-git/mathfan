@@ -78,6 +78,7 @@ describe('user data export serialization', () => {
       buildTime: '2026-01-01T00:00:00.000Z', snapshotVersion: 2,
     });
     expect(metadata.tableCounts.students).toBe(2);
+    expect(metadata.modelVersions).toMatchObject({ cardModel: 'canonical-card-v1', fsrsConfig: expect.any(String) });
     expect(serializePrettyJson(payload)).toMatch(/\n$/);
   });
 
@@ -110,7 +111,8 @@ describe('user data export serialization', () => {
     ]));
     const manifest = JSON.parse(await zip.file(`${root}manifest.json`)!.async('string'));
     expect(manifest.rowCounts.students).toBe(2);
-    expect(manifest.files).toHaveLength(12);
+    expect(manifest.files).toHaveLength(13);
+    expect(manifest.files).toContain('csv/scheduling-telemetry.csv');
     const fullJson = JSON.parse(await zip.file(`${root}mathfan-user-data.json`)!.async('string'));
     expect(fullJson.snapshot.students[1].displayName).toBe('Sam, Jr.');
     expect(await zip.file(`${root}csv/item-states.csv`)!.async('string')).toBe('');

@@ -176,6 +176,8 @@ def verify_local_user_data_exports(page: Page) -> None:
     for build_key in ("appVersion", "gitSha", "buildTime"):
         if not metadata.get(build_key):
             raise AssertionError(f"JSON export is missing {build_key}")
+    if not metadata.get("modelVersions", {}).get("fsrsConfig"):
+        raise AssertionError("JSON export is missing scheduling model versions")
     expected_tables = {
         "students", "itemStates", "attempts", "sessions", "multFactStats",
         "quizSessions", "mathAnswerEvents", "learningGoals", "goalEvents", "goalEvaluations",
@@ -189,6 +191,8 @@ def verify_local_user_data_exports(page: Page) -> None:
         raise AssertionError("JSON export did not flush the latest Settings write")
     if not snapshot["mathAnswerEvents"]:
         raise AssertionError("JSON export did not include recorded practice activity")
+    if not any(event.get("schedulingTelemetry", {}).get("version") == 1 for event in snapshot["mathAnswerEvents"]):
+        raise AssertionError("JSON export did not include versioned scheduling telemetry")
 
     export_button.click()
     with page.expect_download() as zip_download_info:
@@ -215,6 +219,7 @@ def verify_local_user_data_exports(page: Page) -> None:
         f"{root}/csv/learning-goals.csv",
         f"{root}/csv/goal-events.csv",
         f"{root}/csv/goal-evaluations.csv",
+        f"{root}/csv/scheduling-telemetry.csv",
     }
     with zipfile.ZipFile(zip_path) as archive:
         names = set(archive.namelist())
@@ -618,6 +623,14 @@ def adaptive_lesson_and_manual_fallback(page: Page) -> None:
         expect(page.get_by_text(re.compile(r"Correct!|New personal best!"))).to_be_visible()
         page.wait_for_timeout(1200)
     expect(page.get_by_role("button", name="Home", exact=True)).to_be_visible()
+    telemetry_summary = page.evaluate("""async () => {
+        const db = await new Promise((resolve, reject) => { const request = indexedDB.open('mathfan'); request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error); });
+        const events = await new Promise((resolve, reject) => { const request = db.transaction('mathAnswerEvents').objectStore('mathAnswerEvents').getAll(); request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error); }); db.close();
+        const direct = events.filter(event => event.lessonPlanId && !event.relatedEvidence);
+        return { count: direct.length, segments: [...new Set(direct.map(event => event.schedulingTelemetry?.selection?.lessonSegment))], complete: direct.every(event => event.schedulingTelemetry?.cardKey && event.schedulingTelemetry?.selection && event.schedulingTelemetry?.before && event.schedulingTelemetry?.after && event.schedulingTelemetry?.rating && event.schedulingTelemetry?.instance) };
+    }""")
+    if telemetry_summary["count"] < 20 or set(telemetry_summary["segments"]) != {"focus", "transfer"} or not telemetry_summary["complete"]:
+        raise AssertionError(f"Adaptive lesson telemetry is incomplete: {telemetry_summary}")
     page.get_by_role("button", name="Home", exact=True).click()
     page.get_by_role("button", name=re.compile(r"Multiply")).click()
     expect(page.get_by_role("heading", name="Multiplication", exact=True)).to_be_visible()

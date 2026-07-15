@@ -33,6 +33,7 @@ import { buildWordProblemCandidates, buildFactorCandidates } from '../adaptive/c
 import { allMeasurementItemIds, allDataItemIds } from '../../components/opSpecs';
 import { mulberry32, randomSeed } from '../../utils/rng';
 import type { PracticeItem as PItem } from '../../types/math';
+import { buildSchedulingTelemetry, DAILY_LESSON_PLANNER_VERSION, type SelectionContext } from '../learning/schedulingTelemetry';
 
 // ── Public types ──────────────────────────────────────────────────────────────
 
@@ -336,6 +337,18 @@ export function usePracticeSession(studentId: string) {
 
     const cardKey = deriveCardKey(item);
     const existing = stateForItem(item, statesRef.current) ?? createInitialState(studentId, item);
+    const lessonSegment = configRef.current?.lessonSegments?.find(segment => segment.itemInstanceIds.includes(item.id))?.kind;
+    const selection: SelectionContext = lessonSegment
+      ? {
+          origin: lessonSegment === 'retrieval' ? 'due_retrieval' : lessonSegment === 'focus' ? 'focus_skill' : 'transfer',
+          plannerVersion: DAILY_LESSON_PLANNER_VERSION,
+          rationaleCodes: [configRef.current?.lessonRationales?.[item.id] ?? lessonSegment],
+          lessonPlanId: configRef.current?.lessonPlanId,
+          lessonSegment,
+        }
+      : configRef.current?.goalId || configRef.current?.goalIds?.length
+        ? { origin: 'goal', rationaleCodes: ['active_goal'] }
+        : { origin: 'manual', rationaleCodes: ['manual_user_choice'] };
 
     // Presentation-first-attempt (stats: first-try accuracy, misconceptions, retry
     // classification) is distinct from scheduling-first-attempt (issue #28): a card
@@ -414,6 +427,12 @@ export function usePracticeSession(studentId: string) {
               lessonPlanId: configRef.current?.lessonPlanId,
               lessonSegment: configRef.current?.lessonSegments?.find(segment => segment.itemInstanceIds.includes(item.id))?.kind,
               lessonRationale: configRef.current?.lessonRationales?.[item.id],
+              schedulingTelemetry: factItem ? buildSchedulingTelemetry({
+                item: factItem, stateBefore: u.before, stateAfter: u.after,
+                response: { reviewGrade: RELATED_EVIDENCE_GRADE, hintUsed: false, isRetry: false, evidenceKind: 'related', schedulingEligible: true },
+                selection: { origin: 'related_evidence', rationaleCodes: ['misconception_bridge'] },
+                presentationIndex: 1, attemptNo: 1, now,
+              }) : undefined,
               createdAt,
             },
           };
@@ -460,6 +479,15 @@ export function usePracticeSession(studentId: string) {
         lessonPlanId: configRef.current?.lessonPlanId,
         lessonSegment: configRef.current?.lessonSegments?.find(segment => segment.itemInstanceIds.includes(item.id))?.kind,
         lessonRationale: configRef.current?.lessonRationales?.[item.id],
+        schedulingTelemetry: buildSchedulingTelemetry({
+          item, stateBefore: existing, stateAfter: updated,
+          response: {
+            reviewGrade: result.reviewGrade, ratingReason: eventRatingReason, responsePolicy: result.policyKind,
+            fluencyBand: result.fluencyBand, hintUsed: !isFirstAttemptAtPresentation,
+            isRetry: !isFirstAttemptAtPresentation, schedulingEligible: isFirstSchedulingAttemptInSession,
+          },
+          selection, presentationIndex: currentPresentationIndexRef.current, attemptNo, now,
+        }),
         createdAt,
       },
       // Same-session repeats and mid-presentation retries do not change FSRS

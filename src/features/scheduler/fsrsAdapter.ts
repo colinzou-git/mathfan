@@ -20,6 +20,7 @@ const GRADE_MAP: Record<ReviewGrade, Exclude<Rating, Rating.Manual>> = {
 // practice sessions over days, not in Anki-style intraday step queues.
 // Fuzz is also disabled for deterministic scheduling and predictable tests.
 const f = fsrs({ enable_short_term: false, enable_fuzz: false });
+export const FSRS_CONFIG_VERSION = 'ts-fsrs:no-short-term:no-fuzz:v1';
 
 export type FsrsStatePatch = Pick<StudentItemState,
   | 'stabilityDays'
@@ -72,6 +73,17 @@ export function applyFsrsReview(
  * long-term scheduling: with enable_short_term=false there are no intraday
  * Relearning steps whose state would be lost by this approximation.
  */
+export function currentRetrievability(state: StudentItemState, now: Date): number | null {
+  if (!state.lastSeenAt || !state.stabilityDays || (state.reps ?? 0) === 0) return null;
+  try {
+    const card = stateToCard(state, now);
+    const value = f.get_retrievability(card, now, false);
+    return typeof value === 'number' && Number.isFinite(value) ? value : null;
+  } catch {
+    return null;
+  }
+}
+
 function stateToCard(state: StudentItemState, now: Date): Card {
   const reps = state.reps ?? 0;
 

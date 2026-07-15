@@ -219,6 +219,7 @@ export default function App() {
         lastSyncedAt={lastSyncedAt}
         onBack={() => setScreen('dashboard')}
         onStartPractice={startPractice}
+        parentMode={profile.settings.parentModeEnabled}
       />
     );
   }

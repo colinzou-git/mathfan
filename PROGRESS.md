@@ -50,9 +50,9 @@ Capstone. Depends on nearly everything above (#25-#29, #30-#34, #35).
 | 32 | Multi-digit regrouping | B | **merged to main** (628dc33) |
 | 33 | Division fact vs reasoning split | B | **merged to main** (628dc33) |
 | 34 | Time/measurement/graphs redesign | B | **merged to main** (628dc33) |
-| 35 | Goal consolidation + workload cap | C | **implemented and validated; committed on Branch C** |
-| 29 | Adaptive "Start Today's Lesson" tile | C | **implemented and validated; ready to merge** |
-| 36 | Scheduling telemetry + analytics | D | not started |
+| 35 | Goal consolidation + workload cap | C | **merged to main** (4519545) |
+| 29 | Adaptive "Start Today's Lesson" tile | C | **merged to main** (4519545) |
+| 36 | Scheduling telemetry + analytics | D | **implemented and validated; ready to merge** |
 
 ## Current focus
 
@@ -67,12 +67,14 @@ explicitly ask Claude to close them in a future session.
 
 **Branch B is merged and deployed** via PR #37 (merge 628dc33). GitHub issues #30-#34 are closed.
 
-**Active branch:** `feature/adaptive-lesson-and-goals`.
-**Active issue:** #29 — separate adaptive “Start Today’s Lesson” tile (implemented and validated).
+**Branch C is merged and deployed** via PR #38 (merge 4519545). GitHub issues #35 and #29 are closed.
+
+**Active branch:** `feature/scheduling-telemetry`.
+**Active issue:** #36 — auditable scheduling telemetry and calibration analytics (implemented and validated).
 **Next concrete step:**
-1. Complete the final Branch C browser and CI validation gates.
-2. Commit, publish, merge, and deploy Branch C; close #35 and #29.
-3. Start Branch D and implement #36 scheduling telemetry and calibration analytics.
+1. Commit and publish Branch D.
+2. Merge and deploy #36 after GitHub checks pass.
+3. Re-check the live issue list and production build metadata.
 
 Issue #30 validation completed on 2026-07-15: `npm run ci` (73 files / 1,279 tests),
 `npm run test:e2e` (desktop, mobile, iPad, missing-side, comparison, and update flows), and
