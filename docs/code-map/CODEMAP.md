@@ -1,8 +1,8 @@
 # Code Map Overview
 
-Generated: 2026-07-15 06:58:50 UTC
+Generated: 2026-07-15 07:57:33 UTC
 
-Repo root: `/home/ubuntu/mathfan`  
+Repo root: `/home/ubuntu/mathfan`
 Output folder: `/home/ubuntu/mathfan/docs/code-map`
 
 ## What this is for
@@ -14,9 +14,9 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 - Package name: `mathfan`
 - Version: `1.2.0`
 - Module type: `module`
-- Scanned files: **264**
-- Scanned lines: **49,097**
-- Scanned bytes: **1,999,185**
+- Scanned files: **269**
+- Scanned lines: **49,708**
+- Scanned bytes: **2,052,030**
 
 ## NPM scripts
 
@@ -82,11 +82,11 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 | src/features/sync/useSync.ts | 99 | Cloud sync/auth/data transfer logic. | useSync, initAuth, SyncState, useSync, recordSync, useSync |
 | src/features/sync/learnerKeyMerge.ts | 34 | Cloud sync/auth/data transfer logic. | resolveLearnerKeyDuplicate, resolveLearnerKeyDuplicate |
 | src/features/sync/timeUtil.ts | 13 | Cloud sync/auth/data transfer logic. | remoteHasNewerUpdatedAt, validTimeMs, remoteHasNewerUpdatedAt, validTimeMs |
-| src/features/goals/GoalsPage.tsx | 1001 | React UI component file: ConfirmDialog, EmptyState, GoalCard, GoalWizard. | ConfirmDialog, EmptyState, GoalCard, GoalWizard, ProgressBar, SummaryCard, GoalsPage, activeLearningDays |
+| src/features/goals/GoalsPage.tsx | 1056 | React UI component file: ConfirmDialog, EmptyState, GoalCard, GoalWizard. | ConfirmDialog, EmptyState, GoalCard, GoalWizard, ProgressBar, SummaryCard, GoalsPage, activeLearningDays |
 | src/features/multiplication/MultiplicationQuizPage.tsx | 845 | Local persistence/database layer. | FactChip, SetupScreen, StatBox, SummaryScreen, MultiplicationQuizPage, FactChip, MultiplicationQuizPage, recommendedPracticeConfig |
 | src/features/settings/SettingsPage.tsx | 828 | Student/app settings UI or persistence. | Section, SyncRow, ToggleRow, SettingsPage, applyUpdate, buildId, buildLabel, checkForUpdates |
-| src/features/practice/PracticeScreen.tsx | 552 | Local persistence/database layer. | KbChip, PracticeScreen, KbChip, onKey, PracticeScreen, run, submitChoice |
-| src/features/dashboard/StudentDashboard.tsx | 529 | Dashboard/profile setup/student navigation feature. | Chip, PracticeOp, StudentDashboard, Chip, completeSkillSummaries, handleStartReview, openExtra, startDailyNewTile |
+| src/features/dashboard/StudentDashboard.tsx | 569 | Dashboard/profile setup/student navigation feature. | Chip, PracticeOp, StudentDashboard, Chip, completeSkillSummaries, handleStartReview, openExtra, startAdaptiveLesson |
+| src/features/practice/PracticeScreen.tsx | 556 | Local persistence/database layer. | KbChip, PracticeScreen, KbChip, onKey, PracticeScreen, run, submitChoice |
 | src/features/stats/FactStatsTable.tsx | 407 | Local persistence/database layer. | SortBtn, SummaryStat, FactStatsTable, bucketOf, FactStatsTable, idOf, SortBtn, startPractice |
 | src/features/mastery/Grade3MasteryMapPage.tsx | 366 | Grade 3 mastery map UI: skill display, detail panels, and parent action cards. | LegendItem, Grade3MasteryMapPage, buildCompleteSummaries, computeUnmetPrereqNames, Grade3MasteryMapPage, LegendItem |
 | src/features/stats/StatsPage.tsx | 246 | Progress/statistics screens or calculations. | SummaryPill, StatsPage, buildRange, daysBetween, StatsPage, SummaryPill, toYMD |
@@ -99,7 +99,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 | src/features/stats/TodayAchievementSection.tsx | 125 | Progress/statistics screens or calculations. | AchievementTile, TodayAchievementSection, AchievementTile, TodayAchievementSection |
 | src/features/mastery/skillPracticePlanner.ts | 880 | Grade 3 skill practice planner: maps skill IDs to SessionConfig for the mastery map. | buildDivisionFocusSequence, buildFocusSequence, buildRegroupingFocusSequence, FocusSequence, FocusSequenceContext, planFractionFocusSequence, PlanOptions, planPracticeForSkill |
 | src/features/goals/GoalEvaluationSession.tsx | 643 | Exports reusable code: GoalEvaluationSession. | GoalEvaluationSession, buildNewLearningCandidates, buildReviewFindings, buildUpdatedState, confirmCancel, continueNext, evaluationArgs, GoalEvaluationSession |
-| src/features/practice/usePracticeSession.ts | 613 | Local persistence/database layer. | usePracticeSession, CorrectResult, LastSessionSummary, SessionState, usePracticeSession, getStaticItem, usePracticeSession |
+| src/features/practice/usePracticeSession.ts | 628 | Local persistence/database layer. | usePracticeSession, CorrectResult, LastSessionSummary, SessionState, usePracticeSession, getStaticItem, usePracticeSession |
 | src/features/curriculum/areaItems.ts | 609 | Practice item definitions and ID generators for a math curriculum topic. | apChoiceId, areaPerimCmpId, areaPerimCompareItemIds, areaPerimeterChoiceItemIds, AreaPerimeterChoiceKind, AreaPerimeterSchema, AreaPerimVariant, areaRectangleItemIds |
 | src/features/goals/goalEvaluationEngine.ts | 575 | Exports reusable code: ADAPTIVE_GOAL_EVALUATION_CONFIRMATION_COUNT, ADAPTIVE_GOAL_EVALUATION_HISTORICAL_PRIOR_CAP, ADAPTIVE_GOAL_EVALUATION_QUESTION_COUNT, AdaptiveGoalEvaluationArgs, AdaptiveGoalEvaluationItem. | ADAPTIVE_GOAL_EVALUATION_CONFIRMATION_COUNT, ADAPTIVE_GOAL_EVALUATION_HISTORICAL_PRIOR_CAP, ADAPTIVE_GOAL_EVALUATION_QUESTION_COUNT, AdaptiveGoalEvaluationArgs, AdaptiveGoalEvaluationItem, AdaptiveGoalEvaluationPhase, AdaptiveGoalEvaluationResponse, AdaptiveGoalEvaluationResult |
 
@@ -198,6 +198,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   │   ├── goalEvaluationPersistence.ts
 │   │   │   ├── GoalEvaluationSession.tsx
 │   │   │   ├── goalLifecycleService.ts
+│   │   │   ├── goalPortfolioEngine.ts
 │   │   │   ├── goalRecommendationEngine.ts
 │   │   │   ├── GoalsPage.tsx
 │   │   │   └── types.ts
@@ -205,6 +206,9 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   │   ├── eventRebuild.ts
 │   │   │   ├── learningEvents.ts
 │   │   │   └── recordAnswer.ts
+│   │   ├── learningPlan
+│   │   │   ├── dailyLessonPlanner.ts
+│   │   │   └── focusSkillSelector.ts
 │   │   ├── mastery
 │   │   │   ├── grade3MasteryMap.ts
 │   │   │   ├── Grade3MasteryMapPage.tsx
@@ -310,6 +314,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   ├── cardStateMigration.test.ts
 │   │   ├── clock.test.ts
 │   │   ├── components.test.tsx
+│   │   ├── dailyLessonPlanner.test.ts
 │   │   ├── dailyNewGoalPlanner.test.ts
 │   │   ├── dailyReviewQueue.test.ts
 │   │   ├── describeItem.test.ts
@@ -325,6 +330,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   ├── goalEngine.test.ts
 │   │   ├── goalEvaluationEngine.test.tsx
 │   │   ├── goalEvaluationSession.test.tsx
+│   │   ├── goalPortfolioEngine.test.ts
 │   │   ├── goalRecommendationEngine.test.ts
 │   │   ├── goalRepositories.test.ts
 │   │   ├── goalSnapshot.test.ts
@@ -444,12 +450,12 @@ Purpose: Top-level React app shell: routes/screens, global state, and feature wi
   26: import { bootstrapProfiles, loadActiveProfileSelection, saveActiveProfileSelection, resolveSelectedProfile } from './features/profile/profileBootstrap';
   27: import { runCardStateMigration } from './features/migrations/cardStateMigration';
   28: import type { RestoreState } from './features/dashboard/ProfileSetup';
-  29: 
+  29:
   30: type Screen =
   31:   | 'loading' | 'setup' | 'dashboard'
   32:   | 'daily-setup' | 'range-setup' | 'practice'
   33:   | 'stats' | 'settings' | 'quiz' | 'today-detail' | 'mastery-map' | 'diagnostic' | 'goals' | 'goal-evaluation';
-  34: 
+  34:
   35: export default function App() {
   36:   const [screen, setScreen] = useState<Screen>('loading');
   37:   const [profile, setProfile] = useState<StudentProfile | null>(null);
@@ -462,7 +468,7 @@ Purpose: Top-level React app shell: routes/screens, global state, and feature wi
   44:   const { auth, syncStatus, lastSyncedAt, syncError, handleSignIn, handleSignOut, manualSync } = useSync();
   45:   const [practiceReturn, setPracticeReturn] = useState<Screen>('dashboard');
   46:   const [initialGoalSkillIds, setInitialGoalSkillIds] = useState<string[] | null>(null);
-  47: 
+  47:
   48:   const selectProfile = (p: StudentProfile) => {
   49:     setProfile(p);
   50:     saveActiveProfileSelection(p);
@@ -470,7 +476,7 @@ Purpose: Top-level React app shell: routes/screens, global state, and feature wi
   52:     sessionRepo.deleteEmpty(p.id).catch(() => {});
   53:     setScreen('dashboard');
   54:   };
-  55: 
+  55:
   56:   const runBootstrap = async () => {
   57:     const grantPersisted = hasPersistedGrant();
   58:     setRestoreState(grantPersisted ? 'checking' : 'idle');
@@ -486,9 +492,9 @@ Purpose: Cloud sync/auth/data transfer logic.
 ```text
    1: import type { SyncStatus } from './driveSync';
    2: import type { AuthState } from '../auth/googleAuth';
-   3: 
+   3:
    4: const HAS_GOOGLE_CONFIG = !!import.meta.env.VITE_GOOGLE_CLIENT_ID;
-   5: 
+   5:
    6: interface Props {
    7:   auth: AuthState;
    8:   syncStatus: SyncStatus;
@@ -498,10 +504,10 @@ Purpose: Cloud sync/auth/data transfer logic.
   12:   onSignOut: () => void;
   13:   onSync: () => void;
   14: }
-  15: 
+  15:
   16: export function SyncWidget({ auth, syncStatus, lastSyncedAt, syncError, onSignIn, onSignOut, onSync }: Props) {
   17:   const isSyncing = syncStatus === 'syncing';
-  18: 
+  18:
   19:   // ── Not configured ────────────────────────────────────────────────────────
   20:   if (!HAS_GOOGLE_CONFIG) {
   21:     return (
@@ -516,7 +522,7 @@ Purpose: Cloud sync/auth/data transfer logic.
   30:       </div>
   31:     );
   32:   }
-  33: 
+  33:
   34:   // ── Signed out ────────────────────────────────────────────────────────────
   35:   if (!auth.signedIn) {
   36:     return (
@@ -539,7 +545,7 @@ Purpose: Cloud sync/auth/data transfer logic.
   53:             {isSyncing ? 'Signing in…' : 'Sign in'}
   54:           </button>
   55:         </div>
-  56: 
+  56:
   57:         {/* Show errors even before sign-in completes */}
   58:         {syncStatus === 'error' && syncError && (
   59:           <p style={s.errorMsg}>⚠ {friendlyError(syncError)}</p>
@@ -560,7 +566,7 @@ Purpose: Local persistence/database layer.
    6: import type { GoalEvaluation, GoalEvent, LearningGoal } from '../goals/types';
    7: import { resolveLearnerKeyDuplicate } from './learnerKeyMerge';
    8: import { validTimeMs, remoteHasNewerUpdatedAt } from './timeUtil';
-   9: 
+   9:
   10: export interface AppSnapshot {
   11:   appId: 'mathfan';
   12:   snapshotVersion: 1 | 2;
@@ -578,9 +584,9 @@ Purpose: Local persistence/database layer.
   24:   goalEvents?: GoalEvent[];
   25:   goalEvaluations?: GoalEvaluation[];
   26: }
-  27: 
+  27:
   28: // ── Build ─────────────────────────────────────────────────────────────────────
-  29: 
+  29:
   30: export async function buildSnapshot(): Promise<AppSnapshot> {
   31:   const tables = [
   32:     db.students,
@@ -594,7 +600,7 @@ Purpose: Local persistence/database layer.
   40:     db.goalEvents,
   41:     db.goalEvaluations,
   42:   ];
-  43: 
+  43:
   44:   return db.transaction('r', tables, async () => {
   45:     const [
   46:       students,
@@ -624,19 +630,19 @@ Purpose: Vite build/PWA configuration.
    2: import react from '@vitejs/plugin-react'
    3: import { VitePWA } from 'vite-plugin-pwa'
    4: import { readFileSync } from 'node:fs'
-   5: 
+   5:
    6: // VITE_BASE_PATH: set to /mathfan/ when deploying to GitHub Pages project site,
    7: // leave unset (defaults to /) for custom domain or local dev.
    8: const base = process.env.VITE_BASE_PATH ?? '/'
    9: const pkg: { version: string } = JSON.parse(readFileSync('./package.json', 'utf8'))
-  10: 
+  10:
   11: // Computed once so the values baked into the bundle (via `define`) and the
   12: // values written to build-info.json are guaranteed to match. The update checker
   13: // in Settings compares these two to decide whether a newer build is deployed.
   14: const appVersion = pkg.version
   15: const gitSha = process.env.VITE_GIT_SHA ?? 'dev'
   16: const buildTime = new Date().toISOString()
-  17: 
+  17:
   18: // Emits /build-info.json into dist and serves the same payload in dev, so the
   19: // "Check for Updates" button can probe the deployed build over the network.
   20: // build-info.json is intentionally NOT in the Workbox precache globs, so the
@@ -661,7 +667,7 @@ Purpose: Vite build/PWA configuration.
   39:     },
   40:   }
   41: }
-  42: 
+  42:
   43: export default defineConfig({
   44:   base,
   45:   define: {
@@ -751,7 +757,7 @@ Purpose: React entry point that mounts the app.
    2: import { createRoot } from 'react-dom/client'
    3: import './index.css'
    4: import App from './App.tsx'
-   5: 
+   5:
    6: // When a new service worker activates (skipWaiting fires), reload so the fresh
    7: // bundle is served. Guard with hadController so the very first SW install on a
    8: // brand-new visit doesn't trigger a spurious reload.
@@ -761,7 +767,7 @@ Purpose: React entry point that mounts the app.
   12:     if (hadController) window.location.reload();
   13:   });
   14: }
-  15: 
+  15:
   16: createRoot(document.getElementById('root')!).render(
   17:   <StrictMode>
   18:     <App />
@@ -777,31 +783,31 @@ Purpose: Cloud sync/auth/data transfer logic.
    1: import type { AppSnapshot } from './snapshot';
    2: import { buildSnapshot, mergeSnapshot, validateSnapshot } from './snapshot';
    3: import { getToken } from '../auth/googleAuth';
-   4: 
+   4:
    5: const FILE_NAME = 'mathfan-data.json';
    6: const LIST_URL = `https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&fields=files(id,name,size,modifiedTime)&q=name='${FILE_NAME}'`;
    7: const FILES_URL = 'https://www.googleapis.com/drive/v3/files';
    8: const UPLOAD_URL = 'https://www.googleapis.com/upload/drive/v3/files';
-   9: 
+   9:
   10: export type SyncStatus = 'idle' | 'syncing' | 'synced' | 'error';
-  11: 
+  11:
   12: export interface SyncResult {
   13:   ok: boolean;
   14:   error?: string;
   15:   syncedAt?: string;
   16: }
-  17: 
+  17:
   18: interface DriveListFile {
   19:   id: string;
   20:   size?: string;
   21:   modifiedTime?: string;
   22: }
-  23: 
+  23:
   24: function newestSyncFile(files: DriveListFile[] | undefined): DriveListFile | null {
   25:   if (!files?.length) return null;
   26:   return [...files].sort((a, b) => (b.modifiedTime ?? '').localeCompare(a.modifiedTime ?? ''))[0];
   27: }
-  28: 
+  28:
   29: async function authFetch(url: string, options: RequestInit = {}): Promise<Response> {
   30:   const token = await getToken();
   31:   if (!token) throw new Error('Not signed in');
@@ -813,17 +819,17 @@ Purpose: Cloud sync/auth/data transfer logic.
   37:     },
   38:   });
   39: }
-  40: 
+  40:
   41: async function findSyncFile(): Promise<string | null> {
   42:   const res = await authFetch(LIST_URL);
   43:   if (!res.ok) throw new Error(`Drive LIST failed: ${res.status}`);
   44:   const data = await res.json();
   45:   return newestSyncFile(data.files as DriveListFile[] | undefined)?.id ?? null;
   46: }
-  47: 
+  47:
   48: async function uploadSnapshot(snapshot: AppSnapshot, existingId?: string): Promise<void> {
   49:   const body = JSON.stringify(snapshot);
-  50: 
+  50:
   51:   if (existingId) {
   52:     // Update existing file (media-only PATCH)
   53:     const res = await authFetch(
@@ -847,16 +853,16 @@ Purpose: Cloud sync/auth/data transfer logic.
    3: import { pullAndMerge, pushLocal, syncBothWays } from './driveSync';
    4: import type { AuthState } from '../auth/googleAuth';
    5: import type { SyncStatus } from './driveSync';
-   6: 
+   6:
    7: export interface SyncState {
    8:   auth: AuthState;
    9:   syncStatus: SyncStatus;
   10:   lastSyncedAt: string | null;
   11:   syncError: string | null;
   12: }
-  13: 
+  13:
   14: const SYNC_AT_KEY = 'mathfan_last_synced';
-  15: 
+  15:
   16: export function useSync() {
   17:   const [auth, setAuth] = useState<AuthState>(currentState);
   18:   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
@@ -864,17 +870,17 @@ Purpose: Cloud sync/auth/data transfer logic.
   20:     () => localStorage.getItem(SYNC_AT_KEY)
   21:   );
   22:   const [syncError, setSyncError] = useState<string | null>(null);
-  23: 
+  23:
   24:   // Subscribe to auth changes
   25:   useEffect(() => {
   26:     return onChange(setAuth);
   27:   }, []);
-  28: 
+  28:
   29:   const recordSync = (at: string) => {
   30:     setLastSyncedAt(at);
   31:     localStorage.setItem(SYNC_AT_KEY, at);
   32:   };
-  33: 
+  33:
   34:   const handleSignIn = useCallback(async () => {
   35:     setSyncStatus('syncing');
   36:     setSyncError(null);
@@ -890,13 +896,13 @@ Purpose: Cloud sync/auth/data transfer logic.
   46:       setSyncError(err instanceof Error ? err.message : 'Sign-in failed');
   47:     }
   48:   }, []);
-  49: 
+  49:
   50:   const handleSignOut = useCallback(() => {
   51:     signOut();
   52:     setSyncStatus('idle');
   53:     setSyncError(null);
   54:   }, []);
-  55: 
+  55:
   56:   /** Push local data to Drive. Call after a session completes. */
   57:   const pushAfterSession = useCallback(async () => {
   58:     if (!currentState().signedIn) return;
@@ -912,7 +918,7 @@ Purpose: Cloud sync/auth/data transfer logic.
 ```text
    1: import type { StudentProfile } from '../../types/math';
    2: import { remoteHasNewerUpdatedAt } from './snapshot';
-   3: 
+   3:
    4: /**
    5:  * Resolves two profile rows that share the same `learnerKey` but different `id`s
    6:  * (e.g. a local placeholder created before a Drive restore completed, and the
@@ -933,7 +939,7 @@ Purpose: Cloud sync/auth/data transfer logic.
   21:   const remoteEvents = eventCountByStudentId[remote.id] ?? 0;
   22:   const base = remoteEvents > localEvents ? remote : local;
   23:   const metadataSource = remoteHasNewerUpdatedAt(remote.updatedAt ?? '', local.updatedAt) ? remote : local;
-  24: 
+  24:
   25:   return {
   26:     ...base,
   27:     displayName: metadataSource.displayName,
@@ -955,7 +961,7 @@ Purpose: Cloud sync/auth/data transfer logic.
    3:   const ms = Date.parse(value);
    4:   return Number.isFinite(ms) ? ms : null;
    5: }
-   6: 
+   6:
    7: export function remoteHasNewerUpdatedAt(remoteUpdatedAt: string, localUpdatedAt: string | undefined): boolean {
    8:   const remoteMs = validTimeMs(remoteUpdatedAt);
    9:   if (remoteMs === null) return false;
@@ -1004,32 +1010,32 @@ Purpose: React UI component file: ConfirmDialog, EmptyState, GoalCard, GoalWizar
   33: } from './goalRecommendationEngine';
   34: import {
   35:   cancelGoal,
-  36:   endGoal,
-  37:   evaluateGoalLifecycleAndPersist,
-  38:   pauseGoal,
-  39:   resumeGoal,
-  40:   updateGoal,
-  41: } from './goalLifecycleService';
-  42: import { normalizeDailyNewGoalLimits, validateDailyNewGoalLimits } from './dailyNewGoalLimits';
-  43: import { planDailyNewForGoals } from './dailyNewGoalPlanner';
-  44: 
-  45: interface Props {
-  46:   profile: StudentProfile;
-  47:   lastSyncedAt?: string | null;
-  48:   initialGoalSkillIds?: string[] | null;
-  49:   onInitialGoalSkillsHandled?: () => void;
-  50:   onBack: () => void;
-  51:   onStartEvaluation: () => void;
-  52:   onUpdateProfile?: (profile: StudentProfile) => void | Promise<void>;
-  53: }
-  54: 
-  55: type PageState =
-  56:   | { status: 'loading' }
-  57:   | { status: 'error'; message: string }
-  58:   | { status: 'ready'; data: GoalsData };
-  59: 
-  60: interface GoalsData {
-... (940 more lines)
+  36:   completeGoal,
+  37:   endGoal,
+  38:   evaluateGoalLifecycleAndPersist,
+  39:   pauseGoal,
+  40:   resumeGoal,
+  41:   updateGoal,
+  42: } from './goalLifecycleService';
+  43: import { analyzeGoalPortfolio } from './goalPortfolioEngine';
+  44: import { normalizeDailyNewGoalLimits, validateDailyNewGoalLimits } from './dailyNewGoalLimits';
+  45: import { planDailyNewForGoals } from './dailyNewGoalPlanner';
+  46:
+  47: interface Props {
+  48:   profile: StudentProfile;
+  49:   lastSyncedAt?: string | null;
+  50:   initialGoalSkillIds?: string[] | null;
+  51:   onInitialGoalSkillsHandled?: () => void;
+  52:   onBack: () => void;
+  53:   onStartEvaluation: () => void;
+  54:   onUpdateProfile?: (profile: StudentProfile) => void | Promise<void>;
+  55: }
+  56:
+  57: type PageState =
+  58:   | { status: 'loading' }
+  59:   | { status: 'error'; message: string }
+  60:   | { status: 'ready'; data: GoalsData };
+... (995 more lines)
 ```
 
 ### `src/features/multiplication/MultiplicationQuizPage.tsx`
@@ -1056,23 +1062,23 @@ Purpose: Local persistence/database layer.
   17: import { generateId } from '../../utils/id';
   18: import { recordQuizFirstAttempt, recordQuizRetry, finalizeQuizSession } from '../learning/recordAnswer';
   19: import { appNow } from '../time/clock';
-  20: 
+  20:
   21: interface Props {
   22:   studentId: string;
   23:   settings: StudentSettings;
   24:   onDone: () => void;
   25:   onStartPractice?: (config: SessionConfig) => void;
   26: }
-  27: 
+  27:
   28: type Phase = 'setup' | 'loading' | 'active' | 'feedback' | 'retry' | 'saving' | 'summary';
-  29: 
+  29:
   30: const QUIZ_LENGTHS = [10, 20, 30, 50];
   31: const DEFAULT_LENGTH = 20;
   32: const FEEDBACK_PAUSE_MS = 600; // visual pause after the answer speech finishes
-  33: 
-  34: 
+  33:
+  34:
   35: // ── Sub-components ─────────────────────────────────────────────────────────────
-  36: 
+  36:
   37: function FactChip({ label, bg, text }: { label: string; bg: string; text: string }) {
   38:   return (
   39:     <span style={{ background: bg, color: text, borderRadius: '8px', padding: '4px 10px', fontSize: '14px', fontWeight: '600', display: 'inline-block', margin: '3px' }}>
@@ -1080,7 +1086,7 @@ Purpose: Local persistence/database layer.
   41:     </span>
   42:   );
   43: }
-  44: 
+  44:
   45: function StatBox({ label, value, color = '#111827' }: { label: string; value: string; color?: string }) {
   46:   return (
   47:     <div style={{ background: '#f9fafb', borderRadius: '10px', padding: '12px', textAlign: 'center', flex: 1 }}>
@@ -1089,9 +1095,9 @@ Purpose: Local persistence/database layer.
   50:     </div>
   51:   );
   52: }
-  53: 
+  53:
   54: // ── Setup screen ───────────────────────────────────────────────────────────────
-  55: 
+  55:
   56: function SetupScreen({
   57:   quizLength, onSelectLength, onStart, onBack,
   58: }: {

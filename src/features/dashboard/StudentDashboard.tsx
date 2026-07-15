@@ -11,6 +11,8 @@ import { deriveGrade3SkillSummaries, type StudentSkillSummary } from '../mastery
 import { GRADE3_MASTERY_MAP } from '../mastery/grade3MasteryMap';
 import { makeItemFromId } from '../curriculum/makeItemFromId';
 import { planDailyNewForGoals, type DailyNewGoalPlan, type DailyNewGoalTile } from '../goals/dailyNewGoalPlanner';
+import { planDailyLesson, type DailyLessonPlan } from '../learningPlan/dailyLessonPlanner';
+import { mulberry32 } from '../../utils/rng';
 
 export type PracticeOp =
   | 'multiplication' | 'division' | 'addition' | 'subtraction' | 'fraction'
@@ -86,6 +88,9 @@ export function StudentDashboard({ profile, lastSyncedAt, onStartDailyReview, on
   const [dueByGroup, setDueByGroup] = useState<Record<string, DueGroup>>({});
   const [dailyNewPlan, setDailyNewPlan] = useState<DailyNewGoalPlan | null>(null);
   const [dailyNewError, setDailyNewError] = useState<string | null>(null);
+  const [lessonPlan, setLessonPlan] = useState<DailyLessonPlan | null>(null);
+  const [lessonError, setLessonError] = useState<string | null>(null);
+  const [lessonDetailsOpen, setLessonDetailsOpen] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
   const [practiceRounds, setPracticeRounds] = useState(1);
   const [extraOpen, setExtraOpen] = useState(false);
@@ -146,24 +151,35 @@ export function StudentDashboard({ profile, lastSyncedAt, onStartDailyReview, on
           itemStates: states,
           now: now.toISOString(),
         });
+        const completeSummaries = completeSkillSummaries(profile.id, derived);
         setDailyNewPlan(planDailyNewForGoals({
           studentId: profile.id,
           goals,
           events,
           itemStates: states,
-          skillSummaries: completeSkillSummaries(profile.id, derived),
+          skillSummaries: completeSummaries,
           now: now.toISOString(),
           timezone: profile.timezone,
           dailyNewGoalQuestionLimits: profile.settings.dailyNewGoalQuestionLimits,
         }));
         setDailyNewError(null);
+        if (profile.gradeLevel === 3) {
+          try {
+            const seed = [...`${profile.id}:${nowStr.slice(0, 10)}`].reduce((sum, char) => (sum * 31 + char.charCodeAt(0)) >>> 0, 2166136261);
+            const lesson = planDailyLesson({ studentId: profile.id, gradeLevel: profile.gradeLevel, now: nowStr, timezone: profile.timezone, settings: profile.settings, events, itemStates: states, skillSummaries: completeSummaries, goals, rng: mulberry32(seed) });
+            setLessonPlan(lesson.items.length ? lesson : null); setLessonError(lesson.items.length ? null : 'Not enough valid content for an adaptive lesson yet.');
+          } catch (lessonFailure) {
+            console.warn('[StudentDashboard] Today’s Lesson failed', lessonFailure);
+            setLessonPlan(null); setLessonError('Today’s lesson could not load. Existing practice options are still available.');
+          }
+        }
       } catch (err) {
         console.warn('[StudentDashboard] Daily New for Goals failed', err);
         setDailyNewPlan(null);
         setDailyNewError(err instanceof Error ? err.message : 'Daily New for Goals could not load.');
       }
     })();
-  }, [profile.id, profile.timezone, profile.settings.dailyNewGoalQuestionLimits, lastSyncedAt]);
+  }, [profile.id, profile.gradeLevel, profile.timezone, profile.settings, lastSyncedAt]);
 
   const sortedGroups = GROUP_ORDER.filter(k => dueByGroup[k]);
 
@@ -182,6 +198,19 @@ export function StudentDashboard({ profile, lastSyncedAt, onStartDailyReview, on
 
   const startDailyNewTile = (tile: DailyNewGoalTile) => {
     onStartDailyReview(tile.config);
+  };
+
+  const startAdaptiveLesson = () => {
+    if (!lessonPlan) return;
+    const contributingGoals = lessonPlan.focusSkillId ? (dailyNewPlan?.tiles.find(tile => tile.skillId === lessonPlan.focusSkillId)?.goalIds ?? []) : [];
+    const contributingTargets = lessonPlan.focusSkillId ? (dailyNewPlan?.tiles.find(tile => tile.skillId === lessonPlan.focusSkillId)?.targetIds ?? []) : [];
+    onStartDailyReview({
+      mode: 'adaptive_lesson', sessionLength: lessonPlan.items.length, preplannedItems: lessonPlan.items.map(value => value.item),
+      lessonPlanId: lessonPlan.id, lessonKind: 'adaptive_daily_lesson', focusSkillId: lessonPlan.focusSkillId,
+      lessonSegments: (['retrieval', 'focus', 'transfer'] as const).map(kind => ({ kind, itemInstanceIds: lessonPlan.items.filter(value => value.segment === kind).map(value => value.item.id) })),
+      lessonRationales: Object.fromEntries(lessonPlan.items.map(value => [value.item.id, value.rationale])),
+      goalIds: contributingGoals, goalTargetIds: contributingTargets,
+    });
   };
 
   const openExtra = () => {
@@ -227,6 +256,17 @@ export function StudentDashboard({ profile, lastSyncedAt, onStartDailyReview, on
         lastSyncedAt={lastSyncedAt}
         onOpenDetail={onOpenAchievementDetail}
       />
+
+      {/* Separate adaptive lesson experiment; existing Today Plan controls remain below. */}
+      <p style={s.sectionLabel}>Today&apos;s Lesson</p>
+      <section aria-label="Start Today’s Lesson" style={s.dailyNewSection}>
+        <h2 style={s.tileTitle}>Start Today&apos;s Lesson</h2>
+        {lessonPlan ? <>
+          <p style={s.dailyNewCopy}>{lessonPlan.estimatedMinutes} min · {lessonPlan.segmentCounts.retrieval} due review · Focus: {lessonPlan.focusSkillTitle ?? 'mixed practice'} · {lessonPlan.segmentCounts.transfer} transfer</p>
+          <div style={s.actions}><button style={s.dailyNewStart} onClick={startAdaptiveLesson}>Start lesson</button><button style={s.secondaryBtn} aria-expanded={lessonDetailsOpen} onClick={() => setLessonDetailsOpen(value => !value)}>See plan</button></div>
+          {lessonDetailsOpen && <div role="note" style={s.dailyNewNotice}><strong>Why this plan?</strong><p>It uses only genuinely due retrieval cards, one priority focus skill, and learned transfer contexts.</p>{lessonPlan.warnings.map(warning => <p key={warning.code}>{warning.message}</p>)}</div>}
+        </> : <div role="status" style={s.dailyNewNotice}>{lessonError ?? 'Building today’s lesson...'}</div>}
+      </section>
 
       {/* Daily Review */}
       <p style={s.sectionLabel}>Daily Review</p>

@@ -344,6 +344,23 @@ describe('usePracticeSession — measurement mode', () => {
 // ── Adaptive selection ────────────────────────────────────────────────────────
 
 describe('usePracticeSession — adaptive selection', () => {
+  it('preserves a preplanned adaptive lesson queue and session metadata', async () => {
+    const planned = [makeItemFromId('MUL_3x4')!, makeItemFromId('DIV_12d3')!];
+    const { result } = renderHook(() => usePracticeSession(STUDENT_ID));
+    await act(async () => {
+      await result.current.startSession({
+        mode: 'adaptive_lesson', sessionLength: 2, preplannedItems: planned,
+        lessonPlanId: 'lesson-plan', lessonKind: 'adaptive_daily_lesson', focusSkillId: 'g3-mul-tables-basic',
+        lessonSegments: [{ kind: 'retrieval', itemInstanceIds: ['MUL_3x4'] }, { kind: 'focus', itemInstanceIds: ['DIV_12d3'] }],
+        lessonRationales: { MUL_3x4: 'Due retrieval.', DIV_12d3: 'Focus bridge.' },
+      });
+    });
+    expect(result.current.state.currentItem?.id).toBe('MUL_3x4');
+    expect(sessionRepo.save).toHaveBeenCalledWith(expect.objectContaining({ lessonPlanId: 'lesson-plan', lessonKind: 'adaptive_daily_lesson', focusSkillId: 'g3-mul-tables-basic' }));
+    await act(async () => { await result.current.submitAnswer('12'); });
+    expect(vi.mocked(recordPracticeAnswer).mock.calls[0][0].event).toEqual(expect.objectContaining({ lessonPlanId: 'lesson-plan', lessonSegment: 'retrieval', lessonRationale: 'Due retrieval.' }));
+  });
+
   it('non-daily_review specificItemIds still produce a valid, reconstructable queue', async () => {
     const { result } = renderHook(() => usePracticeSession(STUDENT_ID));
     await act(async () => {
@@ -397,7 +414,7 @@ describe('usePracticeSession — adaptive selection', () => {
 
     const cur = result.current.state.currentItem;
     expect(cur).not.toBeNull();
-    expect(cur!.factA === 8 && cur!.factB === 7).toBe(true);
+    expect([cur!.factA, cur!.factB].sort((a, b) => (a ?? 0) - (b ?? 0))).toEqual([7, 8]);
   });
 });
 

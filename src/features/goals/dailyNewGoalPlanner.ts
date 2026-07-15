@@ -8,6 +8,7 @@ import { planPracticeForSkill } from '../mastery/skillPracticePlanner';
 import { getGrade3Skill } from '../mastery/grade3MasteryMap';
 import { calculateGoalProgress, localDateInTimeZone, type GoalEvidenceInput, type GoalTargetProgress } from './goalEngine';
 import { normalizeDailyNewGoalLimits, resolveGoalTileLimits } from './dailyNewGoalLimits';
+import { analyzeGoalPortfolio, type GoalPortfolioAnalysis } from './goalPortfolioEngine';
 
 export type DailyNewGoalTileKind = 'new_skill' | 'continue_new_learning';
 export type DailyNewGoalLearningKind = 'planned' | 'extra';
@@ -73,7 +74,7 @@ interface Candidate {
   maxQuestionsPerSkillTile: number;
 }
 
-interface SkillGroup {
+export interface SkillGroup {
   skillId: string;
   candidates: Candidate[];
   itemIds: string[];
@@ -226,12 +227,14 @@ function makeTile(
   };
 }
 
-function buildGroups(args: PlanDailyNewGoalsArgs, attempted: Set<string>, excludedIds: Set<string>): SkillGroup[] {
+function buildGroups(args: PlanDailyNewGoalsArgs, attempted: Set<string>, excludedIds: Set<string>, suppliedPortfolio?: GoalPortfolioAnalysis): SkillGroup[] {
   const { studentId, goals, events, itemStates, skillSummaries, now, timezone } = args;
   const activeGoals = goals.filter(goal => goal.status === 'active');
   const dueIds = dueItemIds(itemStates, now);
   const summaryMap = new Map(skillSummaries.map(summary => [summary.skillId, summary]));
   const evidence: GoalEvidenceInput = { studentId, events, itemStates, skillSummaries, now, timezone };
+  const portfolio = suppliedPortfolio ?? analyzeGoalPortfolio({ goals, evidence, dailyNewGoalQuestionLimits: args.dailyNewGoalQuestionLimits });
+  const consolidatedBySkill = new Map(portfolio.consolidatedTargets.map(target => [target.skillId, target]));
   const bySkill = new Map<string, SkillGroup>();
   const globalLimits = normalizeDailyNewGoalLimits(args.dailyNewGoalQuestionLimits);
 
@@ -246,15 +249,17 @@ function buildGroups(args: PlanDailyNewGoalsArgs, attempted: Set<string>, exclud
       const unfinishedPerDay = eligible.length / Math.max(1, progress.daysRemaining + 1);
       const urgency = progress.daysRemaining <= 1 ? 4 : progress.daysRemaining <= 3 ? 2 : 0;
       const goalLimits = resolveGoalTileLimits(goal, globalLimits);
+      const consolidated = consolidatedBySkill.get(targetProgress.skillId);
       const candidate: Candidate = {
         goal,
         target: targetProgress,
         itemIds: eligible,
         attemptedBeforeDay: pool.filter(id => attempted.has(id)).length,
-        priority: unfinishedPerDay + urgency + (1 - targetProgress.displayScore),
+        priority: consolidated?.effectivePriority ?? unfinishedPerDay + urgency + (1 - targetProgress.displayScore),
         progress: targetProgress.displayScore,
         daysRemaining: progress.daysRemaining,
         ...goalLimits,
+        ...(consolidated ? { maxQuestionsPerSkillTile: consolidated.effectiveDailyNewCap } : {}),
       };
       const group = bySkill.get(targetProgress.skillId) ?? {
         skillId: targetProgress.skillId,
@@ -288,6 +293,10 @@ function buildGroups(args: PlanDailyNewGoalsArgs, attempted: Set<string>, exclud
     if (b.priority !== a.priority) return b.priority - a.priority;
     return a.skillId.localeCompare(b.skillId);
   });
+}
+
+export function buildGoalSkillGroups(portfolio: GoalPortfolioAnalysis, args: PlanDailyNewGoalsArgs): SkillGroup[] {
+  return buildGroups(args, new Set(), new Set(), portfolio);
 }
 
 function chooseItemBatch(group: SkillGroup, used: Set<string>, preferredCount: number): string[] {

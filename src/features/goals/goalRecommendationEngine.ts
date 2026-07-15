@@ -62,6 +62,8 @@ export interface GoalRecommendationTarget {
 }
 
 export interface GoalRecommendation {
+  action: GoalRecommendationAction;
+  portfolioFitReason: string;
   skillIds: string[];
   title: string;
   primaryReason: RecommendationReasonLabel;
@@ -76,9 +78,13 @@ export interface GoalRecommendation {
   isStretch: boolean;
 }
 
+export type GoalRecommendationAction = 'create_goal' | 'add_target_to_existing_goal' | 'move_existing_to_maintenance' | 'extend_goal_date' | 'no_new_goal';
+export interface GoalRecommendationOutcome { action: GoalRecommendationAction; skillId?: string; goalId?: string; reason: string }
+
 export interface GoalRecommendationResult {
   recommendations: GoalRecommendation[];
   candidates: GoalRecommendationCandidate[];
+  portfolioActions: GoalRecommendationOutcome[];
   capacity: {
     durationDays: number;
     questionsPerDay: number;
@@ -445,6 +451,8 @@ function buildRecommendation(
   const combinedScore = candidates.reduce((sum, candidate) => sum + candidate.score, 0) / candidates.length;
   const advisories = Array.from(new Set(candidates.flatMap(candidate => candidate.prerequisiteAdvisories))).sort();
   return {
+    action: 'create_goal',
+    portfolioFitReason: 'Fits an uncovered skill in the current goal portfolio.',
     skillIds: candidates.map(candidate => candidate.skillId),
     title: recommendationTitle(candidates),
     primaryReason: candidates[0].primaryReason,
@@ -472,10 +480,13 @@ export function recommendLearningGoals(args: GoalRecommendationArgs): GoalRecomm
     });
 
   const recommendations: GoalRecommendation[] = [];
+  const covered = new Map(args.activeGoals.flatMap(goal => goal.status === 'active' ? goal.targets.map(target => [target.skillId, goal.id] as const) : []));
+  const portfolioActions: GoalRecommendationOutcome[] = candidates.filter(candidate => covered.has(candidate.skillId)).map(candidate => ({ action: 'add_target_to_existing_goal', skillId: candidate.skillId, goalId: covered.get(candidate.skillId), reason: 'This skill is already covered; edit the existing goal instead of creating a duplicate.' }));
+  const uncoveredCandidates = candidates.filter(candidate => !covered.has(candidate.skillId));
   const seenBundles = new Set<string>();
   const bundleMax = maxBundleSize(capacity.durationDays);
-  for (let i = 0; i < candidates.length && recommendations.length < 5; i++) {
-    let bundle = candidates.slice(i, i + bundleMax);
+  for (let i = 0; i < uncoveredCandidates.length && recommendations.length < 5; i++) {
+    let bundle = uncoveredCandidates.slice(i, i + bundleMax);
     while (bundle.length > 1) {
       const required = bundle
         .map(candidate => targetForCandidate(candidate, args).thresholds.minFirstAttempts)
@@ -489,5 +500,5 @@ export function recommendLearningGoals(args: GoalRecommendationArgs): GoalRecomm
     recommendations.push(buildRecommendation(bundle, args, capacity));
   }
 
-  return { recommendations, candidates, capacity };
+  return { recommendations, candidates, portfolioActions, capacity };
 }

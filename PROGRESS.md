@@ -45,13 +45,13 @@ Capstone. Depends on nearly everything above (#25-#29, #30-#34, #35).
 | 26 | Hybrid FSRS card model + migration | A | **merged to main** (eb36360) |
 | 27 | Task-aware FSRS ratings | A | **merged to main** (eb36360) |
 | 28 | One scheduling update per card/session | A | **merged to main** (eb36360) |
-| 30 | Area & perimeter redesign | B | **implemented and validated; committed on Branch B** |
-| 31 | Fractions redesign | B | **implemented and validated; committed on Branch B** |
-| 32 | Multi-digit regrouping | B | **implemented and validated; committed on Branch B** |
-| 33 | Division fact vs reasoning split | B | **implemented and validated; committed on Branch B** |
-| 34 | Time/measurement/graphs redesign | B | **implemented and validated; ready to merge Branch B** |
-| 35 | Goal consolidation + workload cap | C | not started |
-| 29 | Adaptive "Start Today's Lesson" tile | C | not started |
+| 30 | Area & perimeter redesign | B | **merged to main** (628dc33) |
+| 31 | Fractions redesign | B | **merged to main** (628dc33) |
+| 32 | Multi-digit regrouping | B | **merged to main** (628dc33) |
+| 33 | Division fact vs reasoning split | B | **merged to main** (628dc33) |
+| 34 | Time/measurement/graphs redesign | B | **merged to main** (628dc33) |
+| 35 | Goal consolidation + workload cap | C | **implemented and validated; committed on Branch C** |
+| 29 | Adaptive "Start Today's Lesson" tile | C | **implemented and validated; ready to merge** |
 | 36 | Scheduling telemetry + analytics | D | not started |
 
 ## Current focus
@@ -65,12 +65,14 @@ Capstone. Depends on nearly everything above (#25-#29, #30-#34, #35).
 session). They remain open on GitHub despite being merged. If you want them closed, do it manually or
 explicitly ask Claude to close them in a future session.
 
-**Active branch:** `feature/grade3-curriculum-redesign` (Branch B complete and ready to publish/merge).
-**Active issue:** Branch B integration and merge, then #35 — goal consolidation and workload cap.
+**Branch B is merged and deployed** via PR #37 (merge 628dc33). GitHub issues #30-#34 are closed.
+
+**Active branch:** `feature/adaptive-lesson-and-goals`.
+**Active issue:** #29 — separate adaptive “Start Today’s Lesson” tile (implemented and validated).
 **Next concrete step:**
-1. Commit #34, publish Branch B, open/merge its pull request into `main`, and verify deployment.
-2. Close the merged Branch B issues and re-check the live issue queue.
-3. Start Branch C with #35, followed by the adaptive lesson tile in #29.
+1. Complete the final Branch C browser and CI validation gates.
+2. Commit, publish, merge, and deploy Branch C; close #35 and #29.
+3. Start Branch D and implement #36 scheduling telemetry and calibration analytics.
 
 Issue #30 validation completed on 2026-07-15: `npm run ci` (73 files / 1,279 tests),
 `npm run test:e2e` (desktop, mobile, iPad, missing-side, comparison, and update flows), and
@@ -91,6 +93,10 @@ built app), and `python tools/generate_code_maps.py` all passed.
 Issue #34 validation completed on 2026-07-15: `npm run ci` (77 files / 1,327 tests),
 `npm run test:e2e` (including real scaled bar graph, fractional line plot, cross-hour time line, and
 two-step tape-diagram journeys), and `python tools/generate_code_maps.py` all passed.
+
+Issue #35 validation completed on 2026-07-15: `npm run ci` (78 files / 1,333 tests),
+`npm run test:e2e` (including overlapping-goal consolidation, overdue lifecycle actions, and the
+advisory third-primary “Create anyway” flow), and `python tools/generate_code_maps.py` all passed.
 
 ## Known gaps / follow-ups (not blocking, revisit if time allows)
 

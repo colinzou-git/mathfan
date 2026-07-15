@@ -315,17 +315,17 @@ describe('goal lifecycle evaluation', () => {
     }));
   }
 
-  it('automatically completes targets and a single-target goal', () => {
+  it('records target completion but leaves the goal active for user confirmation', () => {
     let seq = 0;
     const g = goal({ targets: [target()] });
     const result = evaluateGoalLifecycle(g, completeProgress(g), [], NOW, () => `ge-${++seq}`);
 
-    expect(result.goal.status).toBe('completed');
-    expect(result.goal.completedAt).toBe(NOW);
-    expect(result.events.map(e => e.type)).toEqual(['target_completed', 'completed']);
+    expect(result.goal.status).toBe('active');
+    expect(result.goal.completedAt).toBeUndefined();
+    expect(result.events.map(e => e.type)).toEqual(['target_completed']);
   });
 
-  it('automatically completes a multi-target goal only when all targets complete', () => {
+  it('records all completed targets without automatically completing a multi-target goal', () => {
     const secondTarget = target({ id: 'target-2', skillId: OTHER_SKILL_ID, minDistinctItems: 1 });
     const g = goal({ targets: [target(), secondTarget] });
     const progress = calculateGoalProgress(g, input({
@@ -344,18 +344,18 @@ describe('goal lifecycle evaluation', () => {
     }));
     const result = evaluateGoalLifecycle(g, progress, [], NOW, () => `ge-${Math.random()}`);
 
-    expect(result.goal.status).toBe('completed');
+    expect(result.goal.status).toBe('active');
     expect(result.events.filter(e => e.type === 'target_completed')).toHaveLength(2);
   });
 
-  it('ends an expired incomplete goal and preserves history', () => {
+  it('keeps an expired incomplete goal active for a user-controlled decision', () => {
     const g = goal({ targetDate: '2026-06-04' });
     const progress = calculateGoalProgress(g, input({ events: [] }));
     const result = evaluateGoalLifecycle(g, progress, [], NOW, () => 'ended-event');
 
-    expect(result.goal.status).toBe('ended');
-    expect(result.goal.endedAt).toBe(NOW);
-    expect(result.events[0].type).toBe('ended');
+    expect(result.goal.status).toBe('active');
+    expect(result.goal.endedAt).toBeUndefined();
+    expect(result.events).toHaveLength(0);
   });
 
   it('is idempotent and does not append duplicate lifecycle events', () => {
@@ -366,7 +366,7 @@ describe('goal lifecycle evaluation', () => {
     ];
     const result = evaluateGoalLifecycle(g, completeProgress(g), existing, NOW, () => 'new-event');
 
-    expect(result.goal.status).toBe('completed');
+    expect(result.goal.status).toBe('active');
     expect(result.events).toHaveLength(0);
   });
 

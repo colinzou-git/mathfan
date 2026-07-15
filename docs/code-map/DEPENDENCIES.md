@@ -4,7 +4,7 @@
 
 | Package | Import count |
 | --- | --- |
-| vitest | 78 |
+| vitest | 80 |
 | react | 35 |
 | @testing-library/react | 19 |
 | pathlib | 8 |
@@ -180,9 +180,11 @@
 | src/features/dashboard/ProfileSetup.tsx | ../profile/learnerIdentity |
 | src/features/dashboard/StudentDashboard.tsx | ../../db/repositories |
 | src/features/dashboard/StudentDashboard.tsx | ../../types/math |
+| src/features/dashboard/StudentDashboard.tsx | ../../utils/rng |
 | src/features/dashboard/StudentDashboard.tsx | ../curriculum/describeItem |
 | src/features/dashboard/StudentDashboard.tsx | ../curriculum/makeItemFromId |
 | src/features/dashboard/StudentDashboard.tsx | ../goals/dailyNewGoalPlanner |
+| src/features/dashboard/StudentDashboard.tsx | ../learningPlan/dailyLessonPlanner |
 | src/features/dashboard/StudentDashboard.tsx | ../mastery/grade3MasteryMap |
 | src/features/dashboard/StudentDashboard.tsx | ../mastery/skillMasteryEngine |
 | src/features/dashboard/StudentDashboard.tsx | ../stats/statsEngine |
@@ -222,6 +224,7 @@
 | src/features/goals/dailyNewGoalPlanner.ts | ../mastery/skillPracticePlanner |
 | src/features/goals/dailyNewGoalPlanner.ts | ./dailyNewGoalLimits |
 | src/features/goals/dailyNewGoalPlanner.ts | ./goalEngine |
+| src/features/goals/dailyNewGoalPlanner.ts | ./goalPortfolioEngine |
 | src/features/goals/dailyNewGoalPlanner.ts | ./types |
 | src/features/goals/goalEngine.ts | ../../types/math |
 | src/features/goals/goalEngine.ts | ../curriculum/makeItemFromId |
@@ -269,6 +272,10 @@
 | src/features/goals/goalLifecycleService.ts | ../../utils/id |
 | src/features/goals/goalLifecycleService.ts | ./goalEngine |
 | src/features/goals/goalLifecycleService.ts | ./types |
+| src/features/goals/goalPortfolioEngine.ts | ../../types/math |
+| src/features/goals/goalPortfolioEngine.ts | ./dailyNewGoalLimits |
+| src/features/goals/goalPortfolioEngine.ts | ./goalEngine |
+| src/features/goals/goalPortfolioEngine.ts | ./types |
 | src/features/goals/goalRecommendationEngine.ts | ../../types/math |
 | src/features/goals/goalRecommendationEngine.ts | ../learning/learningEvents |
 | src/features/goals/goalRecommendationEngine.ts | ../mastery/grade3MasteryMap |
@@ -287,6 +294,7 @@
 | src/features/goals/GoalsPage.tsx | ./dailyNewGoalPlanner |
 | src/features/goals/GoalsPage.tsx | ./goalEngine |
 | src/features/goals/GoalsPage.tsx | ./goalLifecycleService |
+| src/features/goals/GoalsPage.tsx | ./goalPortfolioEngine |
 | src/features/goals/GoalsPage.tsx | ./goalRecommendationEngine |
 | src/features/goals/GoalsPage.tsx | ./types |
 | src/features/goals/types.ts | ../../types/math |
@@ -310,6 +318,23 @@
 | src/features/learning/recordAnswer.ts | ../../types/math |
 | src/features/learning/recordAnswer.ts | ../multiplication/types |
 | src/features/learning/recordAnswer.ts | ./learningEvents |
+| src/features/learningPlan/dailyLessonPlanner.ts | ../../types/math |
+| src/features/learningPlan/dailyLessonPlanner.ts | ../adaptive/relatedItemMapping |
+| src/features/learningPlan/dailyLessonPlanner.ts | ../curriculum/makeItemFromId |
+| src/features/learningPlan/dailyLessonPlanner.ts | ../goals/types |
+| src/features/learningPlan/dailyLessonPlanner.ts | ../learning/learningEvents |
+| src/features/learningPlan/dailyLessonPlanner.ts | ../mastery/grade3MasteryMap |
+| src/features/learningPlan/dailyLessonPlanner.ts | ../mastery/skillMapping |
+| src/features/learningPlan/dailyLessonPlanner.ts | ../mastery/skillMasteryEngine |
+| src/features/learningPlan/dailyLessonPlanner.ts | ../mastery/skillPracticePlanner |
+| src/features/learningPlan/dailyLessonPlanner.ts | ../scheduler/cardModel |
+| src/features/learningPlan/dailyLessonPlanner.ts | ./focusSkillSelector |
+| src/features/learningPlan/focusSkillSelector.ts | ../curriculum/makeItemFromId |
+| src/features/learningPlan/focusSkillSelector.ts | ../goals/types |
+| src/features/learningPlan/focusSkillSelector.ts | ../learning/learningEvents |
+| src/features/learningPlan/focusSkillSelector.ts | ../mastery/grade3MasteryMap |
+| src/features/learningPlan/focusSkillSelector.ts | ../mastery/skillMapping |
+| src/features/learningPlan/focusSkillSelector.ts | ../mastery/skillMasteryEngine |
 | src/features/mastery/Grade3MasteryMapPage.tsx | ../../db/repositories |
 | src/features/mastery/Grade3MasteryMapPage.tsx | ../../types/math |
 | src/features/mastery/Grade3MasteryMapPage.tsx | ../curriculum/makeItemFromId |
@@ -398,6 +423,7 @@
 | src/features/practice/PracticeScreen.tsx | ../../types/math |
 | src/features/practice/PracticeScreen.tsx | ../ai/TutorChat |
 | src/features/practice/PracticeScreen.tsx | ../audio/speech |
+| src/features/practice/PracticeScreen.tsx | ../scheduler/cardModel |
 | src/features/practice/PracticeScreen.tsx | ../visuals/MathPrompt |
 | src/features/practice/PracticeScreen.tsx | ../visuals/VisualModel |
 | src/features/practice/PracticeScreen.tsx | ../visuals/visualModelUtils |
@@ -607,6 +633,13 @@
 | src/tests/components.test.tsx | ../features/mastery/SkillTile |
 | src/tests/components.test.tsx | ../features/mastery/todayPlanEngine |
 | src/tests/components.test.tsx | ../types/math |
+| src/tests/dailyLessonPlanner.test.ts | ../features/curriculum/makeItemFromId |
+| src/tests/dailyLessonPlanner.test.ts | ../features/goals/types |
+| src/tests/dailyLessonPlanner.test.ts | ../features/learningPlan/dailyLessonPlanner |
+| src/tests/dailyLessonPlanner.test.ts | ../features/mastery/skillMasteryEngine |
+| src/tests/dailyLessonPlanner.test.ts | ../features/scheduler/cardModel |
+| src/tests/dailyLessonPlanner.test.ts | ../types/math |
+| src/tests/dailyLessonPlanner.test.ts | ../utils/rng |
 | src/tests/dailyNewGoalPlanner.test.ts | ../features/goals/dailyNewGoalLimits |
 | src/tests/dailyNewGoalPlanner.test.ts | ../features/goals/dailyNewGoalPlanner |
 | src/tests/dailyNewGoalPlanner.test.ts | ../features/goals/goalEngine |
@@ -675,6 +708,10 @@
 | src/tests/goalEvaluationSession.test.tsx | ../features/learning/learningEvents |
 | src/tests/goalEvaluationSession.test.tsx | ../features/sync/driveSync |
 | src/tests/goalEvaluationSession.test.tsx | ../types/math |
+| src/tests/goalPortfolioEngine.test.ts | ../features/goals/dailyNewGoalPlanner |
+| src/tests/goalPortfolioEngine.test.ts | ../features/goals/goalEngine |
+| src/tests/goalPortfolioEngine.test.ts | ../features/goals/goalPortfolioEngine |
+| src/tests/goalPortfolioEngine.test.ts | ../features/goals/types |
 | src/tests/goalRecommendationEngine.test.ts | ../features/goals/goalRecommendationEngine |
 | src/tests/goalRecommendationEngine.test.ts | ../features/goals/types |
 | src/tests/goalRecommendationEngine.test.ts | ../features/learning/learningEvents |

@@ -429,10 +429,7 @@ def division_model_choice_lesson(page: Page) -> None:
     expect(page.get_by_text(re.compile(r"Correct!|New personal best!"))).to_be_visible()
 
 
-def scaled_bar_graph_lesson(page: Page) -> None:
-    create_profile(page, "BarGraphTester", "e2e-scaled-bar-graph")
-    open_mastery_skill(page, "Scaled Bar Graphs")
-    prompt = page.locator(".drill-q > div").first.inner_text()
+def scaled_bar_graph_answer(page: Page, prompt: str) -> int:
     figure = page.get_by_role("figure", name=re.compile(r"scaled bar graph.*vertical axis counts by", re.I))
     expect(figure).to_be_visible()
     scale = int(re.search(r"counts by (\d+)", figure.get_attribute("aria-label")).group(1))
@@ -448,13 +445,19 @@ def scaled_bar_graph_lesson(page: Page) -> None:
         bar_units = round((values[0] / max(values)) / (1 - values[0] / max(values)))
         graph_values = [round(height / max(values) * (bar_units + 1) * scale) for height in values]
     if "Mia and Leo" in prompt:
-        answer = graph_values[0] + graph_values[1]
+        return graph_values[0] + graph_values[1]
     elif "more" in prompt:
-        answer = graph_values[0] - graph_values[1]
+        return graph_values[0] - graph_values[1]
     elif "missing" in prompt:
-        answer = graph_values[2]
-    else:
-        answer = graph_values[0]
+        return graph_values[2]
+    return graph_values[0]
+
+
+def scaled_bar_graph_lesson(page: Page) -> None:
+    create_profile(page, "BarGraphTester", "e2e-scaled-bar-graph")
+    open_mastery_skill(page, "Scaled Bar Graphs")
+    prompt = page.locator(".drill-q > div").first.inner_text()
+    answer = scaled_bar_graph_answer(page, prompt)
     page.get_by_label("Your answer", exact=True).fill(str(answer))
     page.get_by_label("Your answer", exact=True).press("Enter")
     expect(page.get_by_text(re.compile(r"Correct!|New personal best!"))).to_be_visible()
@@ -514,7 +517,9 @@ def two_step_tape_lesson(page: Page) -> None:
     prompt = page.locator(".drill-q > div").first.inner_text()
     expect(page.get_by_role("figure", name=re.compile(r"tape diagram for two_step", re.I))).to_be_visible()
     a, b, c = [int(value) for value in re.findall(r"\d+", prompt)][:3]
-    if "rows" in prompt or "more" in prompt:
+    if "shared equally" in prompt or "each friend" in prompt:
+        answer = a // b + c if "more" in prompt or "gets" in prompt else a // b - c
+    elif "rows" in prompt or "more" in prompt:
         answer = a * b + c
     elif "uses" in prompt:
         answer = a * b - c
@@ -525,6 +530,97 @@ def two_step_tape_lesson(page: Page) -> None:
     page.get_by_label("Your answer", exact=True).fill(str(answer))
     page.get_by_label("Your answer", exact=True).press("Enter")
     expect(page.get_by_text(re.compile(r"Correct!|New personal best!"))).to_be_visible()
+
+
+def overlapping_goal_portfolio(page: Page) -> None:
+    create_profile(page, "GoalPortfolioTester", "e2e-goal-portfolio")
+    page.evaluate("""async () => {
+        const db = await new Promise((resolve, reject) => {
+            const request = indexedDB.open('mathfan');
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+        const student = await new Promise((resolve, reject) => {
+            const tx = db.transaction('students', 'readonly');
+            const request = tx.objectStore('students').getAll();
+            request.onsuccess = () => resolve(request.result[0]);
+            request.onerror = () => reject(request.error);
+        });
+        const baseline = { capturedAt: '2026-06-01T00:00:00.000Z', status: 'new', attemptCount: 0, distinctItemCount: 0, recentAccuracy: 0, dueItemCount: 0, mistakePatterns: [], hintRate: 0 };
+        const makeGoal = (id, title, targetDate) => ({
+            id, studentId: student.id, title, source: 'manual', status: 'active', portfolioRole: 'primary',
+            durationDays: 14, startDate: '2026-06-01', targetDate,
+            targets: [{ id: `target-${id}`, skillId: 'g3-mul-meaning', reason: 'needs_evaluation', baseline, targetAccuracy: .8, minFirstAttempts: 8, minDistinctItems: 4, minActiveDays: 2, maxHintRate: .25, misconceptionTargets: [], weight: 1 }],
+            createdAt: '2026-06-01T00:00:00.000Z', updatedAt: '2026-06-01T00:00:00.000Z',
+        });
+        await new Promise((resolve, reject) => {
+            const tx = db.transaction('learningGoals', 'readwrite');
+            tx.objectStore('learningGoals').put(makeGoal('goal-a', 'Multiplication Foundation', '2026-07-01'));
+            tx.objectStore('learningGoals').put(makeGoal('goal-b', 'Array Practice', '2026-08-01'));
+            tx.oncomplete = resolve; tx.onerror = () => reject(tx.error);
+        });
+        db.close();
+    }""")
+    page.reload(wait_until="domcontentloaded")
+    page.get_by_role("button", name=re.compile(r"Goals")).click()
+    expect(page.get_by_role("heading", name="Goals", exact=True)).to_be_visible()
+    expect(page.get_by_role("region", name="Active plan")).to_contain_text("one shared daily quota")
+    expect(page.get_by_text(re.compile(r"past its target date and remains active"))).to_be_visible()
+    expect(page.get_by_text("Target date reached.", exact=True)).to_be_visible()
+
+    page.get_by_role("button", name="Add Goal", exact=True).click()
+    page.get_by_role("button", name="Next", exact=True).click()
+    page.get_by_role("button", name="Browse all skills", exact=True).click()
+    page.get_by_text("Meaning of Multiplication", exact=True).last.click()
+    page.get_by_role("button", name="Next", exact=True).click()
+    page.get_by_label("Goal title", exact=True).fill("Third Primary Goal")
+    expect(page.get_by_text(re.compile(r"third primary goal"))).to_be_visible()
+    page.get_by_role("button", name="Create anyway", exact=True).click()
+    page.get_by_role("button", name="Save Goal", exact=True).click()
+    expect(page.get_by_text("Third Primary Goal", exact=True)).to_be_visible()
+    expect(page.get_by_text(re.compile(r"More than two primary goals"))).to_be_visible()
+
+
+def adaptive_lesson_and_manual_fallback(page: Page) -> None:
+    create_profile(page, "AdaptiveLessonTester", "e2e-adaptive-lesson")
+    page.evaluate("""async () => {
+        const db = await new Promise((resolve, reject) => { const request = indexedDB.open('mathfan'); request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error); });
+        const student = await new Promise((resolve, reject) => { const request = db.transaction('students').objectStore('students').getAll(); request.onsuccess = () => resolve(request.result[0]); request.onerror = () => reject(request.error); });
+        const goal = { id: 'adaptive-goal', studentId: student.id, title: 'Multiplication Focus', source: 'manual', status: 'active', portfolioRole: 'primary', durationDays: 14, startDate: '2026-07-10', targetDate: '2026-07-30', createdAt: '2026-07-10T00:00:00.000Z', updatedAt: '2026-07-10T00:00:00.000Z', targets: [{ id: 'adaptive-target', skillId: 'g3-mul-tables-basic', reason: 'needs_evaluation', baseline: { capturedAt: '2026-07-10T00:00:00.000Z', status: 'new', attemptCount: 0, distinctItemCount: 0, recentAccuracy: 0, dueItemCount: 0, mistakePatterns: [], hintRate: 0 }, targetAccuracy: .8, minFirstAttempts: 8, minDistinctItems: 4, minActiveDays: 2, maxHintRate: .25, misconceptionTargets: [], weight: 1 }] };
+        await new Promise((resolve, reject) => { const tx = db.transaction('learningGoals', 'readwrite'); tx.objectStore('learningGoals').put(goal); tx.oncomplete = resolve; tx.onerror = () => reject(tx.error); }); db.close();
+    }""")
+    page.reload(wait_until="domcontentloaded")
+    lesson = page.get_by_role("region", name="Start Today’s Lesson")
+    expect(lesson).to_be_visible()
+    expect(lesson).to_contain_text("Focus: Times Tables 1–5")
+    lesson.get_by_role("button", name="See plan", exact=True).click()
+    expect(lesson.get_by_text("Why this plan?", exact=True)).to_be_visible()
+    lesson.get_by_role("button", name="Start lesson", exact=True).click()
+    for _ in range(30):
+        if page.get_by_role("button", name="Home", exact=True).count():
+            break
+        answer_input = page.get_by_label("Your answer", exact=True)
+        expect(answer_input).to_be_visible()
+        prompt = page.locator(".drill-q > div").first.inner_text()
+        values = [int(value) for value in re.findall(r"\d+", prompt)]
+        is_bar_graph = "bar graph" in prompt
+        if not is_bar_graph and len(values) < 2:
+            page.wait_for_timeout(500)
+            continue
+        answer = scaled_bar_graph_answer(page, prompt) if is_bar_graph else values[0] * values[1]
+        if not is_bar_graph and re.search(r"shared equally|among \d+", prompt, re.I):
+            answer = values[0] // values[1]
+        if not is_bar_graph and len(values) >= 3:
+            change = values[2]
+            answer = answer - change if re.search(r"left|removed|taken away|\buses\b", prompt, re.I) else answer + change
+        answer_input.fill(str(answer))
+        answer_input.press("Enter")
+        expect(page.get_by_text(re.compile(r"Correct!|New personal best!"))).to_be_visible()
+        page.wait_for_timeout(1200)
+    expect(page.get_by_role("button", name="Home", exact=True)).to_be_visible()
+    page.get_by_role("button", name="Home", exact=True).click()
+    page.get_by_role("button", name=re.compile(r"Multiply")).click()
+    expect(page.get_by_role("heading", name="Multiplication", exact=True)).to_be_visible()
 
 
 def run_scenario(
@@ -621,6 +717,8 @@ def main() -> int:
             ("fractional-line-plot", {"width": 820, "height": 1180}, fractional_line_plot_lesson, False),
             ("elapsed-cross-hour", {"width": 390, "height": 844}, elapsed_cross_hour_lesson, False),
             ("two-step-tape", {"width": 820, "height": 1180}, two_step_tape_lesson, False),
+            ("overlapping-goal-portfolio", {"width": 820, "height": 1180}, overlapping_goal_portfolio, False),
+            ("adaptive-lesson-and-manual", {"width": 390, "height": 844}, adaptive_lesson_and_manual_fallback, False),
         ]
         for name, viewport, scenario, standalone_share in scenarios:
             try:

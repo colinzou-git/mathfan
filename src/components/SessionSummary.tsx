@@ -19,6 +19,9 @@ interface Props {
   missedFacts?: string[];
   lastSession?: LastSession | null;
   wasQuit?: boolean;
+  adaptiveLessonFocus?: string;
+  adaptiveLessonSegments?: Array<{ kind: 'retrieval' | 'focus' | 'transfer'; itemInstanceIds: string[] }>;
+  uniqueSchedulingCards?: number;
   onDone: () => void;
   onPlayAgain?: () => void;
   onBack?: () => void;
@@ -37,6 +40,9 @@ export function SessionSummary({
   missedFacts = [],
   lastSession,
   wasQuit,
+  adaptiveLessonFocus,
+  adaptiveLessonSegments,
+  uniqueSchedulingCards,
   onDone,
   onPlayAgain,
   onBack,
@@ -140,6 +146,14 @@ export function SessionSummary({
             )}
           </div>
         )}
+
+        {adaptiveLessonFocus && <div style={s.compareBox}>
+          <p style={s.compareTitle}>Lesson segments</p>
+          <p style={s.compareLine}>{adaptiveLessonSegments?.map(segment => `${segment.kind}: ${segment.itemInstanceIds.length}`).join(' · ')} · {uniqueSchedulingCards} unique scheduling cards</p>
+          <p style={s.compareLine}>Overall first-attempt outcome: {firstTryPct}%. Next: revisit the weakest segment only if you want extra practice.</p>
+          <p style={s.compareTitle}>Optional extra practice</p>
+          <p style={s.compareLine}>Today&apos;s focus was {adaptiveLessonFocus}. Return Home to choose focused or manual practice; extra work is separate from this completed lesson.</p>
+        </div>}
 
         <div style={s.buttonRow}>
           {onPlayAgain && (

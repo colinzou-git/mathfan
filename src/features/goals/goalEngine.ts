@@ -471,39 +471,14 @@ export function evaluateGoalLifecycle(
     }
   }
 
-  const allTargetsComplete = progress.targets.length > 0 && progress.targets.every(t => t.isComplete);
-  if (allTargetsComplete) {
-    const completedGoal: LearningGoal = {
-      ...goal,
-      status: 'completed',
-      completedAt: goal.completedAt ?? now,
-      updatedAt: now,
-    };
-    if (!hasEvent(existingEvents, 'completed', goal.id)) {
-      events.push(goalEvent(goal, 'completed', now, makeEventId()));
-    }
-    return { goal: completedGoal, events, changed: completedGoal.status !== goal.status || events.length > 0 };
-  }
-
-  if (progress.isExpired) {
-    const endedGoal: LearningGoal = {
-      ...goal,
-      status: 'ended',
-      endedAt: goal.endedAt ?? now,
-      updatedAt: now,
-    };
-    if (!hasEvent(existingEvents, 'ended', goal.id)) {
-      events.push(goalEvent(goal, 'ended', now, makeEventId()));
-    }
-    return { goal: endedGoal, events, changed: endedGoal.status !== goal.status || events.length > 0 };
-  }
-
+  // Completion and overdue lifecycle decisions are user-controlled. Calendar
+  // evaluation may record target evidence, but never changes goal status.
   return { goal, events, changed: events.length > 0 };
 }
 
 export function transitionGoal(
   goal: LearningGoal,
-  type: Extract<GoalEventType, 'paused' | 'resumed' | 'cancelled' | 'ended' | 'updated'>,
+  type: Extract<GoalEventType, 'paused' | 'resumed' | 'completed' | 'cancelled' | 'ended' | 'updated'>,
   now: string,
   makeEventId: () => string,
   changes: Partial<Omit<LearningGoal, 'id' | 'studentId' | 'createdAt'>> = {},
@@ -511,6 +486,7 @@ export function transitionGoal(
   const statusByEvent: Partial<Record<GoalEventType, LearningGoal['status']>> = {
     paused: 'paused',
     resumed: 'active',
+    completed: 'completed',
     cancelled: 'cancelled',
     ended: 'ended',
   };
@@ -521,6 +497,7 @@ export function transitionGoal(
     status: nextStatus,
     updatedAt: now,
     endedAt: type === 'ended' || type === 'cancelled' ? (goal.endedAt ?? now) : changes.endedAt ?? goal.endedAt,
+    completedAt: type === 'completed' ? (goal.completedAt ?? now) : changes.completedAt ?? goal.completedAt,
   };
   return {
     goal: next,

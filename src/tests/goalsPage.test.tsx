@@ -183,6 +183,18 @@ afterEach(() => {
 });
 
 describe('dashboard Goals entry', () => {
+  it('shows a separate adaptive lesson tile while existing manual practice remains usable', async () => {
+    const onStartDailyReview = vi.fn(); const onPickOperation = vi.fn();
+    render(<StudentDashboard profile={profile()} onStartDailyReview={onStartDailyReview} onPickOperation={onPickOperation} onOpenStats={() => {}} onOpenSettings={() => {}} onStartQuiz={() => {}} onOpenAchievementDetail={() => {}} onOpenMasteryMap={() => {}} onOpenGoals={() => {}} />);
+    const start = await screen.findByRole('button', { name: 'Start lesson' });
+    fireEvent.click(screen.getByRole('button', { name: 'See plan' }));
+    expect(screen.getByText(/Why this plan/i)).toBeInTheDocument();
+    fireEvent.click(start);
+    expect(onStartDailyReview).toHaveBeenCalledWith(expect.objectContaining({ mode: 'adaptive_lesson', lessonKind: 'adaptive_daily_lesson', preplannedItems: expect.any(Array) }));
+    fireEvent.click(screen.getByRole('button', { name: /Multiply/i }));
+    expect(onPickOperation).toHaveBeenCalledWith('multiplication');
+  });
+
   it('places Daily New for Goals between Daily Review and the Grade 3 Math Map, then opens Goals', async () => {
     vi.mocked(mathAnswerEventRepo.getAll).mockResolvedValue([]);
     vi.mocked(itemStateRepo.getForStudent).mockResolvedValue([]);

@@ -48,6 +48,7 @@ export type ItemType =
 
 export type SessionMode =
   | 'daily_review'
+  | 'adaptive_lesson'
   | 'single_table'
   | 'multi_table'
   | 'multiplication'
@@ -238,6 +239,9 @@ export interface AttemptLog {
   goalIds?: string[];
   goalTargetIds?: string[];
   goalLearningKind?: GoalLearningKind;
+  lessonPlanId?: string;
+  lessonSegment?: 'retrieval' | 'focus' | 'transfer';
+  lessonRationale?: string;
   createdAt: string;
 }
 
@@ -267,6 +271,10 @@ export interface PracticeSession {
   goalIds?: string[];
   goalTargetIds?: string[];
   goalLearningKind?: GoalLearningKind;
+  lessonPlanId?: string;
+  lessonKind?: 'adaptive_daily_lesson';
+  focusSkillId?: string;
+  lessonSegments?: Array<{ kind: 'retrieval' | 'focus' | 'transfer'; itemInstanceIds: string[] }>;
 }
 
 // ── Stats types ───────────────────────────────────────────────────────────────
@@ -313,6 +321,8 @@ export interface SessionConfig {
   tables?: number[];          // single_table / multi_table (legacy sessions)
   /** When set, practice exactly these item IDs (repeated to fill sessionLength) instead of generating from tables/ranges. */
   specificItemIds?: string[];
+  /** Concrete generated instances for an ordered adaptive lesson queue. */
+  preplannedItems?: PracticeItem[];
   sessionLength: SessionLength;
   /**
    * First operand range. Meaning depends on mode:
@@ -341,6 +351,11 @@ export interface SessionConfig {
   goalIds?: string[];
   goalTargetIds?: string[];
   goalLearningKind?: GoalLearningKind;
+  lessonPlanId?: string;
+  lessonKind?: 'adaptive_daily_lesson';
+  focusSkillId?: string;
+  lessonSegments?: Array<{ kind: 'retrieval' | 'focus' | 'transfer'; itemInstanceIds: string[] }>;
+  lessonRationales?: Record<string, string>;
 }
 
 // ── Growth comparison (period over period) ─────────────────────────────────────
