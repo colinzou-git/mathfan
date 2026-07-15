@@ -1,10 +1,10 @@
 import type { PracticeItem } from '../../types/math';
 import type { ArithmeticGenerationConstraints, ArithmeticGeneratorContext, ArithmeticQuestionSpec } from './regrouping';
 import { analyzeArithmeticStructure, arithmeticTemplateKey, generateArithmeticOperands } from './regrouping';
+import { makeStructuredDivisionItem } from './divisionItems';
 
 const SKILL_ADD = 'SKILL_ADD';
 const SKILL_SUB = 'SKILL_SUB';
-const SKILL_DIV = 'SKILL_DIV_FACTS';
 
 function randInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -140,18 +140,8 @@ export function generateSubtractionItems(
 // ── Division (whole-number quotient) ──────────────────────────────────────────
 
 export function makeDivisionItem(dividend: number, divisor: number): PracticeItem {
-  return {
-    id: divIdStd(dividend, divisor),
-    skillId: SKILL_DIV,
-    itemType: 'division_fact',
-    prompt: `${dividend} ÷ ${divisor}`,
-    answer: dividend / divisor,
-    answerInput: 'numeric',
-    tags: ['division'],
-    difficulty: arithDifficulty(dividend, divisor),
-    factA: dividend,
-    factB: divisor,
-  };
+  const quotient = dividend / divisor;
+  return makeStructuredDivisionItem({ schema: 'fact_recall', dividend, divisor, quotient });
 }
 
 /**

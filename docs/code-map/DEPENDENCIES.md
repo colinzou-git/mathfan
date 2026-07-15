@@ -4,9 +4,9 @@
 
 | Package | Import count |
 | --- | --- |
-| vitest | 76 |
+| vitest | 77 |
 | react | 35 |
-| @testing-library/react | 17 |
+| @testing-library/react | 18 |
 | pathlib | 8 |
 | __future__ | 7 |
 | sys | 7 |
@@ -131,10 +131,13 @@
 | src/features/curriculum/areaItems.ts | ../../utils/grammar |
 | src/features/curriculum/areaItems.ts | ../visuals/types |
 | src/features/curriculum/arithmeticItems.ts | ../../types/math |
+| src/features/curriculum/arithmeticItems.ts | ./divisionItems |
 | src/features/curriculum/arithmeticItems.ts | ./regrouping |
 | src/features/curriculum/decimalItems.ts | ../../types/math |
 | src/features/curriculum/describeItem.ts | ../../types/math |
 | src/features/curriculum/describeItem.ts | ./multiplicationItems |
+| src/features/curriculum/divisionItems.ts | ../../types/math |
+| src/features/curriculum/divisionItems.ts | ./regrouping |
 | src/features/curriculum/fractionItems.ts | ../../types/math |
 | src/features/curriculum/fractionItems.ts | ../../utils/rng |
 | src/features/curriculum/fractionItems.ts | ../fractions/types |
@@ -143,6 +146,7 @@
 | src/features/curriculum/makeItemFromId.ts | ./areaItems |
 | src/features/curriculum/makeItemFromId.ts | ./arithmeticItems |
 | src/features/curriculum/makeItemFromId.ts | ./decimalItems |
+| src/features/curriculum/makeItemFromId.ts | ./divisionItems |
 | src/features/curriculum/makeItemFromId.ts | ./fractionItems |
 | src/features/curriculum/makeItemFromId.ts | ./geometryItems |
 | src/features/curriculum/makeItemFromId.ts | ./measurementItems |
@@ -157,6 +161,7 @@
 | src/features/curriculum/measurementItems.ts | ../../types/math |
 | src/features/curriculum/mulPropertiesItems.ts | ../../types/math |
 | src/features/curriculum/multiplicationItems.ts | ../../types/math |
+| src/features/curriculum/multiplicationItems.ts | ./divisionItems |
 | src/features/curriculum/numberTheoryItems.ts | ../../types/math |
 | src/features/curriculum/patternItems.ts | ../../types/math |
 | src/features/curriculum/regrouping.ts | ../../types/math |
@@ -164,6 +169,7 @@
 | src/features/curriculum/roundingItems.ts | ../../types/math |
 | src/features/curriculum/twoStepItems.ts | ../../types/math |
 | src/features/curriculum/wordProblemItems.ts | ../../types/math |
+| src/features/curriculum/wordProblemItems.ts | ./divisionItems |
 | src/features/dashboard/ProfileSetup.tsx | ../../types/math |
 | src/features/dashboard/ProfileSetup.tsx | ../../utils/id |
 | src/features/dashboard/ProfileSetup.tsx | ../profile/learnerIdentity |
@@ -326,6 +332,7 @@
 | src/features/mastery/skillPracticePlanner.ts | ../../types/math |
 | src/features/mastery/skillPracticePlanner.ts | ../curriculum/areaItems |
 | src/features/mastery/skillPracticePlanner.ts | ../curriculum/arithmeticItems |
+| src/features/mastery/skillPracticePlanner.ts | ../curriculum/divisionItems |
 | src/features/mastery/skillPracticePlanner.ts | ../curriculum/fractionItems |
 | src/features/mastery/skillPracticePlanner.ts | ../curriculum/geometryItems |
 | src/features/mastery/skillPracticePlanner.ts | ../curriculum/measurementItems |
@@ -505,6 +512,8 @@
 | src/features/sync/useSync.ts | ../auth/googleAuth |
 | src/features/sync/useSync.ts | ./driveSync |
 | src/features/visuals/AreaPerimeterCompareModel.tsx | ./types |
+| src/features/visuals/DivisionArrayModel.tsx | ../curriculum/divisionItems |
+| src/features/visuals/DivisionDecompositionModel.tsx | ../curriculum/divisionItems |
 | src/features/visuals/FractionBar.tsx | ../audio/mathSpeech |
 | src/features/visuals/FractionBar.tsx | ./FractionText |
 | src/features/visuals/FractionComparisonModel.tsx | ../fractions/types |
@@ -517,11 +526,14 @@
 | src/features/visuals/MathPrompt.tsx | ./visualModelUtils |
 | src/features/visuals/PerimeterPathModel.tsx | ./types |
 | src/features/visuals/PlaceValueRegroupModel.tsx | ../curriculum/regrouping |
+| src/features/visuals/SharingGroupingModel.tsx | ../curriculum/divisionItems |
 | src/features/visuals/VisualModel.tsx | ../../types/math |
 | src/features/visuals/VisualModel.tsx | ./AreaGrid |
 | src/features/visuals/VisualModel.tsx | ./AreaPerimeterCompareModel |
 | src/features/visuals/VisualModel.tsx | ./ArrayModel |
 | src/features/visuals/VisualModel.tsx | ./ClockModel |
+| src/features/visuals/VisualModel.tsx | ./DivisionArrayModel |
+| src/features/visuals/VisualModel.tsx | ./DivisionDecompositionModel |
 | src/features/visuals/VisualModel.tsx | ./EqualGroupsModel |
 | src/features/visuals/VisualModel.tsx | ./FractionBar |
 | src/features/visuals/VisualModel.tsx | ./FractionComparisonModel |
@@ -532,6 +544,7 @@
 | src/features/visuals/VisualModel.tsx | ./RectangleMeasureModel |
 | src/features/visuals/VisualModel.tsx | ./RectilinearAreaModel |
 | src/features/visuals/VisualModel.tsx | ./ShapeModel |
+| src/features/visuals/VisualModel.tsx | ./SharingGroupingModel |
 | src/features/visuals/VisualModel.tsx | ./visualModelUtils |
 | src/features/visuals/visualModelUtils.ts | ../../types/math |
 | src/features/visuals/visualModelUtils.ts | ./ShapeModel |
@@ -598,6 +611,18 @@
 | src/tests/diagnosticSession.test.tsx | ../db/repositories |
 | src/tests/diagnosticSession.test.tsx | ../features/diagnosis/diagnosticPersistence |
 | src/tests/diagnosticSession.test.tsx | ../features/diagnosis/DiagnosticSession |
+| src/tests/divisionRedesign.test.tsx | ../features/adaptive/relatedItemMapping |
+| src/tests/divisionRedesign.test.tsx | ../features/curriculum/arithmeticItems |
+| src/tests/divisionRedesign.test.tsx | ../features/curriculum/divisionItems |
+| src/tests/divisionRedesign.test.tsx | ../features/curriculum/makeItemFromId |
+| src/tests/divisionRedesign.test.tsx | ../features/mastery/misconceptionEngine |
+| src/tests/divisionRedesign.test.tsx | ../features/mastery/skillMapping |
+| src/tests/divisionRedesign.test.tsx | ../features/mastery/skillPracticePlanner |
+| src/tests/divisionRedesign.test.tsx | ../features/practice/hintEngine |
+| src/tests/divisionRedesign.test.tsx | ../features/scheduler/cardModel |
+| src/tests/divisionRedesign.test.tsx | ../features/scheduler/responsePolicy |
+| src/tests/divisionRedesign.test.tsx | ../features/visuals/VisualModel |
+| src/tests/divisionRedesign.test.tsx | ../utils/rng |
 | src/tests/driveSyncErrors.test.ts | ../features/sync/driveSync |
 | src/tests/eventRebuild.test.ts | ../features/learning/eventRebuild |
 | src/tests/eventRebuild.test.ts | ../features/learning/learningEvents |
@@ -825,6 +850,7 @@
 | src/tests/visualModel.test.ts | ../features/curriculum/wordProblemItems |
 | src/tests/visualModel.test.ts | ../features/visuals/VisualModel |
 | src/tests/visualModel.test.ts | ../features/visuals/visualModelUtils |
+| src/types/math.ts | ../features/curriculum/divisionItems |
 | src/types/math.ts | ../features/curriculum/regrouping |
 | src/types/math.ts | ../features/fractions/types |
 | src/types/math.ts | ../features/visuals/types |

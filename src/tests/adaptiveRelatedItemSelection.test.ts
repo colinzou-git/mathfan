@@ -67,7 +67,7 @@ describe('getRelatedItemIds — calculation embedding', () => {
   });
 
   it('WORD_dv_7_8 → DIV_56d7', () => {
-    expect(getRelatedItemIds(item('WORD_dv_7_8'))).toEqual(['DIV_56d7']);
+    expect(getRelatedItemIds(item('WORD_dv_7_8'))).toEqual(['DIV_56d7', 'MUL_7x8']);
   });
 
   it('MWRD_addg_250_150 → an addition-related item', () => {

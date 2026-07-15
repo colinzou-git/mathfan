@@ -298,7 +298,7 @@ def open_mastery_skill(page: Page, skill_name: str) -> None:
     page.get_by_role("button", name=re.compile(r"Grade 3 Math Map")).click()
     page.get_by_role("button", name=re.compile(rf"^{re.escape(skill_name)}:")).click()
     page.get_by_role("button", name=re.compile(r"Practice this skill")).click()
-    expect(page.get_by_role("img").last).to_be_visible()
+    expect(page.locator(".drill-q")).to_be_visible()
     assert_no_horizontal_overflow(page, skill_name)
 
 
@@ -395,6 +395,40 @@ def subtraction_across_zero_lesson(page: Page) -> None:
         raise AssertionError("Across-zero lesson did not include its planned error-analysis item")
 
 
+def division_decomposition_lesson(page: Page) -> None:
+    create_profile(page, "DivisionDecomposeTester", "e2e-division-decomposition")
+    open_mastery_skill(page, "Decompose Two-Digit Division")
+    found_target = False
+    for _ in range(10):
+        prompt = page.locator(".drill-q > div").first.inner_text()
+        values = [int(value) for value in re.findall(r"\d+", prompt)]
+        if prompt.startswith("Use"):
+            dividend, divisor = values[-2:]
+            expect(page.get_by_role("figure", name=re.compile(rf"decomposition model for {dividend} divided by {divisor}", re.I))).to_be_visible()
+            page.get_by_label("Your answer", exact=True).fill(str(dividend // divisor))
+            page.get_by_label("Your answer", exact=True).press("Enter")
+            found_target = found_target or (dividend == 84 and divisor == 3)
+        else:
+            dividend, divisor, quotient = values[:3]
+            page.get_by_role("button", name=f"{quotient} × {divisor} = {dividend}", exact=True).click()
+        expect(page.get_by_text(re.compile(r"Correct!|New personal best!"))).to_be_visible()
+        if found_target:
+            break
+        page.wait_for_timeout(1400)
+    if not found_target:
+        raise AssertionError("Decomposition lesson did not exercise 84 ÷ 3")
+
+
+def division_model_choice_lesson(page: Page) -> None:
+    create_profile(page, "DivisionModelTester", "e2e-division-model-choice")
+    open_mastery_skill(page, "Division Word Problems")
+    prompt = page.locator(".drill-q > div").first.inner_text()
+    dividend, divisor = [int(value) for value in re.findall(r"\d+", prompt)][:2]
+    expect(page.get_by_role("figure", name=re.compile(rf"sharing model for {dividend} objects", re.I))).to_be_visible()
+    page.get_by_role("button", name=f"{dividend} ÷ {divisor}", exact=True).click()
+    expect(page.get_by_text(re.compile(r"Correct!|New personal best!"))).to_be_visible()
+
+
 def run_scenario(
     browser: Browser,
     name: str,
@@ -483,6 +517,8 @@ def main() -> int:
             ("fraction-equivalence-visual", {"width": 390, "height": 844}, fraction_equivalence_visual_lesson, False),
             ("fraction-same-numerator", {"width": 1024, "height": 768}, fraction_same_numerator_lesson, False),
             ("subtraction-across-zero", {"width": 390, "height": 844}, subtraction_across_zero_lesson, False),
+            ("division-decomposition", {"width": 390, "height": 844}, division_decomposition_lesson, False),
+            ("division-model-choice", {"width": 820, "height": 1180}, division_model_choice_lesson, False),
         ]
         for name, viewport, scenario, standalone_share in scenarios:
             try:

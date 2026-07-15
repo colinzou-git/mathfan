@@ -26,6 +26,8 @@ export function getHint(item: PracticeItem, wrongAttempts: number): HintResult |
   const a = factA ?? 0;
   const b = factB ?? 0;
 
+  if (item.divisionSpec) return structuredDivisionHint(item, wrongAttempts);
+
   if (wrongAttempts >= 4) {
     return {
       text: "Keep going — you're getting closer! Try one more time.",
@@ -85,6 +87,21 @@ export function getHint(item: PracticeItem, wrongAttempts: number): HintResult |
     default:
       return genericHint(wrongAttempts);
   }
+}
+
+function structuredDivisionHint(item: PracticeItem, attempt: number): HintResult {
+  const spec = item.divisionSpec!;
+  const meaning = spec.context?.interpretation === 'grouping'
+    ? `${spec.dividend} is the total and ${spec.divisor} is how many go in each group.`
+    : `${spec.dividend} is the total shared among ${spec.divisor} equal groups.`;
+  if (attempt <= 1) return hint(meaning);
+  if (attempt === 2) return hint(`Picture ${spec.dividend} counters arranged in equal groups of ${spec.divisor}.`);
+  const parts = spec.decomposition;
+  if (attempt === 3 && parts) return hint(`Split ${spec.dividend} into ${parts.map(part => part.dividendPart).join(' + ')}. Each part divides evenly by ${spec.divisor}.`);
+  if (attempt === 4 && parts) return hint(`The partial quotients are ${parts.map(part => part.quotientPart).join(' and ')}. Add them to finish.`);
+  if (attempt <= 3) return hint(`Draw ${spec.divisor} equal groups and share the total one counter at a time.`);
+  if (attempt === 4) return hint(`Check your result with ? × ${spec.divisor} = ${spec.dividend}.`);
+  return { text: `${spec.dividend} ÷ ${spec.divisor} = ${spec.quotient}, because ${spec.quotient} × ${spec.divisor} = ${spec.dividend}.`, showExplanationButton: true };
 }
 
 function arithmeticRegroupHint(item: PracticeItem, attempt: number): HintResult {

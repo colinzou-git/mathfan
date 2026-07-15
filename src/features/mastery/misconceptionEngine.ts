@@ -124,6 +124,21 @@ function detectDivision(item: PracticeItem, raw: string | number): string[] {
 
   const patterns: string[] = [];
 
+  if (item.divisionSpec) {
+    const spec = item.divisionSpec;
+    const candidates = {
+      div_swapped_dividend_divisor: divisor / dividend,
+      div_used_multiplication_result: dividend * divisor,
+      div_shared_vs_grouped_confusion: divisor,
+      div_partial_quotient_missing: spec.decomposition?.[0]?.quotientPart,
+      div_decomposition_sum_error: spec.decomposition?.reduce((sum, part) => sum + part.dividendPart, 0),
+      div_quotient_off_by_one: correct + 1,
+      div_used_related_fact_incorrectly: correct + divisor,
+      div_copied_dividend_or_divisor: dividend,
+    };
+    for (const [code, value] of Object.entries(candidates)) if (value !== undefined && sa === value) patterns.push(`div:${code}`);
+  }
+
   // Student gave the dividend instead of the quotient
   if (sa === dividend) patterns.push('div:gave_dividend');
 

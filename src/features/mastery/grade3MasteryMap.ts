@@ -77,6 +77,21 @@ export const GRADE3_MASTERY_MAP: readonly MasterySkillNode[] = [
     prerequisites: ['g3-div-meaning', 'g3-mul-tables-advanced'],
     californiaStandardIds: ['3.OA.B.6'],
   },
+  {
+    id: 'g3-div-sharing-grouping', domain: 'division', title: 'Sharing and Grouping',
+    description: 'Interpret division as sharing equally or making equal-size groups.',
+    prerequisites: ['g3-div-meaning'], californiaStandardIds: ['3.OA.A.2'],
+  },
+  {
+    id: 'g3-div-decomposition', domain: 'division', title: 'Decompose Two-Digit Division',
+    description: 'Split a dividend into friendly divisible parts and combine partial quotients.',
+    prerequisites: ['g3-div-mul-relationship'], californiaStandardIds: ['3.OA.B.6', '3.NBT.A.2'],
+  },
+  {
+    id: 'g3-div-word-problems', domain: 'division', title: 'Division Word Problems',
+    description: 'Choose and solve division models in one- and two-step situations.',
+    prerequisites: ['g3-div-sharing-grouping'], californiaStandardIds: ['3.OA.A.2', '3.OA.D.8'],
+  },
   // ── Fractions ───────────────────────────────────────────────────────────────
   {
     id: 'g3-frac-unit',

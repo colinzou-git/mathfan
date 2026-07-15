@@ -1,6 +1,7 @@
 import type { VisualSpec } from '../features/visuals/types';
 import type { FractionQuestionSpec } from '../features/fractions/types';
 import type { ArithmeticQuestionSpec } from '../features/curriculum/regrouping';
+import type { DivisionQuestionSpec } from '../features/curriculum/divisionItems';
 
 export type GradeLevel = 3 | 4 | 5;
 export type ReviewGrade = 'again' | 'hard' | 'good' | 'easy';
@@ -165,6 +166,8 @@ export interface PracticeItem {
   fractionSpec?: FractionQuestionSpec;
   /** Structured column arithmetic and regrouping evidence for multi-digit tasks. */
   arithmeticSpec?: ArithmeticQuestionSpec;
+  /** Structured division meaning/strategy data; keeps fact recall separate from reasoning. */
+  divisionSpec?: DivisionQuestionSpec;
 }
 
 export interface PerimeterReasoningSpec {

@@ -30,9 +30,9 @@ describe('hasVisualModel — equal-groups word problem', () => {
     expect(hasVisualModel(item)).toBe(true);
   });
 
-  it('returns false for non-eg word problems', () => {
+  it('renders the structured sharing model for division word problems', () => {
     const item = makeWordProblem('dv', 3, 4);
-    expect(hasVisualModel(item)).toBe(false);
+    expect(hasVisualModel(item)).toBe(true);
   });
 });
 

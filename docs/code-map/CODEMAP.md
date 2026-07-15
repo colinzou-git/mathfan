@@ -1,6 +1,6 @@
 # Code Map Overview
 
-Generated: 2026-07-15 06:21:40 UTC
+Generated: 2026-07-15 06:42:06 UTC
 
 Repo root: `/home/ubuntu/mathfan`  
 Output folder: `/home/ubuntu/mathfan/docs/code-map`
@@ -14,9 +14,9 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 - Package name: `mathfan`
 - Version: `1.2.0`
 - Module type: `module`
-- Scanned files: **252**
-- Scanned lines: **48,127**
-- Scanned bytes: **1,933,647**
+- Scanned files: **257**
+- Scanned lines: **48,594**
+- Scanned bytes: **1,964,690**
 
 ## NPM scripts
 
@@ -97,7 +97,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 | src/features/visuals/ShapeModel.tsx | 137 | Reusable SVG visual model components (area grids, shape diagrams, fraction bars, arrays). | SVGWrap, ShapeModel, ShapeName, pts, regularPoly, rightAnglePath, ShapeModel, SVGWrap |
 | src/features/stats/QuizStatsView.tsx | 135 | Progress/statistics screens or calculations. | FactGroup, QuizStatsView, avgSecStr, FactGroup, fmt, QuizStatsView |
 | src/features/stats/TodayAchievementSection.tsx | 125 | Progress/statistics screens or calculations. | AchievementTile, TodayAchievementSection, AchievementTile, TodayAchievementSection |
-| src/features/mastery/skillPracticePlanner.ts | 837 | Grade 3 skill practice planner: maps skill IDs to SessionConfig for the mastery map. | buildFocusSequence, buildRegroupingFocusSequence, FocusSequence, planFractionFocusSequence, PlanOptions, planPracticeForSkill, add2DigitRegroupingItemIds, add3DigitRegroupingItemIds |
+| src/features/mastery/skillPracticePlanner.ts | 874 | Grade 3 skill practice planner: maps skill IDs to SessionConfig for the mastery map. | buildDivisionFocusSequence, buildFocusSequence, buildRegroupingFocusSequence, FocusSequence, FocusSequenceContext, planFractionFocusSequence, PlanOptions, planPracticeForSkill |
 | src/features/goals/GoalEvaluationSession.tsx | 643 | Exports reusable code: GoalEvaluationSession. | GoalEvaluationSession, buildNewLearningCandidates, buildReviewFindings, buildUpdatedState, confirmCancel, continueNext, evaluationArgs, GoalEvaluationSession |
 | src/features/practice/usePracticeSession.ts | 613 | Local persistence/database layer. | usePracticeSession, CorrectResult, LastSessionSummary, SessionState, usePracticeSession, getStaticItem, usePracticeSession |
 | src/features/curriculum/areaItems.ts | 609 | Practice item definitions and ID generators for a math curriculum topic. | apChoiceId, areaPerimCmpId, areaPerimCompareItemIds, areaPerimeterChoiceItemIds, AreaPerimeterChoiceKind, AreaPerimeterSchema, AreaPerimVariant, areaRectangleItemIds |
@@ -161,6 +161,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   │   ├── arithmeticItems.ts
 │   │   │   ├── decimalItems.ts
 │   │   │   ├── describeItem.ts
+│   │   │   ├── divisionItems.ts
 │   │   │   ├── fractionItems.ts
 │   │   │   ├── geometryItems.ts
 │   │   │   ├── makeItemFromId.ts
@@ -271,6 +272,8 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │       ├── AreaPerimeterCompareModel.tsx
 │   │       ├── ArrayModel.tsx
 │   │       ├── ClockModel.tsx
+│   │       ├── DivisionArrayModel.tsx
+│   │       ├── DivisionDecompositionModel.tsx
 │   │       ├── DraggableEqualGroups.tsx
 │   │       ├── EqualGroupsModel.tsx
 │   │       ├── equalGroupsUtils.ts
@@ -285,6 +288,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │       ├── RectangleMeasureModel.tsx
 │   │       ├── RectilinearAreaModel.tsx
 │   │       ├── ShapeModel.tsx
+│   │       ├── SharingGroupingModel.tsx
 │   │       ├── types.ts
 │   │       ├── VisualModel.tsx
 │   │       └── visualModelUtils.ts
@@ -305,6 +309,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   ├── describeItem.test.ts
 │   │   ├── diagnosticPlanner.test.ts
 │   │   ├── diagnosticSession.test.tsx
+│   │   ├── divisionRedesign.test.tsx
 │   │   ├── driveSyncErrors.test.ts
 │   │   ├── eventRebuild.test.ts
 │   │   ├── fluencyEngine.test.ts

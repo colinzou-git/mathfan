@@ -102,7 +102,7 @@ describe('inferGrade3SkillId — word problems', () => {
   it('schema cmp (comparison) → g3-mul-meaning', () =>
     expect(inferGrade3SkillId(makeWordProblem('cmp', 3, 4))).toBe('g3-mul-meaning'));
 
-  it('schema dv (division) → g3-div-meaning', () =>
+  it('legacy dv events remain under g3-div-meaning', () =>
     expect(inferGrade3SkillId(makeWordProblem('dv', 4, 3))).toBe('g3-div-meaning'));
 
   it('dv schema detected via tags when itemType is word_problem', () => {

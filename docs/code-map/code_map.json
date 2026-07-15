@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-15T06:21:40.875243+00:00",
+  "generated_at": "2026-07-15T06:42:06.832824+00:00",
   "repo_root": "/home/ubuntu/mathfan",
   "package": {
     "name": "mathfan",
@@ -421,9 +421,9 @@
     {
       "path": "PROGRESS.md",
       "ext": ".md",
-      "bytes": 7425,
-      "lines": 112,
-      "sha1": "c6fba40666fd",
+      "bytes": 7633,
+      "lines": 116,
+      "sha1": "77cc997ccbf0",
       "imports": [],
       "exports": [],
       "functions": [],
@@ -570,9 +570,9 @@
     {
       "path": "scripts/e2e_mathfan.py",
       "ext": ".py",
-      "bytes": 23552,
-      "lines": 506,
-      "sha1": "3cd190386805",
+      "bytes": 25688,
+      "lines": 542,
+      "sha1": "8995c08837d7",
       "imports": [
         "__future__",
         "json",
@@ -591,6 +591,8 @@
         "assert_no_horizontal_overflow",
         "create_profile",
         "desktop_student_journey",
+        "division_decomposition_lesson",
+        "division_model_choice_lesson",
         "expect_dashboard_attempt_stats",
         "fraction_equivalence_visual_lesson",
         "fraction_same_numerator_lesson",
@@ -611,6 +613,8 @@
         "assert_no_horizontal_overflow",
         "create_profile",
         "desktop_student_journey",
+        "division_decomposition_lesson",
+        "division_model_choice_lesson",
         "expect_dashboard_attempt_stats",
         "fraction_equivalence_visual_lesson",
         "fraction_same_numerator_lesson",
@@ -1371,9 +1375,9 @@
     {
       "path": "src/features/adaptive/relatedItemMapping.ts",
       "ext": ".ts",
-      "bytes": 8862,
-      "lines": 199,
-      "sha1": "508ee97f853e",
+      "bytes": 9168,
+      "lines": 206,
+      "sha1": "bd4042791230",
       "imports": [
         "../../types/math",
         "../mastery/skillMapping"
@@ -1751,11 +1755,12 @@
     {
       "path": "src/features/curriculum/arithmeticItems.ts",
       "ext": ".ts",
-      "bytes": 7554,
-      "lines": 198,
-      "sha1": "833db589eb37",
+      "bytes": 7385,
+      "lines": 188,
+      "sha1": "1f18be88a440",
       "imports": [
         "../../types/math",
+        "./divisionItems",
         "./regrouping"
       ],
       "exports": [
@@ -1869,6 +1874,61 @@
       "read_error": null
     },
     {
+      "path": "src/features/curriculum/divisionItems.ts",
+      "ext": ".ts",
+      "bytes": 9402,
+      "lines": 162,
+      "sha1": "4de3f4074282",
+      "imports": [
+        "../../types/math",
+        "./regrouping"
+      ],
+      "exports": [
+        "divisionCardKey",
+        "DivisionDecomposition",
+        "DivisionGenerationConstraints",
+        "DivisionMisconceptionCode",
+        "DivisionQuestionSpec",
+        "DivisionSchema",
+        "FactFamily",
+        "factFamilyForDivision",
+        "findFriendlyDivisionDecomposition",
+        "generateDivisionItem",
+        "generateDivisionNearTransfer",
+        "makeStructuredDivisionItem",
+        "simulateDivisionMisconception",
+        "validateDivisionDecomposition"
+      ],
+      "functions": [
+        "divisionCardKey",
+        "factFamilyForDivision",
+        "findFriendlyDivisionDecomposition",
+        "generateDivisionItem",
+        "generateDivisionNearTransfer",
+        "makeStructuredDivisionItem",
+        "simulateDivisionMisconception",
+        "validateDivisionDecomposition"
+      ],
+      "classes": [],
+      "interfaces": [
+        "DivisionDecomposition",
+        "DivisionGenerationConstraints",
+        "DivisionQuestionSpec",
+        "FactFamily"
+      ],
+      "types": [
+        "DivisionMisconceptionCode",
+        "DivisionSchema"
+      ],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Practice item definitions and ID generators for a math curriculum topic.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/features/curriculum/fractionItems.ts",
       "ext": ".ts",
       "bytes": 14296,
@@ -1978,14 +2038,15 @@
     {
       "path": "src/features/curriculum/makeItemFromId.ts",
       "ext": ".ts",
-      "bytes": 8770,
-      "lines": 205,
-      "sha1": "b8a0522ed583",
+      "bytes": 9864,
+      "lines": 220,
+      "sha1": "55f0127e7ddb",
       "imports": [
         "../../types/math",
         "./areaItems",
         "./arithmeticItems",
         "./decimalItems",
+        "./divisionItems",
         "./fractionItems",
         "./geometryItems",
         "./measurementItems",
@@ -2115,11 +2176,12 @@
     {
       "path": "src/features/curriculum/multiplicationItems.ts",
       "ext": ".ts",
-      "bytes": 6539,
-      "lines": 210,
-      "sha1": "55801d4f46bc",
+      "bytes": 6473,
+      "lines": 203,
+      "sha1": "bc7b3c7d1fb3",
       "imports": [
-        "../../types/math"
+        "../../types/math",
+        "./divisionItems"
       ],
       "exports": [
         "ALL_ITEMS",
@@ -2358,11 +2420,12 @@
     {
       "path": "src/features/curriculum/wordProblemItems.ts",
       "ext": ".ts",
-      "bytes": 3069,
-      "lines": 88,
-      "sha1": "d14490281146",
+      "bytes": 3399,
+      "lines": 95,
+      "sha1": "3c25644d277b",
       "imports": [
-        "../../types/math"
+        "../../types/math",
+        "./divisionItems"
       ],
       "exports": [
         "generateWordProblemItems",
@@ -3494,9 +3557,9 @@
     {
       "path": "src/features/mastery/grade3MasteryMap.ts",
       "ext": ".ts",
-      "bytes": 12310,
-      "lines": 323,
-      "sha1": "fc1037add641",
+      "bytes": 13141,
+      "lines": 338,
+      "sha1": "2ae626d8215b",
       "imports": [],
       "exports": [
         "getGrade3Skill",
@@ -3578,9 +3641,9 @@
     {
       "path": "src/features/mastery/misconceptionEngine.ts",
       "ext": ".ts",
-      "bytes": 12745,
-      "lines": 311,
-      "sha1": "64dad9b63b96",
+      "bytes": 13471,
+      "lines": 326,
+      "sha1": "6cc6b65a4b27",
       "imports": [
         "../../types/math",
         "../curriculum/regrouping",
@@ -3681,9 +3744,9 @@
     {
       "path": "src/features/mastery/skillMapping.ts",
       "ext": ".ts",
-      "bytes": 8009,
-      "lines": 135,
-      "sha1": "ff89e624db4b",
+      "bytes": 8817,
+      "lines": 145,
+      "sha1": "d4096b61ad72",
       "imports": [
         "../../types/math"
       ],
@@ -3709,9 +3772,9 @@
     {
       "path": "src/features/mastery/skillMasteryEngine.ts",
       "ext": ".ts",
-      "bytes": 6890,
-      "lines": 173,
-      "sha1": "c6abb93bce9d",
+      "bytes": 6989,
+      "lines": 174,
+      "sha1": "541d5431c857",
       "imports": [
         "../../types/math",
         "../learning/learningEvents",
@@ -3747,13 +3810,14 @@
     {
       "path": "src/features/mastery/skillPracticePlanner.ts",
       "ext": ".ts",
-      "bytes": 32306,
-      "lines": 837,
-      "sha1": "240bc55197fb",
+      "bytes": 35490,
+      "lines": 874,
+      "sha1": "1934c726a444",
       "imports": [
         "../../types/math",
         "../curriculum/areaItems",
         "../curriculum/arithmeticItems",
+        "../curriculum/divisionItems",
         "../curriculum/fractionItems",
         "../curriculum/geometryItems",
         "../curriculum/measurementItems",
@@ -3766,9 +3830,11 @@
         "../curriculum/wordProblemItems"
       ],
       "exports": [
+        "buildDivisionFocusSequence",
         "buildFocusSequence",
         "buildRegroupingFocusSequence",
         "FocusSequence",
+        "FocusSequenceContext",
         "planFractionFocusSequence",
         "PlanOptions",
         "planPracticeForSkill"
@@ -3777,8 +3843,10 @@
         "add2DigitRegroupingItemIds",
         "add3DigitRegroupingItemIds",
         "arithmeticPatternItemIds",
+        "buildDivisionFocusSequence",
         "buildFocusSequence",
         "buildRegroupingFocusSequence",
+        "divisionReasoningIds",
         "divisionWordItemIds",
         "divItemIds",
         "elapsedTimeItemIds",
@@ -3808,6 +3876,7 @@
       "classes": [],
       "interfaces": [
         "FocusSequence",
+        "FocusSequenceContext",
         "PlanOptions"
       ],
       "types": [],
@@ -4266,9 +4335,9 @@
     {
       "path": "src/features/practice/hintEngine.ts",
       "ext": ".ts",
-      "bytes": 22439,
-      "lines": 438,
-      "sha1": "fc45d3e85c63",
+      "bytes": 23768,
+      "lines": 455,
+      "sha1": "f0d91db8cd67",
       "imports": [
         "../../types/math"
       ],
@@ -4295,6 +4364,7 @@
         "perimeterUnknownSideHint",
         "perimHint",
         "singleStepWordHint",
+        "structuredDivisionHint",
         "subHint",
         "twoStepWordHint",
         "unknownFactorHint",
@@ -5708,6 +5778,58 @@
       "read_error": null
     },
     {
+      "path": "src/features/visuals/DivisionArrayModel.tsx",
+      "ext": ".tsx",
+      "bytes": 819,
+      "lines": 12,
+      "sha1": "98511f989937",
+      "imports": [
+        "../curriculum/divisionItems"
+      ],
+      "exports": [
+        "DivisionArrayModel"
+      ],
+      "functions": [
+        "DivisionArrayModel"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Reusable SVG visual model components (area grids, shape diagrams, fraction bars, arrays).",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/visuals/DivisionDecompositionModel.tsx",
+      "ext": ".tsx",
+      "bytes": 1111,
+      "lines": 15,
+      "sha1": "bbdb465492f9",
+      "imports": [
+        "../curriculum/divisionItems"
+      ],
+      "exports": [
+        "DivisionDecompositionModel"
+      ],
+      "functions": [
+        "DivisionDecompositionModel"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Reusable SVG visual model components (area grids, shape diagrams, fraction bars, arrays).",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/features/visuals/DraggableEqualGroups.tsx",
       "ext": ".tsx",
       "bytes": 7563,
@@ -6121,6 +6243,32 @@
       "read_error": null
     },
     {
+      "path": "src/features/visuals/SharingGroupingModel.tsx",
+      "ext": ".tsx",
+      "bytes": 1008,
+      "lines": 13,
+      "sha1": "42dbbfaac85f",
+      "imports": [
+        "../curriculum/divisionItems"
+      ],
+      "exports": [
+        "SharingGroupingModel"
+      ],
+      "functions": [
+        "SharingGroupingModel"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Reusable SVG visual model components (area grids, shape diagrams, fraction bars, arrays).",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/features/visuals/types.ts",
       "ext": ".ts",
       "bytes": 989,
@@ -6152,15 +6300,17 @@
     {
       "path": "src/features/visuals/VisualModel.tsx",
       "ext": ".tsx",
-      "bytes": 9047,
-      "lines": 226,
-      "sha1": "4c262aa6dff7",
+      "bytes": 9655,
+      "lines": 236,
+      "sha1": "23904cb1041b",
       "imports": [
         "../../types/math",
         "./AreaGrid",
         "./AreaPerimeterCompareModel",
         "./ArrayModel",
         "./ClockModel",
+        "./DivisionArrayModel",
+        "./DivisionDecompositionModel",
         "./EqualGroupsModel",
         "./FractionBar",
         "./FractionComparisonModel",
@@ -6171,6 +6321,7 @@
         "./RectangleMeasureModel",
         "./RectilinearAreaModel",
         "./ShapeModel",
+        "./SharingGroupingModel",
         "./visualModelUtils"
       ],
       "exports": [
@@ -6196,9 +6347,9 @@
     {
       "path": "src/features/visuals/visualModelUtils.ts",
       "ext": ".ts",
-      "bytes": 3235,
-      "lines": 85,
-      "sha1": "d97729c8efb0",
+      "bytes": 3273,
+      "lines": 86,
+      "sha1": "72d67b1291df",
       "imports": [
         "../../types/math",
         "./ShapeModel"
@@ -6306,9 +6457,9 @@
     {
       "path": "src/tests/adaptiveRelatedItemSelection.test.ts",
       "ext": ".ts",
-      "bytes": 17703,
+      "bytes": 17714,
       "lines": 375,
-      "sha1": "f03b161744ee",
+      "sha1": "0b6e7e047a86",
       "imports": [
         "../features/adaptive/adaptiveItemSelector",
         "../features/adaptive/candidatePools",
@@ -6736,6 +6887,41 @@
       "functions": [
         "answerOnlyQuestion"
       ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/divisionRedesign.test.tsx",
+      "ext": ".tsx",
+      "bytes": 6985,
+      "lines": 104,
+      "sha1": "5a4f3b495394",
+      "imports": [
+        "../features/adaptive/relatedItemMapping",
+        "../features/curriculum/arithmeticItems",
+        "../features/curriculum/divisionItems",
+        "../features/curriculum/makeItemFromId",
+        "../features/mastery/misconceptionEngine",
+        "../features/mastery/skillMapping",
+        "../features/mastery/skillPracticePlanner",
+        "../features/practice/hintEngine",
+        "../features/scheduler/cardModel",
+        "../features/scheduler/responsePolicy",
+        "../features/visuals/VisualModel",
+        "../utils/rng",
+        "@testing-library/react",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [],
       "classes": [],
       "interfaces": [],
       "types": [],
@@ -7217,7 +7403,7 @@
       "ext": ".ts",
       "bytes": 5193,
       "lines": 132,
-      "sha1": "d53c01258416",
+      "sha1": "483da712bed6",
       "imports": [
         "../features/mastery/grade3MasteryMap",
         "vitest"
@@ -8136,9 +8322,9 @@
     {
       "path": "src/tests/skillMapping.test.ts",
       "ext": ".ts",
-      "bytes": 10714,
+      "bytes": 10719,
       "lines": 246,
-      "sha1": "a37426738e26",
+      "sha1": "629c60b69e89",
       "imports": [
         "../features/curriculum/fractionItems",
         "../features/curriculum/multiplicationItems",
@@ -8443,9 +8629,9 @@
     {
       "path": "src/tests/visualModel.test.ts",
       "ext": ".ts",
-      "bytes": 6999,
+      "bytes": 7023,
       "lines": 167,
-      "sha1": "77b5e70aef6c",
+      "sha1": "9f174d2c0647",
       "imports": [
         "../features/curriculum/areaItems",
         "../features/curriculum/fractionItems",
@@ -8499,10 +8685,11 @@
     {
       "path": "src/types/math.ts",
       "ext": ".ts",
-      "bytes": 11888,
-      "lines": 364,
-      "sha1": "f749e428e7d9",
+      "bytes": 12104,
+      "lines": 367,
+      "sha1": "7495a498747d",
       "imports": [
+        "../features/curriculum/divisionItems",
         "../features/curriculum/regrouping",
         "../features/fractions/types",
         "../features/visuals/types"

@@ -1,10 +1,10 @@
 import type { PracticeItem } from '../../types/math';
+import { makeStructuredDivisionItem } from './divisionItems';
 
 export const TABLE_MIN = 2;
 export const TABLE_MAX = 13;
 
 const SKILL_MUL = 'SKILL_MUL_FACTS';
-const SKILL_DIV = 'SKILL_DIV_FACTS';
 
 export function mulId(a: number, b: number): string { return `MUL_${a}x${b}`; }
 export function divId(dividend: number, divisor: number): string { return `DIV_${dividend}d${divisor}`; }
@@ -60,15 +60,8 @@ export function generateDivisionItems(
     for (let b = min; b <= max; b++) {
       const product = a * b;
       items.push({
-        id: divId(product, a),
-        skillId: SKILL_DIV,
-        itemType: 'division_fact',
-        prompt: `${product} ÷ ${a}`,
-        answer: b,
-        tags: ['division', `table_${a}`],
-        difficulty: difficultyFor(a, b),
-        factA: product,
-        factB: a,
+        ...makeStructuredDivisionItem({ schema: 'fact_recall', dividend: product, divisor: a, quotient: b }),
+        tags: ['division', `table_${a}`], difficulty: difficultyFor(a, b),
       });
     }
   }

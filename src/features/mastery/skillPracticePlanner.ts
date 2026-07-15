@@ -14,6 +14,7 @@ import { mulPropertyItemIds } from '../curriculum/mulPropertiesItems';
 import { fracNlId } from '../curriculum/fractionItems';
 import { addId, subId } from '../curriculum/arithmeticItems';
 import { analyzeArithmeticStructure } from '../curriculum/regrouping';
+import { makeStructuredDivisionItem, type DivisionSchema } from '../curriculum/divisionItems';
 import { roundId } from '../curriculum/roundingItems';
 import {
   clckId, etimeId, bargId, lplotId, mwrdId,
@@ -30,6 +31,38 @@ export interface FocusSequence {
   skillId: string;
   itemIds: string[];
   representations: string[];
+}
+
+export interface FocusSequenceContext { recentItemIds?: string[] }
+
+function divisionReasoningIds(schema: DivisionSchema): string[] {
+  const values: Array<[number, number]> = schema.startsWith('decompose_')
+    ? [[84, 3], [96, 4], [72, 6], [63, 3], [88, 4]]
+    : [[24, 4], [30, 5], [42, 6], [56, 7], [72, 8]];
+  return values.map(([dividend, divisor]) => makeStructuredDivisionItem({
+    schema, dividend, divisor, quotient: dividend / divisor,
+    ...(schema.startsWith('decompose_') ? { decomposition: (() => {
+      const q = dividend / divisor; const firstQ = q >= 20 ? 20 : q >= 10 ? 10 : Math.max(2, q - 2);
+      return [{ dividendPart: firstQ * divisor, quotientPart: firstQ }, { dividendPart: dividend - firstQ * divisor, quotientPart: q - firstQ }];
+    })() } : {}),
+    ...(['equal_sharing', 'measurement_grouping', 'word_problem_choose_model'].includes(schema) ? {
+      context: { interpretation: schema === 'measurement_grouping' ? 'grouping' as const : 'sharing' as const, noun: 'counters', groupNoun: schema === 'measurement_grouping' ? 'bag' : 'child' },
+      unknownPosition: schema === 'measurement_grouping' ? 'group_count' as const : 'group_size' as const,
+    } : {}),
+  }).id);
+}
+
+export function buildDivisionFocusSequence(skillId: string, misconceptions: string[] = [], context: FocusSequenceContext = {}): FocusSequence {
+  let ids: string[];
+  if (skillId === 'g3-div-decomposition') {
+    ids = [mulId(3, 10), ...divisionReasoningIds('equal_sharing').slice(0, 1), ...divisionReasoningIds('decompose_tens_ones').slice(0, 3), ...divisionReasoningIds('verify_with_multiplication').slice(0, 1), ...divisionReasoningIds('word_problem_choose_model').slice(0, 1)];
+  } else if (skillId === 'g3-div-sharing-grouping') ids = [...divisionReasoningIds('equal_sharing'), ...divisionReasoningIds('measurement_grouping')];
+  else if (skillId === 'g3-div-mul-relationship') ids = divisionReasoningIds('unknown_factor');
+  else if (skillId === 'g3-div-word-problems') ids = divisionReasoningIds('word_problem_choose_model');
+  else ids = divItemIds([...BASIC_TABLES, ...ADVANCED_TABLES]);
+  const recent = new Set(context.recentItemIds ?? []);
+  ids = [...ids.filter(id => !recent.has(id)), ...ids.filter(id => recent.has(id))];
+  return { skillId, itemIds: ids, representations: misconceptions.some(code => code.includes('partial_quotient')) ? ['related_fact', 'model', 'scaffolded_decomposition', 'near_transfer', 'verify', 'word_problem'] : ['model', 'independent', 'verify'] };
 }
 
 export function planFractionFocusSequence(skillId: string, misconceptions: string[] = []): FocusSequence {
@@ -75,6 +108,7 @@ export function buildRegroupingFocusSequence(skillId: string, misconceptions: st
 export function buildFocusSequence(skillId: string): FocusSequence {
   if (skillId.startsWith('g3-frac-')) return planFractionFocusSequence(skillId);
   if (skillId.startsWith('g3-add-') || skillId.startsWith('g3-sub-')) return buildRegroupingFocusSequence(skillId);
+  if (skillId.startsWith('g3-div-')) return buildDivisionFocusSequence(skillId);
   if (skillId === 'g3-area-concept') {
     return { skillId, itemIds: areaSquaresItemIds(), representations: ['unit_squares'] };
   }
@@ -114,7 +148,6 @@ const ADVANCED_TABLES = [6, 7, 8, 9, 10];   // G3_OA_MUL_FACTS_6_9 (includes 10)
 // Division divisor sets — must stay >= TABLE_MIN (2) so every generated item ID
 // exists in the global ITEM_MAP or is parseable by makeItemFromId.
 const DIV_WITHIN_DIVISORS = [2, 3, 4, 5];      // g3-div-within-100
-const DIV_ADVANCED_DIVISORS = [6, 7, 8, 9, 10]; // g3-div-mul-relationship
 
 function mulItemIds(tables: number[], factors: number[]): string[] {
   const ids: string[] = [];
@@ -546,10 +579,14 @@ export function planPracticeForSkill(
   if (skillId === 'g3-div-mul-relationship') {
     return {
       mode: 'division',
-      specificItemIds: divItemIds(DIV_ADVANCED_DIVISORS),
+      specificItemIds: divisionReasoningIds('unknown_factor'),
       sessionLength,
     };
   }
+
+  if (skillId === 'g3-div-sharing-grouping') return { mode: 'division', specificItemIds: [...divisionReasoningIds('equal_sharing'), ...divisionReasoningIds('measurement_grouping')], sessionLength };
+  if (skillId === 'g3-div-decomposition') return { mode: 'division', specificItemIds: [...divisionReasoningIds('decompose_tens_ones'), ...divisionReasoningIds('verify_with_multiplication')], sessionLength };
+  if (skillId === 'g3-div-word-problems') return { mode: 'word_problem', specificItemIds: divisionReasoningIds('word_problem_choose_model'), grade: 3, sessionLength };
 
   // ── G3_NF_EQUIVALENT_FRACTIONS (also: g3-frac-equivalent) ────────────────────
   if (

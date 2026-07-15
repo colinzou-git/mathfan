@@ -31,6 +31,9 @@ import { AreaPerimeterCompareModel } from './AreaPerimeterCompareModel';
 import { FractionEquivalenceModel } from './FractionEquivalenceModel';
 import { FractionComparisonModel } from './FractionComparisonModel';
 import { PlaceValueRegroupModel } from './PlaceValueRegroupModel';
+import { DivisionArrayModel } from './DivisionArrayModel';
+import { SharingGroupingModel } from './SharingGroupingModel';
+import { DivisionDecompositionModel } from './DivisionDecompositionModel';
 
 interface Props {
   item: PracticeItem;
@@ -51,6 +54,13 @@ export function VisualModel({ item, color, revealAnswer = false }: Props) {
 
   if (item.arithmeticSpec) {
     return <PlaceValueRegroupModel spec={item.arithmeticSpec} revealAnswer={revealAnswer} color={color} />;
+  }
+
+  if (item.divisionSpec) {
+    const spec = item.divisionSpec;
+    if (spec.schema.startsWith('decompose_') || spec.schema === 'verify_with_multiplication') return <DivisionDecompositionModel spec={spec} revealAnswer={revealAnswer} />;
+    if (spec.context) return <SharingGroupingModel spec={spec} revealAnswer={revealAnswer} />;
+    return <DivisionArrayModel spec={spec} revealAnswer={revealAnswer} />;
   }
 
   if (item.fractionSpec) {

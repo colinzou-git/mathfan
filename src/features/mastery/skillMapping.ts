@@ -9,6 +9,8 @@ import type { PracticeItem } from '../../types/math';
 export function inferGrade3SkillId(item: PracticeItem): string | null {
   const { id, itemType, tags, factA, factB } = item;
 
+  if (item.divisionSpec?.schema === 'unknown_factor') return 'g3-div-mul-relationship';
+
   // ── Multiplication ────────────────────────────────────────────────────────
   if (itemType === 'multiplication_fact' || itemType === 'unknown_factor') {
     const a = factA ?? 0;
@@ -26,6 +28,9 @@ export function inferGrade3SkillId(item: PracticeItem): string | null {
 
   // ── Division ──────────────────────────────────────────────────────────────
   if (itemType === 'division_fact') {
+    const schema = item.divisionSpec?.schema;
+    if (schema?.startsWith('decompose_') || schema === 'verify_with_multiplication') return 'g3-div-decomposition';
+    if (schema === 'equal_sharing' || schema === 'measurement_grouping') return 'g3-div-sharing-grouping';
     // For DIV_{product}d{divisor} items, factB holds the divisor
     const divisor = factB ?? 0;
     // Divisors 1–5 target the basic-tables skill; 6+ require the mul-div relationship skill
@@ -34,6 +39,11 @@ export function inferGrade3SkillId(item: PracticeItem): string | null {
 
   // ── Word problems ─────────────────────────────────────────────────────────
   if (itemType === 'word_problem') {
+    // Preserve historical WORD_dv evidence under its original broad skill;
+    // new explicit sharing/grouping assessments use DIVQ_* IDs below.
+    if (id.startsWith('WORD_dv_')) return 'g3-div-meaning';
+    if (item.divisionSpec?.schema === 'word_problem_choose_model') return 'g3-div-word-problems';
+    if (item.divisionSpec?.schema === 'equal_sharing' || item.divisionSpec?.schema === 'measurement_grouping') return 'g3-div-sharing-grouping';
     // Two-step word problems (WRD2_ prefix) — check before single-step
     if (id.startsWith('WRD2_')) return 'g3-word-two-step';
     // Tags always include the schema: 'eg' | 'ar' | 'cmp' | 'dv'

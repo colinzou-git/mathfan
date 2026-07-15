@@ -2,6 +2,7 @@ import type { PracticeItem } from '../../types/math';
 import { ITEM_MAP, makeMultiplicationItem } from './multiplicationItems';
 import { makeAdditionItem, makeSubtractionItem, makeDivisionItem } from './arithmeticItems';
 import { generateArithmeticErrorAnalysis, type ArithmeticMisconceptionCode } from './regrouping';
+import { findFriendlyDivisionDecomposition, makeStructuredDivisionItem, type DivisionSchema } from './divisionItems';
 import { makeFractionEquivalentItem, makeFractionMissingDenominatorItem, makeFractionCompareItem, makeFractionNumberLineItem, makeFractionStrategyChoiceItem, makeUnitFractionModelItem } from './fractionItems';
 import { makeRoundingItem } from './roundingItems';
 import { makePrimeItem, makeFactorItem } from './numberTheoryItems';
@@ -31,6 +32,20 @@ export function makeItemFromId(itemId: string): PracticeItem | null {
   if (geoItem) return geoItem;
 
   let m: RegExpMatchArray | null;
+
+  m = itemId.match(/^DIVQ_([a-z_]+)_(\d+)_(\d+)$/);
+  if (m) {
+    const schema = m[1] as DivisionSchema, dividend = +m[2], divisor = +m[3], quotient = dividend / divisor;
+    const decomposition = schema.startsWith('decompose_') ? findFriendlyDivisionDecomposition(dividend, divisor) : null;
+    return makeStructuredDivisionItem({
+      schema, dividend, divisor, quotient,
+      ...(decomposition ? { decomposition: decomposition.parts.map((part, i) => ({ dividendPart: part, quotientPart: decomposition.partialQuotients[i] })) } : {}),
+      ...(['equal_sharing', 'measurement_grouping', 'word_problem_choose_model'].includes(schema) ? {
+        context: { interpretation: schema === 'measurement_grouping' ? 'grouping' as const : 'sharing' as const, noun: 'counters', groupNoun: schema === 'measurement_grouping' ? 'bag' : 'child' },
+        unknownPosition: schema === 'measurement_grouping' ? 'group_count' as const : 'group_size' as const,
+      } : {}),
+    });
+  }
 
   m = itemId.match(/^ARERR_(addition|subtraction)_(\d+)_(\d+)_(.+)$/);
   if (m) {
