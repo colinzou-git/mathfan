@@ -51,7 +51,7 @@ Capstone. Depends on nearly everything above (#25-#29, #30-#34, #35).
 | 33 | Division fact vs reasoning split | B | **merged to main** (628dc33) |
 | 34 | Time/measurement/graphs redesign | B | **merged to main** (628dc33) |
 | 35 | Goal consolidation + workload cap | C | **implemented and validated; committed on Branch C** |
-| 29 | Adaptive "Start Today's Lesson" tile | C | not started |
+| 29 | Adaptive "Start Today's Lesson" tile | C | **implemented and validated; ready to merge** |
 | 36 | Scheduling telemetry + analytics | D | not started |
 
 ## Current focus
@@ -68,11 +68,11 @@ explicitly ask Claude to close them in a future session.
 **Branch B is merged and deployed** via PR #37 (merge 628dc33). GitHub issues #30-#34 are closed.
 
 **Active branch:** `feature/adaptive-lesson-and-goals`.
-**Active issue:** #29 — separate adaptive “Start Today’s Lesson” tile.
+**Active issue:** #29 — separate adaptive “Start Today’s Lesson” tile (implemented and validated).
 **Next concrete step:**
-1. Read issue #29 and map it to the dashboard, consolidated goal portfolio, and existing adaptive planners.
-2. Add one lesson tile without removing or changing existing Today Plan tiles.
-3. Add planner/component/browser regression coverage and complete the Branch C validation gates.
+1. Complete the final Branch C browser and CI validation gates.
+2. Commit, publish, merge, and deploy Branch C; close #35 and #29.
+3. Start Branch D and implement #36 scheduling telemetry and calibration analytics.
 
 Issue #30 validation completed on 2026-07-15: `npm run ci` (73 files / 1,279 tests),
 `npm run test:e2e` (desktop, mobile, iPad, missing-side, comparison, and update flows), and

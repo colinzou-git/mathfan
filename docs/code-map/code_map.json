@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-15T07:26:54.066281+00:00",
+  "generated_at": "2026-07-15T07:57:33.777615+00:00",
   "repo_root": "/home/ubuntu/mathfan",
   "package": {
     "name": "mathfan",
@@ -421,9 +421,9 @@
     {
       "path": "PROGRESS.md",
       "ext": ".md",
-      "bytes": 8162,
-      "lines": 123,
-      "sha1": "c4c5a5790c94",
+      "bytes": 8440,
+      "lines": 129,
+      "sha1": "68a9927d424d",
       "imports": [],
       "exports": [],
       "functions": [],
@@ -570,9 +570,9 @@
     {
       "path": "scripts/e2e_mathfan.py",
       "ext": ".py",
-      "bytes": 34445,
-      "lines": 694,
-      "sha1": "534a6e4d19a5",
+      "bytes": 38152,
+      "lines": 740,
+      "sha1": "f194ee0da960",
       "imports": [
         "__future__",
         "json",
@@ -586,6 +586,7 @@
         "zipfile"
       ],
       "exports": [
+        "adaptive_lesson_and_manual_fallback",
         "area_perimeter_comparison_lesson",
         "area_perimeter_missing_side_lesson",
         "assert_no_horizontal_overflow",
@@ -604,6 +605,7 @@
         "responsive_navigation",
         "run_practice_journey",
         "run_scenario",
+        "scaled_bar_graph_answer",
         "scaled_bar_graph_lesson",
         "set_one_question_sessions",
         "set_practice_preferences_and_verify_persistence",
@@ -613,6 +615,7 @@
         "verify_local_user_data_exports"
       ],
       "functions": [
+        "adaptive_lesson_and_manual_fallback",
         "area_perimeter_comparison_lesson",
         "area_perimeter_missing_side_lesson",
         "assert_no_horizontal_overflow",
@@ -631,6 +634,7 @@
         "responsive_navigation",
         "run_practice_journey",
         "run_scenario",
+        "scaled_bar_graph_answer",
         "scaled_bar_graph_lesson",
         "set_one_question_sessions",
         "set_practice_preferences_and_verify_persistence",
@@ -646,7 +650,7 @@
       "hooks": [],
       "css_classes": [],
       "json_keys": [],
-      "purpose": "Exports reusable code: area_perimeter_comparison_lesson, area_perimeter_missing_side_lesson, assert_no_horizontal_overflow, create_profile, desktop_student_journey.",
+      "purpose": "Exports reusable code: adaptive_lesson_and_manual_fallback, area_perimeter_comparison_lesson, area_perimeter_missing_side_lesson, assert_no_horizontal_overflow, create_profile.",
       "too_large": false,
       "read_error": null
     },
@@ -1079,9 +1083,9 @@
     {
       "path": "src/components/SessionSummary.tsx",
       "ext": ".tsx",
-      "bytes": 9549,
-      "lines": 303,
-      "sha1": "a532e4b59990",
+      "bytes": 10529,
+      "lines": 317,
+      "sha1": "a64bd48f7d2a",
       "imports": [
         "react"
       ],
@@ -2588,15 +2592,17 @@
     {
       "path": "src/features/dashboard/StudentDashboard.tsx",
       "ext": ".tsx",
-      "bytes": 26019,
-      "lines": 529,
-      "sha1": "b703d06cad44",
+      "bytes": 29601,
+      "lines": 569,
+      "sha1": "8d7bdbc4af8b",
       "imports": [
         "../../db/repositories",
         "../../types/math",
+        "../../utils/rng",
         "../curriculum/describeItem",
         "../curriculum/makeItemFromId",
         "../goals/dailyNewGoalPlanner",
+        "../learningPlan/dailyLessonPlanner",
         "../mastery/grade3MasteryMap",
         "../mastery/skillMasteryEngine",
         "../stats/statsEngine",
@@ -2614,6 +2620,7 @@
         "completeSkillSummaries",
         "handleStartReview",
         "openExtra",
+        "startAdaptiveLesson",
         "startDailyNewTile",
         "StudentDashboard"
       ],
@@ -3646,9 +3653,9 @@
     {
       "path": "src/features/learning/learningEvents.ts",
       "ext": ".ts",
-      "bytes": 4526,
-      "lines": 105,
-      "sha1": "10302e5bde61",
+      "bytes": 4633,
+      "lines": 108,
+      "sha1": "6c1e517c5777",
       "imports": [
         "../../db/dexie",
         "../../types/math",
@@ -3720,6 +3727,102 @@
       "css_classes": [],
       "json_keys": [],
       "purpose": "Local persistence/database layer.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/learningPlan/dailyLessonPlanner.ts",
+      "ext": ".ts",
+      "bytes": 8304,
+      "lines": 82,
+      "sha1": "4e459bfeeeb8",
+      "imports": [
+        "../../types/math",
+        "../adaptive/relatedItemMapping",
+        "../curriculum/makeItemFromId",
+        "../goals/types",
+        "../learning/learningEvents",
+        "../mastery/grade3MasteryMap",
+        "../mastery/skillMapping",
+        "../mastery/skillMasteryEngine",
+        "../mastery/skillPracticePlanner",
+        "../scheduler/cardModel",
+        "./focusSkillSelector"
+      ],
+      "exports": [
+        "allocateLessonSegments",
+        "buildTransferPool",
+        "DailyLessonPlan",
+        "DailyLessonWarning",
+        "estimateItemSeconds",
+        "LessonAllocation",
+        "LessonAvailability",
+        "LessonSegmentKind",
+        "planDailyLesson",
+        "PlanDailyLessonArgs",
+        "PlannedLessonItem"
+      ],
+      "functions": [
+        "add",
+        "allocateLessonSegments",
+        "buildTransferPool",
+        "estimateItemSeconds",
+        "planDailyLesson",
+        "uniqueItems"
+      ],
+      "classes": [],
+      "interfaces": [
+        "DailyLessonPlan",
+        "DailyLessonWarning",
+        "LessonAllocation",
+        "LessonAvailability",
+        "PlanDailyLessonArgs",
+        "PlannedLessonItem"
+      ],
+      "types": [
+        "LessonSegmentKind"
+      ],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Exports reusable code: allocateLessonSegments, buildTransferPool, DailyLessonPlan, DailyLessonWarning, estimateItemSeconds.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/learningPlan/focusSkillSelector.ts",
+      "ext": ".ts",
+      "bytes": 2475,
+      "lines": 29,
+      "sha1": "22e89e6f82aa",
+      "imports": [
+        "../curriculum/makeItemFromId",
+        "../goals/types",
+        "../learning/learningEvents",
+        "../mastery/grade3MasteryMap",
+        "../mastery/skillMapping",
+        "../mastery/skillMasteryEngine"
+      ],
+      "exports": [
+        "FocusSkillCandidate",
+        "rankFocusSkills",
+        "RankFocusSkillsArgs"
+      ],
+      "functions": [
+        "rankFocusSkills"
+      ],
+      "classes": [],
+      "interfaces": [
+        "FocusSkillCandidate",
+        "RankFocusSkillsArgs"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Exports reusable code: FocusSkillCandidate, rankFocusSkills, RankFocusSkillsArgs.",
       "too_large": false,
       "read_error": null
     },
@@ -4619,9 +4722,9 @@
     {
       "path": "src/features/practice/PracticeScreen.tsx",
       "ext": ".tsx",
-      "bytes": 23681,
-      "lines": 552,
-      "sha1": "0c88eb79dc04",
+      "bytes": 24076,
+      "lines": 556,
+      "sha1": "10f70a9cbac7",
       "imports": [
         "../../components/NumPad",
         "../../components/SessionSummary",
@@ -4630,6 +4733,7 @@
         "../../types/math",
         "../ai/TutorChat",
         "../audio/speech",
+        "../scheduler/cardModel",
         "../visuals/MathPrompt",
         "../visuals/VisualModel",
         "../visuals/visualModelUtils",
@@ -4698,9 +4802,9 @@
     {
       "path": "src/features/practice/usePracticeSession.ts",
       "ext": ".ts",
-      "bytes": 27504,
-      "lines": 613,
-      "sha1": "9dc9056df34c",
+      "bytes": 28573,
+      "lines": 628,
+      "sha1": "5d31d531fe45",
       "imports": [
         "../../components/opSpecs",
         "../../db/dexie",
@@ -7044,6 +7148,37 @@
       "read_error": null
     },
     {
+      "path": "src/tests/dailyLessonPlanner.test.ts",
+      "ext": ".ts",
+      "bytes": 5573,
+      "lines": 67,
+      "sha1": "71641084b639",
+      "imports": [
+        "../features/curriculum/makeItemFromId",
+        "../features/goals/types",
+        "../features/learningPlan/dailyLessonPlanner",
+        "../features/mastery/skillMasteryEngine",
+        "../features/scheduler/cardModel",
+        "../types/math",
+        "../utils/rng",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [
+        "args"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/tests/dailyNewGoalPlanner.test.ts",
       "ext": ".ts",
       "bytes": 16714,
@@ -7620,9 +7755,9 @@
     {
       "path": "src/tests/goalsPage.test.tsx",
       "ext": ".tsx",
-      "bytes": 13916,
-      "lines": 393,
-      "sha1": "b60891216a22",
+      "bytes": 14954,
+      "lines": 405,
+      "sha1": "47e5f148e663",
       "imports": [
         "../db/repositories",
         "../features/dashboard/StudentDashboard",
@@ -8257,9 +8392,9 @@
     {
       "path": "src/tests/practiceSession.test.ts",
       "ext": ".ts",
-      "bytes": 18692,
-      "lines": 464,
-      "sha1": "bdd0f270e51d",
+      "bytes": 19976,
+      "lines": 481,
+      "sha1": "f3e888c810cc",
       "imports": [
         "../db/repositories",
         "../features/curriculum/makeItemFromId",
@@ -9034,9 +9169,9 @@
     {
       "path": "src/types/math.ts",
       "ext": ".ts",
-      "bytes": 12524,
-      "lines": 373,
-      "sha1": "dca53f52a906",
+      "bytes": 13188,
+      "lines": 388,
+      "sha1": "c4a401154091",
       "imports": [
         "../features/curriculum/divisionItems",
         "../features/curriculum/measurementTypes",

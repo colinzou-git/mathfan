@@ -146,7 +146,7 @@ export function usePracticeSession(studentId: string) {
 
     let queue: string[];
     const {
-      mode, tables, sessionLength, specificItemIds,
+      mode, tables, sessionLength, specificItemIds, preplannedItems,
       operandMin, operandMax, operand2Min, operand2Max, fractionMode, grade,
     } = config;
 
@@ -182,7 +182,9 @@ export function usePracticeSession(studentId: string) {
       return items.map(it => it.id);
     };
 
-    if (specificItemIds?.length) {
+    if (preplannedItems?.length) {
+      queue = registerDynamic(preplannedItems).slice(0, sessionLength);
+    } else if (specificItemIds?.length) {
       // Focused review: practice exactly the listed items.
       // Reconstruct and register any item not already in the static ITEM_MAP.
       const validIds: string[] = [];
@@ -287,6 +289,10 @@ export function usePracticeSession(studentId: string) {
       goalIds: config.goalIds,
       goalTargetIds: config.goalTargetIds,
       goalLearningKind: config.goalLearningKind,
+      lessonPlanId: config.lessonPlanId,
+      lessonKind: config.lessonKind,
+      focusSkillId: config.focusSkillId,
+      lessonSegments: config.lessonSegments,
     });
 
     queueRef.current = queue;
@@ -311,7 +317,7 @@ export function usePracticeSession(studentId: string) {
     };
     stateRef.current = s;
     setState(s);
-  }, [studentId]);
+  }, [studentId, resolveItem]);
 
   // ── submitAnswer ──────────────────────────────────────────────────────────
 
@@ -405,6 +411,9 @@ export function usePracticeSession(studentId: string) {
               goalIds: configRef.current?.goalIds,
               goalTargetIds: configRef.current?.goalTargetIds,
               goalLearningKind: configRef.current?.goalLearningKind,
+              lessonPlanId: configRef.current?.lessonPlanId,
+              lessonSegment: configRef.current?.lessonSegments?.find(segment => segment.itemInstanceIds.includes(item.id))?.kind,
+              lessonRationale: configRef.current?.lessonRationales?.[item.id],
               createdAt,
             },
           };
@@ -448,6 +457,9 @@ export function usePracticeSession(studentId: string) {
         goalIds: configRef.current?.goalIds,
         goalTargetIds: configRef.current?.goalTargetIds,
         goalLearningKind: configRef.current?.goalLearningKind,
+        lessonPlanId: configRef.current?.lessonPlanId,
+        lessonSegment: configRef.current?.lessonSegments?.find(segment => segment.itemInstanceIds.includes(item.id))?.kind,
+        lessonRationale: configRef.current?.lessonRationales?.[item.id],
         createdAt,
       },
       // Same-session repeats and mid-presentation retries do not change FSRS
@@ -472,6 +484,9 @@ export function usePracticeSession(studentId: string) {
         goalIds: configRef.current?.goalIds,
         goalTargetIds: configRef.current?.goalTargetIds,
         goalLearningKind: configRef.current?.goalLearningKind,
+        lessonPlanId: configRef.current?.lessonPlanId,
+        lessonSegment: configRef.current?.lessonSegments?.find(segment => segment.itemInstanceIds.includes(item.id))?.kind,
+        lessonRationale: configRef.current?.lessonRationales?.[item.id],
         createdAt,
       },
     };

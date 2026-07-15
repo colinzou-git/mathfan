@@ -35,6 +35,9 @@ export interface MathAnswerEvent {
   goalTargetId?: string;
   goalIds?: string[];
   goalTargetIds?: string[];
+  lessonPlanId?: string;
+  lessonSegment?: 'retrieval' | 'focus' | 'transfer';
+  lessonRationale?: string;
   goalLearningKind?: GoalLearningKind;
   /**
    * True when this event is INDIRECT evidence from a related higher-level item

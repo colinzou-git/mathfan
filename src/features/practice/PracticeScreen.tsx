@@ -12,6 +12,7 @@ import { VisualModel } from '../visuals/VisualModel';
 import { MathPrompt } from '../visuals/MathPrompt';
 import { hasVisualModel } from '../visuals/visualModelUtils';
 import { getHint } from './hintEngine';
+import { deriveCardKey } from '../scheduler/cardModel';
 
 const AUTO_ADVANCE_MS = 700;     // visual-only pause when audio is off
 const POST_SPEECH_PAUSE_MS = 200; // short pause after answer speech finishes
@@ -232,8 +233,11 @@ export function PracticeScreen({
         missedFacts={state.missedFacts}
         lastSession={state.lastSession}
         wasQuit={quitting}
+        adaptiveLessonFocus={config.lessonKind === 'adaptive_daily_lesson' ? config.focusSkillId : undefined}
+        adaptiveLessonSegments={config.lessonSegments}
+        uniqueSchedulingCards={config.preplannedItems ? new Set(config.preplannedItems.map(deriveCardKey)).size : undefined}
         onDone={onDone}
-        onPlayAgain={quitting ? undefined : onPlayAgain}
+        onPlayAgain={quitting || config.lessonKind === 'adaptive_daily_lesson' ? undefined : onPlayAgain}
         onBack={onBack}
       />
     );
