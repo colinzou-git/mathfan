@@ -119,10 +119,16 @@ export function DiagnosticSession({ studentId, onComplete, onCancel }: Props) {
       if (!existing) existing = createInitialState(studentId, item);
 
       let updated = existing;
+      let schedulingApplied = false;
+      let schedulerErrorCode: MathAnswerEvent['schedulerErrorCode'];
       try {
         updated = applyReview(existing, reviewGrade, latencyMs, String(studentAnswer), now, { isCorrect });
-      } catch {
+        schedulingApplied = true;
+      } catch (error) {
         // FSRS error (e.g. clock drift) — keep existing state rather than blocking.
+        schedulerErrorCode = error instanceof RangeError ? 'clock_drift'
+          : error instanceof TypeError ? 'invalid_card'
+            : error instanceof Error ? 'fsrs_validation' : 'unknown';
       }
       updated = { ...updated, cardKey, lastItemId: item.id };
 
@@ -164,6 +170,9 @@ export function DiagnosticSession({ studentId, onComplete, onCancel }: Props) {
         isCorrect,
         isRetry: false,
         hintUsed: false,
+        schedulingEligible: true,
+        schedulingApplied,
+        schedulerErrorCode,
         latencyMs,
         reviewGrade,
         ratingReason: checked.ratingReason,
@@ -174,8 +183,8 @@ export function DiagnosticSession({ studentId, onComplete, onCancel }: Props) {
         factStatusBefore: existing.masteryLevel,
         factStatusAfter: updated.masteryLevel,
         schedulingTelemetry: buildSchedulingTelemetry({
-          item, stateBefore: existing, stateAfter: updated,
-          response: { reviewGrade, ratingReason: checked.ratingReason, responsePolicy: checked.policyKind, fluencyBand: checked.fluencyBand, hintUsed: false, isRetry: false, schedulingEligible: true },
+          item, stateBefore: existing, stateAfter: schedulingApplied ? updated : undefined,
+          response: { reviewGrade, ratingReason: checked.ratingReason, responsePolicy: checked.policyKind, fluencyBand: checked.fluencyBand, hintUsed: false, isRetry: false, schedulingEligible: true, schedulingApplied, schedulerErrorCode },
           selection: { origin: 'diagnostic', rationaleCodes: ['diagnostic_coverage'] },
           presentationIndex: 1, attemptNo: 1, now,
         }),

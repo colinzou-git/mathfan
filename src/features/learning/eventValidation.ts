@@ -12,6 +12,8 @@ export function validateAnswerEvent(event: MathAnswerEvent): EventValidationIssu
   if (event.isRetry && t.schedulingEligible) add('scheduling_eligible_retry', 'error', 'A retry cannot update long-term scheduling.');
   if (event.relatedEvidence && t.evidenceKind === 'direct') add('related_marked_direct', 'error', 'Related evidence is marked as a direct answer.');
   if (t.after && !t.before) add('after_without_before', 'error', 'After-state exists without a before-state.');
+  if (!t.schedulingApplied && t.after) add('after_without_application', 'error', 'A failed or ineligible scheduler event cannot have an after-state.');
+  if (t.schedulingApplied && !t.schedulingEligible) add('applied_while_ineligible', 'error', 'Scheduling cannot be applied when policy or the session guard made it ineligible.');
   for (const [label, state] of [['before', t.before], ['after', t.after]] as const) {
     if (!state) continue;
     if (!Number.isFinite(state.stabilityDays) || state.stabilityDays < 0) add('invalid_stability', 'error', `${label} stability is invalid.`);
@@ -33,7 +35,7 @@ export function auditEventLog(events: MathAnswerEvent[]): EventLogAudit {
     if (writes.has(signature)) issues.push({ code: 'near_duplicate_write', severity: 'warning', eventId: event.id, message: `Near-identical write duplicates ${writes.get(signature)}.` });
     else writes.set(signature, event.id);
     const t = event.schedulingTelemetry;
-    if (t?.schedulingEligible) {
+    if (t?.schedulingEligible && t.schedulingApplied) {
       const key = `${event.sessionId}|${t.cardKey}`;
       if (scheduled.has(key)) issues.push({ code: 'repeated_session_schedule', severity: 'error', eventId: event.id, message: 'Card scheduled more than once in a session.' });
       scheduled.add(key);

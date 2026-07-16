@@ -1,6 +1,6 @@
 # Code Map Overview
 
-Generated: 2026-07-16 09:19:16 UTC
+Generated: 2026-07-16 09:42:45 UTC
 
 Repo root: `/home/ubuntu/mathfan`
 Output folder: `/home/ubuntu/mathfan/docs/code-map`
@@ -15,8 +15,8 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 - Version: `1.2.0`
 - Module type: `module`
 - Scanned files: **283**
-- Scanned lines: **52,502**
-- Scanned bytes: **2,211,373**
+- Scanned lines: **52,621**
+- Scanned bytes: **2,217,446**
 
 ## NPM scripts
 
@@ -98,10 +98,10 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 | src/features/stats/QuizStatsView.tsx | 135 | Progress/statistics screens or calculations. | FactGroup, QuizStatsView, avgSecStr, FactGroup, fmt, QuizStatsView |
 | src/features/stats/TodayAchievementSection.tsx | 125 | Progress/statistics screens or calculations. | AchievementTile, TodayAchievementSection, AchievementTile, TodayAchievementSection |
 | src/features/mastery/skillPracticePlanner.ts | 901 | Grade 3 skill practice planner: maps skill IDs to SessionConfig for the mastery map. | buildDivisionFocusSequence, buildFocusSequence, buildRegroupingFocusSequence, FocusSequence, FocusSequenceContext, planFractionFocusSequence, planLearningUnitsForSkill, PlanOptions |
-| src/features/practice/usePracticeSession.ts | 763 | Local persistence/database layer. | usePracticeSession, CorrectResult, LastSessionSummary, SessionState, usePracticeSession, commit, getStaticItem, usePracticeSession |
-| src/features/goals/GoalEvaluationSession.tsx | 692 | Exports reusable code: GoalEvaluationSession. | GoalEvaluationSession, buildNewLearningCandidates, buildReviewFindings, buildUpdatedState, confirmCancel, continueNext, evaluationArgs, GoalEvaluationSession |
+| src/features/practice/usePracticeSession.ts | 774 | Local persistence/database layer. | usePracticeSession, CorrectResult, LastSessionSummary, SessionState, usePracticeSession, commit, getStaticItem, usePracticeSession |
+| src/features/goals/GoalEvaluationSession.tsx | 712 | Exports reusable code: GoalEvaluationSession. | GoalEvaluationSession, buildNewLearningCandidates, buildReviewFindings, buildUpdatedState, confirmCancel, continueNext, evaluationArgs, GoalEvaluationSession |
 | src/features/curriculum/areaItems.ts | 609 | Practice item definitions and ID generators for a math curriculum topic. | apChoiceId, areaPerimCmpId, areaPerimCompareItemIds, areaPerimeterChoiceItemIds, AreaPerimeterChoiceKind, AreaPerimeterSchema, AreaPerimVariant, areaRectangleItemIds |
-| src/features/diagnosis/DiagnosticSession.tsx | 595 | Exports reusable code: DiagnosticSession. | DiagnosticSession, complete, DiagnosticSession, onKey |
+| src/features/diagnosis/DiagnosticSession.tsx | 604 | Exports reusable code: DiagnosticSession. | DiagnosticSession, complete, DiagnosticSession, onKey |
 
 ## Repository tree, filtered
 

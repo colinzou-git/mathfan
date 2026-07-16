@@ -58,6 +58,8 @@ export interface SchedulingTelemetry {
   presentationIndex: number;
   attemptNo: number;
   schedulingEligible: boolean;
+  schedulingApplied?: boolean;
+  schedulerErrorCode?: 'clock_drift' | 'invalid_card' | 'fsrs_validation' | 'unknown';
   schedulingReason?: 'first_card_evidence' | 'same_evaluation_template_repeat';
   evidenceKind: 'direct' | 'related';
   supportLevel: 'independent' | 'hint' | 'worked_example' | 'retry';
@@ -83,6 +85,8 @@ export interface ResponseTelemetryEvidence {
   isRetry: boolean;
   evidenceKind?: 'direct' | 'related';
   schedulingEligible: boolean;
+  schedulingApplied?: boolean;
+  schedulerErrorCode?: SchedulingTelemetry['schedulerErrorCode'];
 }
 
 export function snapshotSchedulingState(state: StudentItemState, now: Date): SchedulingStateSnapshot {
@@ -129,7 +133,10 @@ export function buildSchedulingTelemetry(args: {
     version: SCHEDULING_TELEMETRY_VERSION, learnerKey: args.learnerKey, cardKey: card.cardKey,
     cardKind: card.kind, schemaId: card.schemaId, itemInstanceId: args.item.instanceKey ?? args.item.id,
     presentationIndex: args.presentationIndex, attemptNo: args.attemptNo,
-    schedulingEligible: args.response.schedulingEligible, schedulingReason: args.schedulingReason,
+    schedulingEligible: args.response.schedulingEligible,
+    schedulingApplied: args.response.schedulingApplied ?? args.response.schedulingEligible,
+    schedulerErrorCode: args.response.schedulerErrorCode,
+    schedulingReason: args.schedulingReason,
     evidenceKind: args.response.evidenceKind ?? 'direct',
     supportLevel: args.response.isRetry ? 'retry' : args.response.hintUsed ? 'hint' : 'independent',
     selection: args.selection, before: args.stateBefore ? snapshotSchedulingState(args.stateBefore, args.now) : undefined,

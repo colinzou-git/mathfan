@@ -48,6 +48,19 @@ describe('scheduling telemetry', () => {
     expect(report.excludedCounts.retry).toBe(1);
   });
 
+  it('excludes failed scheduler applications and counts them separately', () => {
+    const failed = event('failed', .7);
+    failed.schedulingEligible = true;
+    failed.schedulingApplied = false;
+    failed.schedulerErrorCode = 'clock_drift';
+    failed.schedulingTelemetry!.schedulingApplied = false;
+    failed.schedulingTelemetry!.schedulerErrorCode = 'clock_drift';
+    failed.schedulingTelemetry!.after = undefined;
+    const report = buildSchedulingCalibrationReport([failed]);
+    expect(report.overall.every(bucket => bucket.observationCount === 0)).toBe(true);
+    expect(report.excludedCounts.schedulerFailure).toBe(1);
+  });
+
   it('reports separate learning-quality dimensions', () => {
     const report = buildLearningQualityReport([event('a')]);
     expect(report.directFirstAttemptAccuracy).toBe(1);

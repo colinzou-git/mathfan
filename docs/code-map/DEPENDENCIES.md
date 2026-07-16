@@ -898,6 +898,7 @@
 | src/tests/practiceSession.test.ts | ../features/learning/learningEvents |
 | src/tests/practiceSession.test.ts | ../features/learning/recordAnswer |
 | src/tests/practiceSession.test.ts | ../features/practice/usePracticeSession |
+| src/tests/practiceSession.test.ts | ../features/scheduler/scheduler |
 | src/tests/practiceSession.test.ts | ../features/time/clock |
 | src/tests/practiceSession.test.ts | ../types/math |
 | src/tests/practiceSession.test.ts | ../utils/id |

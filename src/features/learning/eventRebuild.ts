@@ -25,6 +25,7 @@ import type { ReviewGrade } from '../../types/math';
 
 export function shouldApplyEventToScheduler(event: MathAnswerEvent, scheduledBySessionCard: Set<string>): boolean {
   if (event.isRetry) return false;
+  if (event.schedulingApplied === false || event.schedulingTelemetry?.schedulingApplied === false) return false;
   const explicit = event.schedulingTelemetry?.schedulingEligible ?? event.schedulingEligible;
   if (explicit === false) return false;
   const cardKey = deriveCardKeyFromEvent(event);

@@ -15,6 +15,11 @@ vi.mock('../features/learning/recordAnswer', () => ({
   recordRelatedEvidenceWrites: vi.fn(),
 }));
 
+vi.mock('../features/scheduler/scheduler', async importOriginal => {
+  const actual = await importOriginal<typeof import('../features/scheduler/scheduler')>();
+  return { ...actual, applyReview: vi.fn(actual.applyReview) };
+});
+
 vi.mock('../db/repositories', () => ({
   itemStateRepo: { getForStudent: vi.fn() },
   mathAnswerEventRepo: { getDirectCorrectFirstAttempts: vi.fn() },
@@ -45,6 +50,7 @@ import { itemStateRepo, mathAnswerEventRepo, sessionRepo } from '../db/repositor
 import { appNow } from '../features/time/clock';
 import { generateId } from '../utils/id';
 import { makeItemFromId } from '../features/curriculum/makeItemFromId';
+import { applyReview } from '../features/scheduler/scheduler';
 import type { SessionConfig } from '../types/math';
 import type { MathAnswerEvent } from '../features/learning/learningEvents';
 
@@ -81,6 +87,32 @@ beforeEach(() => {
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('usePracticeSession — wrong first attempt + correct retry', () => {
+  it('records scheduler failure without an after snapshot and releases the card for a later presentation', async () => {
+    vi.mocked(applyReview).mockImplementationOnce(() => {
+      throw new RangeError('future review date');
+    });
+    const { result } = renderHook(() => usePracticeSession(STUDENT_ID));
+    await act(async () => {
+      await result.current.startSession({ ...SESSION_CONFIG, repeatPolicy: 'user_requested_rounds', rounds: 2 });
+    });
+
+    await act(async () => { await result.current.submitAnswer('56'); });
+    const failed = vi.mocked(recordPracticeAnswer).mock.calls[0][0];
+    expect(failed.event).toMatchObject({
+      schedulingEligible: true, schedulingApplied: false, schedulerErrorCode: 'clock_drift',
+    });
+    expect(failed.event.schedulingTelemetry).toMatchObject({
+      schedulingEligible: true, schedulingApplied: false, schedulerErrorCode: 'clock_drift',
+    });
+    expect(failed.event.schedulingTelemetry?.after).toBeUndefined();
+
+    await act(async () => { await result.current.nextQuestion(); });
+    await act(async () => { await result.current.submitAnswer('56'); });
+    const recovered = vi.mocked(recordPracticeAnswer).mock.calls[1][0];
+    expect(recovered.event).toMatchObject({ schedulingEligible: true, schedulingApplied: true });
+    expect(recovered.event.schedulingTelemetry?.after).toBeDefined();
+  });
+
   it('uses a newly durable fifth sample when grading the next presentation', async () => {
     let clock = 0;
     const nowSpy = vi.spyOn(Date, 'now').mockImplementation(() => clock);

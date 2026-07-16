@@ -266,6 +266,19 @@ describe('rebuildItemStatesFromEvents — misconception tags survive rebuild', (
   });
 });
 
+describe('rebuildItemStatesFromEvents — failed scheduler applications', () => {
+  it('does not replay an event explicitly marked schedulingApplied=false', async () => {
+    fakeDb.mathAnswerEvents.rows = [
+      makeEvent({
+        id: 'scheduler-failed', schedulingEligible: true, schedulingApplied: false,
+        schedulerErrorCode: 'clock_drift', isCorrect: true, reviewGrade: 'good',
+      }),
+    ];
+    await rebuildItemStatesFromEvents(STUDENT, { mode: 'strict' });
+    expect(fakeDb.itemStates.rows).toEqual([]);
+  });
+});
+
 // ── Related-evidence events: reinforce-only + FSRS-only through a rebuild ──────
 
 describe('rebuildItemStatesFromEvents — related-evidence (cross-skill) events', () => {

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-16T09:19:16.281771+00:00",
+  "generated_at": "2026-07-16T09:42:45.302075+00:00",
   "repo_root": "/home/ubuntu/mathfan",
   "package": {
     "name": "mathfan",
@@ -421,9 +421,9 @@
     {
       "path": "PROGRESS.md",
       "ext": ".md",
-      "bytes": 9403,
-      "lines": 155,
-      "sha1": "dc629ed67add",
+      "bytes": 9453,
+      "lines": 156,
+      "sha1": "c183b029acfe",
       "imports": [],
       "exports": [],
       "functions": [],
@@ -570,9 +570,9 @@
     {
       "path": "scripts/e2e_mathfan.py",
       "ext": ".py",
-      "bytes": 45314,
-      "lines": 812,
-      "sha1": "f48571590c46",
+      "bytes": 45469,
+      "lines": 818,
+      "sha1": "8402e93c78b9",
       "imports": [
         "__future__",
         "json",
@@ -1577,9 +1577,9 @@
     {
       "path": "src/features/analytics/schedulingCalibration.ts",
       "ext": ".ts",
-      "bytes": 2816,
-      "lines": 39,
-      "sha1": "7e2339f92d82",
+      "bytes": 2957,
+      "lines": 40,
+      "sha1": "f0b8c9c30fea",
       "imports": [
         "../learning/learningEvents"
       ],
@@ -2814,9 +2814,9 @@
     {
       "path": "src/features/diagnosis/DiagnosticSession.tsx",
       "ext": ".tsx",
-      "bytes": 19635,
-      "lines": 595,
-      "sha1": "554603abdd0d",
+      "bytes": 20142,
+      "lines": 604,
+      "sha1": "6d86e26309c3",
       "imports": [
         "../../components/NumPad",
         "../../db/repositories",
@@ -3335,9 +3335,9 @@
     {
       "path": "src/features/goals/GoalEvaluationSession.tsx",
       "ext": ".tsx",
-      "bytes": 32371,
-      "lines": 692,
-      "sha1": "6e6fdfcf3352",
+      "bytes": 33192,
+      "lines": 712,
+      "sha1": "416fc86569f4",
       "imports": [
         "../../components/NumPad",
         "../../db/repositories",
@@ -3716,9 +3716,9 @@
     {
       "path": "src/features/learning/eventRebuild.ts",
       "ext": ".ts",
-      "bytes": 8819,
-      "lines": 202,
-      "sha1": "e5c4eeca79f0",
+      "bytes": 8932,
+      "lines": 203,
+      "sha1": "bfc1409182a1",
       "imports": [
         "../../db/dexie",
         "../../types/math",
@@ -3754,9 +3754,9 @@
     {
       "path": "src/features/learning/eventValidation.ts",
       "ext": ".ts",
-      "bytes": 3128,
-      "lines": 44,
-      "sha1": "052a8885151a",
+      "bytes": 3482,
+      "lines": 46,
+      "sha1": "401da30e3244",
       "imports": [
         "./learningEvents"
       ],
@@ -3788,9 +3788,9 @@
     {
       "path": "src/features/learning/learningEvents.ts",
       "ext": ".ts",
-      "bytes": 5152,
-      "lines": 116,
-      "sha1": "36399e9bd3ad",
+      "bytes": 5363,
+      "lines": 119,
+      "sha1": "bb9bfcea0827",
       "imports": [
         "../../db/dexie",
         "../../types/math",
@@ -3909,9 +3909,9 @@
     {
       "path": "src/features/learning/schedulingTelemetry.ts",
       "ext": ".ts",
-      "bytes": 6941,
-      "lines": 144,
-      "sha1": "6a88e1c840dc",
+      "bytes": 7310,
+      "lines": 151,
+      "sha1": "c21563780398",
       "imports": [
         "../../types/math",
         "../fluency/fluencyEngine",
@@ -5128,9 +5128,9 @@
     {
       "path": "src/features/practice/usePracticeSession.ts",
       "ext": ".ts",
-      "bytes": 37071,
-      "lines": 763,
-      "sha1": "a5cd1eb07e94",
+      "bytes": 37591,
+      "lines": 774,
+      "sha1": "e0b2c1138827",
       "imports": [
         "../../components/opSpecs",
         "../../db/dexie",
@@ -7860,9 +7860,9 @@
     {
       "path": "src/tests/eventRebuild.test.ts",
       "ext": ".ts",
-      "bytes": 14973,
-      "lines": 354,
-      "sha1": "2a7fe61726cb",
+      "bytes": 15508,
+      "lines": 367,
+      "sha1": "529e438c7520",
       "imports": [
         "../features/learning/eventRebuild",
         "../features/learning/learningEvents",
@@ -8930,15 +8930,16 @@
     {
       "path": "src/tests/practiceSession.test.ts",
       "ext": ".ts",
-      "bytes": 28990,
-      "lines": 623,
-      "sha1": "710e45cbc5a6",
+      "bytes": 30648,
+      "lines": 655,
+      "sha1": "b575964a657d",
       "imports": [
         "../db/repositories",
         "../features/curriculum/makeItemFromId",
         "../features/learning/learningEvents",
         "../features/learning/recordAnswer",
         "../features/practice/usePracticeSession",
+        "../features/scheduler/scheduler",
         "../features/time/clock",
         "../types/math",
         "../utils/id",
@@ -9241,9 +9242,9 @@
     {
       "path": "src/tests/schedulingTelemetry.test.ts",
       "ext": ".ts",
-      "bytes": 4885,
-      "lines": 68,
-      "sha1": "6d2a4122ac6d",
+      "bytes": 5524,
+      "lines": 81,
+      "sha1": "3e31ab616dc5",
       "imports": [
         "../features/analytics/learningQuality",
         "../features/analytics/schedulingCalibration",

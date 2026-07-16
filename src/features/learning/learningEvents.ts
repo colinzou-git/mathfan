@@ -59,6 +59,9 @@ export interface MathAnswerEvent {
   presentationIndex?: number;
   /** False when this presentation could not update long-term FSRS state — see SessionSchedulingGuard (issue #28). */
   schedulingEligible?: boolean;
+  /** True only when the eligible scheduler transition was calculated and durably stored. */
+  schedulingApplied?: boolean;
+  schedulerErrorCode?: 'clock_drift' | 'invalid_card' | 'fsrs_validation' | 'unknown';
   /** Why goal-evaluation evidence did or did not update the canonical card. */
   schedulingReason?: 'first_card_evidence' | 'same_evaluation_template_repeat';
   /** Versioned, immutable context captured at selection/review time. */

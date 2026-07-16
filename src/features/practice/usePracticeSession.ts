@@ -146,7 +146,7 @@ export function usePracticeSession(studentId: string) {
   const pendingSaveRef = useRef<null | {
     payload: PracticeAnswerPayload;
     cardKey: string;
-    schedulingEligible: boolean;
+    schedulingApplied: boolean;
     commit: () => void;
   }>(null);
 
@@ -388,6 +388,8 @@ export function usePracticeSession(studentId: string) {
     // may be presented more than once in a session (e.g. daily-review backfill), but
     // only its first scheduling-eligible presentation may update long-term FSRS state.
     const isFirstSchedulingAttemptInSession = schedulingGuardRef.current.canSchedule(cardKey, attemptNo);
+    let schedulingApplied = false;
+    let schedulerErrorCode: MathAnswerEvent['schedulerErrorCode'];
     let updated: StudentItemState;
     if (isFirstSchedulingAttemptInSession) {
       // Reserve synchronously, before the async write below, so a rapid double-submit
@@ -395,11 +397,16 @@ export function usePracticeSession(studentId: string) {
       schedulingGuardRef.current.markScheduled(cardKey);
       try {
         updated = applyReview(existing, result.reviewGrade, latencyMs, rawInput, now, { isCorrect: result.isCorrect });
+        schedulingApplied = true;
       } catch (err) {
         // FSRS validation errors (e.g. negative delta_t from a future lastSeenAt due to
         // clock drift) must not block the state update — skip FSRS scheduling for this attempt.
         console.warn('[usePracticeSession] applyReview error; FSRS update skipped', err);
+        schedulerErrorCode = err instanceof RangeError ? 'clock_drift'
+          : err instanceof TypeError ? 'invalid_card'
+            : err instanceof Error ? 'fsrs_validation' : 'unknown';
         updated = existing;
+        schedulingGuardRef.current.releaseScheduled(cardKey);
       }
       updated = { ...updated, cardKey, lastItemId: item.id };
     } else {
@@ -457,6 +464,8 @@ export function usePracticeSession(studentId: string) {
         schemaId: item.schemaId,
         presentationIndex: currentPresentationIndexRef.current,
         schedulingEligible: isFirstSchedulingAttemptInSession,
+        schedulingApplied,
+        schedulerErrorCode,
         mode: 'practice',
         promptShown: item.prompt,
         correctAnswer: item.answer,
@@ -483,13 +492,14 @@ export function usePracticeSession(studentId: string) {
         lessonSegment: configRef.current?.lessonSegments?.find(segment => segment.itemInstanceIds.includes(item.id))?.kind,
         lessonRationale: configRef.current?.lessonRationales?.[item.id],
         schedulingTelemetry: buildSchedulingTelemetry({
-          item, stateBefore: existing, stateAfter: updated,
+          item, stateBefore: existing, stateAfter: schedulingApplied ? updated : undefined,
           response: {
             reviewGrade: result.reviewGrade, ratingReason: eventRatingReason, responsePolicy: result.policyKind,
             fluencyBand: result.fluencyBand, hintUsed: !isFirstAttemptAtPresentation,
             fluencyBaselineSource: result.fluencyBaselineSource, fluencySampleCount: result.fluencySampleCount,
             fluencyFastCutoffMs: result.fluencyFastCutoffMs, fluencySlowCutoffMs: result.fluencySlowCutoffMs,
             isRetry: !isFirstAttemptAtPresentation, schedulingEligible: isFirstSchedulingAttemptInSession,
+            schedulingApplied, schedulerErrorCode,
           },
           selection, presentationIndex: currentPresentationIndexRef.current, attemptNo, now,
         }),
@@ -566,7 +576,7 @@ export function usePracticeSession(studentId: string) {
     const commit = () => {
       currentAttemptsRef.current = attemptNo;
       if (isFirstAttemptAtPresentation) statesRef.current.set(cardKey, updated);
-      if (isFirstSchedulingAttemptInSession) {
+      if (schedulingApplied) {
         directEvidenceCardsRef.current.add(cardKey);
         pendingRelatedEvidenceRef.current.delete(cardKey);
       }
@@ -587,7 +597,7 @@ export function usePracticeSession(studentId: string) {
       stateRef.current = nextState;
       setState(nextState);
     };
-    pendingSaveRef.current = { payload, cardKey, schedulingEligible: isFirstSchedulingAttemptInSession, commit };
+    pendingSaveRef.current = { payload, cardKey, schedulingApplied, commit };
     const savingState = { ...prev, saveStatus: 'saving' as const, saveError: null };
     stateRef.current = savingState;
     setState(savingState);
@@ -610,7 +620,7 @@ export function usePracticeSession(studentId: string) {
         return;
       } catch (retryErr) {
         console.error('[usePracticeSession] event write failed after retry', retryErr);
-        if (isFirstSchedulingAttemptInSession) schedulingGuardRef.current.releaseScheduled(cardKey);
+        if (schedulingApplied) schedulingGuardRef.current.releaseScheduled(cardKey);
         const errorState = { ...prev, saveStatus: 'error' as const, saveError: 'Your answer is ready, but it was not saved yet.' };
         stateRef.current = errorState;
         setState(errorState);
@@ -621,7 +631,7 @@ export function usePracticeSession(studentId: string) {
   const retrySave = useCallback(async () => {
     const pending = pendingSaveRef.current;
     if (!pending || stateRef.current.saveStatus !== 'error') return;
-    if (pending.schedulingEligible) schedulingGuardRef.current.markScheduled(pending.cardKey);
+    if (pending.schedulingApplied) schedulingGuardRef.current.markScheduled(pending.cardKey);
     const savingState = { ...stateRef.current, saveStatus: 'saving' as const, saveError: null };
     stateRef.current = savingState;
     setState(savingState);
@@ -632,7 +642,7 @@ export function usePracticeSession(studentId: string) {
       }
       pending.commit();
     } catch {
-      if (pending.schedulingEligible) schedulingGuardRef.current.releaseScheduled(pending.cardKey);
+      if (pending.schedulingApplied) schedulingGuardRef.current.releaseScheduled(pending.cardKey);
       const errorState = { ...stateRef.current, saveStatus: 'error' as const, saveError: 'Still not saved. Check storage and try again.' };
       stateRef.current = errorState;
       setState(errorState);
@@ -663,6 +673,7 @@ export function usePracticeSession(studentId: string) {
             studentAnswer: null, isCorrect: true, isRetry: false, hintUsed: false, latencyMs: 0,
             reviewGrade: RELATED_EVIDENCE_GRADE, factStatusBefore: before.masteryLevel, factStatusAfter: after.masteryLevel,
             relatedEvidence: true, evidenceSourceItemId: candidate.sourceItemId, schedulingEligible: true,
+            schedulingApplied: true,
             origin: configRef.current?.origin, goalId: configRef.current?.goalId, goalTargetId: configRef.current?.goalTargetId,
             goalIds: configRef.current?.goalIds, goalTargetIds: configRef.current?.goalTargetIds, goalLearningKind: configRef.current?.goalLearningKind,
             lessonPlanId: configRef.current?.lessonPlanId,
@@ -670,7 +681,7 @@ export function usePracticeSession(studentId: string) {
             lessonRationale: 'One deferred indirect nudge per canonical card when no direct review occurred.',
             schedulingTelemetry: buildSchedulingTelemetry({
               item: factItem, stateBefore: before, stateAfter: after,
-              response: { reviewGrade: RELATED_EVIDENCE_GRADE, hintUsed: false, isRetry: false, evidenceKind: 'related', schedulingEligible: true },
+              response: { reviewGrade: RELATED_EVIDENCE_GRADE, hintUsed: false, isRetry: false, evidenceKind: 'related', schedulingEligible: true, schedulingApplied: true },
               selection: { origin: 'related_evidence', rationaleCodes: ['deferred_single_related_evidence'] },
               presentationIndex: 1, attemptNo: 1, now,
             }), createdAt: now.toISOString(),

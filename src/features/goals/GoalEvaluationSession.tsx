@@ -194,11 +194,27 @@ function buildUpdatedState(
   existing: StudentItemState | undefined,
   pending: PendingWrite,
   now: Date,
-): { state: StudentItemState; detected: string[]; confirmed: string[] } {
+): {
+  state: StudentItemState;
+  detected: string[];
+  confirmed: string[];
+  schedulingApplied: boolean;
+  schedulerErrorCode?: MathAnswerEvent['schedulerErrorCode'];
+} {
   const before = existing ?? createInitialState(studentId, item);
-  let updated = applyReview(before, pending.reviewGrade ?? 'again', pending.latencyMs, String(pending.studentAnswer), now, {
-    isCorrect: pending.isCorrect,
-  });
+  let updated = before;
+  let schedulingApplied = false;
+  let schedulerErrorCode: MathAnswerEvent['schedulerErrorCode'];
+  try {
+    updated = applyReview(before, pending.reviewGrade ?? 'again', pending.latencyMs, String(pending.studentAnswer), now, {
+      isCorrect: pending.isCorrect,
+    });
+    schedulingApplied = true;
+  } catch (error) {
+    schedulerErrorCode = error instanceof RangeError ? 'clock_drift'
+      : error instanceof TypeError ? 'invalid_card'
+        : error instanceof Error ? 'fsrs_validation' : 'unknown';
+  }
   updated = { ...updated, cardKey: deriveCardKey(item), lastItemId: item.id };
   const context = { eventId: pending.eventId, sessionId, itemId: item.id, createdAt: pending.answeredAt };
   let detected: string[] = [];
@@ -220,7 +236,7 @@ function buildUpdatedState(
     confirmed = confirmation.confirmedCodes;
     updated = { ...updated, misconceptionEvidence: confirmation.evidence };
   }
-  return { state: updated, detected, confirmed };
+  return { state: updated, detected, confirmed, schedulingApplied, schedulerErrorCode };
 }
 
 export function GoalEvaluationSession({ studentId, onCancel, onReturnToGoals, onSelectGoalSkills, onGoToDailyReview }: Props) {
@@ -317,6 +333,7 @@ export function GoalEvaluationSession({ studentId, onCancel, onReturnToGoals, on
         ? buildUpdatedState(studentId, evaluation.id, pending.item, existing, pending, nowDate)
         : undefined;
       const updatedState = misconceptionUpdate?.state;
+      const schedulingApplied = misconceptionUpdate?.schedulingApplied ?? false;
       const stateAfter = updatedState ?? existing ?? createInitialState(studentId, pending.item);
       const event: MathAnswerEvent = {
         id: pending.eventId,
@@ -342,11 +359,14 @@ export function GoalEvaluationSession({ studentId, onCancel, onReturnToGoals, on
         factStatusBefore: existing?.masteryLevel ?? 'new',
         factStatusAfter: stateAfter.masteryLevel,
         schedulingEligible,
+        schedulingApplied,
+        schedulerErrorCode: misconceptionUpdate?.schedulerErrorCode,
         schedulingReason,
         schedulingTelemetry: buildSchedulingTelemetry({
           item: pending.item,
-          stateBefore: existing ?? createInitialState(studentId, pending.item), stateAfter,
-          response: { reviewGrade: pending.reviewGrade, ratingReason: pending.ratingReason, responsePolicy: pending.responsePolicy, fluencyBand: pending.fluencyBand, hintUsed: false, isRetry: false, schedulingEligible },
+          stateBefore: existing ?? createInitialState(studentId, pending.item),
+          stateAfter: schedulingApplied ? stateAfter : undefined,
+          response: { reviewGrade: pending.reviewGrade, ratingReason: pending.ratingReason, responsePolicy: pending.responsePolicy, fluencyBand: pending.fluencyBand, hintUsed: false, isRetry: false, schedulingEligible, schedulingApplied, schedulerErrorCode: misconceptionUpdate?.schedulerErrorCode },
           selection: { origin: 'goal', rationaleCodes: ['active_goal', 'diagnostic_coverage', schedulingReason] },
           presentationIndex: 1, attemptNo: 1, now: nowDate,
           schedulingReason,
@@ -406,7 +426,7 @@ export function GoalEvaluationSession({ studentId, onCancel, onReturnToGoals, on
         itemIds: Array.from(new Set([...evaluation.itemIds, pending.item.id])),
         targetSkillIds: completedResult?.topGoalCandidates.map(candidate => candidate.skillId) ?? evaluation.targetSkillIds,
         answers: nextAnswers,
-        scheduledCardKeys: schedulingEligible ? [...scheduledCardKeys, cardKey] : scheduledCardKeys,
+        scheduledCardKeys: schedulingApplied ? [...scheduledCardKeys, cardKey] : scheduledCardKeys,
         answerEvents: [...(evaluation.answerEvents ?? []).filter(item => item.id !== event.id), event],
         updatedAt: answeredAt,
       };

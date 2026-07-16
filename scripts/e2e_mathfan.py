@@ -630,7 +630,13 @@ def adaptive_lesson_and_manual_fallback(page: Page) -> None:
         const db = await new Promise((resolve, reject) => { const request = indexedDB.open('mathfan'); request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error); });
         const events = await new Promise((resolve, reject) => { const request = db.transaction('mathAnswerEvents').objectStore('mathAnswerEvents').getAll(); request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error); }); db.close();
         const direct = events.filter(event => event.lessonPlanId && !event.relatedEvidence);
-        return { count: direct.length, segments: [...new Set(direct.map(event => event.schedulingTelemetry?.selection?.lessonSegment))], complete: direct.every(event => event.schedulingTelemetry?.cardKey && event.schedulingTelemetry?.selection && event.schedulingTelemetry?.before && event.schedulingTelemetry?.after && event.schedulingTelemetry?.rating && event.schedulingTelemetry?.instance) };
+        return { count: direct.length, segments: [...new Set(direct.map(event => event.schedulingTelemetry?.selection?.lessonSegment))], complete: direct.every(event => {
+            const telemetry = event.schedulingTelemetry;
+            return telemetry?.cardKey && telemetry.selection && telemetry.before
+                && telemetry.rating && telemetry.instance
+                && event.schedulingApplied === telemetry.schedulingApplied
+                && (telemetry.schedulingApplied ? Boolean(telemetry.after) : !telemetry.after);
+        }) };
     }""")
     if telemetry_summary["count"] < 20 or set(telemetry_summary["segments"]) != {"focus", "transfer"} or not telemetry_summary["complete"]:
         raise AssertionError(f"Adaptive lesson telemetry is incomplete: {telemetry_summary}")

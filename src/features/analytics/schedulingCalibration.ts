@@ -15,7 +15,7 @@ function buckets(events: MathAnswerEvent[]): CalibrationBucket[] {
 }
 
 export function buildSchedulingCalibrationReport(events: MathAnswerEvent[]): SchedulingCalibrationReport {
-  const excludedCounts: Record<string, number> = { legacy: 0, retry: 0, related: 0, unsupported: 0, ineligible: 0, repeated: 0 };
+  const excludedCounts: Record<string, number> = { legacy: 0, retry: 0, related: 0, unsupported: 0, ineligible: 0, schedulerFailure: 0, repeated: 0 };
   const seen = new Set<string>();
   const included = events.filter(event => {
     const t = event.schedulingTelemetry;
@@ -24,6 +24,7 @@ export function buildSchedulingCalibrationReport(events: MathAnswerEvent[]): Sch
     if (event.relatedEvidence || t.evidenceKind !== 'direct') { excludedCounts.related++; return false; }
     if (t.supportLevel !== 'independent') { excludedCounts.unsupported++; return false; }
     if (!t.schedulingEligible) { excludedCounts.ineligible++; return false; }
+    if (event.schedulingApplied === false || !t.schedulingApplied) { excludedCounts.schedulerFailure++; return false; }
     const key = `${event.sessionId}|${t.cardKey}`;
     if (seen.has(key)) { excludedCounts.repeated++; return false; }
     seen.add(key); return true;
