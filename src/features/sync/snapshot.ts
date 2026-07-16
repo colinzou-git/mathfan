@@ -124,6 +124,14 @@ const byId = <T extends { id: string }>(rows: T[]): T[] => [...new Map(rows.map(
 
 function mergeCardStateCollision(a: StudentItemState, b: StudentItemState): StudentItemState {
   const preferred = b.attemptCount > a.attemptCount ? b : a;
+  const evidenceByCode = new Map<string, NonNullable<StudentItemState['misconceptionEvidence']>[number]>();
+  for (const entry of [...(a.misconceptionEvidence ?? []), ...(b.misconceptionEvidence ?? [])]) {
+    const prior = evidenceByCode.get(entry.code);
+    if (!prior || entry.lastSeenAt > prior.lastSeenAt
+      || (entry.lastSeenAt === prior.lastSeenAt && (entry.resolvedAt ?? '') > (prior.resolvedAt ?? ''))) {
+      evidenceByCode.set(entry.code, entry);
+    }
+  }
   return {
     ...preferred,
     attemptCount: Math.max(a.attemptCount, b.attemptCount),
@@ -132,6 +140,7 @@ function mergeCardStateCollision(a: StudentItemState, b: StudentItemState): Stud
     lapses: Math.max(a.lapses ?? 0, b.lapses ?? 0),
     stabilityDays: Math.max(a.stabilityDays, b.stabilityDays),
     mistakePatterns: Array.from(new Set([...(a.mistakePatterns ?? []), ...(b.mistakePatterns ?? [])])),
+    misconceptionEvidence: evidenceByCode.size ? [...evidenceByCode.values()] : undefined,
   };
 }
 

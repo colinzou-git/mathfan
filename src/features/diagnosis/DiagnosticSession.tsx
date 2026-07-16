@@ -20,7 +20,11 @@ import { recordDiagnosticAnswerWithRetry } from './diagnosticPersistence';
 import { checkAnswer } from '../practice/answerChecker';
 import { applyReview, createInitialState } from '../scheduler/scheduler';
 import { deriveCardKey } from '../scheduler/cardModel';
-import { detectMistakes } from '../mastery/misconceptionEngine';
+import {
+  applyMisconceptionConfirmation,
+  applyMisconceptionDetection,
+  detectMistakes,
+} from '../mastery/misconceptionEngine';
 import { itemStateRepo } from '../../db/repositories';
 import { generateId } from '../../utils/id';
 import { appNow } from '../time/clock';
@@ -122,12 +126,28 @@ export function DiagnosticSession({ studentId, onComplete, onCancel }: Props) {
       }
       updated = { ...updated, cardKey, lastItemId: item.id };
 
+      let detectedMisconceptions: string[] = [];
+      let confirmedMisconceptions: string[] = [];
+      const misconceptionContext = { eventId, sessionId, itemId: item.id, createdAt };
       if (!isCorrect) {
         const newTags = detectMistakes(item, studentAnswer);
         if (newTags.length > 0) {
           const merged = Array.from(new Set([...(updated.mistakePatterns ?? []), ...newTags]));
-          updated = { ...updated, mistakePatterns: merged };
+          detectedMisconceptions = newTags;
+          updated = {
+            ...updated,
+            mistakePatterns: merged,
+            misconceptionEvidence: applyMisconceptionDetection(
+              updated.misconceptionEvidence, newTags, misconceptionContext, existing.mistakePatterns,
+            ),
+          };
         }
+      } else {
+        const confirmation = applyMisconceptionConfirmation(
+          updated.misconceptionEvidence, item, misconceptionContext, updated.mistakePatterns,
+        );
+        confirmedMisconceptions = confirmation.confirmedCodes;
+        updated = { ...updated, misconceptionEvidence: confirmation.evidence };
       }
 
       const event: MathAnswerEvent = {
@@ -149,6 +169,8 @@ export function DiagnosticSession({ studentId, onComplete, onCancel }: Props) {
         ratingReason: checked.ratingReason,
         responsePolicy: checked.policyKind,
         fluencyBand: checked.fluencyBand,
+        detectedMisconceptions: detectedMisconceptions.length ? detectedMisconceptions : undefined,
+        confirmedMisconceptions: confirmedMisconceptions.length ? confirmedMisconceptions : undefined,
         factStatusBefore: existing.masteryLevel,
         factStatusAfter: updated.masteryLevel,
         schedulingTelemetry: buildSchedulingTelemetry({

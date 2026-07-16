@@ -1,5 +1,5 @@
 import Fraction from 'fraction.js';
-import type { PracticeItem } from '../../types/math';
+import type { MisconceptionEvidence, PracticeItem } from '../../types/math';
 import { simulateArithmeticMisconception, type ArithmeticMisconceptionCode } from '../curriculum/regrouping';
 
 /**
@@ -47,6 +47,112 @@ export function detectMistakes(
     default:
       return [];
   }
+}
+
+export interface MisconceptionEventContext {
+  eventId: string;
+  sessionId: string;
+  itemId: string;
+  createdAt: string;
+}
+
+function normalizeEvidence(
+  evidence: MisconceptionEvidence[] | undefined,
+  legacyPatterns: string[] = [],
+): MisconceptionEvidence[] {
+  const byCode = new Map((evidence ?? []).map(entry => [entry.code, { ...entry }]));
+  for (const code of legacyPatterns) {
+    if (!byCode.has(code)) {
+      byCode.set(code, {
+        code,
+        firstSeenAt: '',
+        lastSeenAt: '',
+        occurrenceCount: 1,
+        sourceItemIds: [],
+        status: 'active',
+      });
+    }
+  }
+  return [...byCode.values()];
+}
+
+export function applyMisconceptionDetection(
+  evidence: MisconceptionEvidence[] | undefined,
+  codes: string[],
+  context: MisconceptionEventContext,
+  legacyPatterns: string[] = [],
+): MisconceptionEvidence[] {
+  const byCode = new Map(normalizeEvidence(evidence, legacyPatterns).map(entry => [entry.code, entry]));
+  for (const code of codes) {
+    const prior = byCode.get(code);
+    byCode.set(code, {
+      code,
+      firstSeenAt: prior?.firstSeenAt || context.createdAt,
+      lastSeenAt: context.createdAt,
+      occurrenceCount: (prior?.occurrenceCount ?? 0) + 1,
+      sourceItemIds: [...new Set([...(prior?.sourceItemIds ?? []), context.itemId])],
+      status: 'active',
+      confirmingEventIds: [],
+      confirmingSessionIds: [],
+      confirmingDates: [],
+    });
+  }
+  return [...byCode.values()];
+}
+
+function misconceptionFamily(code: string): string {
+  if (code.startsWith('frac_compare:') || code.startsWith('fraction:compare_')) return 'fraction_compare';
+  if (code.startsWith('frac_equiv:') || code.startsWith('fraction:equiv')) return 'fraction_equivalent';
+  if (code.startsWith('fraction:number_line')) return 'fraction_number_line';
+  return code.split(':', 1)[0];
+}
+
+export function itemTargetsMisconception(item: PracticeItem, code: string): boolean {
+  const family = misconceptionFamily(code);
+  if (family === 'fraction_compare') return item.itemType === 'fraction_compare';
+  if (family === 'fraction_equivalent') return item.itemType === 'fraction_equivalent';
+  if (family === 'fraction_number_line') return item.itemType === 'fraction_number_line';
+  if (family === 'fraction') return item.itemType.startsWith('fraction_');
+  if (family === 'arithmetic') return item.itemType === 'addition_fact' || item.itemType === 'subtraction_fact';
+  if (family === 'measurement') return Boolean(item.measurementSpec);
+  if (family === 'mul') return item.itemType === 'multiplication_fact' || item.itemType === 'unknown_factor';
+  if (family === 'div') return item.itemType === 'division_fact';
+  return false;
+}
+
+export function applyMisconceptionConfirmation(
+  evidence: MisconceptionEvidence[] | undefined,
+  item: PracticeItem,
+  context: MisconceptionEventContext,
+  legacyPatterns: string[] = [],
+): { evidence: MisconceptionEvidence[]; confirmedCodes: string[] } {
+  const confirmedCodes: string[] = [];
+  const next = normalizeEvidence(evidence, legacyPatterns).map(entry => {
+    if (entry.status === 'resolved' || !itemTargetsMisconception(item, entry.code)) return entry;
+    const eventIds = [...new Set([...(entry.confirmingEventIds ?? []), context.eventId])];
+    const sessionIds = [...new Set([...(entry.confirmingSessionIds ?? []), context.sessionId])];
+    const dates = [...new Set([...(entry.confirmingDates ?? []), context.createdAt.slice(0, 10)])];
+    const resolved = eventIds.length >= 2 && (sessionIds.length >= 2 || dates.length >= 2);
+    confirmedCodes.push(entry.code);
+    return {
+      ...entry,
+      status: resolved ? 'resolved' as const : 'resolving' as const,
+      resolvedAt: resolved ? context.createdAt : undefined,
+      confirmingEventIds: eventIds,
+      confirmingSessionIds: sessionIds,
+      confirmingDates: dates,
+    };
+  });
+  return { evidence: next, confirmedCodes };
+}
+
+export function hasUnresolvedMisconceptionForSkill(
+  evidence: MisconceptionEvidence[],
+  skillId: string,
+): boolean {
+  if (!skillId.startsWith('g3-frac-')) return false;
+  return evidence.some(entry => entry.status !== 'resolved'
+    && (entry.code.startsWith('fraction:') || entry.code.startsWith('frac_')));
 }
 
 function detectMeasurement(item: PracticeItem, raw: string | number): string[] {

@@ -13,7 +13,11 @@ import type { MathAnswerEvent } from './learningEvents';
 import { applyReview, applyRelatedEvidence, createInitialState } from '../scheduler/scheduler';
 import { deriveCardKeyFromEvent } from '../scheduler/cardModel';
 import { makeItemFromId } from '../curriculum/makeItemFromId';
-import { detectMistakes } from '../mastery/misconceptionEngine';
+import {
+  applyMisconceptionConfirmation,
+  applyMisconceptionDetection,
+  detectMistakes,
+} from '../mastery/misconceptionEngine';
 import { deriveMasteryFromEvents } from '../multiplication/masteryEngine';
 import type { MultiplicationFactKey } from '../multiplication/types';
 import { legacyClassifyByLatency } from '../practice/answerChecker';
@@ -157,13 +161,28 @@ export async function rebuildItemStatesFromEvents(
       // on first wrong attempts (see usePracticeSession/DiagnosticSession). Replay
       // that derived-cache behaviour here so a rebuild doesn't drop mistakePatterns.
       if (!event.isCorrect) {
-        const newTags = detectMistakes(eventItem, String(event.studentAnswer ?? ''));
+        const newTags = event.detectedMisconceptions
+          ?? detectMistakes(eventItem, String(event.studentAnswer ?? ''));
         if (newTags.length > 0) {
           state = {
             ...state,
             mistakePatterns: Array.from(new Set([...(state.mistakePatterns ?? []), ...newTags])),
+            misconceptionEvidence: applyMisconceptionDetection(
+              state.misconceptionEvidence,
+              newTags,
+              { eventId: event.id, sessionId: event.sessionId, itemId: event.itemId, createdAt: event.createdAt },
+              state.mistakePatterns,
+            ),
           };
         }
+      } else if (!event.hintUsed && !event.isRetry && event.schedulingEligible !== false) {
+        const confirmation = applyMisconceptionConfirmation(
+          state.misconceptionEvidence,
+          eventItem,
+          { eventId: event.id, sessionId: event.sessionId, itemId: event.itemId, createdAt: event.createdAt },
+          state.mistakePatterns,
+        );
+        state = { ...state, misconceptionEvidence: confirmation.evidence };
       }
     }
     // A card reached only via related evidence has no direct state to rebuild —

@@ -393,6 +393,7 @@
 | src/features/mastery/skillMapping.ts | ../../types/math |
 | src/features/mastery/skillMasteryEngine.ts | ../../types/math |
 | src/features/mastery/skillMasteryEngine.ts | ../learning/learningEvents |
+| src/features/mastery/skillMasteryEngine.ts | ./misconceptionEngine |
 | src/features/mastery/skillMasteryEngine.ts | ./skillMapping |
 | src/features/mastery/skillPracticePlanner.ts | ../../types/math |
 | src/features/mastery/skillPracticePlanner.ts | ../curriculum/areaItems |

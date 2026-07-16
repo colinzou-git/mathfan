@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-16T09:03:10.013535+00:00",
+  "generated_at": "2026-07-16T09:19:16.281771+00:00",
   "repo_root": "/home/ubuntu/mathfan",
   "package": {
     "name": "mathfan",
@@ -421,9 +421,9 @@
     {
       "path": "PROGRESS.md",
       "ext": ".md",
-      "bytes": 9353,
-      "lines": 154,
-      "sha1": "e051d1fd629d",
+      "bytes": 9403,
+      "lines": 155,
+      "sha1": "dc629ed67add",
       "imports": [],
       "exports": [],
       "functions": [],
@@ -2196,9 +2196,9 @@
     {
       "path": "src/features/curriculum/measurementItems.ts",
       "ext": ".ts",
-      "bytes": 15734,
+      "bytes": 15770,
       "lines": 310,
-      "sha1": "a3cf14779a57",
+      "sha1": "14d07537beb1",
       "imports": [
         "../../types/math",
         "../../utils/rng",
@@ -2814,9 +2814,9 @@
     {
       "path": "src/features/diagnosis/DiagnosticSession.tsx",
       "ext": ".tsx",
-      "bytes": 18594,
-      "lines": 573,
-      "sha1": "5b7a706d9026",
+      "bytes": 19635,
+      "lines": 595,
+      "sha1": "554603abdd0d",
       "imports": [
         "../../components/NumPad",
         "../../db/repositories",
@@ -3335,9 +3335,9 @@
     {
       "path": "src/features/goals/GoalEvaluationSession.tsx",
       "ext": ".tsx",
-      "bytes": 31229,
-      "lines": 660,
-      "sha1": "944ed646e1b1",
+      "bytes": 32371,
+      "lines": 692,
+      "sha1": "6e6fdfcf3352",
       "imports": [
         "../../components/NumPad",
         "../../db/repositories",
@@ -3716,9 +3716,9 @@
     {
       "path": "src/features/learning/eventRebuild.ts",
       "ext": ".ts",
-      "bytes": 7968,
-      "lines": 183,
-      "sha1": "b751c4580219",
+      "bytes": 8819,
+      "lines": 202,
+      "sha1": "e5c4eeca79f0",
       "imports": [
         "../../db/dexie",
         "../../types/math",
@@ -3788,9 +3788,9 @@
     {
       "path": "src/features/learning/learningEvents.ts",
       "ext": ".ts",
-      "bytes": 4977,
-      "lines": 113,
-      "sha1": "c22715bc45f6",
+      "bytes": 5152,
+      "lines": 116,
+      "sha1": "36399e9bd3ad",
       "imports": [
         "../../db/dexie",
         "../../types/math",
@@ -4180,18 +4180,25 @@
     {
       "path": "src/features/mastery/misconceptionEngine.ts",
       "ext": ".ts",
-      "bytes": 14845,
-      "lines": 346,
-      "sha1": "a5d7cc5171a4",
+      "bytes": 19079,
+      "lines": 452,
+      "sha1": "de73cb6cc8fb",
       "imports": [
         "../../types/math",
         "../curriculum/regrouping",
         "fraction.js"
       ],
       "exports": [
-        "detectMistakes"
+        "applyMisconceptionConfirmation",
+        "applyMisconceptionDetection",
+        "detectMistakes",
+        "hasUnresolvedMisconceptionForSkill",
+        "itemTargetsMisconception",
+        "MisconceptionEventContext"
       ],
       "functions": [
+        "applyMisconceptionConfirmation",
+        "applyMisconceptionDetection",
         "detectAreaPerimeterChoice",
         "detectAreaRectangle",
         "detectArithmetic",
@@ -4203,10 +4210,16 @@
         "detectMistakes",
         "detectMultiplication",
         "detectPerimeterRectangle",
-        "detectPerimeterUnknownSide"
+        "detectPerimeterUnknownSide",
+        "hasUnresolvedMisconceptionForSkill",
+        "itemTargetsMisconception",
+        "misconceptionFamily",
+        "normalizeEvidence"
       ],
       "classes": [],
-      "interfaces": [],
+      "interfaces": [
+        "MisconceptionEventContext"
+      ],
       "types": [],
       "components": [],
       "hooks": [],
@@ -4312,12 +4325,13 @@
     {
       "path": "src/features/mastery/skillMasteryEngine.ts",
       "ext": ".ts",
-      "bytes": 7199,
-      "lines": 175,
-      "sha1": "6133b857da17",
+      "bytes": 7526,
+      "lines": 180,
+      "sha1": "7011bbc455c9",
       "imports": [
         "../../types/math",
         "../learning/learningEvents",
+        "./misconceptionEngine",
         "./skillMapping"
       ],
       "exports": [
@@ -5114,9 +5128,9 @@
     {
       "path": "src/features/practice/usePracticeSession.ts",
       "ext": ".ts",
-      "bytes": 35915,
-      "lines": 738,
-      "sha1": "5efe7a26667b",
+      "bytes": 37071,
+      "lines": 763,
+      "sha1": "a5cd1eb07e94",
       "imports": [
         "../../components/opSpecs",
         "../../db/dexie",
@@ -6071,9 +6085,9 @@
     {
       "path": "src/features/sync/snapshot.ts",
       "ext": ".ts",
-      "bytes": 19022,
-      "lines": 346,
-      "sha1": "14a9bd3b165d",
+      "bytes": 19585,
+      "lines": 355,
+      "sha1": "7101706d4e3d",
       "imports": [
         "../../db/dexie",
         "../../types/math",
@@ -7846,9 +7860,9 @@
     {
       "path": "src/tests/eventRebuild.test.ts",
       "ext": ".ts",
-      "bytes": 13150,
-      "lines": 318,
-      "sha1": "016a0b237d8a",
+      "bytes": 14973,
+      "lines": 354,
+      "sha1": "2a7fe61726cb",
       "imports": [
         "../features/learning/eventRebuild",
         "../features/learning/learningEvents",
@@ -7953,9 +7967,9 @@
     {
       "path": "src/tests/fractionRedesign.test.tsx",
       "ext": ".tsx",
-      "bytes": 8663,
-      "lines": 162,
-      "sha1": "d30e1a7848f8",
+      "bytes": 10997,
+      "lines": 207,
+      "sha1": "3f4f73839886",
       "imports": [
         "../features/curriculum/fractionItems",
         "../features/curriculum/makeItemFromId",
@@ -8775,9 +8789,9 @@
     {
       "path": "src/tests/misconceptionEngine.test.ts",
       "ext": ".ts",
-      "bytes": 13069,
-      "lines": 279,
-      "sha1": "b786582d64a0",
+      "bytes": 16240,
+      "lines": 342,
+      "sha1": "511850b8965f",
       "imports": [
         "../features/curriculum/fractionItems",
         "../features/curriculum/multiplicationItems",
@@ -9724,9 +9738,9 @@
     {
       "path": "src/types/math.ts",
       "ext": ".ts",
-      "bytes": 13936,
-      "lines": 416,
-      "sha1": "52b9cf303df2",
+      "bytes": 14492,
+      "lines": 432,
+      "sha1": "14545d34a133",
       "imports": [
         "../features/curriculum/divisionItems",
         "../features/curriculum/measurementTypes",
@@ -9749,6 +9763,7 @@
         "GrowthSummary",
         "ItemType",
         "MasteryLevel",
+        "MisconceptionEvidence",
         "PerimeterReasoningSpec",
         "PeriodComparison",
         "PeriodStats",
@@ -9777,6 +9792,7 @@
         "FactGrowth",
         "FactWindowStats",
         "GrowthSummary",
+        "MisconceptionEvidence",
         "PerimeterReasoningSpec",
         "PeriodComparison",
         "PeriodStats",

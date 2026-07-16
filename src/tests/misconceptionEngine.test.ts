@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { detectMistakes } from '../features/mastery/misconceptionEngine';
+import {
+  applyMisconceptionConfirmation,
+  applyMisconceptionDetection,
+  detectMistakes,
+  hasUnresolvedMisconceptionForSkill,
+} from '../features/mastery/misconceptionEngine';
 import {
   makeMultiplicationItem,
   generateDivisionItems,
@@ -18,6 +23,64 @@ const unkItems = generateUnknownFactorItems(2, 10);
 function unkItem(known: number, unknown: number) {
   return unkItems.find(i => i.factA === known && i.factB === unknown)!;
 }
+
+describe('misconception evidence lifecycle', () => {
+  const compare = makeFractionCompareItem(1, 4, 1, 2);
+  const equivalent = makeFractionEquivalentItem(1, 2, 4);
+  const detected = applyMisconceptionDetection(undefined, ['fraction:compare_larger_denominator_means_larger'], {
+    eventId: 'wrong-1', sessionId: 'session-1', itemId: compare.id, createdAt: '2026-01-01T10:00:00.000Z',
+  });
+
+  it('keeps one immediate correct confirmation unresolved', () => {
+    const confirmation = applyMisconceptionConfirmation(detected, compare, {
+      eventId: 'correct-1', sessionId: 'session-1', itemId: compare.id, createdAt: '2026-01-01T10:01:00.000Z',
+    });
+    expect(confirmation.evidence[0].status).toBe('resolving');
+    expect(hasUnresolvedMisconceptionForSkill(confirmation.evidence, 'g3-frac-compare')).toBe(true);
+  });
+
+  it('resolves after two targeted independent confirmations across sessions', () => {
+    const first = applyMisconceptionConfirmation(detected, compare, {
+      eventId: 'correct-1', sessionId: 'session-1', itemId: compare.id, createdAt: '2026-01-01T10:01:00.000Z',
+    }).evidence;
+    const second = applyMisconceptionConfirmation(first, compare, {
+      eventId: 'correct-2', sessionId: 'session-2', itemId: compare.id, createdAt: '2026-01-01T11:00:00.000Z',
+    }).evidence;
+    expect(second[0].status).toBe('resolved');
+    expect(hasUnresolvedMisconceptionForSkill(second, 'g3-frac-compare')).toBe(false);
+  });
+
+  it('does not use unrelated fraction representations as confirmation', () => {
+    const result = applyMisconceptionConfirmation(detected, equivalent, {
+      eventId: 'unrelated', sessionId: 'session-2', itemId: equivalent.id, createdAt: '2026-01-02T10:00:00.000Z',
+    });
+    expect(result.confirmedCodes).toEqual([]);
+    expect(result.evidence[0].status).toBe('active');
+  });
+
+  it('reactivates resolved evidence when the misconception recurs', () => {
+    const resolved = [{
+      ...detected[0], status: 'resolved' as const, resolvedAt: '2026-01-02T10:00:00.000Z',
+      confirmingEventIds: ['correct-1', 'correct-2'],
+    }];
+    const recurrent = applyMisconceptionDetection(resolved, [resolved[0].code], {
+      eventId: 'wrong-2', sessionId: 'session-3', itemId: compare.id, createdAt: '2026-01-03T10:00:00.000Z',
+    });
+    expect(recurrent[0]).toMatchObject({ status: 'active', occurrenceCount: 2 });
+    expect(recurrent[0].resolvedAt).toBeUndefined();
+    expect(recurrent[0].confirmingEventIds).toEqual([]);
+  });
+
+  it('converts legacy string evidence and allows it to resolve', () => {
+    const first = applyMisconceptionConfirmation(undefined, compare, {
+      eventId: 'correct-1', sessionId: 'session-1', itemId: compare.id, createdAt: '2026-01-01T10:00:00.000Z',
+    }, ['fraction:compare_larger_denominator_means_larger']).evidence;
+    const second = applyMisconceptionConfirmation(first, compare, {
+      eventId: 'correct-2', sessionId: 'session-2', itemId: compare.id, createdAt: '2026-01-02T10:00:00.000Z',
+    }).evidence;
+    expect(second[0].status).toBe('resolved');
+  });
+});
 
 // ── Multiplication: addition instead of multiplication ────────────────────────
 

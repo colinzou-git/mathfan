@@ -1,6 +1,7 @@
-import type { PracticeItem, StudentItemState } from '../../types/math';
+import type { MisconceptionEvidence, PracticeItem, StudentItemState } from '../../types/math';
 import type { MathAnswerEvent } from '../learning/learningEvents';
 import { inferGrade3SkillId } from './skillMapping';
+import { hasUnresolvedMisconceptionForSkill } from './misconceptionEngine';
 
 export type SkillSummaryStatus = 'new' | 'needs_practice' | 'review_due' | 'strong' | 'mastered';
 
@@ -130,6 +131,11 @@ export function deriveGrade3SkillSummaries(
     const accuracy = attemptCount > 0 ? correctCount / attemptCount : 0;
     const dueItemCount = states.filter(s => s.nextDueAt != null && s.nextDueAt <= now).length;
     const mistakePatterns = [...new Set(states.flatMap(s => s.mistakePatterns))];
+    const misconceptionEvidence = states.flatMap(state => state.misconceptionEvidence
+      ?? state.mistakePatterns.map(code => ({
+        code, firstSeenAt: '', lastSeenAt: '', occurrenceCount: 1,
+        sourceItemIds: [], status: 'active' as const,
+      } satisfies MisconceptionEvidence)));
 
     const skillItemIds = new Set([
       ...events.map(e => e.itemId),
@@ -148,8 +154,7 @@ export function deriveGrade3SkillSummaries(
     const eventDays = new Set(events.map(event => event.createdAt.slice(0, 10)));
     const hasDelayedEvidence = eventDays.size >= 2 || states.some(state => (state.reps ?? 0) >= 2);
     const hasMultipleSessions = new Set(events.map(event => event.sessionId)).size >= 2;
-    const unresolvedFractionMisconception = skillId.startsWith('g3-frac-')
-      && mistakePatterns.some(pattern => pattern.startsWith('fraction:') || pattern.startsWith('frac_'));
+    const unresolvedFractionMisconception = hasUnresolvedMisconceptionForSkill(misconceptionEvidence, skillId);
 
     return {
       skillId,

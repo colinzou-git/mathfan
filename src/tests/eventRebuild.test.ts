@@ -228,6 +228,42 @@ describe('rebuildItemStatesFromEvents — misconception tags survive rebuild', (
     expect(state).toBeDefined();
     expect(state!.mistakePatterns).toContain('mul:addition_confusion');
   });
+
+  it('reproduces resolved misconception evidence from canonical events', async () => {
+    fakeDb.mathAnswerEvents.rows = [
+      makeEvent({
+        id: 'fraction-wrong', sessionId: 'fraction-session-1', mode: 'practice',
+        itemId: 'FCMP_1_4_1_2', promptShown: 'Compare 1/4 and 1/2',
+        correctAnswer: '<', studentAnswer: '>', isCorrect: false, reviewGrade: 'again',
+        createdAt: '2026-06-01T10:00:00.000Z',
+        detectedMisconceptions: ['fraction:compare_larger_denominator_means_larger'],
+      }),
+      makeEvent({
+        id: 'fraction-correct-1', sessionId: 'fraction-session-2', mode: 'practice',
+        itemId: 'FCMP_1_4_1_2', promptShown: 'Compare 1/4 and 1/2',
+        correctAnswer: '<', studentAnswer: '<', isCorrect: true, reviewGrade: 'good',
+        createdAt: '2026-06-02T10:00:00.000Z',
+        confirmedMisconceptions: ['fraction:compare_larger_denominator_means_larger'],
+      }),
+      makeEvent({
+        id: 'fraction-correct-2', sessionId: 'fraction-session-3', mode: 'practice',
+        itemId: 'FCMP_1_4_1_2', promptShown: 'Compare 1/4 and 1/2',
+        correctAnswer: '<', studentAnswer: '<', isCorrect: true, reviewGrade: 'good',
+        createdAt: '2026-06-03T10:00:00.000Z',
+        confirmedMisconceptions: ['fraction:compare_larger_denominator_means_larger'],
+      }),
+    ];
+
+    await rebuildItemStatesFromEvents(STUDENT, { mode: 'strict' });
+
+    const state = fakeDb.itemStates.rows.find(s => s.lastItemId === 'FCMP_1_4_1_2');
+    expect(state?.misconceptionEvidence?.[0]).toMatchObject({
+      code: 'fraction:compare_larger_denominator_means_larger',
+      status: 'resolved',
+      confirmingEventIds: ['fraction-correct-1', 'fraction-correct-2'],
+    });
+    expect(state?.mistakePatterns).toContain('fraction:compare_larger_denominator_means_larger');
+  });
 });
 
 // ── Related-evidence events: reinforce-only + FSRS-only through a rebuild ──────

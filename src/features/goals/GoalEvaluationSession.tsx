@@ -14,7 +14,11 @@ import type { FluencyBand } from '../fluency/fluencyEngine';
 import { QuestionRenderer } from '../practice/QuestionRenderer';
 import { applyReview, createInitialState } from '../scheduler/scheduler';
 import { deriveCardKey } from '../scheduler/cardModel';
-import { detectMistakes } from '../mastery/misconceptionEngine';
+import {
+  applyMisconceptionConfirmation,
+  applyMisconceptionDetection,
+  detectMistakes,
+} from '../mastery/misconceptionEngine';
 import { itemStateRepo, goalEvaluationRepo, mathAnswerEventRepo } from '../../db/repositories';
 import { appNow } from '../time/clock';
 import { currentState as authState } from '../auth/googleAuth';
@@ -183,17 +187,40 @@ function buildReviewFindings(itemStates: StudentItemState[], now: string): Revie
   return Array.from(bySkill.values()).sort((a, b) => (b.dueCount + b.weakCount) - (a.dueCount + a.weakCount)).slice(0, 6);
 }
 
-function buildUpdatedState(studentId: string, item: PracticeItem, existing: StudentItemState | undefined, pending: PendingWrite, now: Date): StudentItemState {
+function buildUpdatedState(
+  studentId: string,
+  sessionId: string,
+  item: PracticeItem,
+  existing: StudentItemState | undefined,
+  pending: PendingWrite,
+  now: Date,
+): { state: StudentItemState; detected: string[]; confirmed: string[] } {
   const before = existing ?? createInitialState(studentId, item);
   let updated = applyReview(before, pending.reviewGrade ?? 'again', pending.latencyMs, String(pending.studentAnswer), now, {
     isCorrect: pending.isCorrect,
   });
   updated = { ...updated, cardKey: deriveCardKey(item), lastItemId: item.id };
+  const context = { eventId: pending.eventId, sessionId, itemId: item.id, createdAt: pending.answeredAt };
+  let detected: string[] = [];
+  let confirmed: string[] = [];
   if (!pending.isCorrect) {
-    const merged = Array.from(new Set([...(updated.mistakePatterns ?? []), ...detectMistakes(item, pending.studentAnswer)]));
-    updated = { ...updated, mistakePatterns: merged };
+    detected = detectMistakes(item, pending.studentAnswer);
+    const merged = Array.from(new Set([...(updated.mistakePatterns ?? []), ...detected]));
+    updated = {
+      ...updated,
+      mistakePatterns: merged,
+      misconceptionEvidence: applyMisconceptionDetection(
+        updated.misconceptionEvidence, detected, context, before.mistakePatterns,
+      ),
+    };
+  } else {
+    const confirmation = applyMisconceptionConfirmation(
+      updated.misconceptionEvidence, item, context, updated.mistakePatterns,
+    );
+    confirmed = confirmation.confirmedCodes;
+    updated = { ...updated, misconceptionEvidence: confirmation.evidence };
   }
-  return updated;
+  return { state: updated, detected, confirmed };
 }
 
 export function GoalEvaluationSession({ studentId, onCancel, onReturnToGoals, onSelectGoalSkills, onGoToDailyReview }: Props) {
@@ -286,7 +313,10 @@ export function GoalEvaluationSession({ studentId, onCancel, onReturnToGoals, on
       const schedulingEligible = !scheduledCardKeys.includes(cardKey);
       const schedulingReason = schedulingEligible ? 'first_card_evidence' : 'same_evaluation_template_repeat';
       const existing = await itemStateRepo.get(studentId, cardKey);
-      const updatedState = schedulingEligible ? buildUpdatedState(studentId, pending.item, existing, pending, nowDate) : undefined;
+      const misconceptionUpdate = schedulingEligible
+        ? buildUpdatedState(studentId, evaluation.id, pending.item, existing, pending, nowDate)
+        : undefined;
+      const updatedState = misconceptionUpdate?.state;
       const stateAfter = updatedState ?? existing ?? createInitialState(studentId, pending.item);
       const event: MathAnswerEvent = {
         id: pending.eventId,
@@ -306,6 +336,8 @@ export function GoalEvaluationSession({ studentId, onCancel, onReturnToGoals, on
         ratingReason: pending.ratingReason,
         responsePolicy: pending.responsePolicy,
         fluencyBand: pending.fluencyBand,
+        detectedMisconceptions: misconceptionUpdate?.detected.length ? misconceptionUpdate.detected : undefined,
+        confirmedMisconceptions: misconceptionUpdate?.confirmed.length ? misconceptionUpdate.confirmed : undefined,
         reviewGrade: pending.reviewGrade,
         factStatusBefore: existing?.masteryLevel ?? 'new',
         factStatusAfter: stateAfter.masteryLevel,

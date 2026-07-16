@@ -158,4 +158,49 @@ describe('fraction misconceptions, hints, mastery mapping, and focus order', () 
     }).find(value => value.skillId === 'g3-frac-compare');
     expect(oneStrategy?.status).toBe('strong');
   });
+
+  it('blocks mastery only while fraction misconception evidence is unresolved', () => {
+    const items = [
+      makeFractionCompareItem(2, 3, 3, 4),
+      makeFractionCompareItem(3, 4, 5, 8),
+      makeFractionCompareItem(2, 5, 3, 4),
+      makeFractionStrategyChoiceItem(
+        { numerator: 3, denominator: 8 }, { numerator: 4, denominator: 6 }, 'benchmark_half', () => 0.5,
+      ),
+    ];
+    const events = [...items, items[0]].map((item, index) => ({
+      id: `mastery-event-${index}`, studentId: 'student', sessionId: `session-${index}`,
+      itemId: item.id, mode: 'practice' as const, promptShown: item.prompt,
+      correctAnswer: item.answer, studentAnswer: item.answer, isCorrect: true, isRetry: false,
+      hintUsed: false, latencyMs: 1000,
+      createdAt: index < 3 ? '2026-01-01T12:00:00.000Z' : '2026-01-03T12:00:00.000Z',
+    }));
+    const baseState = {
+      studentId: 'student', cardKey: deriveCardKey(items[0]), lastItemId: items[0].id,
+      skillId: items[0].skillId, attemptCount: 5, correctCount: 5, lastCorrect: true,
+      lastLatencyMs: 1000, medianLatencyMs: 1000, ease: 2.5, stabilityDays: 10,
+      difficulty: .3, masteryLevel: 'strong' as const,
+      mistakePatterns: ['fraction:compare_larger_denominator_means_larger'],
+    };
+    const evidence = {
+      code: baseState.mistakePatterns[0], firstSeenAt: '2025-12-01T00:00:00.000Z',
+      lastSeenAt: '2025-12-01T00:00:00.000Z', occurrenceCount: 1,
+      sourceItemIds: [items[0].id],
+    };
+    const active = deriveGrade3SkillSummaries({
+      studentId: 'student', items, mathAnswerEvents: events,
+      itemStates: [{ ...baseState, misconceptionEvidence: [{ ...evidence, status: 'active' as const }] }],
+      now: '2026-01-04T00:00:00.000Z',
+    }).find(value => value.skillId === 'g3-frac-compare');
+    const resolved = deriveGrade3SkillSummaries({
+      studentId: 'student', items, mathAnswerEvents: events,
+      itemStates: [{ ...baseState, misconceptionEvidence: [{
+        ...evidence, status: 'resolved' as const, resolvedAt: '2026-01-03T12:00:00.000Z',
+      }] }],
+      now: '2026-01-04T00:00:00.000Z',
+    }).find(value => value.skillId === 'g3-frac-compare');
+    expect(active?.status).toBe('strong');
+    expect(resolved?.status).toBe('mastered');
+    expect(resolved?.mistakePatterns).toContain(evidence.code);
+  });
 });

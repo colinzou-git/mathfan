@@ -219,6 +219,22 @@ export interface StudentItemState {
   lastSeenAt?: string;
   nextDueAt?: string;
   mistakePatterns: string[];
+  /** Structured current/resolved misconception cache, reproducible from mathAnswerEvents. */
+  misconceptionEvidence?: MisconceptionEvidence[];
+}
+
+export interface MisconceptionEvidence {
+  code: string;
+  firstSeenAt: string;
+  lastSeenAt: string;
+  occurrenceCount: number;
+  sourceItemIds: string[];
+  status: 'active' | 'resolving' | 'resolved';
+  resolvedAt?: string;
+  confirmingEventIds?: string[];
+  /** Internal replay metadata used to enforce independent delayed confirmation. */
+  confirmingSessionIds?: string[];
+  confirmingDates?: string[];
 }
 
 export interface AttemptLog {

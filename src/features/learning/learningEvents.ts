@@ -74,6 +74,9 @@ export interface MathAnswerEvent {
   responsePolicy?: 'atomic_fluency' | 'procedural' | 'conceptual' | 'multi_step' | 'visual_interpretation';
   /** Speed classification — see FluencyBand in features/fluency/fluencyEngine. Only meaningful for atomic_fluency cards. */
   fluencyBand?: 'fast' | 'expected' | 'slow' | 'not_applicable';
+  /** Misconception transitions captured on this canonical event for deterministic cache replay. */
+  detectedMisconceptions?: string[];
+  confirmedMisconceptions?: string[];
   createdAt: string;
 }
 

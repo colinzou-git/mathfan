@@ -26,7 +26,11 @@ import { generateId } from '../../utils/id';
 import { recordPracticeAnswer, recordRelatedEvidenceWrites, type PracticeAnswerPayload, type RelatedEvidenceWrite } from '../learning/recordAnswer';
 import { computeRelatedEvidence } from '../adaptive/relatedEvidence';
 import { RELATED_EVIDENCE_GRADE } from '../scheduler/scheduler';
-import { detectMistakes } from '../mastery/misconceptionEngine';
+import {
+  applyMisconceptionConfirmation,
+  applyMisconceptionDetection,
+  detectMistakes,
+} from '../mastery/misconceptionEngine';
 import { selectAdaptiveItems } from '../adaptive/adaptiveItemSelector';
 import { enrichRelatedMetadata } from '../adaptive/relatedItemMapping';
 import { buildWordProblemCandidates, buildFactorCandidates } from '../adaptive/candidatePools';
@@ -363,6 +367,7 @@ export function usePracticeSession(studentId: string) {
     });
     const now = appNow();
     const createdAt = now.toISOString();
+    const eventId = generateId();
 
     const existing = stateForItem(item, statesRef.current) ?? createInitialState(studentId, item);
     const lessonSegment = configRef.current?.lessonSegments?.find(segment => segment.itemInstanceIds.includes(item.id))?.kind;
@@ -402,12 +407,30 @@ export function usePracticeSession(studentId: string) {
     }
 
     // On first wrong attempt, detect misconception patterns and merge into state.
+    let detectedMisconceptions: string[] = [];
+    let confirmedMisconceptions: string[] = [];
+    const misconceptionContext = {
+      eventId, sessionId: prev.sessionId, itemId: item.id, createdAt,
+    };
     if (isFirstAttemptAtPresentation && !result.isCorrect) {
       const newTags = detectMistakes(item, result.studentAnswer);
       if (newTags.length > 0) {
         const merged = Array.from(new Set([...(updated.mistakePatterns ?? []), ...newTags]));
-        updated = { ...updated, mistakePatterns: merged };
+        detectedMisconceptions = newTags;
+        updated = {
+          ...updated,
+          mistakePatterns: merged,
+          misconceptionEvidence: applyMisconceptionDetection(
+            updated.misconceptionEvidence, newTags, misconceptionContext, existing.mistakePatterns,
+          ),
+        };
       }
+    } else if (isFirstAttemptAtPresentation && isFirstSchedulingAttemptInSession && result.isCorrect) {
+      const confirmation = applyMisconceptionConfirmation(
+        updated.misconceptionEvidence, item, misconceptionContext, updated.mistakePatterns,
+      );
+      confirmedMisconceptions = confirmation.confirmedCodes;
+      updated = { ...updated, misconceptionEvidence: confirmation.evidence };
     }
 
     // Compute possible indirect evidence now, but defer its scheduler write to
@@ -426,7 +449,7 @@ export function usePracticeSession(studentId: string) {
 
     const payload: PracticeAnswerPayload = {
       event: {
-        id: generateId(),
+        id: eventId,
         studentId,
         sessionId: prev.sessionId,
         itemId: item.id,
@@ -446,6 +469,8 @@ export function usePracticeSession(studentId: string) {
         ratingReason: eventRatingReason,
         responsePolicy: result.policyKind,
         fluencyBand: result.fluencyBand,
+        detectedMisconceptions: detectedMisconceptions.length ? detectedMisconceptions : undefined,
+        confirmedMisconceptions: confirmedMisconceptions.length ? confirmedMisconceptions : undefined,
         factStatusBefore: existing.masteryLevel,
         factStatusAfter: updated.masteryLevel,
         origin: configRef.current?.origin,
