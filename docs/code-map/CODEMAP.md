@@ -1,6 +1,6 @@
 # Code Map Overview
 
-Generated: 2026-07-16 22:03:31 UTC
+Generated: 2026-07-16 22:36:19 UTC
 
 Repo root: `/home/ubuntu/mathfan`  
 Output folder: `/home/ubuntu/mathfan/docs/code-map`
@@ -15,8 +15,8 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 - Version: `1.2.0`
 - Module type: `module`
 - Scanned files: **287**
-- Scanned lines: **54,102**
-- Scanned bytes: **2,287,641**
+- Scanned lines: **54,219**
+- Scanned bytes: **2,295,866**
 
 ## NPM scripts
 
@@ -74,7 +74,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 | --- | --- | --- | --- |
 | src/App.tsx | 401 | Top-level React app shell: routes/screens, global state, and feature wiring. | App, exportMigrationDiagnostics, handleQuizDone, handleSessionDone, pickOperation, retryMigration, runBootstrap, selectProfile |
 | src/features/sync/SyncWidget.tsx | 156 | Cloud sync/auth/data transfer logic. | GoogleIcon, SyncWidget, friendlyError, GoogleIcon, initials, SyncWidget, timeSince |
-| src/features/sync/snapshot.ts | 378 | Local persistence/database layer. | AppSnapshot, AppSnapshotV3, normalizeSnapshot, OrphanReport, remoteHasNewerUpdatedAt, SnapshotFormatMetadata, SnapshotNormalizationProblem, SnapshotNormalizationResult |
+| src/features/sync/snapshot.ts | 392 | Local persistence/database layer. | AppSnapshot, AppSnapshotV3, normalizeSnapshot, OrphanReport, remoteHasNewerUpdatedAt, SnapshotFormatMetadata, SnapshotNormalizationProblem, SnapshotNormalizationResult |
 | vite.config.ts | 82 | Vite build/PWA configuration. | buildInfoPlugin |
 | package.json | 53 | Project package metadata, scripts, dependencies, and dev tooling. |  |
 | src/main.tsx | 21 | React entry point that mounts the app. |  |
@@ -589,55 +589,55 @@ Purpose: Local persistence/database layer.
   10: import { deriveCardKey } from '../scheduler/cardModel';
   11: import { CARD_MODEL_VERSION } from '../learning/schedulingTelemetry';
   12: import { validatePracticeItem, withLegacyContentSpec } from '../curriculum/practiceContentSpec';
-  13: 
-  14: export interface SnapshotFormatMetadata {
-  15:   appVersion: string;
-  16:   schemaVersion: 3;
-  17:   cardModelVersion: string;
-  18:   exportedAt: string;
-  19: }
-  20: 
-  21: export interface AppSnapshot {
-  22:   appId: 'mathfan';
-  23:   snapshotVersion: 1 | 2 | 3;
-  24:   snapshotAt: string;
-  25:   metadata?: SnapshotFormatMetadata;
-  26:   students: StudentProfile[];
-  27:   itemStates: StudentItemState[];
-  28:   attempts: AttemptLog[];
-  29:   sessions: PracticeSession[];
-  30:   // Added in quiz feature — absent in older snapshots; treat missing as []
-  31:   multFactStats?: MultiplicationFactStats[];
-  32:   quizSessions?: QuizSession[];
-  33:   // Added with canonical event log — absent in older snapshots; treat missing as []
-  34:   mathAnswerEvents?: MathAnswerEvent[];
-  35:   learningGoals?: LearningGoal[];
-  36:   goalEvents?: GoalEvent[];
-  37:   goalEvaluations?: GoalEvaluation[];
-  38:   dailyLessonPlans?: PersistedDailyLessonPlan[];
-  39: }
-  40: 
-  41: // ── Build ─────────────────────────────────────────────────────────────────────
-  42: 
-  43: export async function buildSnapshot(): Promise<AppSnapshotV3> {
-  44:   const tables = [
-  45:     db.students,
-  46:     db.itemStates,
-  47:     db.attempts,
-  48:     db.sessions,
-  49:     db.multFactStats,
-  50:     db.quizSessions,
-  51:     db.mathAnswerEvents,
-  52:     db.learningGoals,
-  53:     db.goalEvents,
-  54:     db.goalEvaluations,
-  55:     db.dailyLessonPlans,
-  56:   ];
-  57: 
-  58:   return db.transaction('r', tables, async () => {
-  59:     const [
-  60:       students,
-... (317 more lines)
+  13: import { loadActiveProfileSelection, saveActiveProfileSelection } from '../profile/profileBootstrap';
+  14: 
+  15: export interface SnapshotFormatMetadata {
+  16:   appVersion: string;
+  17:   schemaVersion: 3;
+  18:   cardModelVersion: string;
+  19:   exportedAt: string;
+  20: }
+  21: 
+  22: export interface AppSnapshot {
+  23:   appId: 'mathfan';
+  24:   snapshotVersion: 1 | 2 | 3;
+  25:   snapshotAt: string;
+  26:   metadata?: SnapshotFormatMetadata;
+  27:   students: StudentProfile[];
+  28:   itemStates: StudentItemState[];
+  29:   attempts: AttemptLog[];
+  30:   sessions: PracticeSession[];
+  31:   // Added in quiz feature — absent in older snapshots; treat missing as []
+  32:   multFactStats?: MultiplicationFactStats[];
+  33:   quizSessions?: QuizSession[];
+  34:   // Added with canonical event log — absent in older snapshots; treat missing as []
+  35:   mathAnswerEvents?: MathAnswerEvent[];
+  36:   learningGoals?: LearningGoal[];
+  37:   goalEvents?: GoalEvent[];
+  38:   goalEvaluations?: GoalEvaluation[];
+  39:   dailyLessonPlans?: PersistedDailyLessonPlan[];
+  40: }
+  41: 
+  42: // ── Build ─────────────────────────────────────────────────────────────────────
+  43: 
+  44: export async function buildSnapshot(): Promise<AppSnapshotV3> {
+  45:   const tables = [
+  46:     db.students,
+  47:     db.itemStates,
+  48:     db.attempts,
+  49:     db.sessions,
+  50:     db.multFactStats,
+  51:     db.quizSessions,
+  52:     db.mathAnswerEvents,
+  53:     db.learningGoals,
+  54:     db.goalEvents,
+  55:     db.goalEvaluations,
+  56:     db.dailyLessonPlans,
+  57:   ];
+  58: 
+  59:   return db.transaction('r', tables, async () => {
+  60:     const [
+... (331 more lines)
 ```
 
 ### `vite.config.ts`

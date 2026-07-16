@@ -10,6 +10,7 @@ import { makeItemFromId } from '../curriculum/makeItemFromId';
 import { deriveCardKey } from '../scheduler/cardModel';
 import { CARD_MODEL_VERSION } from '../learning/schedulingTelemetry';
 import { validatePracticeItem, withLegacyContentSpec } from '../curriculum/practiceContentSpec';
+import { loadActiveProfileSelection, saveActiveProfileSelection } from '../profile/profileBootstrap';
 
 export interface SnapshotFormatMetadata {
   appVersion: string;
@@ -322,10 +323,14 @@ export async function mergeNormalizedSnapshot(remote: AppSnapshotV3): Promise<vo
       });
 
       const remap = <T extends { studentId: string }>(rows: T[]) => rows.map(row => remapStudentId(row, aliases));
+      const remapEvaluations = (rows: GoalEvaluation[]) => remap(rows).map(evaluation => ({
+        ...evaluation,
+        answerEvents: evaluation.answerEvents?.map(event => remapStudentId(event, aliases)),
+      }));
       const itemStates = compoundMerge(remap([...(await db.itemStates.toArray()), ...remote.itemStates]), row => `${row.studentId}|${row.cardKey}`, mergeCardStateCollision);
       const multFactStats = compoundMerge(remap([...(await db.multFactStats.toArray()), ...(remote.multFactStats ?? [])]), row => `${row.studentId}|${row.key}`, (a, b) => b.totalAttempts > a.totalAttempts ? b : a);
       const goals = compoundMerge(remap([...(await db.learningGoals.toArray()), ...(remote.learningGoals ?? [])]), row => row.id, (a, b) => remoteHasNewerUpdatedAt(b.updatedAt, a.updatedAt) ? b : a);
-      const evaluations = compoundMerge(remap([...(await db.goalEvaluations.toArray()), ...(remote.goalEvaluations ?? [])]), row => row.id, (a, b) => remoteHasNewerUpdatedAt(b.updatedAt, a.updatedAt) ? b : a);
+      const evaluations = compoundMerge(remapEvaluations([...(await db.goalEvaluations.toArray()), ...(remote.goalEvaluations ?? [])]), row => row.id, (a, b) => remoteHasNewerUpdatedAt(b.updatedAt, a.updatedAt) ? b : a);
       const dailyLessonPlans = compoundMerge(remap([...(await db.dailyLessonPlans.toArray()), ...(remote.dailyLessonPlans ?? [])]), row => row.id, mergeDailyLessonPlan);
       const normalizedEvents = remap(allEvents);
       const sessions = byId(remap([...(await db.sessions.toArray()), ...remote.sessions]));
@@ -362,6 +367,15 @@ export async function mergeNormalizedSnapshot(remote: AppSnapshotV3): Promise<vo
       if (losingOrphans.length) throw new Error(`Sync ownership normalization left orphaned losing-profile records: ${JSON.stringify(orphanReport.byTable)}`);
     }
   );
+
+  const activeSelection = loadActiveProfileSelection();
+  if (activeSelection?.id) {
+    const canonicalId = aliases.get(activeSelection.id);
+    if (canonicalId && canonicalId !== activeSelection.id) {
+      const canonicalProfile = await db.students.get(canonicalId);
+      if (canonicalProfile) saveActiveProfileSelection(canonicalProfile);
+    }
+  }
 
   // ── 8. Post-merge rebuild ──────────────────────────────────────────────────
   // Recompute derived tables from the merged event set for each affected student.

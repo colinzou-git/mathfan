@@ -131,6 +131,44 @@ def legacy_scheduler_upgrade(page: Page) -> None:
         raise AssertionError(f"Migration coverage was not persisted: {migrated['runs']!r}")
 
 
+def distinct_same_name_learners(page: Page) -> None:
+    """Different learner keys with the same display name remain selectable profiles."""
+    create_profile(page, "SameName", "issue-41-multi-profile")
+    page.evaluate(
+        """async () => {
+            const database = await new Promise((resolve, reject) => {
+                const request = indexedDB.open('mathfan');
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+            const original = await new Promise((resolve, reject) => {
+                const request = database.transaction('students').objectStore('students').getAll();
+                request.onsuccess = () => resolve(request.result[0]);
+                request.onerror = () => reject(request.error);
+            });
+            await new Promise((resolve, reject) => {
+                const tx = database.transaction('students', 'readwrite');
+                tx.objectStore('students').put({
+                    ...original,
+                    id: 'same-name-second-profile',
+                    learnerKey: 'different-stable-learner-key',
+                    createdAt: '2026-01-02T00:00:00.000Z',
+                });
+                tx.oncomplete = () => resolve();
+                tx.onerror = () => reject(tx.error);
+            });
+            database.close();
+            localStorage.removeItem('mathfan.activeLearnerKey');
+        }"""
+    )
+    page.reload(wait_until="domcontentloaded")
+    expect(page.get_by_role("heading", name="Welcome back to MathFan")).to_be_visible()
+    profiles = page.get_by_role("button", name="SameName (Grade 3)", exact=True)
+    expect(profiles).to_have_count(2)
+    profiles.first.click()
+    expect(page.get_by_role("heading", name="Hi, SameName!", exact=True)).to_be_visible()
+
+
 def set_practice_preferences_and_verify_persistence(page: Page) -> None:
     page.get_by_test_id("open-settings").click()
     expect(page.get_by_role("heading", name="Settings", exact=True)).to_be_visible()
@@ -870,6 +908,7 @@ def main() -> int:
             ("daily-review-requested-rounds", {"width": 390, "height": 844}, daily_review_requested_rounds, False),
             ("practice-save-recovery", {"width": 390, "height": 844}, practice_save_failure_recovery, False),
             ("legacy-scheduler-upgrade", {"width": 1024, "height": 768}, legacy_scheduler_upgrade, False),
+            ("distinct-same-name-learners", {"width": 1024, "height": 768}, distinct_same_name_learners, False),
         ]
         for name, viewport, scenario, standalone_share in scenarios:
             try:
