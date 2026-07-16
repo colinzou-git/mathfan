@@ -37,6 +37,16 @@ export async function recordPracticeAnswer(payload: PracticeAnswerPayload): Prom
   });
 }
 
+/** Atomically persists deferred indirect nudges at session completion. */
+export async function recordRelatedEvidenceWrites(writes: RelatedEvidenceWrite[]): Promise<void> {
+  await db.transaction('rw', db.mathAnswerEvents, db.itemStates, async () => {
+    for (const write of writes) {
+      await mathAnswerEventRepo.save(write.event);
+      await itemStateRepo.save(write.state);
+    }
+  });
+}
+
 /** Write a quiz first-attempt event (mastery update applied; stats flushed at session end). */
 export async function recordQuizFirstAttempt(event: MathAnswerEvent): Promise<void> {
   await db.mathAnswerEvents.put(event);

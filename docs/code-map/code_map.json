@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-16T06:10:53.677079+00:00",
+  "generated_at": "2026-07-16T06:29:21.449292+00:00",
   "repo_root": "/home/ubuntu/mathfan",
   "package": {
     "name": "mathfan",
@@ -421,9 +421,9 @@
     {
       "path": "PROGRESS.md",
       "ext": ".md",
-      "bytes": 9046,
-      "lines": 145,
-      "sha1": "df3e0c261411",
+      "bytes": 9099,
+      "lines": 146,
+      "sha1": "b82da643390d",
       "imports": [],
       "exports": [],
       "functions": [],
@@ -3804,9 +3804,9 @@
     {
       "path": "src/features/learning/recordAnswer.ts",
       "ext": ".ts",
-      "bytes": 2588,
-      "lines": 62,
-      "sha1": "79ec8ce4d3c9",
+      "bytes": 2986,
+      "lines": 72,
+      "sha1": "a203167c9921",
       "imports": [
         "../../db/dexie",
         "../../db/repositories",
@@ -3823,7 +3823,8 @@
         "finalizeQuizSession",
         "recordPracticeAnswer",
         "recordQuizFirstAttempt",
-        "recordQuizRetry"
+        "recordQuizRetry",
+        "recordRelatedEvidenceWrites"
       ],
       "classes": [],
       "interfaces": [
@@ -5007,9 +5008,9 @@
     {
       "path": "src/features/practice/usePracticeSession.ts",
       "ext": ".ts",
-      "bytes": 30527,
-      "lines": 656,
-      "sha1": "a21b8b2612b4",
+      "bytes": 32039,
+      "lines": 668,
+      "sha1": "55533fb9dd70",
       "imports": [
         "../../components/opSpecs",
         "../../db/dexie",
@@ -7306,9 +7307,9 @@
     {
       "path": "src/tests/cardStateMigration.test.ts",
       "ext": ".ts",
-      "bytes": 8315,
+      "bytes": 8336,
       "lines": 198,
-      "sha1": "e4b468062ab9",
+      "sha1": "7d2d7dbcdcaf",
       "imports": [
         "../db/dexie",
         "../features/learning/learningEvents",
@@ -8637,9 +8638,9 @@
     {
       "path": "src/tests/practiceSession.test.ts",
       "ext": ".ts",
-      "bytes": 20419,
-      "lines": 488,
-      "sha1": "4d9e1f0f1cdd",
+      "bytes": 23739,
+      "lines": 536,
+      "sha1": "89b16bb67d4c",
       "imports": [
         "../db/repositories",
         "../features/curriculum/makeItemFromId",

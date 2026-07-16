@@ -63,8 +63,9 @@ Issues #40–#60 are being fixed and validated one at a time in numeric order be
 | 40 | **implemented and validated; committed next** |
 | 41 | **implemented and validated; committed** |
 | 42 | **implemented and validated; committed** |
-| 43 | **implemented; full validation in progress** |
-| 44–60 | open |
+| 43 | **implemented and validated; committed** |
+| 44 | **implemented; full validation in progress** |
+| 45–60 | open |
 
 ## Current focus
 
@@ -84,10 +85,10 @@ explicitly ask Claude to close them in a future session.
 **Branch D is merged and deployed** via PR #39 (merge ac10dea). GitHub issue #36 is closed.
 
 **Active branch:** `fix/open-issues-40-60` (created after the first focused commit).
-**Active issue:** #43 — honor scheduling eligibility during event replay (implemented; full validation in progress).
+**Active issue:** #44 — cap indirect FSRS nudges per canonical card/session (implemented; full validation in progress).
 **Next concrete step:**
-1. Complete full validation and commit #43 as an isolated fix.
-2. Continue with #44 and validate it before moving to #45.
+1. Complete full validation and commit #44 as an isolated fix.
+2. Continue with #45 and validate it before moving to #46.
 3. After #60, run final full checks, merge to main, deploy, and re-check live issues.
 
 Issue #30 validation completed on 2026-07-15: `npm run ci` (73 files / 1,279 tests),

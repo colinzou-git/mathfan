@@ -4,7 +4,7 @@ import type {
 } from '../../types/math';
 import { checkAnswer } from './answerChecker';
 import { classifyAttempts } from './metrics';
-import { applyReview, createInitialState, planSession, planTableSession } from '../scheduler/scheduler';
+import { applyRelatedEvidence, applyReview, createInitialState, planSession, planTableSession } from '../scheduler/scheduler';
 import { deriveCardKey, stateForItem } from '../scheduler/cardModel';
 import { createSessionSchedulingGuard } from '../scheduler/sessionSchedulingGuard';
 import { buildDailyReviewQueue } from '../scheduler/dailyReviewQueue';
@@ -23,7 +23,7 @@ import { itemStateRepo, sessionRepo } from '../../db/repositories';
 import { db } from '../../db/dexie';
 import { appNow } from '../time/clock';
 import { generateId } from '../../utils/id';
-import { recordPracticeAnswer, type PracticeAnswerPayload, type RelatedEvidenceWrite } from '../learning/recordAnswer';
+import { recordPracticeAnswer, recordRelatedEvidenceWrites, type PracticeAnswerPayload, type RelatedEvidenceWrite } from '../learning/recordAnswer';
 import { computeRelatedEvidence } from '../adaptive/relatedEvidence';
 import { RELATED_EVIDENCE_GRADE } from '../scheduler/scheduler';
 import { detectMistakes } from '../mastery/misconceptionEngine';
@@ -128,6 +128,8 @@ export function usePracticeSession(studentId: string) {
   const schedulingGuardRef = useRef(createSessionSchedulingGuard());
   // 1-based count of how many times the *current* item's card has been presented so far.
   const currentPresentationIndexRef = useRef<number>(1);
+  const directEvidenceCardsRef = useRef(new Set<string>());
+  const pendingRelatedEvidenceRef = useRef(new Map<string, { cardKey: string; relatedItemId: string; sourceItemId: string }>());
 
   const resolveItem = useCallback((id: string): PItem => {
     return dynamicItemsRef.current.get(id) ?? getStaticItem(id);
@@ -140,6 +142,8 @@ export function usePracticeSession(studentId: string) {
     const now = appNow();
     sessionStartRef.current = Date.now();
     schedulingGuardRef.current.reset();
+    directEvidenceCardsRef.current.clear();
+    pendingRelatedEvidenceRef.current.clear();
 
     const allStates = await itemStateRepo.getForStudent(studentId);
     const stateMap = new Map(allStates.map(s => [s.cardKey, s]));
@@ -387,57 +391,12 @@ export function usePracticeSession(studentId: string) {
       statesRef.current.set(cardKey, updated);
     }
 
-    // Cross-skill evidence: a first-try-correct higher-level item gives a mild
-    // FSRS nudge to the calculation facts it embeds. Reinforce-only and FSRS-only
-    // (no attempt log, no accuracy/speed change) — see adaptive/relatedEvidence.
-    let relatedEvidence: RelatedEvidenceWrite[] | undefined;
+    // Compute possible indirect evidence now, but defer its scheduler write to
+    // session completion so a later direct review can take precedence (#44).
+    let relatedCandidates: Array<{ cardKey: string; relatedItemId: string; sourceItemId: string }> = [];
     if (isFirstAttemptAtPresentation && result.isCorrect) {
-      const updates = computeRelatedEvidence(item, statesRef.current, now);
-      if (updates.length > 0) {
-        relatedEvidence = updates.map(u => {
-          statesRef.current.set(u.cardKey, u.after);
-          const factItem = makeItemFromId(u.relatedItemId);
-          return {
-            state: u.after,
-            event: {
-              id: generateId(),
-              studentId,
-              sessionId: prev.sessionId!,
-              itemId: u.relatedItemId,
-              cardKey: u.cardKey,
-              mode: 'practice' as const,
-              promptShown: factItem?.prompt ?? u.relatedItemId,
-              correctAnswer: factItem?.answer ?? 0,
-              studentAnswer: null,
-              isCorrect: true,
-              isRetry: false,
-              hintUsed: false,
-              latencyMs: 0,
-              reviewGrade: RELATED_EVIDENCE_GRADE,
-              factStatusBefore: u.before.masteryLevel,
-              factStatusAfter: u.after.masteryLevel,
-              relatedEvidence: true,
-              evidenceSourceItemId: item.id,
-              origin: configRef.current?.origin,
-              goalId: configRef.current?.goalId,
-              goalTargetId: configRef.current?.goalTargetId,
-              goalIds: configRef.current?.goalIds,
-              goalTargetIds: configRef.current?.goalTargetIds,
-              goalLearningKind: configRef.current?.goalLearningKind,
-              lessonPlanId: configRef.current?.lessonPlanId,
-              lessonSegment: configRef.current?.lessonSegments?.find(segment => segment.itemInstanceIds.includes(item.id))?.kind,
-              lessonRationale: configRef.current?.lessonRationales?.[item.id],
-              schedulingTelemetry: factItem ? buildSchedulingTelemetry({
-                item: factItem, stateBefore: u.before, stateAfter: u.after,
-                response: { reviewGrade: RELATED_EVIDENCE_GRADE, hintUsed: false, isRetry: false, evidenceKind: 'related', schedulingEligible: true },
-                selection: { origin: 'related_evidence', rationaleCodes: ['misconception_bridge'] },
-                presentationIndex: 1, attemptNo: 1, now,
-              }) : undefined,
-              createdAt,
-            },
-          };
-        });
-      }
+      relatedCandidates = computeRelatedEvidence(item, statesRef.current, now)
+        .map(update => ({ cardKey: update.cardKey, relatedItemId: update.relatedItemId, sourceItemId: item.id }));
     }
 
     // A same-session repeat presentation's first attempt looks like a fresh
@@ -493,7 +452,6 @@ export function usePracticeSession(studentId: string) {
       // Same-session repeats and mid-presentation retries do not change FSRS
       // state — pass undefined to skip the itemStates write.
       updatedState: isFirstSchedulingAttemptInSession ? updated : undefined,
-      relatedEvidence,
       attempt: {
         id: generateId(),
         studentId,
@@ -562,18 +520,31 @@ export function usePracticeSession(studentId: string) {
     setState(nextState);
 
     // Await the write so FSRS item state is durably saved; retry once on transient DB errors.
+    let persisted = false;
     try {
       await recordPracticeAnswer(payload);
+      persisted = true;
     } catch (err) {
       console.warn('[usePracticeSession] event write failed, retrying…', err);
       try {
         await recordPracticeAnswer(payload);
+        persisted = true;
       } catch (retryErr) {
         console.error('[usePracticeSession] event write failed after retry; event lost:', retryErr);
         // Release the scheduling reservation so a later presentation of this
         // card in the same session can still schedule it, since this write
         // never actually persisted.
         if (isFirstSchedulingAttemptInSession) schedulingGuardRef.current.releaseScheduled(cardKey);
+      }
+    }
+    if (persisted) {
+      if (isFirstSchedulingAttemptInSession) {
+        directEvidenceCardsRef.current.add(cardKey);
+        pendingRelatedEvidenceRef.current.delete(cardKey);
+      }
+      for (const candidate of relatedCandidates) {
+        if (directEvidenceCardsRef.current.has(candidate.cardKey) || pendingRelatedEvidenceRef.current.has(candidate.cardKey)) continue;
+        pendingRelatedEvidenceRef.current.set(candidate.cardKey, candidate);
       }
     }
   }, [studentId]);
@@ -583,6 +554,45 @@ export function usePracticeSession(studentId: string) {
   const nextQuestion = useCallback(async () => {
     const prev = stateRef.current;
     const nextId = queueRef.current.shift();
+
+    if (!nextId && prev.sessionId && pendingRelatedEvidenceRef.current.size > 0) {
+      const now = appNow();
+      const writes: RelatedEvidenceWrite[] = [];
+      for (const candidate of pendingRelatedEvidenceRef.current.values()) {
+        if (directEvidenceCardsRef.current.has(candidate.cardKey)) continue;
+        const before = statesRef.current.get(candidate.cardKey);
+        const factItem = makeItemFromId(candidate.relatedItemId);
+        if (!before || !factItem) continue;
+        const after = applyRelatedEvidence(before, now);
+        writes.push({
+          state: after,
+          event: {
+            id: generateId(), studentId, sessionId: prev.sessionId, itemId: candidate.relatedItemId,
+            cardKey: candidate.cardKey, mode: 'practice', promptShown: factItem.prompt, correctAnswer: factItem.answer,
+            studentAnswer: null, isCorrect: true, isRetry: false, hintUsed: false, latencyMs: 0,
+            reviewGrade: RELATED_EVIDENCE_GRADE, factStatusBefore: before.masteryLevel, factStatusAfter: after.masteryLevel,
+            relatedEvidence: true, evidenceSourceItemId: candidate.sourceItemId, schedulingEligible: true,
+            origin: configRef.current?.origin, goalId: configRef.current?.goalId, goalTargetId: configRef.current?.goalTargetId,
+            goalIds: configRef.current?.goalIds, goalTargetIds: configRef.current?.goalTargetIds, goalLearningKind: configRef.current?.goalLearningKind,
+            lessonPlanId: configRef.current?.lessonPlanId,
+            lessonSegment: configRef.current?.lessonSegments?.find(segment => segment.itemInstanceIds.includes(candidate.sourceItemId))?.kind,
+            lessonRationale: 'One deferred indirect nudge per canonical card when no direct review occurred.',
+            schedulingTelemetry: buildSchedulingTelemetry({
+              item: factItem, stateBefore: before, stateAfter: after,
+              response: { reviewGrade: RELATED_EVIDENCE_GRADE, hintUsed: false, isRetry: false, evidenceKind: 'related', schedulingEligible: true },
+              selection: { origin: 'related_evidence', rationaleCodes: ['deferred_single_related_evidence'] },
+              presentationIndex: 1, attemptNo: 1, now,
+            }), createdAt: now.toISOString(),
+          },
+        });
+      }
+      if (writes.length) {
+        try { await recordRelatedEvidenceWrites(writes); }
+        catch (error) { console.error('[usePracticeSession] deferred related evidence write failed', error); return; }
+        for (const write of writes) statesRef.current.set(write.state.cardKey, write.state);
+      }
+      pendingRelatedEvidenceRef.current.clear();
+    }
 
     // Persist session record (side effect before setState — pure event handler, not an updater).
     if (prev.sessionId) {
@@ -633,7 +643,7 @@ export function usePracticeSession(studentId: string) {
 
     stateRef.current = nextState;
     setState(nextState);
-  }, [resolveItem]);
+  }, [resolveItem, studentId]);
 
   // ── resetSession ─────────────────────────────────────────────────────────
 
@@ -641,6 +651,8 @@ export function usePracticeSession(studentId: string) {
     queueRef.current = [];
     configRef.current = null;
     schedulingGuardRef.current.reset();
+    directEvidenceCardsRef.current.clear();
+    pendingRelatedEvidenceRef.current.clear();
     stateRef.current = INITIAL;
     setState(INITIAL);
   }, []);

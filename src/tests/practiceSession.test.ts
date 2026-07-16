@@ -12,6 +12,7 @@ import { renderHook, act } from '@testing-library/react';
 
 vi.mock('../features/learning/recordAnswer', () => ({
   recordPracticeAnswer: vi.fn(),
+  recordRelatedEvidenceWrites: vi.fn(),
 }));
 
 vi.mock('../db/repositories', () => ({
@@ -38,7 +39,7 @@ vi.mock('../utils/id', () => ({
 // ── Imports (after mocks) ─────────────────────────────────────────────────────
 
 import { usePracticeSession } from '../features/practice/usePracticeSession';
-import { recordPracticeAnswer } from '../features/learning/recordAnswer';
+import { recordPracticeAnswer, recordRelatedEvidenceWrites } from '../features/learning/recordAnswer';
 import { itemStateRepo, sessionRepo } from '../db/repositories';
 import { appNow } from '../features/time/clock';
 import { generateId } from '../utils/id';
@@ -65,6 +66,7 @@ beforeEach(() => {
   idSeq = 0;
   vi.clearAllMocks();
   vi.mocked(recordPracticeAnswer).mockResolvedValue(undefined);
+  vi.mocked(recordRelatedEvidenceWrites).mockResolvedValue(undefined);
   vi.mocked(itemStateRepo.getForStudent).mockResolvedValue([]);
   vi.mocked(sessionRepo.getLastByMode).mockResolvedValue(undefined);
   vi.mocked(sessionRepo.save).mockResolvedValue(undefined);
@@ -483,5 +485,51 @@ describe('usePracticeSession — one scheduling update per card per session', ()
     expect(calls[0][0].updatedState).toBeDefined();
     expect(calls[1][0].event.isRetry).toBe(true);
     expect(calls[1][0].updatedState).toBeUndefined();
+  });
+});
+
+describe('usePracticeSession — session-level related evidence ledger', () => {
+  const factState = {
+    studentId: STUDENT_ID, cardKey: 'fact:mul:3x4', lastItemId: 'MUL_3x4', skillId: 'mul',
+    attemptCount: 4, correctCount: 3, lastCorrect: true, lastLatencyMs: 1000, medianLatencyMs: 1100,
+    ease: 2.5, stabilityDays: 5, fsrsDifficulty: 5, difficulty: .2, reps: 3, lapses: 0,
+    lastSeenAt: '2026-05-20T00:00:00Z', nextDueAt: '2026-05-25T00:00:00Z', masteryLevel: 'developing' as const, mistakePatterns: [],
+  };
+
+  it('caps three related successes at one deferred canonical nudge', async () => {
+    vi.mocked(itemStateRepo.getForStudent).mockResolvedValue([factState]);
+    const { result } = renderHook(() => usePracticeSession(STUDENT_ID));
+    await act(async () => { await result.current.startSession({ mode: 'area', sessionLength: 3, specificItemIds: ['AREA_RECT_3x4'] }); });
+    for (let index = 0; index < 3; index++) {
+      await act(async () => { await result.current.submitAnswer('12'); });
+      await act(async () => { await result.current.nextQuestion(); });
+    }
+    expect(recordRelatedEvidenceWrites).toHaveBeenCalledTimes(1);
+    const writes = vi.mocked(recordRelatedEvidenceWrites).mock.calls[0][0];
+    expect(writes).toHaveLength(1);
+    expect(writes[0].event).toMatchObject({ cardKey: 'fact:mul:3x4', relatedEvidence: true, schedulingEligible: true, evidenceSourceItemId: 'AREA_RECT_3x4' });
+    expect(writes[0].event.schedulingTelemetry?.selection.rationaleCodes).toContain('deferred_single_related_evidence');
+  });
+
+  it('cancels pending related evidence when a direct fact review occurs later', async () => {
+    vi.mocked(itemStateRepo.getForStudent).mockResolvedValue([factState]);
+    const { result } = renderHook(() => usePracticeSession(STUDENT_ID));
+    await act(async () => { await result.current.startSession({ mode: 'adaptive_lesson', sessionLength: 2, preplannedItems: [makeItemFromId('AREA_RECT_3x4')!, makeItemFromId('MUL_3x4')!] }); });
+    await act(async () => { await result.current.submitAnswer('12'); await result.current.nextQuestion(); });
+    await act(async () => { await result.current.submitAnswer('12'); await result.current.nextQuestion(); });
+    expect(recordRelatedEvidenceWrites).not.toHaveBeenCalled();
+  });
+
+  it('does not consume a deferred reservation when persistence fails', async () => {
+    vi.mocked(itemStateRepo.getForStudent).mockResolvedValue([factState]);
+    vi.mocked(recordRelatedEvidenceWrites).mockRejectedValueOnce(new Error('disk full')).mockResolvedValueOnce(undefined);
+    const { result } = renderHook(() => usePracticeSession(STUDENT_ID));
+    await act(async () => { await result.current.startSession({ mode: 'area', sessionLength: 1, specificItemIds: ['AREA_RECT_3x4'] }); });
+    await act(async () => { await result.current.submitAnswer('12'); });
+    await act(async () => { await result.current.nextQuestion(); });
+    expect(result.current.state.phase).toBe('correct');
+    await act(async () => { await result.current.nextQuestion(); });
+    expect(recordRelatedEvidenceWrites).toHaveBeenCalledTimes(2);
+    expect(result.current.state.phase).toBe('complete');
   });
 });
