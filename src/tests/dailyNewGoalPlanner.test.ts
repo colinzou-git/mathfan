@@ -203,6 +203,31 @@ describe('planDailyNewForGoals allocation', () => {
     expect(result.tiles.reduce((sum, tile) => sum + tile.questionCount, 0)).toBeLessThanOrEqual(80);
   });
 
+  it('bounds template new-learning work by canonical-unit evidence instead of catalogue size', () => {
+    const skillId = 'g3-perimeter';
+    const catalogueSize = pool(skillId).length;
+    const lastItemId = pool(skillId).find(id => id.startsWith('PERIM_RECT_'))!;
+    const result = plan({
+      goals: [goal({ targets: [target({ skillId })] })],
+      skillSummaries: [summary(skillId, 'needs_practice')],
+      itemStates: [state(lastItemId, { skillId, masteryLevel: 'mastered', attemptCount: 6 })],
+      dailyNewGoalQuestionLimits: { minQuestionsPerSkillTile: 3, maxQuestionsPerSkillTile: 6 },
+    });
+    const plannedCount = result.tiles.reduce((sum, tile) => sum + tile.questionCount, 0);
+    expect(plannedCount).toBeLessThan(catalogueSize);
+    expect(plannedCount).toBeLessThanOrEqual(6);
+  });
+
+  it('counts commutative multiplication orientations as one new atomic card', () => {
+    const skillId = 'g3-mul-tables-advanced';
+    const result = plan({
+      goals: [goal({ targets: [target({ skillId })] })],
+      skillSummaries: [summary(skillId)],
+    });
+    const cardKeys = result.tiles.flatMap(tile => tile.itemIds.map(deriveCardKeyFromItemId));
+    expect(new Set(cardKeys).size).toBe(cardKeys.length);
+  });
+
   it('respects custom global tile limits and planned total cap', () => {
     const result = plan({
       goals: [

@@ -1,4 +1,7 @@
-import type { SessionConfig } from '../../types/math';
+import type { PracticeItem, SessionConfig, StudentItemState } from '../../types/math';
+import type { MathAnswerEvent } from '../learning/learningEvents';
+import { deriveLearningUnitProgress, type LearningUnitProgress } from '../learning/learningUnitProgress';
+import { makeItemFromId } from '../curriculum/makeItemFromId';
 import {
   mulId, divId,
 } from '../curriculum/multiplicationItems';
@@ -35,6 +38,12 @@ export interface FocusSequence {
 }
 
 export interface FocusSequenceContext { recentItemIds?: string[] }
+
+export interface SkillLearningUnitPlan {
+  config: SessionConfig;
+  items: PracticeItem[];
+  progress: Map<string, LearningUnitProgress>;
+}
 
 function divisionReasoningIds(schema: DivisionSchema): string[] {
   const values: Array<[number, number]> = schema.startsWith('decompose_')
@@ -876,4 +885,16 @@ export function planPracticeForSkill(
     mode: 'daily_review',
     sessionLength,
   };
+}
+
+/** Resolves a skill catalogue and canonical progress while keeping all variants available to manual practice. */
+export function planLearningUnitsForSkill(
+  skillId: string,
+  args: { events: MathAnswerEvent[]; states: StudentItemState[]; options?: PlanOptions },
+): SkillLearningUnitPlan {
+  const config = planPracticeForSkill(skillId, args.options);
+  const items = [...new Set(config.specificItemIds ?? [])]
+    .map(makeItemFromId)
+    .filter((item): item is PracticeItem => item !== null);
+  return { config, items, progress: deriveLearningUnitProgress({ items, events: args.events, states: args.states }) };
 }

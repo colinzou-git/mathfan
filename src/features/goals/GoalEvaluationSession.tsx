@@ -7,7 +7,7 @@ import { makeItemFromId } from '../curriculum/makeItemFromId';
 import type { MathAnswerEvent } from '../learning/learningEvents';
 import { GRADE3_MASTERY_MAP, getGrade3Skill } from '../mastery/grade3MasteryMap';
 import { inferGrade3SkillId } from '../mastery/skillMapping';
-import { planPracticeForSkill } from '../mastery/skillPracticePlanner';
+import { planLearningUnitsForSkill } from '../mastery/skillPracticePlanner';
 import { checkAnswer, type RatingReason } from '../practice/answerChecker';
 import type { ResponsePolicyKind } from '../scheduler/responsePolicy';
 import type { FluencyBand } from '../fluency/fluencyEngine';
@@ -33,6 +33,7 @@ import {
 } from './goalEvaluationPersistence';
 import type { GoalEvaluation } from './types';
 import { buildSchedulingTelemetry } from '../learning/schedulingTelemetry';
+import { remainingLearningUnitEvidence } from '../learning/learningUnitProgress';
 
 interface Props {
   studentId: string;
@@ -108,22 +109,11 @@ function skillTitle(skillId: string): string {
   return getGrade3Skill(skillId)?.title ?? skillId;
 }
 
-function skillItemIds(skillId: string): string[] {
-  const cfg = planPracticeForSkill(skillId);
-  return (cfg.specificItemIds ?? []).filter(id => makeItemFromId(id));
-}
-
 function buildNewLearningCandidates(
   result: AdaptiveGoalEvaluationResult,
   events: MathAnswerEvent[],
   itemStates: StudentItemState[],
 ): NewLearningCandidate[] {
-  const attempted = new Set(events.filter(event => !event.isRetry).map(event => event.itemId));
-  const mastered = new Set(
-    itemStates
-      .filter(state => state.masteryLevel === 'mastered')
-      .map(state => state.lastItemId ?? state.cardKey)
-  );
   const seenSkills = new Set<string>();
   const candidates = [...result.topGoalCandidates, ...result.skillsToStrengthen, ...result.skillsReadyToLearnNext];
   const rows: NewLearningCandidate[] = [];
@@ -131,11 +121,10 @@ function buildNewLearningCandidates(
   for (const candidate of candidates) {
     if (seenSkills.has(candidate.skillId)) continue;
     seenSkills.add(candidate.skillId);
-    const ids = skillItemIds(candidate.skillId);
-    const unseen = ids.filter(id => !attempted.has(id));
-    const allMastered = ids.length > 0 && ids.every(id => mastered.has(id));
-    if (unseen.length === 0 || allMastered) continue;
-    const attemptedInSkill = ids.length - unseen.length;
+    const units = [...planLearningUnitsForSkill(candidate.skillId, { events, states: itemStates }).progress.values()];
+    const activeUnits = units.filter(unit => unit.status !== 'maintenance');
+    if (activeUnits.length === 0) continue;
+    const evidenceNeeded = activeUnits.reduce((sum, unit) => sum + remainingLearningUnitEvidence(unit), 0);
     const prereqIds = getGrade3Skill(candidate.skillId)?.prerequisites ?? [];
     const advisory = prereqIds.length === 0
       ? 'Ready to start.'
@@ -143,28 +132,29 @@ function buildNewLearningCandidates(
     rows.push({
       skillId: candidate.skillId,
       title: skillTitle(candidate.skillId),
-      state: attemptedInSkill === 0 ? 'Completely new' : 'Partially learned',
-      unseenCount: unseen.length,
+      state: activeUnits.every(unit => unit.status === 'new') ? 'Completely new' : 'Partially learned',
+      unseenCount: activeUnits.length,
       advisory,
       confidence: Math.max(0, Math.min(1, 1 - candidate.uncertainty * 0.5)),
-      workload: `${Math.max(4, Math.min(20, unseen.length * 2))} questions`,
+      workload: `${Math.max(1, Math.min(20, evidenceNeeded))} evidence question${evidenceNeeded === 1 ? '' : 's'}`,
     });
   }
 
   if (rows.length > 0) return rows.slice(0, 6);
 
   for (const skill of GRADE3_MASTERY_MAP) {
-    const ids = skillItemIds(skill.id);
-    const unseen = ids.filter(id => !attempted.has(id));
-    if (unseen.length === 0) continue;
+    const units = [...planLearningUnitsForSkill(skill.id, { events, states: itemStates }).progress.values()];
+    const activeUnits = units.filter(unit => unit.status !== 'maintenance');
+    if (activeUnits.length === 0) continue;
+    const evidenceNeeded = activeUnits.reduce((sum, unit) => sum + remainingLearningUnitEvidence(unit), 0);
     rows.push({
       skillId: skill.id,
       title: skill.title,
-      state: ids.length === unseen.length ? 'Completely new' : 'Partially learned',
-      unseenCount: unseen.length,
+      state: activeUnits.every(unit => unit.status === 'new') ? 'Completely new' : 'Partially learned',
+      unseenCount: activeUnits.length,
       advisory: skill.prerequisites.length === 0 ? 'Ready to start.' : `Check nearby skills: ${skill.prerequisites.map(skillTitle).slice(0, 2).join(', ')}.`,
       confidence: 0.55,
-      workload: `${Math.max(4, Math.min(20, unseen.length * 2))} questions`,
+      workload: `${Math.max(1, Math.min(20, evidenceNeeded))} evidence question${evidenceNeeded === 1 ? '' : 's'}`,
     });
     if (rows.length >= 3) break;
   }
@@ -534,7 +524,7 @@ export function GoalEvaluationSession({ studentId, onCancel, onReturnToGoals, on
               {newLearning.map(candidate => (
                 <article key={candidate.skillId} style={s.resultCard}>
                   <h3 style={s.cardTitle}>{candidate.title}</h3>
-                  <p style={s.body}>{candidate.state} · {candidate.unseenCount} unseen items · {candidate.workload}</p>
+                  <p style={s.body}>{candidate.state} · {candidate.unseenCount} learning unit{candidate.unseenCount === 1 ? '' : 's'} · {candidate.workload}</p>
                   <p style={s.body}>{candidate.advisory}</p>
                   <p style={s.body}>{Math.round(candidate.confidence * 100)}% recommendation confidence</p>
                   <button style={s.primaryBtn} onClick={() => onSelectGoalSkills([candidate.skillId])}>Continue to Add Goal review</button>

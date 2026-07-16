@@ -9,6 +9,7 @@ import { getGrade3Skill } from '../mastery/grade3MasteryMap';
 import { inferGrade3SkillId } from '../mastery/skillMapping';
 import { getRelatedSkillIds } from '../adaptive/relatedItemMapping';
 import { rankFocusSkills } from './focusSkillSelector';
+import { deriveLearningUnitProgress } from '../learning/learningUnitProgress';
 
 export type LessonSegmentKind = 'retrieval' | 'focus' | 'transfer';
 export interface PlannedLessonItem { item: PracticeItem; cardKey: string; segment: LessonSegmentKind; rationale: string; schedulingEligible: boolean }
@@ -58,8 +59,13 @@ export function planDailyLesson(args: PlanDailyLessonArgs): DailyLessonPlan {
   const usable = new Set(args.skillSummaries.map(summary => summary.skillId).filter(skillId => (planPracticeForSkill(skillId).specificItemIds?.length ?? 0) > 0));
   const focusCandidate = rankFocusSkills({ studentId: args.studentId, now: args.now, summaries: args.skillSummaries, goals: args.goals, events: args.events, usableSkillIds: usable })[0];
   const focusIds = focusCandidate ? (buildSkillFocusSequence(focusCandidate.skillId).itemIds.length ? buildSkillFocusSequence(focusCandidate.skillId).itemIds : planPracticeForSkill(focusCandidate.skillId).specificItemIds ?? []) : [];
-  const focusAll = shuffled(uniqueItems(focusIds), args.rng);
-  const transferAll = focusCandidate ? shuffled(buildTransferPool(focusCandidate.skillId, args.gradeLevel, args.skillSummaries), args.rng) : [];
+  const focusCatalogue = uniqueItems(focusIds);
+  const unitProgress = deriveLearningUnitProgress({ items: focusCatalogue, events: args.events, states: args.itemStates });
+  const focusAll = shuffled(focusCatalogue.filter(item => unitProgress.get(deriveCardKey(item))?.status !== 'maintenance'), args.rng);
+  const maintenanceTransfer = focusCatalogue.filter(item => unitProgress.get(deriveCardKey(item))?.status === 'maintenance');
+  const transferAll = focusCandidate
+    ? shuffled([...maintenanceTransfer, ...buildTransferPool(focusCandidate.skillId, args.gradeLevel, args.skillSummaries)], args.rng)
+    : [];
   const allocation = allocateLessonSegments(targetSeconds, { retrieval: retrievalAll.length, focus: focusAll.length, transfer: transferAll.length });
   const selectedCards = new Set<string>(); const plannedIds = new Set<string>(); const planned: PlannedLessonItem[] = [];
   const add = (item: PracticeItem, segment: LessonSegmentKind, rationale: string) => {

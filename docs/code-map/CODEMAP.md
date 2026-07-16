@@ -1,6 +1,6 @@
 # Code Map Overview
 
-Generated: 2026-07-16 06:50:10 UTC
+Generated: 2026-07-16 07:14:01 UTC
 
 Repo root: `/home/ubuntu/mathfan`
 Output folder: `/home/ubuntu/mathfan/docs/code-map`
@@ -14,9 +14,9 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 - Package name: `mathfan`
 - Version: `1.2.0`
 - Module type: `module`
-- Scanned files: **275**
-- Scanned lines: **50,955**
-- Scanned bytes: **2,131,119**
+- Scanned files: **277**
+- Scanned lines: **51,230**
+- Scanned bytes: **2,145,598**
 
 ## NPM scripts
 
@@ -97,9 +97,9 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 | src/features/visuals/ShapeModel.tsx | 137 | Reusable SVG visual model components (area grids, shape diagrams, fraction bars, arrays). | SVGWrap, ShapeModel, ShapeName, pts, regularPoly, rightAnglePath, ShapeModel, SVGWrap |
 | src/features/stats/QuizStatsView.tsx | 135 | Progress/statistics screens or calculations. | FactGroup, QuizStatsView, avgSecStr, FactGroup, fmt, QuizStatsView |
 | src/features/stats/TodayAchievementSection.tsx | 125 | Progress/statistics screens or calculations. | AchievementTile, TodayAchievementSection, AchievementTile, TodayAchievementSection |
-| src/features/mastery/skillPracticePlanner.ts | 880 | Grade 3 skill practice planner: maps skill IDs to SessionConfig for the mastery map. | buildDivisionFocusSequence, buildFocusSequence, buildRegroupingFocusSequence, FocusSequence, FocusSequenceContext, planFractionFocusSequence, PlanOptions, planPracticeForSkill |
+| src/features/mastery/skillPracticePlanner.ts | 901 | Grade 3 skill practice planner: maps skill IDs to SessionConfig for the mastery map. | buildDivisionFocusSequence, buildFocusSequence, buildRegroupingFocusSequence, FocusSequence, FocusSequenceContext, planFractionFocusSequence, planLearningUnitsForSkill, PlanOptions |
 | src/features/practice/usePracticeSession.ts | 700 | Local persistence/database layer. | usePracticeSession, CorrectResult, LastSessionSummary, SessionState, usePracticeSession, commit, getStaticItem, usePracticeSession |
-| src/features/goals/GoalEvaluationSession.tsx | 670 | Exports reusable code: GoalEvaluationSession. | GoalEvaluationSession, buildNewLearningCandidates, buildReviewFindings, buildUpdatedState, confirmCancel, continueNext, evaluationArgs, GoalEvaluationSession |
+| src/features/goals/GoalEvaluationSession.tsx | 660 | Exports reusable code: GoalEvaluationSession. | GoalEvaluationSession, buildNewLearningCandidates, buildReviewFindings, buildUpdatedState, confirmCancel, continueNext, evaluationArgs, GoalEvaluationSession |
 | src/features/curriculum/areaItems.ts | 609 | Practice item definitions and ID generators for a math curriculum topic. | apChoiceId, areaPerimCmpId, areaPerimCompareItemIds, areaPerimeterChoiceItemIds, AreaPerimeterChoiceKind, AreaPerimeterSchema, AreaPerimVariant, areaRectangleItemIds |
 | src/features/goals/goalEvaluationEngine.ts | 591 | Exports reusable code: ADAPTIVE_GOAL_EVALUATION_CONFIRMATION_COUNT, ADAPTIVE_GOAL_EVALUATION_HISTORICAL_PRIOR_CAP, ADAPTIVE_GOAL_EVALUATION_QUESTION_COUNT, AdaptiveGoalEvaluationArgs, AdaptiveGoalEvaluationItem. | ADAPTIVE_GOAL_EVALUATION_CONFIRMATION_COUNT, ADAPTIVE_GOAL_EVALUATION_HISTORICAL_PRIOR_CAP, ADAPTIVE_GOAL_EVALUATION_QUESTION_COUNT, AdaptiveGoalEvaluationArgs, AdaptiveGoalEvaluationItem, AdaptiveGoalEvaluationPhase, AdaptiveGoalEvaluationResponse, AdaptiveGoalEvaluationResult |
 
@@ -209,6 +209,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   │   ├── eventRebuild.ts
 │   │   │   ├── eventValidation.ts
 │   │   │   ├── learningEvents.ts
+│   │   │   ├── learningUnitProgress.ts
 │   │   │   ├── recordAnswer.ts
 │   │   │   └── schedulingTelemetry.ts
 │   │   ├── learningPlan
@@ -353,6 +354,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   ├── learnerIdentity.test.ts
 │   │   ├── learnerKeyMerge.test.ts
 │   │   ├── learningEvents.test.ts
+│   │   ├── learningUnitProgress.test.ts
 │   │   ├── mainBranchGoalFixes.test.ts
 │   │   ├── makeItemFromId.test.ts
 │   │   ├── mathPrompt.test.tsx

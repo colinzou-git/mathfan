@@ -348,6 +348,8 @@ describe('GoalEvaluationSession', () => {
     expect(screen.getByText(/New or Unfinished Learning for Goals/i)).toBeInTheDocument();
     expect(screen.getByText(/Review in Daily Review/i)).toBeInTheDocument();
     expect(screen.getByText(/Scheduled practice will appear under Daily Review/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/learning units?/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/evidence questions?/i).length).toBeGreaterThan(0);
     expect(pushLocal).toHaveBeenCalledTimes(1);
 
     fireEvent.click(screen.getByRole('button', { name: /go to daily review/i }));

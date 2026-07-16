@@ -1,7 +1,7 @@
 import type { MathAnswerEvent } from '../learning/learningEvents';
 import type { StudentSkillSummary } from '../mastery/skillMasteryEngine';
 import type { LearningGoal } from './types';
-import type { DailyNewGoalQuestionLimits, SessionConfig, StudentItemState } from '../../types/math';
+import type { DailyNewGoalQuestionLimits, PracticeItem, SessionConfig, StudentItemState } from '../../types/math';
 import { makeItemFromId } from '../curriculum/makeItemFromId';
 import { inferGrade3SkillId } from '../mastery/skillMapping';
 import { planPracticeForSkill } from '../mastery/skillPracticePlanner';
@@ -9,6 +9,8 @@ import { getGrade3Skill } from '../mastery/grade3MasteryMap';
 import { calculateGoalProgress, localDateInTimeZone, type GoalEvidenceInput, type GoalTargetProgress } from './goalEngine';
 import { normalizeDailyNewGoalLimits, resolveGoalTileLimits } from './dailyNewGoalLimits';
 import { analyzeGoalPortfolio, type GoalPortfolioAnalysis } from './goalPortfolioEngine';
+import { deriveLearningUnitProgress, remainingLearningUnitEvidence } from '../learning/learningUnitProgress';
+import { deriveCardKey } from '../scheduler/cardModel';
 
 export type DailyNewGoalTileKind = 'new_skill' | 'continue_new_learning';
 export type DailyNewGoalLearningKind = 'planned' | 'extra';
@@ -227,7 +229,36 @@ function makeTile(
   };
 }
 
-function buildGroups(args: PlanDailyNewGoalsArgs, attempted: Set<string>, excludedIds: Set<string>, suppliedPortfolio?: GoalPortfolioAnalysis): SkillGroup[] {
+function learningItemsForPool(
+  pool: string[], events: MathAnswerEvent[], itemStates: StudentItemState[], attempted: Set<string>, dueIds: Set<string>, excludedIds: Set<string>,
+  minimumQuestions: number,
+): { itemIds: string[]; priorEvidenceCount: number } {
+  const items = pool.map(makeItemFromId).filter((item): item is PracticeItem => item !== null);
+  const progress = deriveLearningUnitProgress({ items, events, states: itemStates });
+  const byCard = new Map<string, string[]>();
+  for (const item of items) {
+    if (dueIds.has(item.id) || excludedIds.has(item.id)) continue;
+    const ids = byCard.get(deriveCardKey(item)) ?? [];
+    ids.push(item.id);
+    byCard.set(deriveCardKey(item), ids);
+  }
+  const eligible: string[] = [];
+  let priorEvidenceCount = 0;
+  for (const [cardKey, ids] of byCard) {
+    const unit = progress.get(cardKey);
+    if (!unit || unit.status === 'maintenance') continue;
+    priorEvidenceCount += unit.directInstanceCount;
+    const fresh = ids.filter(id => !attempted.has(id));
+    if (unit.kind === 'atomic_fact') {
+      if (unit.status === 'new' && fresh[0]) eligible.push(fresh[0]);
+      continue;
+    }
+    eligible.push(...fresh.slice(0, Math.max(remainingLearningUnitEvidence(unit), minimumQuestions)));
+  }
+  return { itemIds: eligible, priorEvidenceCount };
+}
+
+function buildGroups(args: PlanDailyNewGoalsArgs, attempted: Set<string>, progressEvents: MathAnswerEvent[], excludedIds: Set<string>, suppliedPortfolio?: GoalPortfolioAnalysis): SkillGroup[] {
   const { studentId, goals, events, itemStates, skillSummaries, now, timezone } = args;
   const activeGoals = goals.filter(goal => goal.status === 'active');
   const dueIds = dueItemIds(itemStates, now);
@@ -244,17 +275,18 @@ function buildGroups(args: PlanDailyNewGoalsArgs, attempted: Set<string>, exclud
       if (targetProgress.isComplete) continue;
       if (summaryMap.get(targetProgress.skillId)?.status === 'mastered' || targetProgress.status === 'mastered') continue;
       const pool = poolForSkill(targetProgress.skillId);
-      const eligible = pool.filter(id => !attempted.has(id) && !dueIds.has(id) && !excludedIds.has(id));
+      const goalLimits = resolveGoalTileLimits(goal, globalLimits);
+      const learningItems = learningItemsForPool(pool, progressEvents, itemStates, attempted, dueIds, excludedIds, goalLimits.minQuestionsPerSkillTile);
+      const eligible = learningItems.itemIds;
       if (eligible.length === 0) continue;
       const unfinishedPerDay = eligible.length / Math.max(1, progress.daysRemaining + 1);
       const urgency = progress.daysRemaining <= 1 ? 4 : progress.daysRemaining <= 3 ? 2 : 0;
-      const goalLimits = resolveGoalTileLimits(goal, globalLimits);
       const consolidated = consolidatedBySkill.get(targetProgress.skillId);
       const candidate: Candidate = {
         goal,
         target: targetProgress,
         itemIds: eligible,
-        attemptedBeforeDay: pool.filter(id => attempted.has(id)).length,
+        attemptedBeforeDay: learningItems.priorEvidenceCount,
         priority: consolidated?.effectivePriority ?? unfinishedPerDay + urgency + (1 - targetProgress.displayScore),
         progress: targetProgress.displayScore,
         daysRemaining: progress.daysRemaining,
@@ -296,7 +328,7 @@ function buildGroups(args: PlanDailyNewGoalsArgs, attempted: Set<string>, exclud
 }
 
 export function buildGoalSkillGroups(portfolio: GoalPortfolioAnalysis, args: PlanDailyNewGoalsArgs): SkillGroup[] {
-  return buildGroups(args, new Set(), new Set(), portfolio);
+  return buildGroups(args, new Set(), args.events, new Set(), portfolio);
 }
 
 function chooseItemBatch(group: SkillGroup, used: Set<string>, preferredCount: number): string[] {
@@ -331,10 +363,11 @@ export function planDailyNewForGoals(args: PlanDailyNewGoalsArgs): DailyNewGoalP
   const activeGoals = args.goals.filter(goal => goal.status === 'active');
   const dayStartIso = localDayStartIso(args.now, args.timezone);
   const attemptedBeforeDay = directAttemptedItemIds(args.events, args.studentId, dayStartIso);
+  const eventsBeforeDay = args.events.filter(event => event.createdAt < dayStartIso);
   const todayEvents = todayGoalLearningEvents(args.events, args.studentId, dayStartIso);
   const todayCompletedIds = new Set(todayEvents.map(event => event.itemId));
   const used = new Set<string>();
-  const groups = buildGroups(args, attemptedBeforeDay, new Set());
+  const groups = buildGroups(args, attemptedBeforeDay, eventsBeforeDay, new Set());
   const tiles: DailyNewGoalTile[] = [];
   let plannedTotal = 0;
   const globalLimits = normalizeDailyNewGoalLimits(args.dailyNewGoalQuestionLimits);
@@ -354,7 +387,7 @@ export function planDailyNewForGoals(args: PlanDailyNewGoalsArgs): DailyNewGoalP
   const plannedIds = new Set(tiles.flatMap(tile => tile.itemIds));
   const todayGoalLearningIds = new Set(todayEvents.map(event => event.itemId));
   const extraExcluded = new Set([...plannedIds, ...todayGoalLearningIds]);
-  const extraGroups = buildGroups(args, allTimeAttempted, extraExcluded);
+  const extraGroups = buildGroups(args, allTimeAttempted, args.events, extraExcluded);
   const extraChoices = extraGroups.map(group => {
     const ids = chooseItemBatch(group, new Set(), group.maxQuestionsPerSkillTile);
     return ids.length ? makeTile(group, ids, 'extra', todayCompletedIds) : null;

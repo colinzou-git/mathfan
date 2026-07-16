@@ -66,8 +66,9 @@ Issues #40–#60 are being fixed and validated one at a time in numeric order be
 | 43 | **implemented and validated; committed** |
 | 44 | **implemented and validated; committed** |
 | 45 | **implemented and validated; committed** |
-| 46 | **implemented and validated; committed next** |
-| 47–60 | open |
+| 46 | **implemented and validated; committed** |
+| 47 | **implemented and validated; committed next** |
+| 48–60 | open |
 
 ## Current focus
 
@@ -87,10 +88,10 @@ explicitly ask Claude to close them in a future session.
 **Branch D is merged and deployed** via PR #39 (merge ac10dea). GitHub issue #36 is closed.
 
 **Active branch:** `fix/open-issues-40-60` (created after the first focused commit).
-**Active issue:** #46 — enforce one FSRS update per canonical card per evaluation (implemented and validated; committing next).
+**Active issue:** #47 — stop treating every numeric template instance as a separate new learning unit (implemented and validated; committing next).
 **Next concrete step:**
-1. Complete full validation and commit #46 as an isolated fix.
-2. Continue with #47 and validate it before moving to #48.
+1. Implement and validate the shared learning-unit progress model for #47.
+2. Commit #47, then continue with #48.
 3. After #60, run final full checks, merge to main, deploy, and re-check live issues.
 
 Issue #30 validation completed on 2026-07-15: `npm run ci` (73 files / 1,279 tests),

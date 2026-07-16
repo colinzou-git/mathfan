@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-16T06:50:10.943234+00:00",
+  "generated_at": "2026-07-16T07:14:01.351447+00:00",
   "repo_root": "/home/ubuntu/mathfan",
   "package": {
     "name": "mathfan",
@@ -421,9 +421,9 @@
     {
       "path": "PROGRESS.md",
       "ext": ".md",
-      "bytes": 9144,
-      "lines": 147,
-      "sha1": "85778963a253",
+      "bytes": 9265,
+      "lines": 149,
+      "sha1": "658443e3008a",
       "imports": [],
       "exports": [],
       "functions": [],
@@ -3035,17 +3035,19 @@
     {
       "path": "src/features/goals/dailyNewGoalPlanner.ts",
       "ext": ".ts",
-      "bytes": 15836,
-      "lines": 371,
-      "sha1": "8a230e26ab91",
+      "bytes": 17577,
+      "lines": 404,
+      "sha1": "04b82aef12e3",
       "imports": [
         "../../types/math",
         "../curriculum/makeItemFromId",
         "../learning/learningEvents",
+        "../learning/learningUnitProgress",
         "../mastery/grade3MasteryMap",
         "../mastery/skillMapping",
         "../mastery/skillMasteryEngine",
         "../mastery/skillPracticePlanner",
+        "../scheduler/cardModel",
         "./dailyNewGoalLimits",
         "./goalEngine",
         "./goalPortfolioEngine",
@@ -3072,6 +3074,7 @@
         "directAttemptedItemIds",
         "directFirstAttempt",
         "dueItemIds",
+        "learningItemsForPool",
         "localDayStartIso",
         "makeConfig",
         "makeTile",
@@ -3312,9 +3315,9 @@
     {
       "path": "src/features/goals/GoalEvaluationSession.tsx",
       "ext": ".tsx",
-      "bytes": 31137,
-      "lines": 670,
-      "sha1": "3675a582984d",
+      "bytes": 31229,
+      "lines": 660,
+      "sha1": "944ed646e1b1",
       "imports": [
         "../../components/NumPad",
         "../../db/repositories",
@@ -3324,6 +3327,7 @@
         "../curriculum/makeItemFromId",
         "../fluency/fluencyEngine",
         "../learning/learningEvents",
+        "../learning/learningUnitProgress",
         "../learning/schedulingTelemetry",
         "../mastery/grade3MasteryMap",
         "../mastery/misconceptionEngine",
@@ -3356,7 +3360,6 @@
         "responsesFromEvaluation",
         "resume",
         "retrySave",
-        "skillItemIds",
         "skillTitle",
         "startNew"
       ],
@@ -3805,6 +3808,45 @@
       "read_error": null
     },
     {
+      "path": "src/features/learning/learningUnitProgress.ts",
+      "ext": ".ts",
+      "bytes": 4881,
+      "lines": 115,
+      "sha1": "a59268e30473",
+      "imports": [
+        "../../types/math",
+        "../scheduler/cardModel",
+        "./learningEvents"
+      ],
+      "exports": [
+        "deriveLearningUnitProgress",
+        "LearningUnitEvidenceRequirements",
+        "learningUnitEvidenceRequirements",
+        "LearningUnitProgress",
+        "remainingLearningUnitEvidence"
+      ],
+      "functions": [
+        "deriveLearningUnitProgress",
+        "direct",
+        "learningUnitEvidenceRequirements",
+        "remainingLearningUnitEvidence",
+        "representationId"
+      ],
+      "classes": [],
+      "interfaces": [
+        "LearningUnitEvidenceRequirements",
+        "LearningUnitProgress"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Exports reusable code: deriveLearningUnitProgress, LearningUnitEvidenceRequirements, learningUnitEvidenceRequirements, LearningUnitProgress, remainingLearningUnitEvidence.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/features/learning/recordAnswer.ts",
       "ext": ".ts",
       "bytes": 2986,
@@ -3904,15 +3946,16 @@
     {
       "path": "src/features/learningPlan/dailyLessonPlanner.ts",
       "ext": ".ts",
-      "bytes": 8304,
-      "lines": 82,
-      "sha1": "4e459bfeeeb8",
+      "bytes": 8791,
+      "lines": 88,
+      "sha1": "0546dd7c6615",
       "imports": [
         "../../types/math",
         "../adaptive/relatedItemMapping",
         "../curriculum/makeItemFromId",
         "../goals/types",
         "../learning/learningEvents",
+        "../learning/learningUnitProgress",
         "../mastery/grade3MasteryMap",
         "../mastery/skillMapping",
         "../mastery/skillMasteryEngine",
@@ -4254,9 +4297,9 @@
     {
       "path": "src/features/mastery/skillPracticePlanner.ts",
       "ext": ".ts",
-      "bytes": 36104,
-      "lines": 880,
-      "sha1": "d94b54105938",
+      "bytes": 37134,
+      "lines": 901,
+      "sha1": "3c8d823f7539",
       "imports": [
         "../../types/math",
         "../curriculum/areaItems",
@@ -4264,6 +4307,7 @@
         "../curriculum/divisionItems",
         "../curriculum/fractionItems",
         "../curriculum/geometryItems",
+        "../curriculum/makeItemFromId",
         "../curriculum/measurementItems",
         "../curriculum/mulPropertiesItems",
         "../curriculum/multiplicationItems",
@@ -4271,7 +4315,9 @@
         "../curriculum/regrouping",
         "../curriculum/roundingItems",
         "../curriculum/twoStepItems",
-        "../curriculum/wordProblemItems"
+        "../curriculum/wordProblemItems",
+        "../learning/learningEvents",
+        "../learning/learningUnitProgress"
       ],
       "exports": [
         "buildDivisionFocusSequence",
@@ -4280,8 +4326,10 @@
         "FocusSequence",
         "FocusSequenceContext",
         "planFractionFocusSequence",
+        "planLearningUnitsForSkill",
         "PlanOptions",
-        "planPracticeForSkill"
+        "planPracticeForSkill",
+        "SkillLearningUnitPlan"
       ],
       "functions": [
         "add2DigitRegroupingItemIds",
@@ -4307,6 +4355,7 @@
         "mulItemIds",
         "mulMultipleOf10ItemIds",
         "planFractionFocusSequence",
+        "planLearningUnitsForSkill",
         "planPracticeForSkill",
         "rng",
         "roundNearest10or100ItemIds",
@@ -4322,7 +4371,8 @@
       "interfaces": [
         "FocusSequence",
         "FocusSequenceContext",
-        "PlanOptions"
+        "PlanOptions",
+        "SkillLearningUnitPlan"
       ],
       "types": [],
       "components": [],
@@ -7430,9 +7480,9 @@
     {
       "path": "src/tests/dailyNewGoalPlanner.test.ts",
       "ext": ".ts",
-      "bytes": 16714,
-      "lines": 430,
-      "sha1": "7a4258537dcf",
+      "bytes": 17947,
+      "lines": 455,
+      "sha1": "1d59986d40e2",
       "imports": [
         "../features/goals/dailyNewGoalLimits",
         "../features/goals/dailyNewGoalPlanner",
@@ -7841,9 +7891,9 @@
     {
       "path": "src/tests/goalEvaluationSession.test.tsx",
       "ext": ".tsx",
-      "bytes": 13936,
-      "lines": 374,
-      "sha1": "1bd5a2727aba",
+      "bytes": 14099,
+      "lines": 376,
+      "sha1": "a95f829338ca",
       "imports": [
         "../db/repositories",
         "../features/goals/goalEvaluationPersistence",
@@ -8373,6 +8423,38 @@
       "css_classes": [],
       "json_keys": [],
       "purpose": "Local persistence/database layer.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/learningUnitProgress.test.ts",
+      "ext": ".ts",
+      "bytes": 4731,
+      "lines": 81,
+      "sha1": "13a31b7dbc89",
+      "imports": [
+        "../features/curriculum/makeItemFromId",
+        "../features/learning/learningEvents",
+        "../features/learning/learningUnitProgress",
+        "../features/mastery/skillPracticePlanner",
+        "../features/scheduler/cardModel",
+        "../types/math",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [
+        "event",
+        "item",
+        "state"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
       "too_large": false,
       "read_error": null
     },

@@ -4,7 +4,7 @@
 
 | Package | Import count |
 | --- | --- |
-| vitest | 81 |
+| vitest | 82 |
 | react | 35 |
 | @testing-library/react | 19 |
 | pathlib | 8 |
@@ -226,10 +226,12 @@
 | src/features/goals/dailyNewGoalPlanner.ts | ../../types/math |
 | src/features/goals/dailyNewGoalPlanner.ts | ../curriculum/makeItemFromId |
 | src/features/goals/dailyNewGoalPlanner.ts | ../learning/learningEvents |
+| src/features/goals/dailyNewGoalPlanner.ts | ../learning/learningUnitProgress |
 | src/features/goals/dailyNewGoalPlanner.ts | ../mastery/grade3MasteryMap |
 | src/features/goals/dailyNewGoalPlanner.ts | ../mastery/skillMapping |
 | src/features/goals/dailyNewGoalPlanner.ts | ../mastery/skillMasteryEngine |
 | src/features/goals/dailyNewGoalPlanner.ts | ../mastery/skillPracticePlanner |
+| src/features/goals/dailyNewGoalPlanner.ts | ../scheduler/cardModel |
 | src/features/goals/dailyNewGoalPlanner.ts | ./dailyNewGoalLimits |
 | src/features/goals/dailyNewGoalPlanner.ts | ./goalEngine |
 | src/features/goals/dailyNewGoalPlanner.ts | ./goalPortfolioEngine |
@@ -263,6 +265,7 @@
 | src/features/goals/GoalEvaluationSession.tsx | ../curriculum/makeItemFromId |
 | src/features/goals/GoalEvaluationSession.tsx | ../fluency/fluencyEngine |
 | src/features/goals/GoalEvaluationSession.tsx | ../learning/learningEvents |
+| src/features/goals/GoalEvaluationSession.tsx | ../learning/learningUnitProgress |
 | src/features/goals/GoalEvaluationSession.tsx | ../learning/schedulingTelemetry |
 | src/features/goals/GoalEvaluationSession.tsx | ../mastery/grade3MasteryMap |
 | src/features/goals/GoalEvaluationSession.tsx | ../mastery/misconceptionEngine |
@@ -325,6 +328,9 @@
 | src/features/learning/learningEvents.ts | ../../types/math |
 | src/features/learning/learningEvents.ts | ../multiplication/types |
 | src/features/learning/learningEvents.ts | ./schedulingTelemetry |
+| src/features/learning/learningUnitProgress.ts | ../../types/math |
+| src/features/learning/learningUnitProgress.ts | ../scheduler/cardModel |
+| src/features/learning/learningUnitProgress.ts | ./learningEvents |
 | src/features/learning/recordAnswer.ts | ../../db/dexie |
 | src/features/learning/recordAnswer.ts | ../../db/repositories |
 | src/features/learning/recordAnswer.ts | ../../types/math |
@@ -341,6 +347,7 @@
 | src/features/learningPlan/dailyLessonPlanner.ts | ../curriculum/makeItemFromId |
 | src/features/learningPlan/dailyLessonPlanner.ts | ../goals/types |
 | src/features/learningPlan/dailyLessonPlanner.ts | ../learning/learningEvents |
+| src/features/learningPlan/dailyLessonPlanner.ts | ../learning/learningUnitProgress |
 | src/features/learningPlan/dailyLessonPlanner.ts | ../mastery/grade3MasteryMap |
 | src/features/learningPlan/dailyLessonPlanner.ts | ../mastery/skillMapping |
 | src/features/learningPlan/dailyLessonPlanner.ts | ../mastery/skillMasteryEngine |
@@ -383,6 +390,7 @@
 | src/features/mastery/skillPracticePlanner.ts | ../curriculum/divisionItems |
 | src/features/mastery/skillPracticePlanner.ts | ../curriculum/fractionItems |
 | src/features/mastery/skillPracticePlanner.ts | ../curriculum/geometryItems |
+| src/features/mastery/skillPracticePlanner.ts | ../curriculum/makeItemFromId |
 | src/features/mastery/skillPracticePlanner.ts | ../curriculum/measurementItems |
 | src/features/mastery/skillPracticePlanner.ts | ../curriculum/mulPropertiesItems |
 | src/features/mastery/skillPracticePlanner.ts | ../curriculum/multiplicationItems |
@@ -391,6 +399,8 @@
 | src/features/mastery/skillPracticePlanner.ts | ../curriculum/roundingItems |
 | src/features/mastery/skillPracticePlanner.ts | ../curriculum/twoStepItems |
 | src/features/mastery/skillPracticePlanner.ts | ../curriculum/wordProblemItems |
+| src/features/mastery/skillPracticePlanner.ts | ../learning/learningEvents |
+| src/features/mastery/skillPracticePlanner.ts | ../learning/learningUnitProgress |
 | src/features/mastery/SkillTile.tsx | ./grade3MasteryMap |
 | src/features/mastery/SkillTile.tsx | ./skillMasteryEngine |
 | src/features/mastery/todayPlanEngine.ts | ../../types/math |
@@ -813,6 +823,12 @@
 | src/tests/learningEvents.test.ts | ../features/learning/learningEvents |
 | src/tests/learningEvents.test.ts | ../features/multiplication/masteryEngine |
 | src/tests/learningEvents.test.ts | ../features/stats/statsEngine |
+| src/tests/learningUnitProgress.test.ts | ../features/curriculum/makeItemFromId |
+| src/tests/learningUnitProgress.test.ts | ../features/learning/learningEvents |
+| src/tests/learningUnitProgress.test.ts | ../features/learning/learningUnitProgress |
+| src/tests/learningUnitProgress.test.ts | ../features/mastery/skillPracticePlanner |
+| src/tests/learningUnitProgress.test.ts | ../features/scheduler/cardModel |
+| src/tests/learningUnitProgress.test.ts | ../types/math |
 | src/tests/mainBranchGoalFixes.test.ts | ../features/curriculum/makeItemFromId |
 | src/tests/mainBranchGoalFixes.test.ts | ../features/goals/dailyNewGoalPlanner |
 | src/tests/mainBranchGoalFixes.test.ts | ../features/goals/goalEngine |
