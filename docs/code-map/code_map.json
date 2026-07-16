@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-16T18:54:28.297248+00:00",
+  "generated_at": "2026-07-16T22:03:31.927708+00:00",
   "repo_root": "/home/ubuntu/mathfan",
   "package": {
     "name": "mathfan",
@@ -570,9 +570,9 @@
     {
       "path": "scripts/e2e_mathfan.py",
       "ext": ".py",
-      "bytes": 45618,
-      "lines": 822,
-      "sha1": "d2594d2bebac",
+      "bytes": 49999,
+      "lines": 893,
+      "sha1": "112d6273017a",
       "imports": [
         "__future__",
         "json",
@@ -600,6 +600,7 @@
         "fraction_equivalence_visual_lesson",
         "fraction_same_numerator_lesson",
         "fractional_line_plot_lesson",
+        "legacy_scheduler_upgrade",
         "main",
         "open_mastery_skill",
         "overlapping_goal_portfolio",
@@ -631,6 +632,7 @@
         "fraction_equivalence_visual_lesson",
         "fraction_same_numerator_lesson",
         "fractional_line_plot_lesson",
+        "legacy_scheduler_upgrade",
         "main",
         "open_mastery_skill",
         "overlapping_goal_portfolio",
@@ -4632,9 +4634,9 @@
     {
       "path": "src/features/migrations/cardStateMigration.ts",
       "ext": ".ts",
-      "bytes": 11803,
-      "lines": 267,
-      "sha1": "a9cdc6bf1b66",
+      "bytes": 12401,
+      "lines": 283,
+      "sha1": "c727b25c79be",
       "imports": [
         "../../db/dexie",
         "../../types/math",
@@ -4661,6 +4663,7 @@
         "migrateLegacyState",
         "preflight",
         "reconcileMigratedCardState",
+        "recoverInterruptedRuns",
         "rollbackCardStateMigration",
         "runCardStateMigration",
         "validate"
@@ -7629,19 +7632,22 @@
     {
       "path": "src/tests/cardStateMigration.test.ts",
       "ext": ".ts",
-      "bytes": 8336,
-      "lines": 198,
-      "sha1": "7d2d7dbcdcaf",
+      "bytes": 12881,
+      "lines": 310,
+      "sha1": "6e72f0b1b0e9",
       "imports": [
         "../db/dexie",
         "../features/learning/learningEvents",
         "../features/migrations/cardStateMigration",
         "../features/migrations/migrationTypes",
+        "dexie",
         "vitest"
       ],
       "exports": [],
       "functions": [
         "clearAll",
+        "createRealV6Database",
+        "createRealV7Database",
         "event",
         "legacy",
         "putSchemaBackup"

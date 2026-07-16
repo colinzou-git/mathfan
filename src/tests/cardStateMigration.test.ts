@@ -1,5 +1,6 @@
 import 'fake-indexeddb/auto';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import Dexie from 'dexie';
 import { db } from '../db/dexie';
 import {
   runCardStateMigration,
@@ -52,6 +53,62 @@ function legacy(itemId = 'MUL_7x8', overrides: Partial<LegacyStudentItemState> =
 
 async function putSchemaBackup(rows: LegacyStudentItemState[]) {
   await db.migrationBackups.put({ id: 'schema-v7-pre-cardkey-backup', migrationRunId: 'schema-v7-auto-backup', createdAt: '2026-01-01T00:00:00.000Z', itemStates: rows });
+}
+
+async function createRealV6Database(rows: LegacyStudentItemState[]) {
+  db.close();
+  await Dexie.delete('mathfan');
+  const legacyDb = new Dexie('mathfan');
+  legacyDb.version(1).stores({
+    students: 'id, displayName',
+    itemStates: '[studentId+itemId], studentId, skillId, nextDueAt, masteryLevel',
+    attempts: 'id, studentId, itemId, sessionId, createdAt',
+    sessions: 'id, studentId, startedAt, mode',
+  });
+  legacyDb.version(2).stores({ attempts: 'id, studentId, itemId, sessionId, createdAt, [studentId+createdAt]' });
+  legacyDb.version(3).stores({
+    multFactStats: '[studentId+key], studentId',
+    quizSessions: 'id, studentId, startedAt',
+  });
+  legacyDb.version(4).stores({ mathAnswerEvents: 'id, studentId, sessionId, mode, createdAt, [studentId+createdAt]' });
+  legacyDb.version(5).stores({
+    learningGoals: 'id, studentId, status, targetDate, updatedAt, [studentId+status]',
+    goalEvents: 'id, studentId, goalId, type, createdAt, [studentId+createdAt]',
+    goalEvaluations: 'id, studentId, status, updatedAt',
+  });
+  legacyDb.version(6).stores({ students: 'id, learnerKey, displayName' });
+  await legacyDb.open();
+  await legacyDb.table('itemStates').bulkPut(rows);
+  legacyDb.close();
+  await db.open();
+}
+
+async function createRealV7Database(rows: LegacyStudentItemState[]) {
+  db.close();
+  await Dexie.delete('mathfan');
+  const legacyDb = new Dexie('mathfan');
+  legacyDb.version(7).stores({
+    students: 'id, learnerKey, displayName',
+    attempts: 'id, studentId, itemId, sessionId, createdAt, [studentId+createdAt]',
+    sessions: 'id, studentId, startedAt, mode',
+    multFactStats: '[studentId+key], studentId',
+    quizSessions: 'id, studentId, startedAt',
+    mathAnswerEvents: 'id, studentId, sessionId, mode, createdAt, [studentId+createdAt]',
+    learningGoals: 'id, studentId, status, targetDate, updatedAt, [studentId+status]',
+    goalEvents: 'id, studentId, goalId, type, createdAt, [studentId+createdAt]',
+    goalEvaluations: 'id, studentId, status, updatedAt',
+    migrationBackups: 'id, migrationRunId, createdAt',
+    dataMigrationRuns: 'id, kind, status, startedAt',
+  });
+  await legacyDb.open();
+  await legacyDb.table('migrationBackups').put({
+    id: 'schema-v7-pre-cardkey-backup',
+    migrationRunId: 'schema-v7-auto-backup',
+    createdAt: '2026-01-01T00:00:00.000Z',
+    itemStates: rows,
+  });
+  legacyDb.close();
+  await db.open();
 }
 
 describe('runCardStateMigration', () => {
@@ -193,5 +250,60 @@ describe('rollbackCardStateMigration', () => {
   it('fails gracefully when no backup exists for the given run id', async () => {
     const result = await rollbackCardStateMigration('nonexistent-run');
     expect(result.ok).toBe(false);
+  });
+});
+
+describe('real IndexedDB schema upgrade', () => {
+  it('upgrades a v6 database and preserves legacy-only scheduler rows', async () => {
+    const row = legacy();
+    await createRealV6Database([row]);
+
+    const backup = await db.migrationBackups.get('schema-v7-pre-cardkey-backup');
+    expect(backup?.itemStates).toEqual([row]);
+
+    const result = await runCardStateMigration();
+    expect(result.status).toBe('completed');
+    expect(await db.itemStates.get(['s1', 'fact:mul:7x8'])).toMatchObject({
+      attemptCount: 9,
+      correctCount: 7,
+      stabilityDays: 12,
+      fsrsDifficulty: 4.2,
+      reps: 8,
+      lapses: 1,
+      lastSeenAt: '2025-12-20T00:00:00.000Z',
+      nextDueAt: '2026-01-20T00:00:00.000Z',
+      masteryLevel: 'strong',
+      mistakePatterns: ['mul_add_instead'],
+      lastItemId: 'MUL_7x8',
+      cardKey: 'fact:mul:7x8',
+    });
+  });
+
+  it('resumes after an interrupted started run and remains idempotent', async () => {
+    await createRealV6Database([legacy()]);
+    await db.dataMigrationRuns.put({
+      id: 'interrupted-run',
+      kind: MIGRATION_KIND,
+      status: 'started',
+      startedAt: '2026-01-01T00:00:00.000Z',
+      sourceEventCount: 0,
+    });
+
+    const resumed = await runCardStateMigration();
+    expect(resumed.status).toBe('completed');
+    expect((await db.dataMigrationRuns.get('interrupted-run'))?.status).toBe('failed');
+    expect(await db.itemStates.count()).toBe(1);
+    expect((await runCardStateMigration()).status).toBe('skipped');
+    expect(await db.itemStates.count()).toBe(1);
+  });
+
+  it('opens a v7 database and repairs its retained pre-card-key backup', async () => {
+    await createRealV7Database([legacy('MUL_7x8'), legacy('MUL_8x7', { reps: 10 })]);
+
+    const result = await runCardStateMigration();
+    expect(result.status).toBe('completed');
+    expect(result.coverage).toMatchObject({ legacyInputCount: 2, collisionCount: 1, legacyFallbackCount: 1 });
+    expect(await db.itemStates.count()).toBe(1);
+    expect(await db.itemStates.get(['s1', 'fact:mul:7x8'])).toMatchObject({ reps: 10, lastItemId: 'MUL_7x8' });
   });
 });

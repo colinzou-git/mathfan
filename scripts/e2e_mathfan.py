@@ -61,6 +61,76 @@ def create_profile(page: Page, name: str, fresh: str) -> None:
     expect(page.get_by_text("Grade 3", exact=True)).to_be_visible()
 
 
+def legacy_scheduler_upgrade(page: Page) -> None:
+    """Open the built app over a real v6 IndexedDB and verify scheduler recovery."""
+    seed_url = f"{BASE_URL}/__seed_issue_40__"
+    page.route(seed_url, lambda route: route.fulfill(status=200, content_type="text/html", body="<!doctype html><title>seed</title>"))
+    page.goto(seed_url, wait_until="domcontentloaded")
+    page.evaluate(
+        """async () => {
+            await new Promise((resolve, reject) => {
+                const request = indexedDB.deleteDatabase('mathfan');
+                request.onsuccess = () => resolve();
+                request.onerror = () => reject(request.error);
+            });
+            await new Promise((resolve, reject) => {
+                const request = indexedDB.open('mathfan', 6);
+                request.onupgradeneeded = () => {
+                    const database = request.result;
+                    database.createObjectStore('students', { keyPath: 'id' });
+                    database.createObjectStore('itemStates', { keyPath: ['studentId', 'itemId'] });
+                    database.createObjectStore('attempts', { keyPath: 'id' });
+                    database.createObjectStore('sessions', { keyPath: 'id' });
+                    database.createObjectStore('multFactStats', { keyPath: ['studentId', 'key'] });
+                    database.createObjectStore('quizSessions', { keyPath: 'id' });
+                    database.createObjectStore('mathAnswerEvents', { keyPath: 'id' });
+                    database.createObjectStore('learningGoals', { keyPath: 'id' });
+                    database.createObjectStore('goalEvents', { keyPath: 'id' });
+                    database.createObjectStore('goalEvaluations', { keyPath: 'id' });
+                };
+                request.onsuccess = () => {
+                    const database = request.result;
+                    const tx = database.transaction('itemStates', 'readwrite');
+                    tx.objectStore('itemStates').put({
+                        studentId: 'legacy-student', itemId: 'MUL_7x8', skillId: 'g3-mul-tables-basic',
+                        attemptCount: 9, correctCount: 7, lastAnswer: '56', lastCorrect: true,
+                        lastLatencyMs: 1200, medianLatencyMs: 1400, personalBestMs: 900,
+                        ease: 2.5, stabilityDays: 12, difficulty: 0.3, fsrsDifficulty: 4.2,
+                        reps: 8, lapses: 1, masteryLevel: 'strong',
+                        lastSeenAt: '2025-12-20T00:00:00.000Z', nextDueAt: '2026-01-20T00:00:00.000Z',
+                        mistakePatterns: ['mul_add_instead'],
+                    });
+                    tx.oncomplete = () => { database.close(); resolve(); };
+                    tx.onerror = () => reject(tx.error);
+                };
+                request.onerror = () => reject(request.error);
+            });
+        }"""
+    )
+    page.unroute(seed_url)
+    page.goto(BASE_URL, wait_until="domcontentloaded")
+    expect(page.get_by_role("heading", name="Welcome to MathFan")).to_be_visible()
+    migrated = page.evaluate(
+        """async () => new Promise((resolve, reject) => {
+            const request = indexedDB.open('mathfan');
+            request.onsuccess = () => {
+                const database = request.result;
+                const tx = database.transaction(['itemStates', 'dataMigrationRuns'], 'readonly');
+                const stateRequest = tx.objectStore('itemStates').get(['legacy-student', 'fact:mul:7x8']);
+                const runsRequest = tx.objectStore('dataMigrationRuns').getAll();
+                tx.oncomplete = () => { database.close(); resolve({ state: stateRequest.result, runs: runsRequest.result }); };
+                tx.onerror = () => reject(tx.error);
+            };
+            request.onerror = () => reject(request.error);
+        })"""
+    )
+    state = migrated["state"]
+    if not state or state.get("reps") != 8 or state.get("lastItemId") != "MUL_7x8":
+        raise AssertionError(f"Legacy scheduler state was not preserved: {state!r}")
+    if not any(run.get("status") == "completed" and run.get("coverage", {}).get("legacyFallbackCount") == 1 for run in migrated["runs"]):
+        raise AssertionError(f"Migration coverage was not persisted: {migrated['runs']!r}")
+
+
 def set_practice_preferences_and_verify_persistence(page: Page) -> None:
     page.get_by_test_id("open-settings").click()
     expect(page.get_by_role("heading", name="Settings", exact=True)).to_be_visible()
@@ -799,6 +869,7 @@ def main() -> int:
             ("adaptive-lesson-and-manual", {"width": 390, "height": 844}, adaptive_lesson_and_manual_fallback, False),
             ("daily-review-requested-rounds", {"width": 390, "height": 844}, daily_review_requested_rounds, False),
             ("practice-save-recovery", {"width": 390, "height": 844}, practice_save_failure_recovery, False),
+            ("legacy-scheduler-upgrade", {"width": 1024, "height": 768}, legacy_scheduler_upgrade, False),
         ]
         for name, viewport, scenario, standalone_share in scenarios:
             try:
