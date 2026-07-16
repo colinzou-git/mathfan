@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-16T10:01:46.087997+00:00",
+  "generated_at": "2026-07-16T10:11:10.656067+00:00",
   "repo_root": "/home/ubuntu/mathfan",
   "package": {
     "name": "mathfan",
@@ -421,9 +421,9 @@
     {
       "path": "PROGRESS.md",
       "ext": ".md",
-      "bytes": 9553,
-      "lines": 158,
-      "sha1": "3e9f7ef4e9c3",
+      "bytes": 9603,
+      "lines": 159,
+      "sha1": "d7841e6e53a1",
       "imports": [],
       "exports": [],
       "functions": [],
@@ -1965,20 +1965,23 @@
     {
       "path": "src/features/curriculum/divisionItems.ts",
       "ext": ".ts",
-      "bytes": 9402,
-      "lines": 162,
-      "sha1": "4de3f4074282",
+      "bytes": 13865,
+      "lines": 257,
+      "sha1": "0f5c4b0fb7c6",
       "imports": [
         "../../types/math",
         "./regrouping"
       ],
       "exports": [
         "divisionCardKey",
+        "DivisionContext",
         "DivisionDecomposition",
         "DivisionGenerationConstraints",
         "DivisionMisconceptionCode",
+        "DivisionMisconceptionSimulation",
         "DivisionQuestionSpec",
         "DivisionSchema",
+        "divisionSkillIdForSchema",
         "FactFamily",
         "factFamilyForDivision",
         "findFriendlyDivisionDecomposition",
@@ -1986,22 +1989,27 @@
         "generateDivisionNearTransfer",
         "makeStructuredDivisionItem",
         "simulateDivisionMisconception",
-        "validateDivisionDecomposition"
+        "validateDivisionDecomposition",
+        "validateDivisionItem"
       ],
       "functions": [
         "divisionCardKey",
+        "divisionSkillIdForSchema",
         "factFamilyForDivision",
         "findFriendlyDivisionDecomposition",
         "generateDivisionItem",
         "generateDivisionNearTransfer",
         "makeStructuredDivisionItem",
         "simulateDivisionMisconception",
-        "validateDivisionDecomposition"
+        "validateDivisionDecomposition",
+        "validateDivisionItem"
       ],
       "classes": [],
       "interfaces": [
+        "DivisionContext",
         "DivisionDecomposition",
         "DivisionGenerationConstraints",
+        "DivisionMisconceptionSimulation",
         "DivisionQuestionSpec",
         "FactFamily"
       ],
@@ -2155,9 +2163,9 @@
     {
       "path": "src/features/curriculum/makeItemFromId.ts",
       "ext": ".ts",
-      "bytes": 11995,
-      "lines": 244,
-      "sha1": "bf336f1418d7",
+      "bytes": 12239,
+      "lines": 247,
+      "sha1": "9ab8a722d1e8",
       "imports": [
         "../../types/math",
         "./areaItems",
@@ -4220,11 +4228,12 @@
     {
       "path": "src/features/mastery/misconceptionEngine.ts",
       "ext": ".ts",
-      "bytes": 19079,
-      "lines": 452,
-      "sha1": "de73cb6cc8fb",
+      "bytes": 19239,
+      "lines": 455,
+      "sha1": "02ccb29db97c",
       "imports": [
         "../../types/math",
+        "../curriculum/divisionItems",
         "../curriculum/regrouping",
         "fraction.js"
       ],
@@ -4337,11 +4346,12 @@
     {
       "path": "src/features/mastery/skillMapping.ts",
       "ext": ".ts",
-      "bytes": 8817,
-      "lines": 145,
-      "sha1": "d4096b61ad72",
+      "bytes": 8734,
+      "lines": 144,
+      "sha1": "242e94f713fa",
       "imports": [
-        "../../types/math"
+        "../../types/math",
+        "../curriculum/divisionItems"
       ],
       "exports": [
         "inferGrade3SkillId"
@@ -4404,9 +4414,9 @@
     {
       "path": "src/features/mastery/skillPracticePlanner.ts",
       "ext": ".ts",
-      "bytes": 37134,
-      "lines": 901,
-      "sha1": "3c8d823f7539",
+      "bytes": 37301,
+      "lines": 905,
+      "sha1": "63a440a3cb88",
       "imports": [
         "../../types/math",
         "../curriculum/areaItems",
@@ -7842,9 +7852,9 @@
     {
       "path": "src/tests/divisionRedesign.test.tsx",
       "ext": ".tsx",
-      "bytes": 6985,
-      "lines": 104,
-      "sha1": "5a4f3b495394",
+      "bytes": 9462,
+      "lines": 145,
+      "sha1": "5eb1037d1946",
       "imports": [
         "../features/adaptive/relatedItemMapping",
         "../features/curriculum/arithmeticItems",

@@ -6,6 +6,12 @@ export type DivisionSchema =
   | 'decompose_tens_ones' | 'decompose_partial_quotients'
   | 'verify_with_multiplication' | 'word_problem_choose_model';
 
+export interface DivisionContext {
+  interpretation: 'sharing' | 'grouping';
+  noun: string;
+  groupNoun: string;
+}
+
 export interface DivisionQuestionSpec {
   schema: DivisionSchema;
   dividend: number;
@@ -13,7 +19,7 @@ export interface DivisionQuestionSpec {
   quotient: number;
   remainder?: number;
   decomposition?: Array<{ dividendPart: number; quotientPart: number }>;
-  context?: { interpretation: 'sharing' | 'grouping'; noun: string; groupNoun: string };
+  context?: DivisionContext;
   unknownPosition?: 'group_size' | 'group_count' | 'factor';
 }
 
@@ -68,9 +74,53 @@ export function divisionCardKey(spec: DivisionQuestionSpec): string {
   return keys[spec.schema];
 }
 
+export function divisionSkillIdForSchema(schema: DivisionSchema, divisor: number): string {
+  if (schema === 'fact_recall') return divisor <= 5 ? 'g3-div-within-100' : 'g3-div-mul-relationship';
+  if (schema === 'unknown_factor' || schema === 'verify_with_multiplication') return 'g3-div-mul-relationship';
+  if (schema === 'equal_sharing' || schema === 'measurement_grouping') return 'g3-div-sharing-grouping';
+  if (schema.startsWith('decompose_')) return 'g3-div-decomposition';
+  return 'g3-div-word-problems';
+}
+
+export function validateDivisionItem(item: PracticeItem): string[] {
+  const spec = item.divisionSpec;
+  if (!spec) return ['missing divisionSpec'];
+  const errors: string[] = [];
+  if (!Number.isInteger(spec.dividend) || !Number.isInteger(spec.divisor) || spec.divisor <= 0) errors.push('invalid operands');
+  if (spec.dividend % spec.divisor !== 0 || spec.remainder) errors.push('unsupported remainder');
+  if (spec.quotient !== spec.dividend / spec.divisor || item.answer !== (
+    spec.schema === 'verify_with_multiplication' ? `${spec.quotient} × ${spec.divisor} = ${spec.dividend}`
+      : spec.schema === 'word_problem_choose_model' ? `${spec.dividend} ÷ ${spec.divisor}`
+        : spec.quotient
+  )) errors.push('answer/spec mismatch');
+  if (item.skillId !== divisionSkillIdForSchema(spec.schema, spec.divisor)) errors.push('skill/schema mismatch');
+  if (item.cardKey !== divisionCardKey(spec)) errors.push('card/schema mismatch');
+  if (spec.schema.startsWith('decompose_')) {
+    const parts = spec.decomposition ?? [];
+    const decomposition = {
+      dividend: spec.dividend, divisor: spec.divisor,
+      parts: parts.map(part => part.dividendPart),
+      partialQuotients: parts.map(part => part.quotientPart),
+    };
+    if (!validateDivisionDecomposition(decomposition)) errors.push('invalid decomposition');
+  }
+  if (['equal_sharing', 'measurement_grouping', 'word_problem_choose_model'].includes(spec.schema)) {
+    if (!spec.context) errors.push('missing division context');
+    if (spec.schema === 'equal_sharing' && spec.context?.interpretation !== 'sharing') errors.push('sharing schema/context mismatch');
+    if (spec.schema === 'measurement_grouping' && spec.context?.interpretation !== 'grouping') errors.push('grouping schema/context mismatch');
+  }
+  if ((item.answerInput ?? 'numeric') === 'numeric' && !Number.isInteger(Number(item.answer))) errors.push('non-integer numeric answer');
+  return errors;
+}
+
 export function makeStructuredDivisionItem(spec: DivisionQuestionSpec): PracticeItem {
   const { schema, dividend, divisor, quotient } = spec;
-  const id = schema === 'fact_recall' ? `DIV_${dividend}d${divisor}` : `DIVQ_${schema}_${dividend}_${divisor}`;
+  if (spec.remainder || dividend % divisor !== 0 || quotient !== dividend / divisor) {
+    throw new Error('Grade 3 structured division requires an exact whole-number quotient');
+  }
+  const interpretationSuffix = schema === 'word_problem_choose_model' && spec.context?.interpretation === 'grouping'
+    ? '_grouping' : '';
+  const id = schema === 'fact_recall' ? `DIV_${dividend}d${divisor}` : `DIVQ_${schema}${interpretationSuffix}_${dividend}_${divisor}`;
   let prompt = `${dividend} ÷ ${divisor}`;
   let answer: string | number = quotient;
   let choices: Array<string | number> | undefined;
@@ -94,32 +144,41 @@ export function makeStructuredDivisionItem(spec: DivisionQuestionSpec): Practice
     answer = `${dividend} ÷ ${divisor}`;
     choices = [answer, `${divisor} ÷ ${dividend}`, `${dividend} × ${divisor}`];
   }
-  return {
-    id, skillId: 'SKILL_DIV_FACTS', itemType: schema === 'unknown_factor' ? 'unknown_factor' : schema === 'word_problem_choose_model' ? 'word_problem' : 'division_fact',
+  const item: PracticeItem = {
+    id, skillId: divisionSkillIdForSchema(schema, divisor), itemType: schema === 'unknown_factor' ? 'unknown_factor' : schema === 'word_problem_choose_model' ? 'word_problem' : 'division_fact',
     prompt, answer, choices, answerInput: choices ? 'choice' : 'numeric', tags: ['division', schema], difficulty: schema === 'fact_recall' ? 0.45 : 0.65,
     factA: dividend, factB: divisor, divisionSpec: spec, schemaId: `division_${schema}`, cardKey: divisionCardKey(spec),
   };
+  const errors = validateDivisionItem(item);
+  if (errors.length) throw new Error(`Invalid structured division item ${id}: ${errors.join('; ')}`);
+  return item;
 }
 
 export function generateDivisionItem(constraints: DivisionGenerationConstraints, context: TemplateGeneratorContext = {}): PracticeItem {
+  if (constraints.allowRemainder) {
+    throw new Error('Grade 3 remainder division is unsupported; use a future quotient-and-remainder schema');
+  }
   const rng = context.rng ?? Math.random;
   const minD = Math.max(2, constraints.divisorMin ?? 2), maxD = Math.max(minD, constraints.divisorMax ?? 9);
   const minQ = Math.max(1, constraints.quotientMin ?? 2), maxQ = Math.max(minQ, constraints.quotientMax ?? (constraints.schema.startsWith('decompose_') ? 30 : 10));
   for (let attempt = 0; attempt < 100; attempt++) {
     const divisor = minD + Math.floor(rng() * (maxD - minD + 1));
     const quotient = minQ + Math.floor(rng() * (maxQ - minQ + 1));
-    const remainder = constraints.allowRemainder ? Math.floor(rng() * divisor) : 0;
-    const dividend = divisor * quotient + remainder;
-    if (dividend > (constraints.dividendMax ?? 100) || (!constraints.allowRemainder && remainder)) continue;
+    const dividend = divisor * quotient;
+    if (dividend > (constraints.dividendMax ?? 100)) continue;
     const decomposition = constraints.schema.startsWith('decompose_') ? findFriendlyDivisionDecomposition(dividend, divisor) : null;
     if (constraints.schema.startsWith('decompose_') && !decomposition) continue;
     const spec: DivisionQuestionSpec = {
-      schema: constraints.schema, dividend, divisor, quotient, ...(remainder ? { remainder } : {}),
+      schema: constraints.schema, dividend, divisor, quotient,
       ...(decomposition ? { decomposition: decomposition.parts.map((part, i) => ({ dividendPart: part, quotientPart: decomposition.partialQuotients[i] })) } : {}),
-      ...(['equal_sharing', 'measurement_grouping', 'word_problem_choose_model'].includes(constraints.schema) ? {
-        context: { interpretation: constraints.schema === 'measurement_grouping' ? 'grouping' : 'sharing', noun: 'counters', groupNoun: constraints.schema === 'measurement_grouping' ? 'bag' : 'child' },
-        unknownPosition: constraints.schema === 'measurement_grouping' ? 'group_count' as const : 'group_size' as const,
-      } : {}),
+      ...(['equal_sharing', 'measurement_grouping', 'word_problem_choose_model'].includes(constraints.schema) ? (() => {
+        const interpretation = constraints.schema === 'measurement_grouping'
+          || (constraints.schema === 'word_problem_choose_model' && rng() < .5) ? 'grouping' as const : 'sharing' as const;
+        return {
+          context: { interpretation, noun: 'counters', groupNoun: interpretation === 'grouping' ? 'bag' : 'child' },
+          unknownPosition: interpretation === 'grouping' ? 'group_count' as const : 'group_size' as const,
+        };
+      })() : {}),
     };
     const item = makeStructuredDivisionItem(spec);
     if (!context.recentItemIds?.includes(item.id)) return item;
@@ -145,17 +204,53 @@ export type DivisionMisconceptionCode = 'div_swapped_dividend_divisor' | 'div_us
   | 'div_shared_vs_grouped_confusion' | 'div_partial_quotient_missing' | 'div_decomposition_sum_error'
   | 'div_quotient_off_by_one' | 'div_used_related_fact_incorrectly' | 'div_copied_dividend_or_divisor';
 
-export function simulateDivisionMisconception(spec: DivisionQuestionSpec, code: DivisionMisconceptionCode): number {
+export interface DivisionMisconceptionSimulation {
+  code: DivisionMisconceptionCode;
+  answer: number;
+  explanation: string;
+  applicable: boolean;
+}
+
+export function simulateDivisionMisconception(
+  spec: DivisionQuestionSpec,
+  code: DivisionMisconceptionCode,
+): DivisionMisconceptionSimulation {
   const first = spec.decomposition?.[0];
-  const values: Record<DivisionMisconceptionCode, number> = {
-    div_swapped_dividend_divisor: spec.divisor / spec.dividend,
-    div_used_multiplication_result: spec.dividend * spec.divisor,
-    div_shared_vs_grouped_confusion: spec.divisor,
-    div_partial_quotient_missing: first?.quotientPart ?? Math.max(1, spec.quotient - 1),
-    div_decomposition_sum_error: spec.decomposition?.reduce((sum, part) => sum + part.dividendPart, 0) ?? spec.dividend,
-    div_quotient_off_by_one: spec.quotient + 1,
-    div_used_related_fact_incorrectly: spec.quotient + spec.divisor,
-    div_copied_dividend_or_divisor: spec.dividend,
+  const simulations: Record<DivisionMisconceptionCode, Omit<DivisionMisconceptionSimulation, 'code'>> = {
+    div_swapped_dividend_divisor: {
+      answer: 0,
+      explanation: 'Reversed division is not represented as a valid Grade 3 whole-number answer.',
+      applicable: false,
+    },
+    div_used_multiplication_result: {
+      answer: spec.divisor * spec.divisor,
+      explanation: 'Multiplied the divisor by itself instead of finding the missing factor.',
+      applicable: spec.divisor * spec.divisor !== spec.quotient,
+    },
+    div_shared_vs_grouped_confusion: {
+      answer: spec.divisor,
+      explanation: 'Reported the given number of groups or group size.', applicable: spec.divisor !== spec.quotient,
+    },
+    div_partial_quotient_missing: {
+      answer: first?.quotientPart ?? spec.quotient - 1,
+      explanation: 'Stopped after the first partial quotient.', applicable: Boolean(first),
+    },
+    div_decomposition_sum_error: {
+      answer: spec.decomposition ? Math.abs(spec.decomposition[0].quotientPart - spec.decomposition[1].quotientPart) : spec.quotient - 1,
+      explanation: 'Subtracted partial quotients instead of adding them.', applicable: Boolean(spec.decomposition?.length === 2),
+    },
+    div_quotient_off_by_one: {
+      answer: spec.quotient + 1,
+      explanation: 'Counted one extra group.', applicable: true,
+    },
+    div_used_related_fact_incorrectly: {
+      answer: spec.quotient + spec.divisor,
+      explanation: 'Added the divisor after recalling the related fact.', applicable: true,
+    },
+    div_copied_dividend_or_divisor: {
+      answer: spec.dividend,
+      explanation: 'Copied the dividend instead of solving.', applicable: true,
+    },
   };
-  return values[code];
+  return { code, ...simulations[code] };
 }

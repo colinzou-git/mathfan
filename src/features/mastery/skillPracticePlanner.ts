@@ -49,15 +49,19 @@ function divisionReasoningIds(schema: DivisionSchema): string[] {
   const values: Array<[number, number]> = schema.startsWith('decompose_')
     ? [[84, 3], [96, 4], [72, 6], [63, 3], [88, 4]]
     : [[24, 4], [30, 5], [42, 6], [56, 7], [72, 8]];
-  return values.map(([dividend, divisor]) => makeStructuredDivisionItem({
+  return values.map(([dividend, divisor], index) => makeStructuredDivisionItem({
     schema, dividend, divisor, quotient: dividend / divisor,
     ...(schema.startsWith('decompose_') ? { decomposition: (() => {
       const q = dividend / divisor; const firstQ = q >= 20 ? 20 : q >= 10 ? 10 : Math.max(2, q - 2);
       return [{ dividendPart: firstQ * divisor, quotientPart: firstQ }, { dividendPart: dividend - firstQ * divisor, quotientPart: q - firstQ }];
     })() } : {}),
     ...(['equal_sharing', 'measurement_grouping', 'word_problem_choose_model'].includes(schema) ? {
-      context: { interpretation: schema === 'measurement_grouping' ? 'grouping' as const : 'sharing' as const, noun: 'counters', groupNoun: schema === 'measurement_grouping' ? 'bag' : 'child' },
-      unknownPosition: schema === 'measurement_grouping' ? 'group_count' as const : 'group_size' as const,
+      context: {
+        interpretation: schema === 'measurement_grouping' || (schema === 'word_problem_choose_model' && index % 2 === 1) ? 'grouping' as const : 'sharing' as const,
+        noun: 'counters',
+        groupNoun: schema === 'measurement_grouping' || (schema === 'word_problem_choose_model' && index % 2 === 1) ? 'bag' : 'child',
+      },
+      unknownPosition: schema === 'measurement_grouping' || (schema === 'word_problem_choose_model' && index % 2 === 1) ? 'group_count' as const : 'group_size' as const,
     } : {}),
   }).id);
 }
@@ -599,7 +603,7 @@ export function planPracticeForSkill(
   }
 
   if (skillId === 'g3-div-sharing-grouping') return { mode: 'division', specificItemIds: [...divisionReasoningIds('equal_sharing'), ...divisionReasoningIds('measurement_grouping')], sessionLength };
-  if (skillId === 'g3-div-decomposition') return { mode: 'division', specificItemIds: [...divisionReasoningIds('decompose_tens_ones'), ...divisionReasoningIds('verify_with_multiplication')], sessionLength };
+  if (skillId === 'g3-div-decomposition') return { mode: 'division', specificItemIds: divisionReasoningIds('decompose_tens_ones'), sessionLength };
   if (skillId === 'g3-div-word-problems') return { mode: 'word_problem', specificItemIds: divisionReasoningIds('word_problem_choose_model'), grade: 3, sessionLength };
 
   // ── G3_NF_EQUIVALENT_FRACTIONS (also: g3-frac-equivalent) ────────────────────

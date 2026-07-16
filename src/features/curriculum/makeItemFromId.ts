@@ -59,14 +59,17 @@ export function makeItemFromId(itemId: string): PracticeItem | null {
 
   m = itemId.match(/^DIVQ_([a-z_]+)_(\d+)_(\d+)$/);
   if (m) {
-    const schema = m[1] as DivisionSchema, dividend = +m[2], divisor = +m[3], quotient = dividend / divisor;
+    const encoded = m[1];
+    const groupingWordProblem = encoded === 'word_problem_choose_model_grouping';
+    const schema = (groupingWordProblem ? 'word_problem_choose_model' : encoded) as DivisionSchema;
+    const dividend = +m[2], divisor = +m[3], quotient = dividend / divisor;
     const decomposition = schema.startsWith('decompose_') ? findFriendlyDivisionDecomposition(dividend, divisor) : null;
     return makeStructuredDivisionItem({
       schema, dividend, divisor, quotient,
       ...(decomposition ? { decomposition: decomposition.parts.map((part, i) => ({ dividendPart: part, quotientPart: decomposition.partialQuotients[i] })) } : {}),
       ...(['equal_sharing', 'measurement_grouping', 'word_problem_choose_model'].includes(schema) ? {
-        context: { interpretation: schema === 'measurement_grouping' ? 'grouping' as const : 'sharing' as const, noun: 'counters', groupNoun: schema === 'measurement_grouping' ? 'bag' : 'child' },
-        unknownPosition: schema === 'measurement_grouping' ? 'group_count' as const : 'group_size' as const,
+        context: { interpretation: schema === 'measurement_grouping' || groupingWordProblem ? 'grouping' as const : 'sharing' as const, noun: 'counters', groupNoun: schema === 'measurement_grouping' || groupingWordProblem ? 'bag' : 'child' },
+        unknownPosition: schema === 'measurement_grouping' || groupingWordProblem ? 'group_count' as const : 'group_size' as const,
       } : {}),
     });
   }

@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import {
   factFamilyForDivision, findFriendlyDivisionDecomposition, generateDivisionItem,
   generateDivisionNearTransfer, makeStructuredDivisionItem, simulateDivisionMisconception, validateDivisionDecomposition,
+  divisionSkillIdForSchema, validateDivisionItem,
   type DivisionMisconceptionCode,
 } from '../features/curriculum/divisionItems';
 import { makeDivisionItem, generateDivisionItemsRange } from '../features/curriculum/arithmeticItems';
@@ -29,11 +30,34 @@ describe('structured Grade 3 division generation', () => {
   it('generates valid no-remainder items and avoids recent instances', () => {
     for (const schema of ['fact_recall', 'unknown_factor', 'equal_sharing', 'measurement_grouping', 'decompose_tens_ones', 'decompose_partial_quotients', 'verify_with_multiplication', 'word_problem_choose_model'] as const) {
       const item = generateDivisionItem({ schema, divisorMin: 3, divisorMax: 6, quotientMin: 3, quotientMax: 20, dividendMax: 100 }, { rng: mulberry32(schema.length * 31) });
+      expect(validateDivisionItem(item)).toEqual([]);
       expect(item.divisionSpec!.dividend % item.divisionSpec!.divisor).toBe(0);
       expect(item.divisionSpec!.remainder).toBeUndefined();
       if (item.divisionSpec!.decomposition) expect(item.divisionSpec!.decomposition.reduce((sum, p) => sum + p.dividendPart, 0)).toBe(item.divisionSpec!.dividend);
     }
     expect(generateDivisionItemsRange(2, 9, 20, 20, 100).every(item => Number.isInteger(Number(item.answer)))).toBe(true);
+  });
+
+  it('keeps every generated schema exact across 1,000 seeds and rejects unsupported remainders', () => {
+    const schemas = ['fact_recall', 'unknown_factor', 'equal_sharing', 'measurement_grouping', 'decompose_tens_ones', 'decompose_partial_quotients', 'verify_with_multiplication', 'word_problem_choose_model'] as const;
+    for (const schema of schemas) {
+      for (let seed = 0; seed < 1000; seed++) {
+        const item = generateDivisionItem({
+          schema, divisorMin: 2, divisorMax: 9, quotientMin: 2, quotientMax: 20, dividendMax: 100,
+        }, { rng: mulberry32(seed) });
+        expect(validateDivisionItem(item)).toEqual([]);
+        expect(item.divisionSpec!.dividend % item.divisionSpec!.divisor).toBe(0);
+        expect(item.skillId).toBe(divisionSkillIdForSchema(schema, item.divisionSpec!.divisor));
+        const rebuilt = makeItemFromId(item.id)!;
+        expect(rebuilt.answer).toBe(item.answer);
+        expect(rebuilt.divisionSpec).toEqual(item.divisionSpec);
+        expect(rebuilt.cardKey).toBe(item.cardKey);
+      }
+    }
+    expect(() => generateDivisionItem({ schema: 'fact_recall', allowRemainder: true })).toThrow(/remainder.*unsupported/i);
+    expect(() => makeStructuredDivisionItem({
+      schema: 'fact_recall', dividend: 10, divisor: 3, quotient: 3, remainder: 1,
+    })).toThrow(/exact whole-number quotient/i);
   });
 
   it('preserves legacy IDs and separates atomic from template cards', () => {
@@ -73,12 +97,29 @@ describe('division meaning, feedback, and planning', () => {
     expect(item.choices).toContain('24 ÷ 4');
   });
 
-  it('detects each structured counterfactual', () => {
-    const codes: DivisionMisconceptionCode[] = ['div_swapped_dividend_divisor', 'div_used_multiplication_result', 'div_shared_vs_grouped_confusion', 'div_partial_quotient_missing', 'div_decomposition_sum_error', 'div_quotient_off_by_one', 'div_used_related_fact_incorrectly', 'div_copied_dividend_or_divisor'];
-    for (const code of codes) {
-      const wrong = simulateDivisionMisconception(decomposition.divisionSpec!, code);
-      expect(detectMistakes(decomposition, wrong), code).toContain(`div:${code}`);
+  it('generates and reconstructs both sharing and grouping word-model contexts', () => {
+    const generated = Array.from({ length: 40 }, (_, seed) =>
+      generateDivisionItem({ schema: 'word_problem_choose_model' }, { rng: mulberry32(seed) }));
+    const interpretations = new Set(generated.map(item => item.divisionSpec?.context?.interpretation));
+    expect(interpretations).toEqual(new Set(['sharing', 'grouping']));
+    for (const item of generated) {
+      expect(makeItemFromId(item.id)?.divisionSpec?.context).toEqual(item.divisionSpec?.context);
     }
+  });
+
+  it('detects each structured counterfactual', () => {
+    const codes: DivisionMisconceptionCode[] = ['div_used_multiplication_result', 'div_shared_vs_grouped_confusion', 'div_partial_quotient_missing', 'div_decomposition_sum_error', 'div_quotient_off_by_one', 'div_used_related_fact_incorrectly', 'div_copied_dividend_or_divisor'];
+    const answers = new Set<number>();
+    for (const code of codes) {
+      const simulation = simulateDivisionMisconception(decomposition.divisionSpec!, code);
+      expect(simulation.applicable, code).toBe(true);
+      expect(Number.isInteger(simulation.answer), code).toBe(true);
+      expect(simulation.answer, code).toBeGreaterThanOrEqual(0);
+      expect(answers.has(simulation.answer), code).toBe(false);
+      answers.add(simulation.answer);
+      expect(detectMistakes(decomposition, simulation.answer), code).toContain(`div:${code}`);
+    }
+    expect(simulateDivisionMisconception(decomposition.divisionSpec!, 'div_swapped_dividend_divisor').applicable).toBe(false);
   });
 
   it('uses a progressive decomposition hint ladder', () => {

@@ -389,6 +389,7 @@
 | src/features/mastery/Grade3MasteryMapPage.tsx | ./SkillTile |
 | src/features/mastery/Grade3MasteryMapPage.tsx | ./todayPlanEngine |
 | src/features/mastery/misconceptionEngine.ts | ../../types/math |
+| src/features/mastery/misconceptionEngine.ts | ../curriculum/divisionItems |
 | src/features/mastery/misconceptionEngine.ts | ../curriculum/regrouping |
 | src/features/mastery/ParentNextActionCard.tsx | ../../types/math |
 | src/features/mastery/ParentNextActionCard.tsx | ./grade3MasteryMap |
@@ -397,6 +398,7 @@
 | src/features/mastery/SkillDetailPanel.tsx | ./grade3MasteryMap |
 | src/features/mastery/SkillDetailPanel.tsx | ./skillMasteryEngine |
 | src/features/mastery/skillMapping.ts | ../../types/math |
+| src/features/mastery/skillMapping.ts | ../curriculum/divisionItems |
 | src/features/mastery/skillMasteryEngine.ts | ../../types/math |
 | src/features/mastery/skillMasteryEngine.ts | ../learning/learningEvents |
 | src/features/mastery/skillMasteryEngine.ts | ./misconceptionEngine |
