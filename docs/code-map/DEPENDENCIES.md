@@ -4,7 +4,7 @@
 
 | Package | Import count |
 | --- | --- |
-| vitest | 84 |
+| vitest | 85 |
 | react | 35 |
 | @testing-library/react | 19 |
 | pathlib | 8 |
@@ -612,6 +612,7 @@
 | src/features/visuals/PerimeterPathModel.tsx | ./types |
 | src/features/visuals/PlaceValueRegroupModel.tsx | ../curriculum/regrouping |
 | src/features/visuals/ScaledBarGraphModel.tsx | ../curriculum/measurementTypes |
+| src/features/visuals/ScaledBarGraphModel.tsx | ./barGraphGeometry |
 | src/features/visuals/SharingGroupingModel.tsx | ../curriculum/divisionItems |
 | src/features/visuals/TapeDiagramModel.tsx | ../curriculum/wordProblemItems |
 | src/features/visuals/VisualModel.tsx | ../../types/math |
@@ -665,6 +666,7 @@
 | src/tests/areaPerimeterRedesign.test.tsx | ../features/visuals/VisualModel |
 | src/tests/areaPerimeterRedesign.test.tsx | ../features/visuals/visualModelUtils |
 | src/tests/arithmeticItems.test.ts | ../features/curriculum/arithmeticItems |
+| src/tests/barGraphGeometry.test.ts | ../features/visuals/barGraphGeometry |
 | src/tests/cardModel.test.ts | ../features/curriculum/makeItemFromId |
 | src/tests/cardModel.test.ts | ../features/learning/learningEvents |
 | src/tests/cardModel.test.ts | ../features/scheduler/cardModel |

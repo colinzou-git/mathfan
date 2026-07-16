@@ -1,6 +1,6 @@
 # Code Map Overview
 
-Generated: 2026-07-16 08:37:56 UTC
+Generated: 2026-07-16 08:47:42 UTC
 
 Repo root: `/home/ubuntu/mathfan`
 Output folder: `/home/ubuntu/mathfan/docs/code-map`
@@ -14,9 +14,9 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 - Package name: `mathfan`
 - Version: `1.2.0`
 - Module type: `module`
-- Scanned files: **281**
-- Scanned lines: **51,849**
-- Scanned bytes: **2,180,815**
+- Scanned files: **283**
+- Scanned lines: **51,950**
+- Scanned bytes: **2,185,605**
 
 ## NPM scripts
 
@@ -286,6 +286,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │       ├── AreaGrid.tsx
 │   │       ├── AreaPerimeterCompareModel.tsx
 │   │       ├── ArrayModel.tsx
+│   │       ├── barGraphGeometry.ts
 │   │       ├── ClockModel.tsx
 │   │       ├── DivisionArrayModel.tsx
 │   │       ├── DivisionDecompositionModel.tsx
@@ -319,6 +320,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   ├── appGoalEvaluationNavigation.test.tsx
 │   │   ├── areaPerimeterRedesign.test.tsx
 │   │   ├── arithmeticItems.test.ts
+│   │   ├── barGraphGeometry.test.ts
 │   │   ├── cardModel.test.ts
 │   │   ├── cardStateMigration.test.ts
 │   │   ├── clock.test.ts

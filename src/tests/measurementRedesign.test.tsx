@@ -31,9 +31,35 @@ describe('authentic measurement and data instances', () => {
   it('renders a scaled bar graph without announcing the computed answer', () => {
     const item = makeBarGraphItem(5, 6);
     render(<VisualModel item={item} />);
-    expect(screen.getByRole('figure', { name: /vertical axis counts by 5/i })).toBeInTheDocument();
+    expect(screen.getByRole('figure', { name: /scale counts by 5 from 0/i })).toBeInTheDocument();
+    expect(screen.getByText('0')).toBeInTheDocument();
+    expect(screen.getByText('35')).toBeInTheDocument();
     expect(item.answer).toBe(30);
     expect(item.prompt).not.toContain('30');
+  });
+
+  it('hides a missing bar value from accessible and visible content until reveal', () => {
+    const item = generateMeasurementItem('bar_missing', { rng: mulberry32(91) });
+    const hiddenValue = String(item.answer);
+    const { rerender } = render(<VisualModel item={item} />);
+    const hiddenFigure = screen.getByRole('figure');
+    expect(hiddenFigure).toHaveAccessibleName(/Ava: missing/i);
+    expect(hiddenFigure.getAttribute('aria-label')).not.toContain(`Ava: ${hiddenValue}`);
+    expect(hiddenFigure).toHaveTextContent('?');
+
+    rerender(<VisualModel item={item} revealAnswer />);
+    expect(screen.getByRole('figure')).toHaveAccessibleName(new RegExp(`Ava: ${hiddenValue}`));
+    expect(screen.getByRole('figure')).not.toHaveTextContent('?');
+  });
+
+  it.each(['bar_compare', 'bar_total'] as const)('%s names every source bar without announcing the computed answer', schema => {
+    const item = generateMeasurementItem(schema, { rng: mulberry32(91) });
+    render(<VisualModel item={item} />);
+    const name = screen.getByRole('figure').getAttribute('aria-label') ?? '';
+    const spec = item.measurementSpec!;
+    if (spec.kind !== 'bar_graph') throw new Error('Expected bar graph');
+    spec.categories.forEach((category, index) => expect(name).toContain(`${category}: ${spec.values[index]}`));
+    if (!spec.values.includes(Number(item.answer))) expect(name).not.toContain(`: ${item.answer}.`);
   });
 
   it('renders repeated X marks at fractional integer ticks', () => {

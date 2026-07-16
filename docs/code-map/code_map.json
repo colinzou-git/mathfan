@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-16T08:37:56.596830+00:00",
+  "generated_at": "2026-07-16T08:47:42.548016+00:00",
   "repo_root": "/home/ubuntu/mathfan",
   "package": {
     "name": "mathfan",
@@ -421,9 +421,9 @@
     {
       "path": "PROGRESS.md",
       "ext": ".md",
-      "bytes": 9346,
-      "lines": 152,
-      "sha1": "0d76a1e8ce6a",
+      "bytes": 9303,
+      "lines": 153,
+      "sha1": "5f22cac04d5d",
       "imports": [],
       "exports": [],
       "functions": [],
@@ -570,9 +570,9 @@
     {
       "path": "scripts/e2e_mathfan.py",
       "ext": ".py",
-      "bytes": 45572,
-      "lines": 817,
-      "sha1": "292e07779d1c",
+      "bytes": 45314,
+      "lines": 812,
+      "sha1": "f48571590c46",
       "imports": [
         "__future__",
         "json",
@@ -6398,6 +6398,33 @@
       "read_error": null
     },
     {
+      "path": "src/features/visuals/barGraphGeometry.ts",
+      "ext": ".ts",
+      "bytes": 817,
+      "lines": 20,
+      "sha1": "f0a12bd83e1a",
+      "imports": [],
+      "exports": [
+        "BarGraphGeometry",
+        "buildBarGraphGeometry"
+      ],
+      "functions": [
+        "buildBarGraphGeometry"
+      ],
+      "classes": [],
+      "interfaces": [
+        "BarGraphGeometry"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Reusable SVG visual model components (area grids, shape diagrams, fraction bars, arrays).",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/features/visuals/ClockModel.tsx",
       "ext": ".tsx",
       "bytes": 2894,
@@ -6912,11 +6939,12 @@
     {
       "path": "src/features/visuals/ScaledBarGraphModel.tsx",
       "ext": ".tsx",
-      "bytes": 1525,
-      "lines": 16,
-      "sha1": "aa471868f323",
+      "bytes": 3370,
+      "lines": 50,
+      "sha1": "fa5551b111e6",
       "imports": [
-        "../curriculum/measurementTypes"
+        "../curriculum/measurementTypes",
+        "./barGraphGeometry"
       ],
       "exports": [
         "ScaledBarGraphModel"
@@ -7388,6 +7416,29 @@
       "sha1": "9b165e0c5bf6",
       "imports": [
         "../features/curriculum/arithmeticItems",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/barGraphGeometry.test.ts",
+      "ext": ".ts",
+      "bytes": 899,
+      "lines": 25,
+      "sha1": "4002eedc14e0",
+      "imports": [
+        "../features/visuals/barGraphGeometry",
         "vitest"
       ],
       "exports": [],
@@ -8678,9 +8729,9 @@
     {
       "path": "src/tests/measurementRedesign.test.tsx",
       "ext": ".tsx",
-      "bytes": 6111,
-      "lines": 110,
-      "sha1": "59e794f35ea1",
+      "bytes": 7641,
+      "lines": 136,
+      "sha1": "a1da31f98c28",
       "imports": [
         "../features/adaptive/candidatePools",
         "../features/curriculum/language",

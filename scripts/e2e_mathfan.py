@@ -435,27 +435,22 @@ def division_model_choice_lesson(page: Page) -> None:
 
 
 def scaled_bar_graph_answer(page: Page, prompt: str) -> int:
-    figure = page.get_by_role("figure", name=re.compile(r"scaled bar graph.*vertical axis counts by", re.I))
+    figure = page.get_by_role("figure", name=re.compile(r"scaled bar graph.*scale counts by", re.I))
     expect(figure).to_be_visible()
-    scale = int(re.search(r"counts by (\d+)", figure.get_attribute("aria-label")).group(1))
-    bars = page.locator('[aria-label$=" bar"]')
-    values = []
-    for index in range(bars.count()):
-        height = float(bars.nth(index).evaluate("node => parseFloat(node.style.height)"))
-        values.append(height)
+    label = figure.get_attribute("aria-label")
+    scale = int(re.search(r"counts by (\d+)", label).group(1))
+    expect(figure.locator("svg line")).to_have_count(int(re.search(r"from 0 to (\d+)", label).group(1)) // scale * 2 + 3)
+    values = [int(value) for value in re.findall(r"(?:Mia|Leo|Ava): (\d+)", label)]
     if "missing" in prompt:
-        bar_units = round(1 / (1 - values[1] / values[0]))
-        graph_values = [bar_units * scale, (bar_units - 1) * scale, (bar_units + 1) * scale]
-    else:
-        bar_units = round((values[0] / max(values)) / (1 - values[0] / max(values)))
-        graph_values = [round(height / max(values) * (bar_units + 1) * scale) for height in values]
+        expect(figure).to_have_attribute("aria-label", re.compile(r"Ava: missing", re.I))
+        values.append(values[0] + scale)
     if "Mia and Leo" in prompt:
-        return graph_values[0] + graph_values[1]
+        return values[0] + values[1]
     elif "more" in prompt:
-        return graph_values[0] - graph_values[1]
+        return values[0] - values[1]
     elif "missing" in prompt:
-        return graph_values[2]
-    return graph_values[0]
+        return values[2]
+    return values[0]
 
 
 def scaled_bar_graph_lesson(page: Page) -> None:
