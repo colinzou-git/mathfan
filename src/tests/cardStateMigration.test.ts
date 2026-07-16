@@ -8,6 +8,7 @@ import {
   MIGRATION_KIND,
 } from '../features/migrations/cardStateMigration';
 import type { MathAnswerEvent } from '../features/learning/learningEvents';
+import type { LegacyStudentItemState } from '../features/migrations/migrationTypes';
 
 async function clearAll() {
   await db.mathAnswerEvents.clear();
@@ -37,6 +38,20 @@ function event(overrides: Partial<MathAnswerEvent> = {}): MathAnswerEvent {
     createdAt: '2026-01-01T00:00:00.000Z',
     ...overrides,
   };
+}
+
+function legacy(itemId = 'MUL_7x8', overrides: Partial<LegacyStudentItemState> = {}): LegacyStudentItemState {
+  return {
+    studentId: 's1', itemId, skillId: 'g3-mul-tables-basic', attemptCount: 9, correctCount: 7,
+    lastAnswer: '56', lastCorrect: true, lastLatencyMs: 1200, medianLatencyMs: 1400, personalBestMs: 900,
+    ease: 2.5, stabilityDays: 12, difficulty: .3, fsrsDifficulty: 4.2, reps: 8, lapses: 1,
+    masteryLevel: 'strong', lastSeenAt: '2025-12-20T00:00:00.000Z', nextDueAt: '2026-01-20T00:00:00.000Z',
+    mistakePatterns: ['mul_add_instead'], ...overrides,
+  };
+}
+
+async function putSchemaBackup(rows: LegacyStudentItemState[]) {
+  await db.migrationBackups.put({ id: 'schema-v7-pre-cardkey-backup', migrationRunId: 'schema-v7-auto-backup', createdAt: '2026-01-01T00:00:00.000Z', itemStates: rows });
 }
 
 describe('runCardStateMigration', () => {
@@ -109,6 +124,55 @@ describe('runCardStateMigration', () => {
     expect(backups).toHaveLength(1);
     // Fresh schema-v8 itemStates starts empty, so the pre-run backup is empty too.
     expect(backups[0].itemStates).toEqual([]);
+  });
+
+  it('preserves legacy-only scheduler rows under canonical keys', async () => {
+    await putSchemaBackup([legacy()]);
+    const result = await runCardStateMigration();
+    expect(result.status).toBe('completed');
+    expect(result.coverage).toMatchObject({ legacyInputCount: 1, legacyFallbackCount: 1, unexplainedLossCount: 0 });
+    expect(await db.itemStates.get(['s1', 'fact:mul:7x8'])).toMatchObject({
+      attemptCount: 9, correctCount: 7, stabilityDays: 12, fsrsDifficulty: 4.2, reps: 8, lapses: 1,
+      lastSeenAt: '2025-12-20T00:00:00.000Z', nextDueAt: '2026-01-20T00:00:00.000Z',
+      masteryLevel: 'strong', mistakePatterns: ['mul_add_instead'], lastItemId: 'MUL_7x8', cardKey: 'fact:mul:7x8',
+    });
+  });
+
+  it('keeps legacy-only cards while event replay owns event-backed cards', async () => {
+    await putSchemaBackup([legacy(), legacy('MUL_2x3', { attemptCount: 4, reps: 3 })]);
+    await db.mathAnswerEvents.put(event());
+    const result = await runCardStateMigration();
+    expect(result.status).toBe('completed');
+    expect(await db.itemStates.count()).toBe(2);
+    expect((await db.itemStates.get(['s1', 'fact:mul:7x8']))?.attemptCount).toBe(1);
+    expect((await db.itemStates.get(['s1', 'fact:mul:2x3']))?.attemptCount).toBe(4);
+  });
+
+  it('merges commutative legacy collisions conservatively', async () => {
+    await putSchemaBackup([
+      legacy('MUL_7x8'),
+      legacy('MUL_8x7', { attemptCount: 11, reps: 10, stabilityDays: 20, nextDueAt: '2026-02-01T00:00:00.000Z', mistakePatterns: ['other'] }),
+    ]);
+    const result = await runCardStateMigration();
+    expect(result.coverage?.collisionCount).toBe(1);
+    expect(await db.itemStates.count()).toBe(1);
+    expect(await db.itemStates.get(['s1', 'fact:mul:7x8'])).toMatchObject({ attemptCount: 11, reps: 10, stabilityDays: 20, nextDueAt: '2026-02-01T00:00:00.000Z', mistakePatterns: ['mul_add_instead', 'other'] });
+  });
+
+  it('fails safely and persists coverage when a legacy row is unparseable', async () => {
+    await putSchemaBackup([legacy('REMOVED_ITEM')]);
+    const result = await runCardStateMigration();
+    expect(result.status).toBe('failed');
+    expect(result.coverage).toMatchObject({ unparseableLegacyCount: 1, unexplainedLossCount: 1 });
+    expect((await db.dataMigrationRuns.get(result.runId))?.coverage?.unexplainedLossCount).toBe(1);
+    expect(await isCardStateMigrationComplete()).toBe(false);
+  });
+
+  it('can repair directly from the real schema-v7 backup', async () => {
+    await putSchemaBackup([legacy()]);
+    const rollback = await rollbackCardStateMigration('schema-v7-auto-backup');
+    expect(rollback.ok).toBe(true);
+    expect(await db.itemStates.get(['s1', 'fact:mul:7x8'])).toMatchObject({ reps: 8, lastItemId: 'MUL_7x8' });
   });
 });
 

@@ -2,6 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { StudentProfile } from '../types/math';
 
+const { runMigrationMock } = vi.hoisted(() => ({ runMigrationMock: vi.fn() }));
+
 const mockProfile: StudentProfile = {
   id: 'student-1',
   displayName: 'Alex',
@@ -66,6 +68,8 @@ vi.mock('../features/audio/speech', () => ({
   stopSpeech: vi.fn(),
 }));
 
+vi.mock('../features/migrations/cardStateMigration', () => ({ runCardStateMigration: runMigrationMock }));
+
 vi.mock('../features/dashboard/ProfileSetup', () => ({
   ProfileSetup: () => <div>Profile Setup</div>,
 }));
@@ -117,6 +121,7 @@ import App from '../App';
 
 beforeEach(() => {
   vi.clearAllMocks();
+  runMigrationMock.mockResolvedValue({ status: 'completed', runId: 'migration-run' });
 });
 
 afterEach(() => {
@@ -124,6 +129,14 @@ afterEach(() => {
 });
 
 describe('App goal evaluation navigation', () => {
+  it('blocks dashboard bootstrap when card migration fails', async () => {
+    runMigrationMock.mockResolvedValueOnce({ status: 'failed', runId: 'failed-run', error: 'Legacy row could not be preserved.' });
+    render(<App />);
+    expect(await screen.findByRole('heading', { name: /practice history needs attention/i })).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent('Legacy row could not be preserved.');
+    expect(screen.queryByRole('button', { name: /open goals/i })).not.toBeInTheDocument();
+  });
+
   it('opens the distinct goal-evaluation screen from Goals Evaluation', async () => {
     render(<App />);
 
@@ -144,4 +157,3 @@ describe('App goal evaluation navigation', () => {
     expect(screen.queryByText(/Goal Evaluation Screen/i)).not.toBeInTheDocument();
   });
 });
-

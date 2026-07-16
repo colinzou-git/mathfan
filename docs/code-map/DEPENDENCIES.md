@@ -60,6 +60,7 @@
 | src/App.tsx | ./components/opSpecs |
 | src/App.tsx | ./components/RangeSetup |
 | src/App.tsx | ./components/SessionSetup |
+| src/App.tsx | ./db/dexie |
 | src/App.tsx | ./db/repositories |
 | src/App.tsx | ./features/audio/speech |
 | src/App.tsx | ./features/auth/googleAuth |
@@ -71,6 +72,7 @@
 | src/App.tsx | ./features/goals/GoalsPage |
 | src/App.tsx | ./features/mastery/Grade3MasteryMapPage |
 | src/App.tsx | ./features/migrations/cardStateMigration |
+| src/App.tsx | ./features/migrations/MigrationRecoveryScreen |
 | src/App.tsx | ./features/multiplication/MultiplicationQuizPage |
 | src/App.tsx | ./features/practice/practiceNavigation |
 | src/App.tsx | ./features/practice/PracticeScreen |
@@ -401,6 +403,7 @@
 | src/features/migrations/cardStateMigration.ts | ../../utils/id |
 | src/features/migrations/cardStateMigration.ts | ../curriculum/makeItemFromId |
 | src/features/migrations/cardStateMigration.ts | ../learning/eventRebuild |
+| src/features/migrations/cardStateMigration.ts | ../scheduler/cardModel |
 | src/features/migrations/cardStateMigration.ts | ./migrationTypes |
 | src/features/migrations/migrationTypes.ts | ../../types/math |
 | src/features/multiplication/masteryEngine.ts | ../learning/learningEvents |
@@ -642,6 +645,7 @@
 | src/tests/cardStateMigration.test.ts | ../db/dexie |
 | src/tests/cardStateMigration.test.ts | ../features/learning/learningEvents |
 | src/tests/cardStateMigration.test.ts | ../features/migrations/cardStateMigration |
+| src/tests/cardStateMigration.test.ts | ../features/migrations/migrationTypes |
 | src/tests/clock.test.ts | ../features/time/clock |
 | src/tests/components.test.tsx | ../components/NumPad |
 | src/tests/components.test.tsx | ../components/SessionSummary |

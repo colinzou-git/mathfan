@@ -19,7 +19,8 @@ import { generateId } from '../../utils/id';
 import { makeItemFromId } from '../curriculum/makeItemFromId';
 import { rebuildItemStatesFromEvents } from '../learning/eventRebuild';
 import type { StudentItemState } from '../../types/math';
-import type { DataMigrationKind, DataMigrationRun, MigrationBackup } from './migrationTypes';
+import { deriveCardKey } from '../scheduler/cardModel';
+import type { DataMigrationKind, DataMigrationRun, LegacyStudentItemState, MigrationBackup, MigrationCoverage } from './migrationTypes';
 
 export const MIGRATION_KIND: DataMigrationKind = 'hybrid-card-v1';
 
@@ -29,7 +30,71 @@ export interface MigrationRunResult {
   affectedStudentCount?: number;
   outputCardCount?: number;
   unparseableEventCount?: number;
+  coverage?: MigrationCoverage;
   error?: string;
+}
+
+const SCHEMA_V7_BACKUP_ID = 'schema-v7-pre-cardkey-backup';
+
+export async function loadSchemaV7LegacyBackup(): Promise<LegacyStudentItemState[]> {
+  const backup = await db.migrationBackups.get(SCHEMA_V7_BACKUP_ID);
+  if (!backup) return [];
+  return backup.itemStates.filter((row): row is LegacyStudentItemState => 'itemId' in row && !('cardKey' in row));
+}
+
+export function migrateLegacyState(legacy: LegacyStudentItemState): StudentItemState | { problem: string } {
+  const item = makeItemFromId(legacy.itemId);
+  if (!item) return { problem: `Cannot reconstruct legacy item ${legacy.itemId}` };
+  const { itemId, ...preserved } = legacy;
+  return { ...preserved, cardKey: deriveCardKey(item), lastItemId: itemId };
+}
+
+const masteryRank = { new: 0, learning: 1, developing: 2, strong: 3, mastered: 4 } as const;
+const latest = (a?: string, b?: string) => !a ? b : !b ? a : Date.parse(a) >= Date.parse(b) ? a : b;
+
+/** Conservatively combines legacy orientation collisions without reducing history. */
+export function reconcileMigratedCardState(
+  replayed: StudentItemState | undefined,
+  legacy: StudentItemState | undefined,
+): StudentItemState {
+  if (replayed) return replayed;
+  if (!legacy) throw new Error('No migrated state to reconcile');
+  return legacy;
+}
+
+function mergeLegacyCollision(a: StudentItemState, b: StudentItemState): StudentItemState {
+  const envelopeA = Number(a.fsrsDifficulty !== undefined) + Number(a.nextDueAt !== undefined) + Number(a.lastSeenAt !== undefined);
+  const envelopeB = Number(b.fsrsDifficulty !== undefined) + Number(b.nextDueAt !== undefined) + Number(b.lastSeenAt !== undefined);
+  const base = envelopeB > envelopeA ? b : a;
+  return {
+    ...base,
+    attemptCount: Math.max(a.attemptCount, b.attemptCount),
+    correctCount: Math.max(a.correctCount, b.correctCount),
+    stabilityDays: Math.max(a.stabilityDays, b.stabilityDays),
+    fsrsDifficulty: Math.max(a.fsrsDifficulty ?? 0, b.fsrsDifficulty ?? 0) || undefined,
+    reps: Math.max(a.reps ?? 0, b.reps ?? 0),
+    lapses: Math.max(a.lapses ?? 0, b.lapses ?? 0),
+    lastSeenAt: latest(a.lastSeenAt, b.lastSeenAt),
+    nextDueAt: latest(a.nextDueAt, b.nextDueAt),
+    masteryLevel: masteryRank[a.masteryLevel] >= masteryRank[b.masteryLevel] ? a.masteryLevel : b.masteryLevel,
+    mistakePatterns: Array.from(new Set([...(a.mistakePatterns ?? []), ...(b.mistakePatterns ?? [])])),
+  };
+}
+
+async function convertedLegacyStates(): Promise<{ states: StudentItemState[]; inputCount: number; collisionCount: number; unparseable: number }> {
+  const rows = await loadSchemaV7LegacyBackup();
+  const byCard = new Map<string, StudentItemState>();
+  let collisionCount = 0;
+  let unparseable = 0;
+  for (const row of rows) {
+    const converted = migrateLegacyState(row);
+    if ('problem' in converted) { unparseable++; continue; }
+    const key = `${converted.studentId}::${converted.cardKey}`;
+    const prior = byCard.get(key);
+    if (prior) { collisionCount++; byCard.set(key, mergeLegacyCollision(prior, converted)); }
+    else byCard.set(key, converted);
+  }
+  return { states: [...byCard.values()], inputCount: rows.length, collisionCount, unparseable };
 }
 
 /** True when this migration kind has already completed successfully. */
@@ -69,10 +134,15 @@ export async function rollbackCardStateMigration(runId: string): Promise<{ ok: b
   try {
     await db.transaction('rw', db.itemStates, db.dataMigrationRuns, async () => {
       await db.itemStates.clear();
-      // Backups captured by this module are always current-shape rows (see
-      // backupCurrentItemStates) — the legacy-shape variant only ever appears in
-      // the one-time schema-upgrade backup, which this function does not target.
-      await db.itemStates.bulkPut(backup.itemStates as StudentItemState[]);
+      const restored: StudentItemState[] = [];
+      for (const row of backup.itemStates) {
+        if ('cardKey' in row) restored.push(row);
+        else {
+          const converted = migrateLegacyState(row);
+          if (!('problem' in converted)) restored.push(converted);
+        }
+      }
+      await db.itemStates.bulkPut(restored);
       await db.dataMigrationRuns.update(runId, { status: 'rolled_back' });
     });
     return { ok: true };
@@ -131,11 +201,39 @@ export async function runCardStateMigration(): Promise<MigrationRunResult> {
   try {
     await backupCurrentItemStates(runId);
 
+    const legacy = await convertedLegacyStates();
+    if (legacy.states.length) await db.itemStates.bulkPut(legacy.states);
+
+    const studentIds = Array.from(new Set([...pre.studentIds, ...legacy.states.map(state => state.studentId)]));
     for (const studentId of pre.studentIds) {
-      await rebuildItemStatesFromEvents(studentId, { mode: 'strict' });
+      await rebuildItemStatesFromEvents(studentId, { mode: 'preserve-legacy' });
     }
 
-    const validation = await validate(pre.studentIds);
+    const validation = await validate(studentIds);
+    const replayedCardKeys = new Set<string>();
+    const directEvents = await db.mathAnswerEvents
+      .filter(event => !event.isRetry && !event.relatedEvidence && (event.mode === 'practice' || event.mode === 'diagnostic' || event.mode === 'goal_evaluation'))
+      .toArray();
+    for (const event of directEvents) {
+      const item = makeItemFromId(event.itemId);
+      if (item) replayedCardKeys.add(`${event.studentId}::${deriveCardKey(item)}`);
+    }
+    const legacyFallbackCount = legacy.states.filter(state => !replayedCardKeys.has(`${state.studentId}::${state.cardKey}`)).length;
+    const coverage: MigrationCoverage = {
+      legacyInputCount: legacy.inputCount,
+      replayedCardCount: replayedCardKeys.size,
+      legacyFallbackCount,
+      collisionCount: legacy.collisionCount,
+      unparseableLegacyCount: legacy.unparseable,
+      unparseableEventCount: pre.unparseable,
+      unexplainedLossCount: legacy.unparseable,
+    };
+    if (coverage.unexplainedLossCount > 0) {
+      const error = `Migration would lose ${coverage.unexplainedLossCount} legacy scheduler row(s).`;
+      await rollbackCardStateMigration(runId);
+      await db.dataMigrationRuns.update(runId, { status: 'failed', error, coverage, completedAt: new Date().toISOString() });
+      return { status: 'failed', runId, error, coverage };
+    }
     if (!validation.ok) {
       await rollbackCardStateMigration(runId);
       await db.dataMigrationRuns.update(runId, { status: 'failed', error: validation.error, completedAt: new Date().toISOString() });
@@ -146,14 +244,16 @@ export async function runCardStateMigration(): Promise<MigrationRunResult> {
       status: 'completed',
       completedAt: new Date().toISOString(),
       outputCardCount: validation.count,
+      coverage,
     });
 
     return {
       status: 'completed',
       runId,
-      affectedStudentCount: pre.studentIds.length,
+      affectedStudentCount: studentIds.length,
       outputCardCount: validation.count,
       unparseableEventCount: pre.unparseable,
+      coverage,
     };
   } catch (err) {
     const error = err instanceof Error ? err.message : String(err);

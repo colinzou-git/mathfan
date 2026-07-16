@@ -8,6 +8,16 @@ export interface LegacyStudentItemState extends Omit<StudentItemState, 'cardKey'
 export type DataMigrationKind = 'hybrid-card-v1';
 export type DataMigrationStatus = 'started' | 'completed' | 'failed' | 'rolled_back';
 
+export interface MigrationCoverage {
+  legacyInputCount: number;
+  replayedCardCount: number;
+  legacyFallbackCount: number;
+  collisionCount: number;
+  unparseableLegacyCount: number;
+  unparseableEventCount: number;
+  unexplainedLossCount: number;
+}
+
 export interface DataMigrationRun {
   id: string;
   kind: DataMigrationKind;
@@ -16,6 +26,7 @@ export interface DataMigrationRun {
   completedAt?: string;
   sourceEventCount: number;
   outputCardCount?: number;
+  coverage?: MigrationCoverage;
   error?: string;
 }
 

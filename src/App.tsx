@@ -26,11 +26,13 @@ import { resolvePracticeDoneDestination } from './features/practice/practiceNavi
 import { bootstrapProfiles, loadActiveProfileSelection, saveActiveProfileSelection, resolveSelectedProfile } from './features/profile/profileBootstrap';
 import { runCardStateMigration } from './features/migrations/cardStateMigration';
 import type { RestoreState } from './features/dashboard/ProfileSetup';
+import { MigrationRecoveryScreen } from './features/migrations/MigrationRecoveryScreen';
+import { db } from './db/dexie';
 
 type Screen =
   | 'loading' | 'setup' | 'dashboard'
   | 'daily-setup' | 'range-setup' | 'practice'
-  | 'stats' | 'settings' | 'quiz' | 'today-detail' | 'mastery-map' | 'diagnostic' | 'goals' | 'goal-evaluation';
+  | 'stats' | 'settings' | 'quiz' | 'today-detail' | 'mastery-map' | 'diagnostic' | 'goals' | 'goal-evaluation' | 'migration-error';
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('loading');
@@ -44,6 +46,8 @@ export default function App() {
   const { auth, syncStatus, lastSyncedAt, syncError, handleSignIn, handleSignOut, manualSync } = useSync();
   const [practiceReturn, setPracticeReturn] = useState<Screen>('dashboard');
   const [initialGoalSkillIds, setInitialGoalSkillIds] = useState<string[] | null>(null);
+  const [migrationError, setMigrationError] = useState<string | null>(null);
+  const [migrationRetrying, setMigrationRetrying] = useState(false);
 
   const selectProfile = (p: StudentProfile) => {
     setProfile(p);
@@ -113,12 +117,42 @@ export default function App() {
     initAuth();
     // Deferred to a microtask so the first setState happens outside the effect body itself.
     // Card-state migration must finish before any screen reads itemStates.
-    Promise.resolve()
-      .then(() => runCardStateMigration())
-      .catch(err => console.warn('[App] card-state migration failed', err))
-      .then(runBootstrap);
+    Promise.resolve().then(async () => {
+      const result = await runCardStateMigration();
+      if (result.status === 'failed') {
+        setMigrationError(result.error ?? 'Card-state migration failed.');
+        setScreen('migration-error');
+        return;
+      }
+      await runBootstrap();
+    }).catch(err => {
+      setMigrationError(err instanceof Error ? err.message : String(err));
+      setScreen('migration-error');
+    });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const retryMigration = async () => {
+    setMigrationRetrying(true);
+    const result = await runCardStateMigration();
+    setMigrationRetrying(false);
+    if (result.status === 'failed') { setMigrationError(result.error ?? 'Card-state migration failed.'); return; }
+    setMigrationError(null);
+    setScreen('loading');
+    await runBootstrap();
+  };
+
+  const exportMigrationDiagnostics = async () => {
+    const payload = {
+      exportedAt: new Date().toISOString(),
+      runs: await db.dataMigrationRuns.toArray(),
+      backups: (await db.migrationBackups.toArray()).map(backup => ({ id: backup.id, migrationRunId: backup.migrationRunId, createdAt: backup.createdAt, rowCount: backup.itemStates.length })),
+    };
+    const url = URL.createObjectURL(new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' }));
+    const anchor = document.createElement('a');
+    anchor.href = url; anchor.download = 'mathfan-migration-diagnostics.json'; anchor.click();
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+  };
 
   const updateProfile = async (updated: StudentProfile) => {
     const withTimestamp = { ...updated, updatedAt: new Date().toISOString() };
@@ -155,6 +189,10 @@ export default function App() {
         <div style={{ fontSize: '48px' }}>🧮</div>
       </div>
     );
+  }
+
+  if (screen === 'migration-error') {
+    return <MigrationRecoveryScreen error={migrationError ?? 'Card-state migration failed.'} retrying={migrationRetrying} onRetry={retryMigration} onExportDiagnostics={exportMigrationDiagnostics} />;
   }
 
   if (screen === 'setup') {

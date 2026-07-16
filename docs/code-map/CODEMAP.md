@@ -1,6 +1,6 @@
 # Code Map Overview
 
-Generated: 2026-07-15 08:32:24 UTC
+Generated: 2026-07-16 05:36:25 UTC
 
 Repo root: `/home/ubuntu/mathfan`
 Output folder: `/home/ubuntu/mathfan/docs/code-map`
@@ -14,9 +14,9 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 - Package name: `mathfan`
 - Version: `1.2.0`
 - Module type: `module`
-- Scanned files: **274**
-- Scanned lines: **50,170**
-- Scanned bytes: **2,081,662**
+- Scanned files: **275**
+- Scanned lines: **50,416**
+- Scanned bytes: **2,094,008**
 
 ## NPM scripts
 
@@ -72,7 +72,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 
 | File | Lines | Likely purpose | Key symbols |
 | --- | --- | --- | --- |
-| src/App.tsx | 363 | Top-level React app shell: routes/screens, global state, and feature wiring. | App, handleQuizDone, handleSessionDone, pickOperation, runBootstrap, selectProfile, startPractice, updateProfile |
+| src/App.tsx | 401 | Top-level React app shell: routes/screens, global state, and feature wiring. | App, exportMigrationDiagnostics, handleQuizDone, handleSessionDone, pickOperation, retryMigration, runBootstrap, selectProfile |
 | src/features/sync/SyncWidget.tsx | 156 | Cloud sync/auth/data transfer logic. | GoogleIcon, SyncWidget, friendlyError, GoogleIcon, initials, SyncWidget, timeSince |
 | src/features/sync/snapshot.ts | 237 | Local persistence/database layer. | AppSnapshot, remoteHasNewerUpdatedAt, validateSnapshot, validTimeMs, buildSnapshot, mergeSnapshot, validateSnapshot |
 | vite.config.ts | 82 | Vite build/PWA configuration. | buildInfoPlugin |
@@ -227,6 +227,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   │   └── todayPlanEngine.ts
 │   │   ├── migrations
 │   │   │   ├── cardStateMigration.ts
+│   │   │   ├── MigrationRecoveryScreen.tsx
 │   │   │   └── migrationTypes.ts
 │   │   ├── multiplication
 │   │   │   ├── masteryEngine.ts
@@ -456,39 +457,39 @@ Purpose: Top-level React app shell: routes/screens, global state, and feature wi
   26: import { bootstrapProfiles, loadActiveProfileSelection, saveActiveProfileSelection, resolveSelectedProfile } from './features/profile/profileBootstrap';
   27: import { runCardStateMigration } from './features/migrations/cardStateMigration';
   28: import type { RestoreState } from './features/dashboard/ProfileSetup';
-  29:
-  30: type Screen =
-  31:   | 'loading' | 'setup' | 'dashboard'
-  32:   | 'daily-setup' | 'range-setup' | 'practice'
-  33:   | 'stats' | 'settings' | 'quiz' | 'today-detail' | 'mastery-map' | 'diagnostic' | 'goals' | 'goal-evaluation';
-  34:
-  35: export default function App() {
-  36:   const [screen, setScreen] = useState<Screen>('loading');
-  37:   const [profile, setProfile] = useState<StudentProfile | null>(null);
-  38:   const [existingProfiles, setExistingProfiles] = useState<StudentProfile[]>([]);
-  39:   const [restoreState, setRestoreState] = useState<RestoreState>('idle');
-  40:   const [sessionConfig, setSessionConfig] = useState<SessionConfig | null>(null);
-  41:   const [selectedOp, setSelectedOp] = useState<PracticeOp>('multiplication');
-  42:   const [achievementFilter, setAchievementFilter] = useState<AchievementFilter>('total');
-  43:   const [achievementData, setAchievementData] = useState<TodayAchievementData | null>(null);
-  44:   const { auth, syncStatus, lastSyncedAt, syncError, handleSignIn, handleSignOut, manualSync } = useSync();
-  45:   const [practiceReturn, setPracticeReturn] = useState<Screen>('dashboard');
-  46:   const [initialGoalSkillIds, setInitialGoalSkillIds] = useState<string[] | null>(null);
-  47:
-  48:   const selectProfile = (p: StudentProfile) => {
-  49:     setProfile(p);
-  50:     saveActiveProfileSelection(p);
-  51:     applyTheme(p.settings.theme ?? 'indigo');
-  52:     sessionRepo.deleteEmpty(p.id).catch(() => {});
-  53:     setScreen('dashboard');
-  54:   };
-  55:
-  56:   const runBootstrap = async () => {
-  57:     const grantPersisted = hasPersistedGrant();
-  58:     setRestoreState(grantPersisted ? 'checking' : 'idle');
-  59:     const result = await bootstrapProfiles({
-  60:       loadLocalProfiles: () => studentRepo.getAll(),
-... (302 more lines)
+  29: import { MigrationRecoveryScreen } from './features/migrations/MigrationRecoveryScreen';
+  30: import { db } from './db/dexie';
+  31:
+  32: type Screen =
+  33:   | 'loading' | 'setup' | 'dashboard'
+  34:   | 'daily-setup' | 'range-setup' | 'practice'
+  35:   | 'stats' | 'settings' | 'quiz' | 'today-detail' | 'mastery-map' | 'diagnostic' | 'goals' | 'goal-evaluation' | 'migration-error';
+  36:
+  37: export default function App() {
+  38:   const [screen, setScreen] = useState<Screen>('loading');
+  39:   const [profile, setProfile] = useState<StudentProfile | null>(null);
+  40:   const [existingProfiles, setExistingProfiles] = useState<StudentProfile[]>([]);
+  41:   const [restoreState, setRestoreState] = useState<RestoreState>('idle');
+  42:   const [sessionConfig, setSessionConfig] = useState<SessionConfig | null>(null);
+  43:   const [selectedOp, setSelectedOp] = useState<PracticeOp>('multiplication');
+  44:   const [achievementFilter, setAchievementFilter] = useState<AchievementFilter>('total');
+  45:   const [achievementData, setAchievementData] = useState<TodayAchievementData | null>(null);
+  46:   const { auth, syncStatus, lastSyncedAt, syncError, handleSignIn, handleSignOut, manualSync } = useSync();
+  47:   const [practiceReturn, setPracticeReturn] = useState<Screen>('dashboard');
+  48:   const [initialGoalSkillIds, setInitialGoalSkillIds] = useState<string[] | null>(null);
+  49:   const [migrationError, setMigrationError] = useState<string | null>(null);
+  50:   const [migrationRetrying, setMigrationRetrying] = useState(false);
+  51:
+  52:   const selectProfile = (p: StudentProfile) => {
+  53:     setProfile(p);
+  54:     saveActiveProfileSelection(p);
+  55:     applyTheme(p.settings.theme ?? 'indigo');
+  56:     sessionRepo.deleteEmpty(p.id).catch(() => {});
+  57:     setScreen('dashboard');
+  58:   };
+  59:
+  60:   const runBootstrap = async () => {
+... (340 more lines)
 ```
 
 ### `src/features/sync/SyncWidget.tsx`

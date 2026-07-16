@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-15T08:32:24.356871+00:00",
+  "generated_at": "2026-07-16T05:36:25.113997+00:00",
   "repo_root": "/home/ubuntu/mathfan",
   "package": {
     "name": "mathfan",
@@ -421,9 +421,9 @@
     {
       "path": "PROGRESS.md",
       "ext": ".md",
-      "bytes": 8542,
+      "bytes": 8459,
       "lines": 131,
-      "sha1": "e2f7170024da",
+      "sha1": "fd3d79e73533",
       "imports": [],
       "exports": [],
       "functions": [],
@@ -803,13 +803,14 @@
     {
       "path": "src/App.tsx",
       "ext": ".tsx",
-      "bytes": 12520,
-      "lines": 363,
-      "sha1": "56e372f8227d",
+      "bytes": 14358,
+      "lines": 401,
+      "sha1": "4798c152957f",
       "imports": [
         "./components/opSpecs",
         "./components/RangeSetup",
         "./components/SessionSetup",
+        "./db/dexie",
         "./db/repositories",
         "./features/audio/speech",
         "./features/auth/googleAuth",
@@ -821,6 +822,7 @@
         "./features/goals/GoalsPage",
         "./features/mastery/Grade3MasteryMapPage",
         "./features/migrations/cardStateMigration",
+        "./features/migrations/MigrationRecoveryScreen",
         "./features/multiplication/MultiplicationQuizPage",
         "./features/practice/practiceNavigation",
         "./features/practice/PracticeScreen",
@@ -837,9 +839,11 @@
       ],
       "exports": [],
       "functions": [
+        "exportMigrationDiagnostics",
         "handleQuizDone",
         "handleSessionDone",
         "pickOperation",
+        "retryMigration",
         "runBootstrap",
         "selectProfile",
         "startPractice",
@@ -4397,26 +4401,35 @@
     {
       "path": "src/features/migrations/cardStateMigration.ts",
       "ext": ".ts",
-      "bytes": 6883,
-      "lines": 167,
-      "sha1": "1e90a0800eb1",
+      "bytes": 11803,
+      "lines": 267,
+      "sha1": "a9cdc6bf1b66",
       "imports": [
         "../../db/dexie",
         "../../types/math",
         "../../utils/id",
         "../curriculum/makeItemFromId",
         "../learning/eventRebuild",
+        "../scheduler/cardModel",
         "./migrationTypes"
       ],
       "exports": [
+        "migrateLegacyState",
         "MIGRATION_KIND",
-        "MigrationRunResult"
+        "MigrationRunResult",
+        "reconcileMigratedCardState"
       ],
       "functions": [
         "backupCurrentItemStates",
+        "convertedLegacyStates",
         "isCardStateMigrationComplete",
         "isValidState",
+        "latest",
+        "loadSchemaV7LegacyBackup",
+        "mergeLegacyCollision",
+        "migrateLegacyState",
         "preflight",
+        "reconcileMigratedCardState",
         "rollbackCardStateMigration",
         "runCardStateMigration",
         "validate"
@@ -4435,11 +4448,37 @@
       "read_error": null
     },
     {
+      "path": "src/features/migrations/MigrationRecoveryScreen.tsx",
+      "ext": ".tsx",
+      "bytes": 951,
+      "lines": 21,
+      "sha1": "a0e6ce948cfc",
+      "imports": [],
+      "exports": [
+        "MigrationRecoveryScreen"
+      ],
+      "functions": [
+        "MigrationRecoveryScreen"
+      ],
+      "classes": [],
+      "interfaces": [
+        "Props"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Exports reusable code: MigrationRecoveryScreen.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/features/migrations/migrationTypes.ts",
       "ext": ".ts",
-      "bytes": 1047,
-      "lines": 33,
-      "sha1": "58c3d717d1d0",
+      "bytes": 1332,
+      "lines": 44,
+      "sha1": "c88d69662012",
       "imports": [
         "../../types/math"
       ],
@@ -4448,14 +4487,16 @@
         "DataMigrationRun",
         "DataMigrationStatus",
         "LegacyStudentItemState",
-        "MigrationBackup"
+        "MigrationBackup",
+        "MigrationCoverage"
       ],
       "functions": [],
       "classes": [],
       "interfaces": [
         "DataMigrationRun",
         "LegacyStudentItemState",
-        "MigrationBackup"
+        "MigrationBackup",
+        "MigrationCoverage"
       ],
       "types": [
         "DataMigrationKind",
@@ -4963,9 +5004,9 @@
     {
       "path": "src/features/practice/usePracticeSession.ts",
       "ext": ".ts",
-      "bytes": 30575,
+      "bytes": 30527,
       "lines": 656,
-      "sha1": "9a55080d9a1c",
+      "sha1": "a21b8b2612b4",
       "imports": [
         "../../components/opSpecs",
         "../../db/dexie",
@@ -7127,9 +7168,9 @@
     {
       "path": "src/tests/appGoalEvaluationNavigation.test.tsx",
       "ext": ".tsx",
-      "bytes": 4496,
-      "lines": 148,
-      "sha1": "6091d596f442",
+      "bytes": 5307,
+      "lines": 160,
+      "sha1": "5831bda799af",
       "imports": [
         "../App",
         "../types/math",
@@ -7236,19 +7277,22 @@
     {
       "path": "src/tests/cardStateMigration.test.ts",
       "ext": ".ts",
-      "bytes": 4643,
-      "lines": 134,
-      "sha1": "44a9a7907039",
+      "bytes": 8315,
+      "lines": 198,
+      "sha1": "e4b468062ab9",
       "imports": [
         "../db/dexie",
         "../features/learning/learningEvents",
         "../features/migrations/cardStateMigration",
+        "../features/migrations/migrationTypes",
         "vitest"
       ],
       "exports": [],
       "functions": [
         "clearAll",
-        "event"
+        "event",
+        "legacy",
+        "putSchemaBackup"
       ],
       "classes": [],
       "interfaces": [],

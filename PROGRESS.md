@@ -52,7 +52,16 @@ Capstone. Depends on nearly everything above (#25-#29, #30-#34, #35).
 | 34 | Time/measurement/graphs redesign | B | **merged to main** (628dc33) |
 | 35 | Goal consolidation + workload cap | C | **merged to main** (4519545) |
 | 29 | Adaptive "Start Today's Lesson" tile | C | **merged to main** (4519545) |
-| 36 | Scheduling telemetry + analytics | D | **implemented and validated; ready to merge** |
+| 36 | Scheduling telemetry + analytics | D | **merged to main** (ac10dea) |
+
+### Follow-up bug backlog opened 2026-07-16
+
+Issues #40–#60 are being fixed and validated one at a time in numeric order before the final merge.
+
+| # | Status |
+|---|--------|
+| 40 | **implemented and validated; committed next** |
+| 41–60 | open |
 
 ## Current focus
 
@@ -69,12 +78,14 @@ explicitly ask Claude to close them in a future session.
 
 **Branch C is merged and deployed** via PR #38 (merge 4519545). GitHub issues #35 and #29 are closed.
 
-**Active branch:** `feature/scheduling-telemetry`.
-**Active issue:** #36 — auditable scheduling telemetry and calibration analytics (implemented and validated).
+**Branch D is merged and deployed** via PR #39 (merge ac10dea). GitHub issue #36 is closed.
+
+**Active branch:** `fix/open-issues-40-60` (created after the first focused commit).
+**Active issue:** #40 — preserve legacy item states during canonical-card migration (implemented and validated).
 **Next concrete step:**
-1. Commit and publish Branch D.
-2. Merge and deploy #36 after GitHub checks pass.
-3. Re-check the live issue list and production build metadata.
+1. Commit #40 as an isolated fix.
+2. Continue with #41 and validate it before moving to #42.
+3. After #60, run final full checks, merge to main, deploy, and re-check live issues.
 
 Issue #30 validation completed on 2026-07-15: `npm run ci` (73 files / 1,279 tests),
 `npm run test:e2e` (desktop, mobile, iPad, missing-side, comparison, and update flows), and
