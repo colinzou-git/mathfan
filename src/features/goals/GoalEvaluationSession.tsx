@@ -58,6 +58,9 @@ interface PendingWrite {
   fluencyBand: FluencyBand;
   item: PracticeItem;
   skillId: string;
+  cardKey: string;
+  schedulingEligible: boolean;
+  schedulingReason: 'first_card_evidence' | 'same_evaluation_template_repeat';
 }
 
 interface NewLearningCandidate {
@@ -97,6 +100,7 @@ function evaluationArgs(evaluation: GoalEvaluation, events: MathAnswerEvent[], i
     mathAnswerEvents: events,
     itemStates,
     responses: responsesFromEvaluation(evaluation),
+    scheduledCardKeys: evaluation.scheduledCardKeys ?? [],
   };
 }
 
@@ -286,14 +290,20 @@ export function GoalEvaluationSession({ studentId, onCancel, onReturnToGoals, on
     try {
       const nowDate = appNow();
       const answeredAt = pending.answeredAt;
-      const existing = await itemStateRepo.get(studentId, deriveCardKey(pending.item));
-      const updatedState = buildUpdatedState(studentId, pending.item, existing, pending, nowDate);
+      const cardKey = deriveCardKey(pending.item);
+      const scheduledCardKeys = evaluation.scheduledCardKeys ?? [];
+      // Recompute from persisted evaluation state; selector metadata is advisory and may be stale after resume/retry.
+      const schedulingEligible = !scheduledCardKeys.includes(cardKey);
+      const schedulingReason = schedulingEligible ? 'first_card_evidence' : 'same_evaluation_template_repeat';
+      const existing = await itemStateRepo.get(studentId, cardKey);
+      const updatedState = schedulingEligible ? buildUpdatedState(studentId, pending.item, existing, pending, nowDate) : undefined;
+      const stateAfter = updatedState ?? existing ?? createInitialState(studentId, pending.item);
       const event: MathAnswerEvent = {
         id: pending.eventId,
         studentId,
         sessionId: evaluation.id,
         itemId: pending.item.id,
-        cardKey: updatedState.cardKey,
+        cardKey,
         schemaId: pending.item.schemaId,
         mode: 'goal_evaluation',
         promptShown: pending.item.prompt,
@@ -308,13 +318,16 @@ export function GoalEvaluationSession({ studentId, onCancel, onReturnToGoals, on
         fluencyBand: pending.fluencyBand,
         reviewGrade: pending.reviewGrade,
         factStatusBefore: existing?.masteryLevel ?? 'new',
-        factStatusAfter: updatedState.masteryLevel,
+        factStatusAfter: stateAfter.masteryLevel,
+        schedulingEligible,
+        schedulingReason,
         schedulingTelemetry: buildSchedulingTelemetry({
           item: pending.item,
-          stateBefore: existing ?? createInitialState(studentId, pending.item), stateAfter: updatedState,
-          response: { reviewGrade: pending.reviewGrade, ratingReason: pending.ratingReason, responsePolicy: pending.responsePolicy, fluencyBand: pending.fluencyBand, hintUsed: false, isRetry: false, schedulingEligible: true },
-          selection: { origin: 'goal', rationaleCodes: ['active_goal', 'diagnostic_coverage'] },
+          stateBefore: existing ?? createInitialState(studentId, pending.item), stateAfter,
+          response: { reviewGrade: pending.reviewGrade, ratingReason: pending.ratingReason, responsePolicy: pending.responsePolicy, fluencyBand: pending.fluencyBand, hintUsed: false, isRetry: false, schedulingEligible },
+          selection: { origin: 'goal', rationaleCodes: ['active_goal', 'diagnostic_coverage', schedulingReason] },
           presentationIndex: 1, attemptNo: 1, now: nowDate,
+          schedulingReason,
         }),
         createdAt: answeredAt,
       };
@@ -359,7 +372,7 @@ export function GoalEvaluationSession({ studentId, onCancel, onReturnToGoals, on
             seed: evaluation.seed ?? 1,
             now: nowDate.toISOString(),
             mathAnswerEvents: [...events.filter(item => item.id !== event.id), event],
-            itemStates: [...itemStates.filter(item => item.cardKey !== updatedState.cardKey), updatedState],
+            itemStates: updatedState ? [...itemStates.filter(item => item.cardKey !== updatedState.cardKey), updatedState] : itemStates,
             responses: nextResponses,
           })
         : null;
@@ -371,13 +384,16 @@ export function GoalEvaluationSession({ studentId, onCancel, onReturnToGoals, on
         itemIds: Array.from(new Set([...evaluation.itemIds, pending.item.id])),
         targetSkillIds: completedResult?.topGoalCandidates.map(candidate => candidate.skillId) ?? evaluation.targetSkillIds,
         answers: nextAnswers,
+        scheduledCardKeys: schedulingEligible ? [...scheduledCardKeys, cardKey] : scheduledCardKeys,
         answerEvents: [...(evaluation.answerEvents ?? []).filter(item => item.id !== event.id), event],
         updatedAt: answeredAt,
       };
       await recordGoalEvaluationAnswer({ event, attempt, updatedState, evaluation: nextEvaluation });
       setEvaluation(nextEvaluation);
       setEvents(current => [...current.filter(item => item.id !== event.id), event]);
-      setItemStates(current => [...current.filter(item => !(item.studentId === updatedState.studentId && item.cardKey === updatedState.cardKey)), updatedState]);
+      if (updatedState) {
+        setItemStates(current => [...current.filter(item => !(item.studentId === updatedState.studentId && item.cardKey === updatedState.cardKey)), updatedState]);
+      }
       setPendingWrite(null);
       if (complete) {
         if (authState().signedIn) pushLocal().catch(console.warn);
@@ -410,6 +426,9 @@ export function GoalEvaluationSession({ studentId, onCancel, onReturnToGoals, on
       fluencyBand: checked.fluencyBand,
       item: currentItem,
       skillId: selection.skillId,
+      cardKey: selection.cardKey,
+      schedulingEligible: selection.schedulingEligible,
+      schedulingReason: selection.schedulingReason,
     };
     setInput('');
     setFeedback(checked.isCorrect ? 'correct' : 'wrong');

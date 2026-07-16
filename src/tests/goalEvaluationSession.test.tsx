@@ -18,6 +18,7 @@ const mockData = vi.hoisted(() => {
     answerInput: 'numeric' as const,
     tags: ['evaluation'],
     difficulty: 0.3,
+    cardKey: index < 2 ? 'template:shared-evaluation-card' : `template:evaluation-card-${index + 1}`,
   }));
   return {
     items,
@@ -39,9 +40,10 @@ vi.mock('../features/goals/goalEvaluationEngine', () => ({
     skillsToStrengthen: [{ skillId: 'g3-mul-meaning', domain: 'multiplication', score: 1, mean: 0.5, uncertainty: 0.2, reason: 'strengthen' }],
     skillsReadyToLearnNext: [],
   }),
-  selectNextAdaptiveGoalEvaluationItem: (args: { responses: unknown[] }) => {
+  selectNextAdaptiveGoalEvaluationItem: (args: { responses: unknown[]; scheduledCardKeys?: string[] }) => {
     const item = mockData.items[args.responses.length];
     if (!item) return null;
+    const schedulingEligible = !args.scheduledCardKeys?.includes(item.cardKey);
     return {
       questionNumber: args.responses.length + 1,
       phase: args.responses.length < 10 ? 'screening' : args.responses.length < 24 ? 'adaptive_probe' : 'confirmation',
@@ -51,6 +53,9 @@ vi.mock('../features/goals/goalEvaluationEngine', () => ({
       evidence: [],
       topCandidates: [],
       rationale: 'test',
+      cardKey: item.cardKey,
+      schedulingEligible,
+      schedulingReason: schedulingEligible ? 'first_card_evidence' : 'same_evaluation_template_repeat',
     };
   },
 }));
@@ -72,6 +77,7 @@ vi.mock('../features/goals/goalEvaluationPersistence', () => ({
     targetSkillIds: [],
     answers: [],
     answerEvents: [],
+    scheduledCardKeys: [],
   })),
   recordGoalEvaluationAnswer: vi.fn(async () => undefined),
 }));
@@ -121,6 +127,7 @@ function evaluation(overrides: Partial<GoalEvaluation> = {}): GoalEvaluation {
     targetSkillIds: [],
     answers: [],
     answerEvents: [],
+    scheduledCardKeys: [],
     ...overrides,
   };
 }
@@ -198,9 +205,37 @@ describe('GoalEvaluationSession', () => {
     expect(event.isRetry).toBe(false);
     expect(event.hintUsed).toBe(false);
     expect(event.relatedEvidence).toBeUndefined();
+    expect(event.schedulingEligible).toBe(true);
+    expect(event.schedulingReason).toBe('first_card_evidence');
     expect(attempt.id).toBeDefined();
-    expect(updatedState.attemptCount).toBe(1);
+    expect(updatedState?.attemptCount).toBe(1);
     expect(saved.answers).toHaveLength(1);
+    expect(saved.scheduledCardKeys).toEqual(['template:shared-evaluation-card']);
+  });
+
+  it('records repeated template evidence without applying a second scheduler update', async () => {
+    renderEvaluation();
+    await startEvaluation();
+    await answerCurrent();
+    await waitFor(() => expect(recordGoalEvaluationAnswer).toHaveBeenCalledTimes(1));
+    fireEvent.click(await screen.findByRole('button', { name: /continue/i }));
+    await answerCurrent();
+    await waitFor(() => expect(recordGoalEvaluationAnswer).toHaveBeenCalledTimes(2));
+
+    const first = vi.mocked(recordGoalEvaluationAnswer).mock.calls[0][0];
+    const second = vi.mocked(recordGoalEvaluationAnswer).mock.calls[1][0];
+    expect(first.updatedState).toBeDefined();
+    expect(second.updatedState).toBeUndefined();
+    expect(second.event).toMatchObject({
+      schedulingEligible: false,
+      schedulingReason: 'same_evaluation_template_repeat',
+    });
+    expect(second.event.schedulingTelemetry).toMatchObject({
+      schedulingEligible: false,
+      schedulingReason: 'same_evaluation_template_repeat',
+    });
+    expect(second.evaluation.answers).toHaveLength(2);
+    expect(second.evaluation.scheduledCardKeys).toEqual(['template:shared-evaluation-card']);
   });
 
   it('does not show hints, retries, or the correct answer after a wrong answer', async () => {
@@ -262,6 +297,7 @@ describe('GoalEvaluationSession', () => {
         latencyMs: 1000,
         reviewGrade: 'good',
       }],
+      scheduledCardKeys: ['template:shared-evaluation-card'],
     });
 
     renderEvaluation();

@@ -113,6 +113,19 @@ describe('Adaptive Goal Evaluation planning constraints', () => {
     expect(new Set(plan.map(selection => selection.item.id)).size).toBe(plan.length);
   });
 
+  it('marks only the first selected item for each canonical card as scheduling eligible', () => {
+    const plan = fullPlan();
+    const scheduled = new Set<string>();
+    for (const selection of plan) {
+      expect(selection.schedulingEligible).toBe(!scheduled.has(selection.cardKey));
+      expect(selection.schedulingReason).toBe(
+        selection.schedulingEligible ? 'first_card_evidence' : 'same_evaluation_template_repeat',
+      );
+      if (selection.schedulingEligible) scheduled.add(selection.cardKey);
+    }
+    expect(plan).toHaveLength(30);
+  });
+
   it('covers all seven domains during broad screening', () => {
     const plan = fullPlan();
     const firstTenDomains = new Set(plan.slice(0, 10).map(selection => selection.domain));

@@ -247,6 +247,7 @@
 | src/features/goals/goalEvaluationEngine.ts | ../mastery/grade3MasteryMap |
 | src/features/goals/goalEvaluationEngine.ts | ../mastery/skillMapping |
 | src/features/goals/goalEvaluationEngine.ts | ../mastery/skillPracticePlanner |
+| src/features/goals/goalEvaluationEngine.ts | ../scheduler/cardModel |
 | src/features/goals/goalEvaluationPersistence.ts | ../../db/dexie |
 | src/features/goals/goalEvaluationPersistence.ts | ../../db/repositories |
 | src/features/goals/goalEvaluationPersistence.ts | ../../types/math |

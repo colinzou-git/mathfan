@@ -58,6 +58,7 @@ export interface SchedulingTelemetry {
   presentationIndex: number;
   attemptNo: number;
   schedulingEligible: boolean;
+  schedulingReason?: 'first_card_evidence' | 'same_evaluation_template_repeat';
   evidenceKind: 'direct' | 'related';
   supportLevel: 'independent' | 'hint' | 'worked_example' | 'retry';
   selection: SelectionContext;
@@ -115,13 +116,15 @@ export function buildSchedulingTelemetry(args: {
   item: PracticeItem; stateBefore?: StudentItemState; stateAfter?: StudentItemState;
   response: ResponseTelemetryEvidence; selection: SelectionContext;
   presentationIndex: number; attemptNo: number; now: Date; learnerKey?: string;
+  schedulingReason?: SchedulingTelemetry['schedulingReason'];
 }): SchedulingTelemetry {
   const card = describeLearningCard(args.item);
   return {
     version: SCHEDULING_TELEMETRY_VERSION, learnerKey: args.learnerKey, cardKey: card.cardKey,
     cardKind: card.kind, schemaId: card.schemaId, itemInstanceId: args.item.instanceKey ?? args.item.id,
     presentationIndex: args.presentationIndex, attemptNo: args.attemptNo,
-    schedulingEligible: args.response.schedulingEligible, evidenceKind: args.response.evidenceKind ?? 'direct',
+    schedulingEligible: args.response.schedulingEligible, schedulingReason: args.schedulingReason,
+    evidenceKind: args.response.evidenceKind ?? 'direct',
     supportLevel: args.response.isRetry ? 'retry' : args.response.hintUsed ? 'hint' : 'independent',
     selection: args.selection, before: args.stateBefore ? snapshotSchedulingState(args.stateBefore, args.now) : undefined,
     after: args.stateAfter ? snapshotSchedulingState(args.stateAfter, args.now) : undefined,

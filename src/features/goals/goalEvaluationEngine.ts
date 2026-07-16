@@ -6,6 +6,7 @@ import { planPracticeForSkill } from '../mastery/skillPracticePlanner';
 import { makeItemFromId as defaultMakeItemFromId } from '../curriculum/makeItemFromId';
 import type { PracticeItem, SessionConfig, StudentItemState } from '../../types/math';
 import { mulberry32, shuffled, type Rng } from '../../utils/rng';
+import { deriveCardKey } from '../scheduler/cardModel';
 
 export type AdaptiveGoalEvaluationPhase = 'screening' | 'adaptive_probe' | 'confirmation';
 
@@ -49,6 +50,9 @@ export interface AdaptiveGoalEvaluationSelection {
   evidence: AdaptiveGoalSkillEvidence[];
   topCandidates: GoalEvaluationCandidate[];
   rationale: string;
+  cardKey: string;
+  schedulingEligible: boolean;
+  schedulingReason: 'first_card_evidence' | 'same_evaluation_template_repeat';
 }
 
 export interface GoalEvaluationCandidate {
@@ -75,6 +79,7 @@ export interface AdaptiveGoalEvaluationArgs {
   mathAnswerEvents: MathAnswerEvent[];
   itemStates: StudentItemState[];
   responses: AdaptiveGoalEvaluationResponse[];
+  scheduledCardKeys?: string[];
   skillGraph?: readonly MasterySkillNode[];
   makeItemFromId?: (itemId: string) => PracticeItem | null;
   itemPoolForSkill?: (skillId: string) => SessionConfig;
@@ -376,6 +381,7 @@ function selectFromSkills(
 ): AdaptiveGoalEvaluationSelection {
   const lookup = itemLookup(catalogue);
   const used = usedItemIds(args);
+  const scheduledCards = new Set(args.scheduledCardKeys ?? []);
   const rng = rngFor(args, `item:${rationale}:${skillIds.join('|')}`);
   const evidenceBySkill = new Map(evidence.map(item => [item.skillId, item]));
   const skillSet = new Set(skillIds);
@@ -397,6 +403,9 @@ function selectFromSkills(
   }
 
   eligible.sort((a, b) => {
+    const aFreshCard = scheduledCards.has(deriveCardKey(a.item)) ? 0 : 1;
+    const bFreshCard = scheduledCards.has(deriveCardKey(b.item)) ? 0 : 1;
+    if (bFreshCard !== aFreshCard) return bFreshCard - aFreshCard;
     const aEvidence = evidenceBySkill.get(a.skillId)!;
     const bEvidence = evidenceBySkill.get(b.skillId)!;
     const scoreA = itemScore(a, aEvidence, args, rng);
@@ -406,6 +415,8 @@ function selectFromSkills(
   });
 
   const selected = eligible[0];
+  const cardKey = deriveCardKey(selected.item);
+  const schedulingEligible = !scheduledCards.has(cardKey);
   return {
     questionNumber: args.responses.length + 1,
     phase: args.responses.length < SCREENING_COUNT
@@ -419,6 +430,9 @@ function selectFromSkills(
     evidence,
     topCandidates: topCandidates(evidence, args.skillGraph ?? GRADE3_MASTERY_MAP),
     rationale,
+    cardKey,
+    schedulingEligible,
+    schedulingReason: schedulingEligible ? 'first_card_evidence' : 'same_evaluation_template_repeat',
   };
 }
 
@@ -530,10 +544,12 @@ export function planFullAdaptiveGoalEvaluation(
 ): AdaptiveGoalEvaluationSelection[] {
   const selections: AdaptiveGoalEvaluationSelection[] = [];
   const responses: AdaptiveGoalEvaluationResponse[] = [];
+  const scheduledCardKeys: string[] = [];
   for (let i = 0; i < QUESTION_COUNT; i++) {
-    const selection = selectNextAdaptiveGoalEvaluationItem({ ...args, responses });
+    const selection = selectNextAdaptiveGoalEvaluationItem({ ...args, responses, scheduledCardKeys });
     if (!selection) break;
     selections.push(selection);
+    if (selection.schedulingEligible) scheduledCardKeys.push(selection.cardKey);
     responses.push({
       itemId: selection.item.id,
       skillId: selection.skillId,

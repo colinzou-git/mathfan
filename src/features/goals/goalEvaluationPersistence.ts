@@ -9,7 +9,7 @@ import type { GoalEvaluation } from './types';
 export interface GoalEvaluationAnswerWrite {
   event: MathAnswerEvent;
   attempt: AttemptLog;
-  updatedState: StudentItemState;
+  updatedState?: StudentItemState;
   evaluation: GoalEvaluation;
 }
 
@@ -36,6 +36,7 @@ export async function createGoalEvaluation(studentId: string, now: string): Prom
     targetSkillIds: [],
     answers: [],
     answerEvents: [],
+    scheduledCardKeys: [],
   };
   await goalEvaluationRepo.save(evaluation, now);
   return evaluation;
@@ -44,9 +45,8 @@ export async function createGoalEvaluation(studentId: string, now: string): Prom
 export async function recordGoalEvaluationAnswer(payload: GoalEvaluationAnswerWrite): Promise<void> {
   await db.transaction('rw', db.mathAnswerEvents, db.itemStates, db.attempts, db.goalEvaluations, async () => {
     await mathAnswerEventRepo.save(payload.event);
-    await itemStateRepo.save(payload.updatedState);
+    if (payload.updatedState) await itemStateRepo.save(payload.updatedState);
     await attemptRepo.save(payload.attempt);
     await goalEvaluationRepo.save(payload.evaluation, payload.evaluation.updatedAt);
   });
 }
-

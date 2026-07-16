@@ -60,13 +60,14 @@ Issues #40–#60 are being fixed and validated one at a time in numeric order be
 
 | # | Status |
 |---|--------|
-| 40 | **implemented and validated; committed next** |
+| 40 | **implemented and validated; committed** |
 | 41 | **implemented and validated; committed** |
 | 42 | **implemented and validated; committed** |
 | 43 | **implemented and validated; committed** |
 | 44 | **implemented and validated; committed** |
-| 45 | **implemented; full validation in progress** |
-| 46–60 | open |
+| 45 | **implemented and validated; committed** |
+| 46 | **implemented and validated; committed next** |
+| 47–60 | open |
 
 ## Current focus
 
@@ -86,10 +87,10 @@ explicitly ask Claude to close them in a future session.
 **Branch D is merged and deployed** via PR #39 (merge ac10dea). GitHub issue #36 is closed.
 
 **Active branch:** `fix/open-issues-40-60` (created after the first focused commit).
-**Active issue:** #45 — persist answers before advancing session state (implemented; full validation in progress).
+**Active issue:** #46 — enforce one FSRS update per canonical card per evaluation (implemented and validated; committing next).
 **Next concrete step:**
-1. Complete full validation and commit #45 as an isolated fix.
-2. Continue with #46 and validate it before moving to #47.
+1. Complete full validation and commit #46 as an isolated fix.
+2. Continue with #47 and validate it before moving to #48.
 3. After #60, run final full checks, merge to main, deploy, and re-check live issues.
 
 Issue #30 validation completed on 2026-07-15: `npm run ci` (73 files / 1,279 tests),

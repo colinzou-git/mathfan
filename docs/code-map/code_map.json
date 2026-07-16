@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-16T06:39:25.082799+00:00",
+  "generated_at": "2026-07-16T06:50:10.943234+00:00",
   "repo_root": "/home/ubuntu/mathfan",
   "package": {
     "name": "mathfan",
@@ -3193,9 +3193,9 @@
     {
       "path": "src/features/goals/goalEvaluationEngine.ts",
       "ext": ".ts",
-      "bytes": 22410,
-      "lines": 575,
-      "sha1": "a5d5d73bff17",
+      "bytes": 23294,
+      "lines": 591,
+      "sha1": "e34d27f32974",
       "imports": [
         "../../types/math",
         "../../utils/rng",
@@ -3203,7 +3203,8 @@
         "../learning/learningEvents",
         "../mastery/grade3MasteryMap",
         "../mastery/skillMapping",
-        "../mastery/skillPracticePlanner"
+        "../mastery/skillPracticePlanner",
+        "../scheduler/cardModel"
       ],
       "exports": [
         "ADAPTIVE_GOAL_EVALUATION_CONFIRMATION_COUNT",
@@ -3275,9 +3276,9 @@
     {
       "path": "src/features/goals/goalEvaluationPersistence.ts",
       "ext": ".ts",
-      "bytes": 1914,
+      "bytes": 1967,
       "lines": 53,
-      "sha1": "aa45135de533",
+      "sha1": "7a380dd3e2c5",
       "imports": [
         "../../db/dexie",
         "../../db/repositories",
@@ -3311,9 +3312,9 @@
     {
       "path": "src/features/goals/GoalEvaluationSession.tsx",
       "ext": ".tsx",
-      "bytes": 30055,
-      "lines": 651,
-      "sha1": "ad2d0954ab76",
+      "bytes": 31137,
+      "lines": 670,
+      "sha1": "3675a582984d",
       "imports": [
         "../../components/NumPad",
         "../../db/repositories",
@@ -3641,9 +3642,9 @@
     {
       "path": "src/features/goals/types.ts",
       "ext": ".ts",
-      "bytes": 2984,
-      "lines": 123,
-      "sha1": "5fe32d349710",
+      "bytes": 3096,
+      "lines": 125,
+      "sha1": "5b64358d5ea4",
       "imports": [
         "../../types/math",
         "../learning/learningEvents",
@@ -3764,9 +3765,9 @@
     {
       "path": "src/features/learning/learningEvents.ts",
       "ext": ".ts",
-      "bytes": 4817,
-      "lines": 111,
-      "sha1": "9765d1122d80",
+      "bytes": 4977,
+      "lines": 113,
+      "sha1": "c22715bc45f6",
       "imports": [
         "../../db/dexie",
         "../../types/math",
@@ -3846,9 +3847,9 @@
     {
       "path": "src/features/learning/schedulingTelemetry.ts",
       "ext": ".ts",
-      "bytes": 6176,
-      "lines": 133,
-      "sha1": "1a0e9cbf3ea7",
+      "bytes": 6363,
+      "lines": 136,
+      "sha1": "9a10ba444f30",
       "imports": [
         "../../types/math",
         "../fluency/fluencyEngine",
@@ -5010,9 +5011,9 @@
     {
       "path": "src/features/practice/usePracticeSession.ts",
       "ext": ".ts",
-      "bytes": 33467,
+      "bytes": 33459,
       "lines": 700,
-      "sha1": "5e9eb769d139",
+      "sha1": "d8df9d8aa298",
       "imports": [
         "../../components/opSpecs",
         "../../db/dexie",
@@ -7802,9 +7803,9 @@
     {
       "path": "src/tests/goalEvaluationEngine.test.tsx",
       "ext": ".tsx",
-      "bytes": 9983,
-      "lines": 258,
-      "sha1": "e63045218a0c",
+      "bytes": 10547,
+      "lines": 271,
+      "sha1": "72c0ac848867",
       "imports": [
         "../features/curriculum/makeItemFromId",
         "../features/goals/goalEvaluationEngine",
@@ -7840,9 +7841,9 @@
     {
       "path": "src/tests/goalEvaluationSession.test.tsx",
       "ext": ".tsx",
-      "bytes": 12093,
-      "lines": 338,
-      "sha1": "b6d39c841c22",
+      "bytes": 13936,
+      "lines": 374,
+      "sha1": "1bd5a2727aba",
       "imports": [
         "../db/repositories",
         "../features/goals/goalEvaluationPersistence",

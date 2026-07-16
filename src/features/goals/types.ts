@@ -117,6 +117,8 @@ export interface GoalEvaluation {
   itemIds: string[];
   targetSkillIds: string[];
   answers: GoalEvaluationAnswer[];
+  /** Canonical cards already allowed to update FSRS during this evaluation. */
+  scheduledCardKeys?: string[];
   resultGoalId?: string;
   answerEvents?: MathAnswerEvent[];
 }
