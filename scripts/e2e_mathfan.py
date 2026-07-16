@@ -482,6 +482,42 @@ def area_perimeter_comparison_lesson(page: Page) -> None:
     expect(page.get_by_text(re.compile(r"Correct!|New personal best!"))).to_be_visible()
 
 
+def related_evidence_failure_recovery(page: Page) -> None:
+    create_profile(page, "RelatedRepairTester", "e2e-related-repair")
+    set_one_question_sessions(page)
+    page.evaluate("""async () => {
+        const db = await new Promise((resolve, reject) => { const request = indexedDB.open('mathfan'); request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error); });
+        const students = await new Promise((resolve, reject) => { const request = db.transaction('students').objectStore('students').getAll(); request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error); });
+        const rows = [];
+        for (let left = 1; left <= 12; left++) for (let right = left; right <= 12; right++) rows.push({ studentId: students[0].id, cardKey: `fact:mul:${left}x${right}`, lastItemId: `MUL_${left}x${right}`, skillId: 'g3-mul-tables-basic', attemptCount: 2, correctCount: 2, lastCorrect: true, lastLatencyMs: 1000, medianLatencyMs: 1000, ease: 2.5, stabilityDays: 2, difficulty: .2, reps: 2, lapses: 0, masteryLevel: 'learning', nextDueAt: '2026-01-01T00:00:00Z', mistakePatterns: [] });
+        await new Promise((resolve, reject) => { const tx = db.transaction('itemStates', 'readwrite'); rows.forEach(row => tx.objectStore('itemStates').put(row)); tx.oncomplete = resolve; tx.onerror = () => reject(tx.error); }); db.close();
+    }""")
+    open_mastery_skill(page, "Compare Area and Perimeter")
+    page.evaluate("""() => {
+        window.__mathfanOriginalPut = IDBObjectStore.prototype.put;
+        IDBObjectStore.prototype.put = function(value, key) {
+            if (this.name === 'mathAnswerEvents' && String(value?.id || '').startsWith('related:')) throw new DOMException('Simulated related write failure', 'QuotaExceededError');
+            return window.__mathfanOriginalPut.call(this, value, key);
+        };
+    }""")
+    for _ in range(10):
+        answer_box = page.get_by_label("Your answer", exact=True)
+        expect(answer_box).to_be_visible()
+        prompt = page.locator(".drill-q > div").first.inner_text()
+        numbers = [int(value) for value in re.findall(r"\d+", prompt)]
+        answer = 2 * (numbers[0] + numbers[1]) if "perimeter of Rectangle A" in prompt else numbers[2] * numbers[3]
+        answer_box.fill(str(answer))
+        answer_box.press("Enter")
+        expect(page.get_by_text(re.compile(r"Correct!|New personal best!"))).to_be_visible()
+        page.wait_for_timeout(800)
+    expect(page.get_by_role("heading", name="Session Complete!", exact=True)).to_be_visible()
+    expect(page.get_by_text(re.compile(r"Your answers are saved.*review-schedule update", re.I))).to_be_visible()
+    expect(page.get_by_role("button", name="Home", exact=True)).to_be_enabled()
+    page.evaluate("""() => { IDBObjectStore.prototype.put = window.__mathfanOriginalPut; }""")
+    page.get_by_role("button", name="Retry schedule update", exact=True).click()
+    expect(page.get_by_role("button", name="Retry schedule update", exact=True)).to_have_count(0)
+
+
 def fraction_equivalence_visual_lesson(page: Page) -> None:
     create_profile(page, "FractionEquivalentTester", "e2e-fraction-equivalent")
     set_one_question_sessions(page)
@@ -929,6 +965,7 @@ def main() -> int:
             ("legacy-downloaded-backup-restore", {"width": 1024, "height": 768}, legacy_downloaded_backup_restore, False),
             ("missing-side-lesson", {"width": 390, "height": 844}, area_perimeter_missing_side_lesson, False),
             ("area-perimeter-comparison", {"width": 1024, "height": 768}, area_perimeter_comparison_lesson, False),
+            ("related-evidence-failure-recovery", {"width": 1024, "height": 768}, related_evidence_failure_recovery, False),
             ("fraction-equivalence-visual", {"width": 390, "height": 844}, fraction_equivalence_visual_lesson, False),
             ("fraction-same-numerator", {"width": 1024, "height": 768}, fraction_same_numerator_lesson, False),
             ("subtraction-across-zero", {"width": 390, "height": 844}, subtraction_across_zero_lesson, False),

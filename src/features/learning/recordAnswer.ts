@@ -41,6 +41,15 @@ export async function recordPracticeAnswer(payload: PracticeAnswerPayload): Prom
 export async function recordRelatedEvidenceWrites(writes: RelatedEvidenceWrite[]): Promise<void> {
   await db.transaction('rw', db.mathAnswerEvents, db.itemStates, async () => {
     for (const write of writes) {
+      const existing = await db.mathAnswerEvents.get(write.event.id);
+      if (existing) {
+        const equivalent = existing.relatedEvidence === true
+          && existing.sessionId === write.event.sessionId
+          && existing.cardKey === write.event.cardKey
+          && existing.evidenceSourceItemId === write.event.evidenceSourceItemId;
+        if (!equivalent) throw new Error(`Conflicting related-evidence event identity: ${write.event.id}`);
+        continue;
+      }
       await mathAnswerEventRepo.save(write.event);
       await itemStateRepo.save(write.state);
     }

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-16T23:15:25.742325+00:00",
+  "generated_at": "2026-07-16T23:36:44.191724+00:00",
   "repo_root": "/home/ubuntu/mathfan",
   "package": {
     "name": "mathfan",
@@ -570,9 +570,9 @@
     {
       "path": "scripts/e2e_mathfan.py",
       "ext": ".py",
-      "bytes": 54189,
-      "lines": 967,
-      "sha1": "430a8d596d92",
+      "bytes": 57152,
+      "lines": 999,
+      "sha1": "636c5617e21c",
       "imports": [
         "__future__",
         "json",
@@ -607,6 +607,7 @@
         "open_mastery_skill",
         "overlapping_goal_portfolio",
         "practice_save_failure_recovery",
+        "related_evidence_failure_recovery",
         "responsive_navigation",
         "run_practice_journey",
         "run_scenario",
@@ -641,6 +642,7 @@
         "open_mastery_skill",
         "overlapping_goal_portfolio",
         "practice_save_failure_recovery",
+        "related_evidence_failure_recovery",
         "responsive_navigation",
         "run_practice_journey",
         "run_scenario",
@@ -1097,9 +1099,9 @@
     {
       "path": "src/components/SessionSummary.tsx",
       "ext": ".tsx",
-      "bytes": 10529,
-      "lines": 317,
-      "sha1": "a64bd48f7d2a",
+      "bytes": 11532,
+      "lines": 339,
+      "sha1": "6918c5bfb097",
       "imports": [
         "react"
       ],
@@ -1374,9 +1376,9 @@
     {
       "path": "src/features/adaptive/relatedEvidence.ts",
       "ext": ".ts",
-      "bytes": 2487,
-      "lines": 54,
-      "sha1": "18d5eabdedab",
+      "bytes": 2725,
+      "lines": 59,
+      "sha1": "2aa04dbdd680",
       "imports": [
         "../../types/math",
         "../scheduler/scheduler",
@@ -1385,10 +1387,12 @@
       ],
       "exports": [
         "computeRelatedEvidence",
+        "relatedEvidenceEventId",
         "RelatedEvidenceUpdate"
       ],
       "functions": [
-        "computeRelatedEvidence"
+        "computeRelatedEvidence",
+        "relatedEvidenceEventId"
       ],
       "classes": [],
       "interfaces": [
@@ -1399,7 +1403,38 @@
       "hooks": [],
       "css_classes": [],
       "json_keys": [],
-      "purpose": "Exports reusable code: computeRelatedEvidence, RelatedEvidenceUpdate.",
+      "purpose": "Exports reusable code: computeRelatedEvidence, relatedEvidenceEventId, RelatedEvidenceUpdate.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/adaptive/relatedEvidenceRepair.ts",
+      "ext": ".ts",
+      "bytes": 4873,
+      "lines": 71,
+      "sha1": "21b66d553747",
+      "imports": [
+        "../../db/repositories",
+        "../curriculum/makeItemFromId",
+        "../learning/recordAnswer",
+        "../learning/schedulingTelemetry",
+        "../scheduler/cardModel",
+        "../scheduler/scheduler",
+        "./relatedEvidence"
+      ],
+      "exports": [],
+      "functions": [
+        "reconstructPendingRelatedEvidence",
+        "retryRecentRelatedEvidenceRepairs"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Support module that imports project/external dependencies.",
       "too_large": false,
       "read_error": null
     },
@@ -2746,13 +2781,14 @@
     {
       "path": "src/features/dashboard/StudentDashboard.tsx",
       "ext": ".tsx",
-      "bytes": 32509,
-      "lines": 619,
-      "sha1": "ebb6b6d23eec",
+      "bytes": 32716,
+      "lines": 624,
+      "sha1": "c9319a350c05",
       "imports": [
         "../../db/repositories",
         "../../types/math",
         "../../utils/rng",
+        "../adaptive/relatedEvidenceRepair",
         "../curriculum/describeItem",
         "../curriculum/makeItemFromId",
         "../goals/dailyNewGoalPlanner",
@@ -3979,9 +4015,9 @@
     {
       "path": "src/features/learning/recordAnswer.ts",
       "ext": ".ts",
-      "bytes": 2986,
-      "lines": 72,
-      "sha1": "a203167c9921",
+      "bytes": 3466,
+      "lines": 81,
+      "sha1": "0216b340dca4",
       "imports": [
         "../../db/dexie",
         "../../db/repositories",
@@ -5165,9 +5201,9 @@
     {
       "path": "src/features/practice/PracticeScreen.tsx",
       "ext": ".tsx",
-      "bytes": 24855,
-      "lines": 567,
-      "sha1": "b9280141ac25",
+      "bytes": 25185,
+      "lines": 571,
+      "sha1": "169df2372759",
       "imports": [
         "../../components/NumPad",
         "../../components/SessionSummary",
@@ -5245,9 +5281,9 @@
     {
       "path": "src/features/practice/usePracticeSession.ts",
       "ext": ".ts",
-      "bytes": 40790,
-      "lines": 821,
-      "sha1": "ea73e251ac29",
+      "bytes": 43729,
+      "lines": 873,
+      "sha1": "e7dc4d0b2f97",
       "imports": [
         "../../components/opSpecs",
         "../../db/dexie",
@@ -7750,9 +7786,9 @@
     {
       "path": "src/tests/components.test.tsx",
       "ext": ".tsx",
-      "bytes": 12887,
-      "lines": 368,
-      "sha1": "89fadf10b280",
+      "bytes": 13773,
+      "lines": 383,
+      "sha1": "8b2562c66aae",
       "imports": [
         "../components/NumPad",
         "../components/SessionSummary",
@@ -9486,9 +9522,9 @@
     {
       "path": "src/tests/practiceSession.test.ts",
       "ext": ".ts",
-      "bytes": 34950,
-      "lines": 739,
-      "sha1": "fab2e95b6954",
+      "bytes": 35469,
+      "lines": 746,
+      "sha1": "66043ded18e4",
       "imports": [
         "../db/repositories",
         "../features/curriculum/makeItemFromId",
@@ -9705,6 +9741,30 @@
         "mapOf",
         "state"
       ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/relatedEvidenceRepair.test.ts",
+      "ext": ".ts",
+      "bytes": 3551,
+      "lines": 65,
+      "sha1": "e249231090dd",
+      "imports": [
+        "../features/adaptive/relatedEvidenceRepair",
+        "../features/learning/learningEvents",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [],
       "classes": [],
       "interfaces": [],
       "types": [],
@@ -10298,9 +10358,9 @@
     {
       "path": "src/types/math.ts",
       "ext": ".ts",
-      "bytes": 15980,
-      "lines": 468,
-      "sha1": "4beee3304a20",
+      "bytes": 16213,
+      "lines": 472,
+      "sha1": "c66f476d8675",
       "imports": [
         "../features/curriculum/divisionItems",
         "../features/curriculum/measurementTypes",

@@ -25,7 +25,7 @@ import { db } from '../../db/dexie';
 import { appNow } from '../time/clock';
 import { generateId } from '../../utils/id';
 import { recordPracticeAnswer, recordRelatedEvidenceWrites, type PracticeAnswerPayload, type RelatedEvidenceWrite } from '../learning/recordAnswer';
-import { computeRelatedEvidence } from '../adaptive/relatedEvidence';
+import { computeRelatedEvidence, relatedEvidenceEventId } from '../adaptive/relatedEvidence';
 import { RELATED_EVIDENCE_GRADE } from '../scheduler/scheduler';
 import {
   applyMisconceptionConfirmation,
@@ -88,6 +88,8 @@ export interface SessionState {
   lastSession: LastSessionSummary | null;
   saveStatus: 'idle' | 'saving' | 'error';
   saveError: string | null;
+  auxiliarySaveStatus: 'idle' | 'saving' | 'complete' | 'error' | 'dismissed';
+  auxiliarySaveError: string | null;
 }
 
 // ── Internal state helpers ────────────────────────────────────────────────────
@@ -113,6 +115,8 @@ const INITIAL: SessionState = {
   lastSession: null,
   saveStatus: 'idle',
   saveError: null,
+  auxiliarySaveStatus: 'idle',
+  auxiliarySaveError: null,
 };
 
 // ── Hook ──────────────────────────────────────────────────────────────────────
@@ -145,6 +149,7 @@ export function usePracticeSession(studentId: string) {
   const currentPresentationIndexRef = useRef<number>(1);
   const directEvidenceCardsRef = useRef(new Set<string>());
   const pendingRelatedEvidenceRef = useRef(new Map<string, { cardKey: string; relatedItemId: string; sourceItemId: string }>());
+  const pendingRelatedWritesRef = useRef<RelatedEvidenceWrite[]>([]);
   const fluencyEventsRef = useRef<MathAnswerEvent[]>([]);
   const fluencyBaselinesRef = useRef<FluencyBaselineMap>(new Map());
   const pendingSaveRef = useRef<null | {
@@ -167,6 +172,7 @@ export function usePracticeSession(studentId: string) {
     schedulingGuardRef.current.reset();
     directEvidenceCardsRef.current.clear();
     pendingRelatedEvidenceRef.current.clear();
+    pendingRelatedWritesRef.current = [];
 
     const [allStates, fluencyEvents] = await Promise.all([
       itemStateRepo.getForStudent(studentId),
@@ -700,6 +706,8 @@ export function usePracticeSession(studentId: string) {
     if (prev.saveStatus !== 'idle' || pendingSaveRef.current) return;
     const nextPlanned = queueRef.current.shift();
 
+    let auxiliaryFailure: string | null = null;
+    let auxiliaryAttempted = false;
     if (!nextPlanned && prev.sessionId && pendingRelatedEvidenceRef.current.size > 0) {
       const now = appNow();
       const writes: RelatedEvidenceWrite[] = [];
@@ -712,7 +720,7 @@ export function usePracticeSession(studentId: string) {
         writes.push({
           state: after,
           event: {
-            id: generateId(), studentId, sessionId: prev.sessionId, itemId: candidate.relatedItemId,
+            id: relatedEvidenceEventId(prev.sessionId, candidate.cardKey), studentId, sessionId: prev.sessionId, itemId: candidate.relatedItemId,
             cardKey: candidate.cardKey, mode: 'practice', promptShown: factItem.prompt, correctAnswer: factItem.answer,
             studentAnswer: null, isCorrect: true, isRetry: false, hintUsed: false, latencyMs: 0,
             reviewGrade: RELATED_EVIDENCE_GRADE, factStatusBefore: before.masteryLevel, factStatusAfter: after.masteryLevel,
@@ -735,11 +743,19 @@ export function usePracticeSession(studentId: string) {
         });
       }
       if (writes.length) {
-        try { await recordRelatedEvidenceWrites(writes); }
-        catch (error) { console.error('[usePracticeSession] deferred related evidence write failed', error); return; }
-        for (const write of writes) statesRef.current.set(write.state.cardKey, write.state);
+        auxiliaryAttempted = true;
+        pendingRelatedWritesRef.current = writes;
+        try {
+          await recordRelatedEvidenceWrites(writes);
+          for (const write of writes) statesRef.current.set(write.state.cardKey, write.state);
+          pendingRelatedWritesRef.current = [];
+          pendingRelatedEvidenceRef.current.clear();
+        } catch (error) {
+          console.error('[usePracticeSession] deferred related evidence write failed', error);
+          auxiliaryFailure = 'Your answers are saved. One review-schedule update still needs to be saved.';
+        }
       }
-      pendingRelatedEvidenceRef.current.clear();
+      if (!writes.length) pendingRelatedEvidenceRef.current.clear();
     }
 
     // Persist session record (side effect before setState — pure event handler, not an updater).
@@ -769,6 +785,11 @@ export function usePracticeSession(studentId: string) {
             averageLatencyMs: avgMs,
             fastestCorrectMs: prev.fastestMs ?? undefined,
             endedAt: isEnding ? appNow().toISOString() : undefined,
+            relatedEvidenceStatus: isEnding
+              ? auxiliaryFailure ? 'error' : auxiliaryAttempted ? 'complete' : 'not_applicable'
+              : s.relatedEvidenceStatus,
+            relatedEvidenceError: auxiliaryFailure ?? undefined,
+            relatedEvidenceLastAttemptAt: auxiliaryAttempted ? appNow().toISOString() : s.relatedEvidenceLastAttemptAt,
           });
         }
       });
@@ -776,7 +797,11 @@ export function usePracticeSession(studentId: string) {
 
     let nextState: SessionState;
     if (!nextPlanned) {
-      nextState = { ...prev, phase: 'complete', correctResult: null, errorText: null };
+      nextState = {
+        ...prev, phase: 'complete', correctResult: null, errorText: null,
+        auxiliarySaveStatus: auxiliaryFailure ? 'error' : auxiliaryAttempted ? 'complete' : 'idle',
+        auxiliarySaveError: auxiliaryFailure,
+      };
     } else {
       questionStartRef.current = Date.now();
       currentAttemptsRef.current = 0;
@@ -797,6 +822,32 @@ export function usePracticeSession(studentId: string) {
     setState(nextState);
   }, [resolveItem, studentId]);
 
+  const retryAuxiliaryWrites = useCallback(async () => {
+    const writes = pendingRelatedWritesRef.current;
+    const sessionId = stateRef.current.sessionId;
+    if (!writes.length || !sessionId || stateRef.current.auxiliarySaveStatus === 'saving') return;
+    const saving = { ...stateRef.current, auxiliarySaveStatus: 'saving' as const, auxiliarySaveError: null };
+    stateRef.current = saving; setState(saving);
+    try {
+      await recordRelatedEvidenceWrites(writes);
+      for (const write of writes) statesRef.current.set(write.state.cardKey, write.state);
+      pendingRelatedWritesRef.current = [];
+      pendingRelatedEvidenceRef.current.clear();
+      const complete = { ...stateRef.current, auxiliarySaveStatus: 'complete' as const, auxiliarySaveError: null };
+      stateRef.current = complete; setState(complete);
+      const session = await sessionRepo.get(sessionId);
+      if (session) await sessionRepo.save({ ...session, relatedEvidenceStatus: 'complete', relatedEvidenceError: undefined, relatedEvidenceLastAttemptAt: appNow().toISOString() });
+    } catch {
+      const failed = { ...stateRef.current, auxiliarySaveStatus: 'error' as const, auxiliarySaveError: 'That review-schedule update still needs to be saved.' };
+      stateRef.current = failed; setState(failed);
+    }
+  }, []);
+
+  const dismissAuxiliaryWarning = useCallback(() => {
+    const dismissed = { ...stateRef.current, auxiliarySaveStatus: 'dismissed' as const, auxiliarySaveError: null };
+    stateRef.current = dismissed; setState(dismissed);
+  }, []);
+
   // ── resetSession ─────────────────────────────────────────────────────────
 
   const resetSession = useCallback(() => {
@@ -805,12 +856,13 @@ export function usePracticeSession(studentId: string) {
     schedulingGuardRef.current.reset();
     directEvidenceCardsRef.current.clear();
     pendingRelatedEvidenceRef.current.clear();
+    pendingRelatedWritesRef.current = [];
     pendingSaveRef.current = null;
     stateRef.current = INITIAL;
     setState(INITIAL);
   }, []);
 
-  return { state, startSession, submitAnswer, retrySave, nextQuestion, resetSession };
+  return { state, startSession, submitAnswer, retrySave, nextQuestion, retryAuxiliaryWrites, dismissAuxiliaryWarning, resetSession };
 }
 
 function getStaticItem(id: string): PracticeItem {
