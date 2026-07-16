@@ -1,6 +1,6 @@
 # Code Map Overview
 
-Generated: 2026-07-16 05:36:25 UTC
+Generated: 2026-07-16 05:51:52 UTC
 
 Repo root: `/home/ubuntu/mathfan`
 Output folder: `/home/ubuntu/mathfan/docs/code-map`
@@ -15,8 +15,8 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 - Version: `1.2.0`
 - Module type: `module`
 - Scanned files: **275**
-- Scanned lines: **50,416**
-- Scanned bytes: **2,094,008**
+- Scanned lines: **50,534**
+- Scanned bytes: **2,103,359**
 
 ## NPM scripts
 
@@ -74,13 +74,13 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 | --- | --- | --- | --- |
 | src/App.tsx | 401 | Top-level React app shell: routes/screens, global state, and feature wiring. | App, exportMigrationDiagnostics, handleQuizDone, handleSessionDone, pickOperation, retryMigration, runBootstrap, selectProfile |
 | src/features/sync/SyncWidget.tsx | 156 | Cloud sync/auth/data transfer logic. | GoogleIcon, SyncWidget, friendlyError, GoogleIcon, initials, SyncWidget, timeSince |
-| src/features/sync/snapshot.ts | 237 | Local persistence/database layer. | AppSnapshot, remoteHasNewerUpdatedAt, validateSnapshot, validTimeMs, buildSnapshot, mergeSnapshot, validateSnapshot |
+| src/features/sync/snapshot.ts | 256 | Local persistence/database layer. | AppSnapshot, OrphanReport, remoteHasNewerUpdatedAt, validateSnapshot, validTimeMs, buildSnapshot, findOrphanedStudentReferences, mergeCardStateCollision |
 | vite.config.ts | 82 | Vite build/PWA configuration. | buildInfoPlugin |
 | package.json | 53 | Project package metadata, scripts, dependencies, and dev tooling. |  |
 | src/main.tsx | 21 | React entry point that mounts the app. |  |
 | src/features/sync/driveSync.ts | 163 | Cloud sync/auth/data transfer logic. | DriveFileInfo, SyncResult, SyncStatus, authFetch, downloadSnapshot, findSyncFile, getDriveFileInfo, newestSyncFile |
 | src/features/sync/useSync.ts | 99 | Cloud sync/auth/data transfer logic. | useSync, initAuth, SyncState, useSync, recordSync, useSync |
-| src/features/sync/learnerKeyMerge.ts | 34 | Cloud sync/auth/data transfer logic. | resolveLearnerKeyDuplicate, resolveLearnerKeyDuplicate |
+| src/features/sync/learnerKeyMerge.ts | 69 | Cloud sync/auth/data transfer logic. | remapStudentId, resolveCanonicalStudentIds, resolveLearnerKeyDuplicate, StudentIdAliasMap, resolveCanonicalStudentIds, resolveLearnerKeyDuplicate |
 | src/features/sync/timeUtil.ts | 13 | Cloud sync/auth/data transfer logic. | remoteHasNewerUpdatedAt, validTimeMs, remoteHasNewerUpdatedAt, validTimeMs |
 | src/features/goals/GoalsPage.tsx | 1056 | React UI component file: ConfirmDialog, EmptyState, GoalCard, GoalWizard. | ConfirmDialog, EmptyState, GoalCard, GoalWizard, ProgressBar, SummaryCard, GoalsPage, activeLearningDays |
 | src/features/multiplication/MultiplicationQuizPage.tsx | 861 | Local persistence/database layer. | FactChip, SetupScreen, StatBox, SummaryScreen, MultiplicationQuizPage, FactChip, MultiplicationQuizPage, recommendedPracticeConfig |
@@ -571,7 +571,7 @@ Purpose: Local persistence/database layer.
    4: import { rebuildMultFactStatsFromEvents, rebuildItemStatesFromEvents } from '../learning/eventRebuild';
    5: import { db } from '../../db/dexie';
    6: import type { GoalEvaluation, GoalEvent, LearningGoal } from '../goals/types';
-   7: import { resolveLearnerKeyDuplicate } from './learnerKeyMerge';
+   7: import { remapStudentId, resolveCanonicalStudentIds, resolveLearnerKeyDuplicate, type StudentIdAliasMap } from './learnerKeyMerge';
    8: import { validTimeMs, remoteHasNewerUpdatedAt } from './timeUtil';
    9:
   10: export interface AppSnapshot {
@@ -625,7 +625,7 @@ Purpose: Local persistence/database layer.
   58:       db.itemStates.toArray(),
   59:       db.attempts.toArray(),
   60:       db.sessions.toArray(),
-... (176 more lines)
+... (195 more lines)
 ```
 
 ### `vite.config.ts`
@@ -956,6 +956,34 @@ Purpose: Cloud sync/auth/data transfer logic.
   31:     updatedAt: metadataSource.updatedAt,
   32:   };
   33: }
+  34:
+  35: export type StudentIdAliasMap = Map<string, string>;
+  36:
+  37: /** Chooses one stable owner ID for every duplicated learnerKey before child rows are merged. */
+  38: export function resolveCanonicalStudentIds(
+  39:   localProfiles: StudentProfile[],
+  40:   remoteProfiles: StudentProfile[],
+  41:   evidenceCounts: Record<string, number>,
+  42: ): StudentIdAliasMap {
+  43:   const aliases: StudentIdAliasMap = new Map();
+  44:   const localIds = new Set(localProfiles.map(profile => profile.id));
+  45:   const groups = new Map<string, StudentProfile[]>();
+  46:   for (const profile of [...localProfiles, ...remoteProfiles]) {
+  47:     aliases.set(profile.id, profile.id);
+  48:     if (!profile.learnerKey) continue;
+  49:     const group = groups.get(profile.learnerKey) ?? [];
+  50:     if (!group.some(existing => existing.id === profile.id)) group.push(profile);
+  51:     groups.set(profile.learnerKey, group);
+  52:   }
+  53:   for (const group of groups.values()) {
+  54:     if (group.length < 2) continue;
+  55:     const canonical = [...group].sort((a, b) =>
+  56:       (evidenceCounts[b.id] ?? 0) - (evidenceCounts[a.id] ?? 0)
+  57:       || Number(localIds.has(b.id)) - Number(localIds.has(a.id))
+  58:       || a.id.localeCompare(b.id)
+  59:     )[0].id;
+  60:     for (const profile of group) aliases.set(profile.id, canonical);
+... (8 more lines)
 ```
 
 ### `src/features/sync/timeUtil.ts`

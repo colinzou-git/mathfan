@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-16T05:36:25.113997+00:00",
+  "generated_at": "2026-07-16T05:51:52.699766+00:00",
   "repo_root": "/home/ubuntu/mathfan",
   "package": {
     "name": "mathfan",
@@ -421,9 +421,9 @@
     {
       "path": "PROGRESS.md",
       "ext": ".md",
-      "bytes": 8459,
-      "lines": 131,
-      "sha1": "fd3d79e73533",
+      "bytes": 8959,
+      "lines": 143,
+      "sha1": "8ab51794f1cd",
       "imports": [],
       "exports": [],
       "functions": [],
@@ -5921,22 +5921,28 @@
     {
       "path": "src/features/sync/learnerKeyMerge.ts",
       "ext": ".ts",
-      "bytes": 1314,
-      "lines": 34,
-      "sha1": "c35cb34f52ed",
+      "bytes": 2801,
+      "lines": 69,
+      "sha1": "f3aa98d3fbe2",
       "imports": [
         "../../types/math",
         "./snapshot"
       ],
       "exports": [
-        "resolveLearnerKeyDuplicate"
+        "remapStudentId",
+        "resolveCanonicalStudentIds",
+        "resolveLearnerKeyDuplicate",
+        "StudentIdAliasMap"
       ],
       "functions": [
+        "resolveCanonicalStudentIds",
         "resolveLearnerKeyDuplicate"
       ],
       "classes": [],
       "interfaces": [],
-      "types": [],
+      "types": [
+        "StudentIdAliasMap"
+      ],
       "components": [],
       "hooks": [],
       "css_classes": [],
@@ -5948,9 +5954,9 @@
     {
       "path": "src/features/sync/snapshot.ts",
       "ext": ".ts",
-      "bytes": 9385,
-      "lines": 237,
-      "sha1": "a002a25382f5",
+      "bytes": 11597,
+      "lines": 256,
+      "sha1": "eaa638410f6e",
       "imports": [
         "../../db/dexie",
         "../../types/math",
@@ -5963,18 +5969,23 @@
       ],
       "exports": [
         "AppSnapshot",
+        "OrphanReport",
         "remoteHasNewerUpdatedAt",
         "validateSnapshot",
         "validTimeMs"
       ],
       "functions": [
         "buildSnapshot",
+        "findOrphanedStudentReferences",
+        "mergeCardStateCollision",
         "mergeSnapshot",
+        "orphanReportInTransaction",
         "validateSnapshot"
       ],
       "classes": [],
       "interfaces": [
-        "AppSnapshot"
+        "AppSnapshot",
+        "OrphanReport"
       ],
       "types": [],
       "components": [],
@@ -8286,9 +8297,9 @@
     {
       "path": "src/tests/learnerKeyMerge.test.ts",
       "ext": ".ts",
-      "bytes": 6063,
-      "lines": 166,
-      "sha1": "2d3a42b27027",
+      "bytes": 11215,
+      "lines": 218,
+      "sha1": "f28a0e9a81d2",
       "imports": [
         "../db/dexie",
         "../features/learning/learningEvents",
@@ -8301,6 +8312,7 @@
       "functions": [
         "clearAll",
         "emptySnapshot",
+        "eventFor",
         "makeProfile"
       ],
       "classes": [],

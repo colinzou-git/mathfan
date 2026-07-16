@@ -31,3 +31,38 @@ export function resolveLearnerKeyDuplicate(
     updatedAt: metadataSource.updatedAt,
   };
 }
+
+export type StudentIdAliasMap = Map<string, string>;
+
+/** Chooses one stable owner ID for every duplicated learnerKey before child rows are merged. */
+export function resolveCanonicalStudentIds(
+  localProfiles: StudentProfile[],
+  remoteProfiles: StudentProfile[],
+  evidenceCounts: Record<string, number>,
+): StudentIdAliasMap {
+  const aliases: StudentIdAliasMap = new Map();
+  const localIds = new Set(localProfiles.map(profile => profile.id));
+  const groups = new Map<string, StudentProfile[]>();
+  for (const profile of [...localProfiles, ...remoteProfiles]) {
+    aliases.set(profile.id, profile.id);
+    if (!profile.learnerKey) continue;
+    const group = groups.get(profile.learnerKey) ?? [];
+    if (!group.some(existing => existing.id === profile.id)) group.push(profile);
+    groups.set(profile.learnerKey, group);
+  }
+  for (const group of groups.values()) {
+    if (group.length < 2) continue;
+    const canonical = [...group].sort((a, b) =>
+      (evidenceCounts[b.id] ?? 0) - (evidenceCounts[a.id] ?? 0)
+      || Number(localIds.has(b.id)) - Number(localIds.has(a.id))
+      || a.id.localeCompare(b.id)
+    )[0].id;
+    for (const profile of group) aliases.set(profile.id, canonical);
+  }
+  return aliases;
+}
+
+export function remapStudentId<T extends { studentId: string }>(record: T, aliases: StudentIdAliasMap): T {
+  const studentId = aliases.get(record.studentId) ?? record.studentId;
+  return studentId === record.studentId ? record : { ...record, studentId };
+}
