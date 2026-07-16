@@ -11,6 +11,7 @@
 | __future__ | 7 |
 | sys | 7 |
 | json | 4 |
+| node:fs | 3 |
 | os | 3 |
 | playwright.sync_api | 3 |
 | re | 3 |
@@ -19,7 +20,7 @@
 | datetime | 2 |
 | dexie | 2 |
 | jszip | 2 |
-| node:fs | 2 |
+| node:path | 2 |
 | ssl | 2 |
 | typing | 2 |
 | @dnd-kit/core | 1 |
@@ -39,7 +40,6 @@
 | http.server | 1 |
 | mafs | 1 |
 | math | 1 |
-| node:path | 1 |
 | node:url | 1 |
 | react-dom | 1 |
 | socket | 1 |
@@ -542,6 +542,7 @@
 | src/features/settings/SettingsPage.tsx | ../export/userDataExport |
 | src/features/settings/SettingsPage.tsx | ../goals/dailyNewGoalLimits |
 | src/features/settings/SettingsPage.tsx | ../sync/driveSync |
+| src/features/settings/SettingsPage.tsx | ../sync/snapshot |
 | src/features/settings/SettingsPage.tsx | ../theme/themes |
 | src/features/settings/SettingsPage.tsx | ../time/clock |
 | src/features/settings/SettingsPage.tsx | ./updateCheck |
@@ -610,7 +611,13 @@
 | src/features/sync/snapshot.ts | ../profile/profileBootstrap |
 | src/features/sync/snapshot.ts | ../scheduler/cardModel |
 | src/features/sync/snapshot.ts | ./learnerKeyMerge |
+| src/features/sync/snapshot.ts | ./snapshotParsers |
 | src/features/sync/snapshot.ts | ./timeUtil |
+| src/features/sync/snapshotParsers.ts | ../../types/math |
+| src/features/sync/snapshotParsers.ts | ../goals/types |
+| src/features/sync/snapshotParsers.ts | ../learning/learningEvents |
+| src/features/sync/snapshotParsers.ts | ../multiplication/types |
+| src/features/sync/snapshotParsers.ts | ./snapshot |
 | src/features/sync/SyncWidget.tsx | ../auth/googleAuth |
 | src/features/sync/SyncWidget.tsx | ./driveSync |
 | src/features/sync/useSync.ts | ../auth/googleAuth |

@@ -399,6 +399,40 @@ def standalone_pwa_share_flow(page: Page) -> None:
         raise AssertionError(f"Prepared file was not shared from the explicit click: {share_calls}")
 
 
+def legacy_downloaded_backup_restore(page: Page) -> None:
+    """Import a v1 downloaded backup and begin review from its legacy itemId state."""
+    create_profile(page, "RestoreTester", "e2e-legacy-backup")
+    student = page.evaluate("""async () => {
+        const db = await new Promise((resolve, reject) => { const request = indexedDB.open('mathfan'); request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error); });
+        const rows = await new Promise((resolve, reject) => { const request = db.transaction('students').objectStore('students').getAll(); request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error); });
+        db.close(); return rows[0];
+    }""")
+    legacy_state = {
+        "studentId": student["id"], "itemId": "MUL_8x7", "skillId": "g3-mul-tables-basic",
+        "attemptCount": 3, "correctCount": 2, "lastCorrect": True, "lastLatencyMs": 900,
+        "medianLatencyMs": 1000, "ease": 2.5, "stabilityDays": 1, "difficulty": 0.2,
+        "reps": 3, "lapses": 1, "masteryLevel": "learning",
+        "nextDueAt": "2026-01-01T00:00:00.000Z", "mistakePatterns": [],
+    }
+    backup = {
+        "appId": "mathfan", "snapshotVersion": 1, "snapshotAt": "2025-01-01T00:00:00.000Z",
+        "students": [student], "itemStates": [legacy_state], "attempts": [], "sessions": [],
+    }
+    page.get_by_test_id("open-settings").click()
+    page.get_by_label("Choose MathFan backup", exact=True).set_input_files({
+        "name": "mathfan-backup-v1.json",
+        "mimeType": "application/json",
+        "buffer": json.dumps(backup).encode("utf-8"),
+    })
+    expect(page.get_by_text("Backup imported successfully. Your restored progress is ready.", exact=True)).to_be_visible()
+    page.get_by_role("button", name="← Back", exact=True).click()
+    review_tile = page.locator("button").filter(has_text=re.compile(r"Multiply.*1"))
+    expect(review_tile).to_be_visible()
+    review_tile.click()
+    page.get_by_role("button", name="Start", exact=True).click()
+    expect(page.locator(".drill-q")).to_be_visible()
+
+
 def set_one_question_sessions(page: Page) -> None:
     page.get_by_test_id("open-settings").click()
     page.get_by_label("Default questions per session", exact=True).fill("1")
@@ -892,6 +926,7 @@ def main() -> int:
                 False,
             ),
             ("standalone-pwa-share", {"width": 1024, "height": 768}, standalone_pwa_share_flow, True),
+            ("legacy-downloaded-backup-restore", {"width": 1024, "height": 768}, legacy_downloaded_backup_restore, False),
             ("missing-side-lesson", {"width": 390, "height": 844}, area_perimeter_missing_side_lesson, False),
             ("area-perimeter-comparison", {"width": 1024, "height": 768}, area_perimeter_comparison_lesson, False),
             ("fraction-equivalence-visual", {"width": 390, "height": 844}, fraction_equivalence_visual_lesson, False),

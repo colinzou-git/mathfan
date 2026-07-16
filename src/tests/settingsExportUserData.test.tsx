@@ -10,11 +10,15 @@ const {
   downloadPreparedExportMock,
   prepareUserDataExportMock,
   sharePreparedExportMock,
+  normalizeSnapshotMock,
+  mergeNormalizedSnapshotMock,
 } = vi.hoisted(() => ({
   canShareExportArtifactMock: vi.fn(),
   downloadPreparedExportMock: vi.fn(),
   prepareUserDataExportMock: vi.fn(),
   sharePreparedExportMock: vi.fn(),
+  normalizeSnapshotMock: vi.fn(),
+  mergeNormalizedSnapshotMock: vi.fn(),
 }));
 
 vi.mock('../features/export/userDataExport', () => ({
@@ -24,6 +28,10 @@ vi.mock('../features/export/userDataExport', () => ({
   sharePreparedExport: sharePreparedExportMock,
 }));
 vi.mock('../features/sync/driveSync', () => ({ getDriveFileInfo: vi.fn(async () => null) }));
+vi.mock('../features/sync/snapshot', () => ({
+  normalizeSnapshot: normalizeSnapshotMock,
+  mergeNormalizedSnapshot: mergeNormalizedSnapshotMock,
+}));
 vi.mock('../db/repositories', () => ({ attemptRepo: { getAll: vi.fn(async () => []) } }));
 
 const profile: StudentProfile = {
@@ -90,6 +98,8 @@ beforeEach(() => {
     ok: true, filename: prepared.filename, format: prepared.format, delivery: 'download',
   }));
   sharePreparedExportMock.mockResolvedValue({ status: 'shared' });
+  normalizeSnapshotMock.mockReturnValue({ snapshot: { snapshotVersion: 3 }, problems: [], warnings: [] });
+  mergeNormalizedSnapshotMock.mockResolvedValue(undefined);
 });
 
 afterEach(() => {
@@ -98,6 +108,36 @@ afterEach(() => {
 });
 
 describe('Settings Export User Data', () => {
+  it('normalizes a downloaded backup before merging and reports record warnings', async () => {
+    normalizeSnapshotMock.mockReturnValue({
+      snapshot: { snapshotVersion: 3 },
+      problems: [],
+      warnings: [{ table: 'itemStates', recordId: 'REMOVED_ITEM', code: 'legacy', message: 'Legacy cache row was skipped.' }],
+    });
+    renderSettings();
+    const file = new File([JSON.stringify({ exportMetadata: {}, snapshot: { snapshotVersion: 1 } })], 'backup.json', { type: 'application/json' });
+    fireEvent.change(screen.getByLabelText('Choose MathFan backup'), { target: { files: [file] } });
+
+    await waitFor(() => expect(normalizeSnapshotMock).toHaveBeenCalledWith({ snapshotVersion: 1 }));
+    expect(mergeNormalizedSnapshotMock).toHaveBeenCalledWith({ snapshotVersion: 3 });
+    expect(await screen.findByText(/Backup imported successfully/i)).toBeVisible();
+    expect(screen.getByText(/itemStates record REMOVED_ITEM: Legacy cache row was skipped/i)).toBeVisible();
+  });
+
+  it('does not write anything when backup normalization reports a structural record error', async () => {
+    normalizeSnapshotMock.mockReturnValue({
+      problems: [{ table: 'itemStates', recordId: '7', code: 'missing_owner', message: 'Item state is missing studentId.' }],
+      warnings: [],
+    });
+    renderSettings();
+    const file = new File([JSON.stringify({ snapshotVersion: 1 })], 'broken.json', { type: 'application/json' });
+    fireEvent.change(screen.getByLabelText('Choose MathFan backup'), { target: { files: [file] } });
+
+    expect(await screen.findByText(/current progress was not changed/i)).toBeVisible();
+    expect(screen.getByText(/itemStates record 7: Item state is missing studentId/i)).toBeVisible();
+    expect(mergeNormalizedSnapshotMock).not.toHaveBeenCalled();
+  });
+
   it('is enabled while signed out and immediately downloads both formats in normal browsers', async () => {
     renderSettings();
     const button = screen.getByRole('button', { name: 'Export User Data' });

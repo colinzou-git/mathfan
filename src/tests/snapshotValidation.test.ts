@@ -2,6 +2,10 @@ import { describe, it, expect } from 'vitest';
 import { normalizeSnapshot, validateSnapshot } from '../features/sync/snapshot';
 import type { AppSnapshot } from '../features/sync/snapshot';
 import { makeItemFromId } from '../features/curriculum/makeItemFromId';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+
+const fixture = (name: string): unknown => JSON.parse(readFileSync(resolve(process.cwd(), 'src/tests/fixtures/snapshots', name), 'utf8'));
 
 function validSnapshot(overrides: Partial<AppSnapshot> = {}): AppSnapshot {
   return {
@@ -25,6 +29,12 @@ function without(snap: AppSnapshot, key: keyof AppSnapshot): Record<string, unkn
 // ── valid snapshots ────────────────────────────────────────────────────────────
 
 describe('validateSnapshot — valid inputs', () => {
+  it.each(['v1-valid-item-id-states.json', 'v2-valid-goals.json', 'v3-valid-current.json'])('normalizes immutable backward fixture %s', name => {
+    const result = normalizeSnapshot(fixture(name));
+    expect(result.problems).toEqual([]);
+    expect(result.snapshot?.snapshotVersion).toBe(3);
+    expect(result.snapshot?.itemStates.every(state => Boolean(state.cardKey))).toBe(true);
+  });
   it('accepts a minimal valid snapshot', () => {
     expect(validateSnapshot(validSnapshot())).toBe(true);
   });
@@ -66,6 +76,17 @@ describe('normalizeSnapshot — legacy card compatibility', () => {
     expect(result.snapshot?.itemStates[0]).toMatchObject({ cardKey: 'fact:mul:7x8', attemptCount: 5, stabilityDays: 9, reps: 5 });
   });
 
+  it('imports v2 goal data together with legacy itemId states', () => {
+    const result = normalizeSnapshot(validSnapshot({
+      snapshotVersion: 2,
+      students: [{ id: 's1', displayName: 'Alex' } as never],
+      itemStates: [{ studentId: 's1', itemId: 'MUL_7x8', skillId: 'mul', attemptCount: 2, correctCount: 1, lastCorrect: true, lastLatencyMs: 900, medianLatencyMs: 900, ease: 2.5, stabilityDays: 3, difficulty: .2, reps: 2, lapses: 0, masteryLevel: 'learning', mistakePatterns: [] } as never],
+      learningGoals: [], goalEvents: [], goalEvaluations: [],
+    }));
+    expect(result.problems).toEqual([]);
+    expect(result.snapshot?.itemStates[0]).toMatchObject({ cardKey: 'fact:mul:7x8', lastItemId: 'MUL_7x8' });
+  });
+
   it('reports and skips an unparseable optional legacy cache row', () => {
     const result = normalizeSnapshot(validSnapshot({ itemStates: [{ studentId: 's1', itemId: 'REMOVED_ITEM' }] as never }));
     expect(result.problems).toEqual([]);
@@ -80,11 +101,63 @@ describe('normalizeSnapshot — legacy card compatibility', () => {
   });
 });
 
+describe('normalizeSnapshot — strict external record boundary', () => {
+  const profile = { id: 's1', displayName: 'Alex', createdAt: '2026-01-01T00:00:00.000Z', settings: {} } as never;
+
+  it.each([
+    ['v3-invalid-attempt-missing-student.json', 'attempts', 'bad-attempt', 'missing_owner'],
+    ['v3-invalid-event-date.json', 'mathAnswerEvents', 'bad-event', 'invalid_timestamp'],
+    ['v3-invalid-goal-evaluation-response.json', 'goalEvaluations', 'bad-evaluation', 'invalid_answer'],
+    ['v3-orphaned-child.json', 'attempts', 'orphan-attempt', 'unknown_student_id'],
+  ])('returns precise diagnostics for fixture %s', (name, table, recordId, code) => {
+    const result = normalizeSnapshot(fixture(name));
+    expect(result.snapshot).toBeUndefined();
+    expect(result.problems).toContainEqual(expect.objectContaining({ table, recordId, code, message: expect.any(String) }));
+  });
+
+  it.each([
+    ['attempts', { id: 'a1', itemId: 'MUL_2x3' }, 'missing_owner'],
+    ['sessions', { id: 'session-1', studentId: 's1', startedAt: 'not-a-date' }, 'invalid_timestamp'],
+    ['mathAnswerEvents', { id: 'event-1', studentId: 's1', sessionId: 'session-1', itemId: 'MUL_2x3', mode: 'practice', promptShown: '2 × 3', latencyMs: 1, isCorrect: true, isRetry: false, hintUsed: false, createdAt: 'bad' }, 'invalid_timestamp'],
+  ] as const)('reports malformed %s rows before merge', (table, row, code) => {
+    const raw = validSnapshot({ students: [profile], [table]: [row] } as never);
+    const result = normalizeSnapshot(raw);
+    expect(result.snapshot).toBeUndefined();
+    expect(result.problems).toContainEqual(expect.objectContaining({ table, recordId: expect.any(String), code }));
+  });
+
+  it('reports invalid nested goal evaluation answers at the evaluation record', () => {
+    const result = normalizeSnapshot(validSnapshot({
+      snapshotVersion: 2, students: [profile], learningGoals: [], goalEvents: [],
+      goalEvaluations: [{ id: 'evaluation-1', studentId: 's1', status: 'completed', source: 'manual', createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-01-01T00:00:00Z', currentQuestionIndex: 1, plannedQuestionCount: 1, itemIds: ['MUL_2x3'], targetSkillIds: [], answers: [{ itemId: 'MUL_2x3' }] }] as never,
+    }));
+    expect(result.problems).toContainEqual(expect.objectContaining({ table: 'goalEvaluations', recordId: 'evaluation-1', code: 'invalid_answer' }));
+  });
+
+  it('rejects v3 cache rows without cardKey instead of treating them as optional legacy caches', () => {
+    const result = normalizeSnapshot(validSnapshot({
+      snapshotVersion: 3, students: [profile], itemStates: [{ studentId: 's1', itemId: 'REMOVED_ITEM' }] as never,
+      learningGoals: [], goalEvents: [], goalEvaluations: [],
+    }));
+    expect(result.problems).toContainEqual(expect.objectContaining({ table: 'itemStates', code: 'missing_card_key' }));
+    expect(result.warnings).toEqual([]);
+  });
+
+  it('rejects orphaned child ownership and does not mutate the raw input', () => {
+    const raw = validSnapshot({ attempts: [{ id: 'a1', studentId: 'missing', itemId: 'MUL_2x3', skillId: 'mul', sessionId: 'session', promptShown: '2 × 3', correctAnswer: 6, studentAnswer: 6, isCorrect: true, latencyMs: 1, reviewGrade: 'good', createdAt: '2026-01-01T00:00:00Z' }] as never });
+    const before = structuredClone(raw);
+    const result = normalizeSnapshot(raw);
+    expect(result.problems).toContainEqual(expect.objectContaining({ table: 'attempts', recordId: 'a1', code: 'unknown_student_id' }));
+    expect(raw).toEqual(before);
+  });
+});
+
 describe('normalizeSnapshot — practice content contracts', () => {
   it('repairs a single legacy content field in a persisted daily lesson', () => {
     const item = makeItemFromId('FEQ_1_2_4')!;
     const legacyItem = { ...item, contentSpec: undefined };
     const result = normalizeSnapshot(validSnapshot({
+      students: [{ id: 's1', displayName: 'Alex' } as never],
       dailyLessonPlans: [{
         id: 'lesson-1', studentId: 's1', localDate: '2026-06-01', timezone: 'UTC',
         plannerVersion: 'legacy', revision: 1, generatedAt: '', updatedAt: '', status: 'planned',

@@ -80,7 +80,7 @@ function baseSnapshot(overrides: Partial<AppSnapshot> = {}): AppSnapshot {
     appId: 'mathfan',
     snapshotVersion: 2,
     snapshotAt: '2026-06-01T00:00:00.000Z',
-    students: [],
+    students: [student()],
     itemStates: [],
     attempts: [],
     sessions: [],
@@ -221,7 +221,20 @@ beforeEach(() => {
 });
 
 describe('goal snapshot v2', () => {
+  it('performs zero database writes when any external row fails normalization', async () => {
+    mockDb.students.rows = [{ id: 'local-student' }];
+    mockDb.attempts.rows = [{ id: 'local-attempt' }];
+    const before = Object.fromEntries(Object.entries(mockDb).filter(([, value]) => value && typeof value === 'object' && 'rows' in value).map(([name, table]) => [name, structuredClone((table as { rows: unknown[] }).rows)]));
+    const malformed = baseSnapshot({ attempts: [{ id: 'broken-attempt', studentId: '', itemId: 'MUL_2x3' }] as never });
+
+    await expect(mergeSnapshot(malformed)).rejects.toThrow(/normalization failed/i);
+
+    const after = Object.fromEntries(Object.entries(mockDb).filter(([, value]) => value && typeof value === 'object' && 'rows' in value).map(([name, table]) => [name, (table as { rows: unknown[] }).rows]));
+    expect(after).toEqual(before);
+  });
+
   it('builds and validates a version-2 snapshot with goal arrays', async () => {
+    mockDb.students.rows = [student()];
     mockDb.learningGoals.rows = [goal()];
     mockDb.goalEvents.rows = [{
       id: 'event-1',
@@ -255,11 +268,11 @@ describe('goal snapshot v2', () => {
     await mergeSnapshot(baseSnapshot({
       learningGoals: [
         goal({ id: 'goal-1', title: 'Remote newer', updatedAt: '2026-06-11T00:00:00.000Z' }),
-        goal({ id: 'goal-2', title: 'Remote invalid', updatedAt: 'not-a-date' }),
+        goal({ id: 'goal-2', title: 'Remote older', updatedAt: '2026-05-01T00:00:00.000Z' }),
       ],
       goalEvaluations: [
         evaluation({ id: 'eval-1', currentQuestionIndex: 9, updatedAt: '2026-06-11T00:00:00.000Z' }),
-        evaluation({ id: 'eval-2', currentQuestionIndex: 99, updatedAt: 'not-a-date' }),
+        evaluation({ id: 'eval-2', currentQuestionIndex: 99, updatedAt: '2026-05-01T00:00:00.000Z' }),
       ],
     }));
 

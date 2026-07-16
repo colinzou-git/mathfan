@@ -11,9 +11,16 @@ import { deriveCardKey } from '../scheduler/cardModel';
 import { CARD_MODEL_VERSION } from '../learning/schedulingTelemetry';
 import { validatePracticeItem, withLegacyContentSpec } from '../curriculum/practiceContentSpec';
 import { loadActiveProfileSelection, saveActiveProfileSelection } from '../profile/profileBootstrap';
+import {
+  parseAttemptLog, parseDailyLessonPlanShape, parseGoalEvaluation, parseGoalEvent, parseLearningGoal,
+  parseMathAnswerEvent, parseMultiplicationFactStat, parsePracticeSession, parseQuizSession,
+  parseSnapshotTable, parseStudentItemState, parseStudentProfile,
+} from './snapshotParsers';
 
 export interface SnapshotFormatMetadata {
   appVersion: string;
+  gitSha: string;
+  buildTime: string;
   schemaVersion: 3;
   cardModelVersion: string;
   exportedAt: string;
@@ -86,7 +93,7 @@ export async function buildSnapshot(): Promise<AppSnapshotV3> {
       appId: 'mathfan',
       snapshotVersion: 3,
       snapshotAt: new Date().toISOString(),
-      metadata: { appVersion: __APP_VERSION__, schemaVersion: 3, cardModelVersion: CARD_MODEL_VERSION, exportedAt: new Date().toISOString() },
+      metadata: { appVersion: __APP_VERSION__, gitSha: __GIT_SHA__, buildTime: __BUILD_TIME__, schemaVersion: 3, cardModelVersion: CARD_MODEL_VERSION, exportedAt: new Date().toISOString() },
       students,
       itemStates,
       attempts,
@@ -202,14 +209,40 @@ export function normalizeSnapshot(raw: unknown): SnapshotNormalizationResult {
   if (problems.length) return { problems, warnings };
 
   const version = source.snapshotVersion as 1 | 2 | 3;
-  const students = (source.students as StudentProfile[]).filter((profile, index) => {
-    const valid = profile && typeof profile.id === 'string' && typeof profile.displayName === 'string';
-    if (!valid) problems.push({ table: 'students', recordId: String(index), code: 'invalid_profile', message: 'Student profile is missing required identity fields.' });
-    return valid;
-  });
+  if (typeof source.snapshotAt !== 'string' || validTimeMs(source.snapshotAt) === null) problems.push({ table: 'snapshot', code: 'invalid_timestamp', message: 'snapshotAt must be a valid timestamp.' });
   if (problems.length) return { problems, warnings };
-  const allChildArrays = ['attempts', 'sessions', 'multFactStats', 'quizSessions', 'mathAnswerEvents', 'learningGoals', 'goalEvents', 'goalEvaluations', 'dailyLessonPlans'] as const;
-  const childRows = Object.fromEntries(allChildArrays.map(table => [table, Array.isArray(source[table]) ? source[table] : []])) as Record<typeof allChildArrays[number], Array<{ studentId: string }>>;
+  const parsedTables = {
+    students: parseSnapshotTable('students', source.students, parseStudentProfile, true),
+    attempts: parseSnapshotTable('attempts', source.attempts, parseAttemptLog, true),
+    sessions: parseSnapshotTable('sessions', source.sessions, parsePracticeSession, true),
+    multFactStats: parseSnapshotTable('multFactStats', source.multFactStats, parseMultiplicationFactStat),
+    quizSessions: parseSnapshotTable('quizSessions', source.quizSessions, parseQuizSession),
+    mathAnswerEvents: parseSnapshotTable('mathAnswerEvents', source.mathAnswerEvents, parseMathAnswerEvent),
+    learningGoals: parseSnapshotTable('learningGoals', source.learningGoals, parseLearningGoal),
+    goalEvents: parseSnapshotTable('goalEvents', source.goalEvents, parseGoalEvent),
+    goalEvaluations: parseSnapshotTable('goalEvaluations', source.goalEvaluations, parseGoalEvaluation),
+    dailyLessonPlans: parseSnapshotTable('dailyLessonPlans', source.dailyLessonPlans, (value, index) => {
+      if (version < 3 && value && typeof value === 'object') {
+        const legacy = value as Record<string, unknown>;
+        return parseDailyLessonPlanShape({
+          ...legacy,
+          generatedAt: legacy.generatedAt || (typeof source.snapshotAt === 'string' ? source.snapshotAt : '1970-01-01T00:00:00.000Z'),
+          updatedAt: legacy.updatedAt || (typeof source.snapshotAt === 'string' ? source.snapshotAt : '1970-01-01T00:00:00.000Z'),
+        }, index);
+      }
+      return parseDailyLessonPlanShape(value, index);
+    }),
+  };
+  for (const result of Object.values(parsedTables)) { problems.push(...result.problems); warnings.push(...result.warnings); }
+  if (problems.length) return { problems, warnings };
+  const students = parsedTables.students.values;
+  const childRows = {
+    attempts: parsedTables.attempts.values, sessions: parsedTables.sessions.values,
+    multFactStats: parsedTables.multFactStats.values, quizSessions: parsedTables.quizSessions.values,
+    mathAnswerEvents: parsedTables.mathAnswerEvents.values, learningGoals: parsedTables.learningGoals.values,
+    goalEvents: parsedTables.goalEvents.values, goalEvaluations: parsedTables.goalEvaluations.values,
+    dailyLessonPlans: parsedTables.dailyLessonPlans.values,
+  };
   if (version >= 2 && (!Array.isArray(source.learningGoals) || !Array.isArray(source.goalEvents) || !Array.isArray(source.goalEvaluations))) {
     problems.push({ table: 'snapshot', code: 'missing_v2_tables', message: 'Version 2+ snapshots require goal arrays.' });
     return { problems, warnings };
@@ -233,8 +266,14 @@ export function normalizeSnapshot(raw: unknown): SnapshotNormalizationResult {
         state = { ...legacy, studentId: row.studentId, cardKey: deriveCardKey(item), lastItemId: itemId } as unknown as StudentItemState;
       }
     }
-    if (!state) { warnings.push({ table: 'itemStates', recordId: String(row.itemId ?? index), code: 'unparseable_legacy_item', message: 'Legacy cache row could not be reconstructed and was skipped; answer events remain importable.' }); continue; }
-    normalizedStates.push(remapStudentId(state, aliases));
+    if (!state) {
+      const diagnostic = { table: 'itemStates', recordId: String(row.itemId ?? index), code: version === 3 ? 'missing_card_key' : 'unparseable_legacy_item', message: version === 3 ? 'Version 3 item state is missing a canonical cardKey.' : 'Legacy cache row could not be reconstructed and was skipped; answer events remain importable.' };
+      if (version === 3) problems.push(diagnostic); else warnings.push(diagnostic);
+      continue;
+    }
+    const parsedState = parseStudentItemState(state, index);
+    if (!parsedState.ok) { problems.push(...parsedState.problems); continue; }
+    normalizedStates.push(remapStudentId(parsedState.value, aliases));
   }
   if (problems.length) return { problems, warnings };
   const itemStates = compoundMerge(normalizedStates, row => `${row.studentId}|${row.cardKey}`, mergeCardStateCollision);
@@ -261,11 +300,38 @@ export function normalizeSnapshot(raw: unknown): SnapshotNormalizationResult {
     table,
     table === 'dailyLessonPlans' ? normalizedDailyLessonPlans : rows.map(row => remapStudentId(row, aliases)),
   ]));
+  const canonicalStudentIds = new Set(canonicalProfiles.map(profile => profile.id));
+  for (const [table, rows] of Object.entries({ itemStates, ...remappedChildren })) {
+    const seen = new Map<string, string>();
+    for (const [index, value] of (rows as unknown as Array<Record<string, unknown>>).entries()) {
+      if (!canonicalStudentIds.has(String(value.studentId))) {
+        problems.push({ table, recordId: typeof value.id === 'string' ? value.id : String(index), code: 'unknown_student_id', message: `studentId does not resolve to a profile in this snapshot.` });
+      }
+      if (typeof value.id === 'string') {
+        const serialized = JSON.stringify(value);
+        const prior = seen.get(value.id);
+        if (prior !== undefined && prior !== serialized) problems.push({ table, recordId: value.id, code: 'conflicting_duplicate_id', message: 'Duplicate id has conflicting record contents.' });
+        seen.set(value.id, serialized);
+      }
+    }
+  }
+  if (version === 3) {
+    const lessonIds = new Set(parsedTables.dailyLessonPlans.values.map(plan => plan.id));
+    for (const event of remappedChildren.mathAnswerEvents as MathAnswerEvent[]) {
+      if (event.lessonPlanId && !lessonIds.has(event.lessonPlanId)) problems.push({ table: 'mathAnswerEvents', recordId: event.id, code: 'unknown_lesson_plan_id', message: 'lessonPlanId does not resolve to a daily lesson plan.' });
+    }
+  }
+  if (problems.length) return { problems, warnings };
   const snapshotAt = typeof source.snapshotAt === 'string' ? source.snapshotAt : new Date().toISOString();
   return {
     snapshot: {
       appId: 'mathfan', snapshotVersion: 3, snapshotAt,
-      metadata: { appVersion: typeof (source.metadata as Record<string, unknown> | undefined)?.appVersion === 'string' ? String((source.metadata as Record<string, unknown>).appVersion) : 'legacy', schemaVersion: 3, cardModelVersion: CARD_MODEL_VERSION, exportedAt: snapshotAt },
+      metadata: {
+        appVersion: typeof (source.metadata as Record<string, unknown> | undefined)?.appVersion === 'string' ? String((source.metadata as Record<string, unknown>).appVersion) : 'legacy',
+        gitSha: typeof (source.metadata as Record<string, unknown> | undefined)?.gitSha === 'string' ? String((source.metadata as Record<string, unknown>).gitSha) : 'legacy',
+        buildTime: typeof (source.metadata as Record<string, unknown> | undefined)?.buildTime === 'string' ? String((source.metadata as Record<string, unknown>).buildTime) : snapshotAt,
+        schemaVersion: 3, cardModelVersion: CARD_MODEL_VERSION, exportedAt: snapshotAt,
+      },
       students: canonicalProfiles, itemStates,
       attempts: remappedChildren.attempts as AttemptLog[], sessions: remappedChildren.sessions as PracticeSession[],
       multFactStats: remappedChildren.multFactStats as MultiplicationFactStats[], quizSessions: remappedChildren.quizSessions as QuizSession[],
@@ -276,7 +342,7 @@ export function normalizeSnapshot(raw: unknown): SnapshotNormalizationResult {
   };
 }
 
-export async function mergeSnapshot(remote: AppSnapshot): Promise<void> {
+export async function mergeSnapshot(remote: unknown): Promise<void> {
   const normalized = normalizeSnapshot(remote);
   if (!normalized.snapshot || normalized.problems.length) throw new Error(`Snapshot normalization failed: ${normalized.problems.map(problem => `${problem.table}:${problem.code}`).join(', ')}`);
   return mergeNormalizedSnapshot(normalized.snapshot);
