@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-16T08:47:42.548016+00:00",
+  "generated_at": "2026-07-16T09:03:10.013535+00:00",
   "repo_root": "/home/ubuntu/mathfan",
   "package": {
     "name": "mathfan",
@@ -421,9 +421,9 @@
     {
       "path": "PROGRESS.md",
       "ext": ".md",
-      "bytes": 9303,
-      "lines": 153,
-      "sha1": "5f22cac04d5d",
+      "bytes": 9353,
+      "lines": 154,
+      "sha1": "e051d1fd629d",
       "imports": [],
       "exports": [],
       "functions": [],
@@ -2196,11 +2196,12 @@
     {
       "path": "src/features/curriculum/measurementItems.ts",
       "ext": ".ts",
-      "bytes": 10901,
-      "lines": 209,
-      "sha1": "523098aed976",
+      "bytes": 15734,
+      "lines": 310,
+      "sha1": "a3cf14779a57",
       "imports": [
         "../../types/math",
+        "../../utils/rng",
         "./language",
         "./measurementTypes",
         "./regrouping"
@@ -2210,7 +2211,10 @@
         "buildElapsedTimeJumps",
         "clckId",
         "elapsedMinutes",
+        "ElapsedTimeConstraints",
         "etimeId",
+        "generateElapsedTimeSpec",
+        "generateMeasurementContextValues",
         "generateMeasurementItem",
         "lplotId",
         "makeBarGraphItem",
@@ -2220,15 +2224,19 @@
         "makeTimeItem",
         "MeasSchema",
         "minutesSinceMidnight",
-        "mwrdId"
+        "mwrdId",
+        "validateMeasurementItem"
       ],
       "functions": [
+        "assertValidMeasurementItem",
         "bargId",
         "buildElapsedTimeJumps",
         "clckId",
         "elapsedMinutes",
         "etimeId",
         "fmtTime",
+        "generateElapsedTimeSpec",
+        "generateMeasurementContextValues",
         "generateMeasurementItem",
         "lplotId",
         "makeBarGraphItem",
@@ -2241,11 +2249,14 @@
         "mwrdId",
         "n",
         "pad",
+        "validateMeasurementItem",
         "wrapH",
         "wrapM"
       ],
       "classes": [],
-      "interfaces": [],
+      "interfaces": [
+        "ElapsedTimeConstraints"
+      ],
       "types": [
         "MeasSchema"
       ],
@@ -6939,9 +6950,9 @@
     {
       "path": "src/features/visuals/ScaledBarGraphModel.tsx",
       "ext": ".tsx",
-      "bytes": 3370,
+      "bytes": 3366,
       "lines": 50,
-      "sha1": "fa5551b111e6",
+      "sha1": "d80e55cf3123",
       "imports": [
         "../curriculum/measurementTypes",
         "./barGraphGeometry"
@@ -8729,9 +8740,9 @@
     {
       "path": "src/tests/measurementRedesign.test.tsx",
       "ext": ".tsx",
-      "bytes": 7641,
-      "lines": 136,
-      "sha1": "a1da31f98c28",
+      "bytes": 11071,
+      "lines": 204,
+      "sha1": "37e0e7b4add1",
       "imports": [
         "../features/adaptive/candidatePools",
         "../features/curriculum/language",

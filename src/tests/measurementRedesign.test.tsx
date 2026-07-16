@@ -2,8 +2,9 @@ import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { selectSchemaBalancedItems } from '../features/adaptive/candidatePools';
 import {
-  buildElapsedTimeJumps, elapsedMinutes, generateMeasurementItem, makeBarGraphItem,
+  buildElapsedTimeJumps, elapsedMinutes, generateElapsedTimeSpec, generateMeasurementItem, makeBarGraphItem,
   makeElapsedTimeItem, makeLinePlotItem, makeMeasurementWordProblem, minutesSinceMidnight,
+  validateMeasurementItem,
 } from '../features/curriculum/measurementItems';
 import { articleFor, formatQuantity, pluralize } from '../features/curriculum/language';
 import { makeItemFromId } from '../features/curriculum/makeItemFromId';
@@ -26,6 +27,73 @@ describe('authentic measurement and data instances', () => {
       { from: { hour: 9, minute: 45 }, to: { hour: 10, minute: 0 }, minutes: 15 },
       { from: { hour: 10, minute: 0 }, to: { hour: 10, minute: 25 }, minutes: 25 },
     ]);
+  });
+
+  it('normalizes 12-hour rollover while preserving positive elapsed time', () => {
+    const acrossNoon = makeElapsedTimeItem(11, 45, 12, 15);
+    const afterTwelve = makeElapsedTimeItem(12, 45, 1, 15);
+    expect(acrossNoon.answer).toBe(30);
+    expect(afterTwelve.answer).toBe(30);
+    expect(afterTwelve.measurementSpec).toMatchObject({
+      start: { hour: 12, minute: 45 }, end: { hour: 1, minute: 15 },
+      crossesHour: true, durationMinutes: 30,
+    });
+    expect(buildElapsedTimeJumps({ hour: 12, minute: 45 }, { hour: 1, minute: 15 })).toEqual([
+      { from: { hour: 12, minute: 45 }, to: { hour: 1, minute: 0 }, minutes: 15 },
+      { from: { hour: 1, minute: 0 }, to: { hour: 1, minute: 15 }, minutes: 15 },
+    ]);
+  });
+
+  it.each(['elapsed_same_hour', 'elapsed_cross_hour'] as const)(
+    'satisfies %s invariants and deterministic reconstruction across 1,000 seeds',
+    schema => {
+      for (let seed = 0; seed < 1000; seed++) {
+        const item = generateMeasurementItem(schema, { rng: mulberry32(seed) });
+        const repeated = generateMeasurementItem(schema, { rng: mulberry32(seed) });
+        const rebuilt = makeItemFromId(item.id);
+        expect(item).toEqual(repeated);
+        expect(validateMeasurementItem(item)).toEqual([]);
+        expect(rebuilt?.answer).toBe(item.answer);
+        expect(rebuilt?.measurementSpec).toEqual(item.measurementSpec);
+        expect(deriveCardKey(rebuilt!)).toBe(deriveCardKey(item));
+        const spec = item.measurementSpec;
+        if (!spec || spec.kind !== 'elapsed_time') throw new Error('Expected elapsed-time spec');
+        expect(spec.durationMinutes).toBe(item.answer);
+        expect(spec.durationMinutes).toBeGreaterThan(0);
+        expect(spec.start.hour).toBeGreaterThanOrEqual(1);
+        expect(spec.start.hour).toBeLessThanOrEqual(12);
+        expect(spec.end.hour).toBeGreaterThanOrEqual(1);
+        expect(spec.end.hour).toBeLessThanOrEqual(12);
+        expect(spec.start.minute + spec.durationMinutes >= 60).toBe(schema === 'elapsed_cross_hour');
+      }
+    },
+  );
+
+  it('pure elapsed generator honors minute increments and named schemas', () => {
+    const same = generateElapsedTimeSpec({
+      schema: 'elapsed_same_hour', startHourMin: 12, startHourMax: 12,
+      minuteIncrement: 15, durationMin: 15, durationMax: 45,
+    }, mulberry32(2));
+    const cross = generateElapsedTimeSpec({
+      schema: 'elapsed_cross_hour', startHourMin: 12, startHourMax: 12,
+      minuteIncrement: 15, durationMin: 15, durationMax: 45,
+    }, mulberry32(2));
+    expect(same.start.minute % 15).toBe(0);
+    expect(same.start.minute + same.durationMinutes).toBeLessThan(60);
+    expect(cross.start.minute + cross.durationMinutes).toBeGreaterThanOrEqual(60);
+    expect(cross.end.hour).toBe(1);
+  });
+
+  it('keeps generated Grade 3 measurement subtraction nonnegative across 1,000 seeds', () => {
+    for (let seed = 0; seed < 1000; seed++) {
+      const item = generateMeasurementItem('measurement_subtract', { rng: mulberry32(seed) });
+      expect(Number(item.answer)).toBeGreaterThanOrEqual(0);
+      expect(validateMeasurementItem(item)).toEqual([]);
+      const rebuilt = makeItemFromId(item.id);
+      expect(rebuilt?.answer).toBe(item.answer);
+      expect(rebuilt?.measurementSpec).toEqual(item.measurementSpec);
+      expect(deriveCardKey(rebuilt!)).toBe(deriveCardKey(item));
+    }
   });
 
   it('renders a scaled bar graph without announcing the computed answer', () => {

@@ -165,6 +165,7 @@
 | src/features/curriculum/makeItemFromId.ts | ./twoStepItems |
 | src/features/curriculum/makeItemFromId.ts | ./wordProblemItems |
 | src/features/curriculum/measurementItems.ts | ../../types/math |
+| src/features/curriculum/measurementItems.ts | ../../utils/rng |
 | src/features/curriculum/measurementItems.ts | ./language |
 | src/features/curriculum/measurementItems.ts | ./measurementTypes |
 | src/features/curriculum/measurementItems.ts | ./regrouping |
