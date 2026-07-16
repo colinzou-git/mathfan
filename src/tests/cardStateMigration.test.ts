@@ -58,7 +58,7 @@ describe('runCardStateMigration', () => {
   it('replays events into card-keyed itemStates', async () => {
     await db.mathAnswerEvents.bulkPut([
       event({ id: 'e1', itemId: 'MUL_7x8' }),
-      event({ id: 'e2', itemId: 'MUL_8x7', createdAt: '2026-01-02T00:00:00.000Z' }),
+      event({ id: 'e2', sessionId: 'sess-2', itemId: 'MUL_8x7', createdAt: '2026-01-02T00:00:00.000Z' }),
     ]);
 
     const result = await runCardStateMigration();

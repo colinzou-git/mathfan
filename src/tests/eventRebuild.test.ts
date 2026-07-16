@@ -140,8 +140,8 @@ describe('rebuildItemStatesFromEvents — diagnostic events feed FSRS', () => {
 
   it('replays practice and diagnostic events for the same item in chronological order', async () => {
     fakeDb.mathAnswerEvents.rows = [
-      makeEvent({ id: 'p1', mode: 'practice', createdAt: '2026-06-01T10:00:00.000Z' }),
-      makeEvent({ id: 'd1', mode: 'diagnostic', createdAt: '2026-06-02T10:00:00.000Z' }),
+      makeEvent({ id: 'p1', sessionId: 'practice-session', mode: 'practice', createdAt: '2026-06-01T10:00:00.000Z' }),
+      makeEvent({ id: 'd1', sessionId: 'diagnostic-session', mode: 'diagnostic', createdAt: '2026-06-02T10:00:00.000Z' }),
     ];
 
     await rebuildItemStatesFromEvents(STUDENT);
@@ -163,6 +163,45 @@ describe('rebuildItemStatesFromEvents — diagnostic events feed FSRS', () => {
     expect(state).toBeDefined();
     // Quiz event ignored; only the diagnostic event was applied.
     expect(state!.reps).toBe(1);
+  });
+});
+
+describe('rebuildItemStatesFromEvents — scheduling eligibility', () => {
+  it('does not replay an explicitly ineligible repeat presentation', async () => {
+    fakeDb.mathAnswerEvents.rows = [
+      makeEvent({ id: 'first', schedulingEligible: true }),
+      makeEvent({ id: 'repeat', schedulingEligible: false, createdAt: '2026-06-01T10:01:00.000Z' }),
+    ];
+    await rebuildItemStatesFromEvents(STUDENT);
+    expect(fakeDb.itemStates.rows[0].reps).toBe(1);
+  });
+
+  it('honors telemetry-only ineligibility', async () => {
+    fakeDb.mathAnswerEvents.rows = [
+      makeEvent({ id: 'first', schedulingEligible: true }),
+      makeEvent({ id: 'repeat', schedulingTelemetry: { schedulingEligible: false } as never, createdAt: '2026-06-01T10:01:00.000Z' }),
+    ];
+    await rebuildItemStatesFromEvents(STUDENT);
+    expect(fakeDb.itemStates.rows[0].reps).toBe(1);
+  });
+
+  it('deduplicates legacy same-session card events but applies a later session', async () => {
+    fakeDb.mathAnswerEvents.rows = [
+      makeEvent({ id: 'legacy-1', sessionId: 'session-a' }),
+      makeEvent({ id: 'legacy-2', sessionId: 'session-a', itemId: 'MUL_8x7', createdAt: '2026-06-01T10:01:00.000Z' }),
+      makeEvent({ id: 'later', sessionId: 'session-b', createdAt: '2026-06-02T10:00:00.000Z' }),
+    ];
+    await rebuildItemStatesFromEvents(STUDENT);
+    expect(fakeDb.itemStates.rows[0].reps).toBe(2);
+  });
+
+  it('does not apply an explicitly ineligible related-evidence nudge', async () => {
+    fakeDb.mathAnswerEvents.rows = [
+      makeEvent({ id: 'direct', sessionId: 'session-a', schedulingEligible: true }),
+      makeEvent({ id: 'related', sessionId: 'session-b', relatedEvidence: true, evidenceSourceItemId: 'AREA_RECT_8x7', studentAnswer: null, reviewGrade: 'hard', schedulingEligible: false, createdAt: '2026-06-02T10:00:00.000Z' }),
+    ];
+    await rebuildItemStatesFromEvents(STUDENT);
+    expect(fakeDb.itemStates.rows[0].reps).toBe(1);
   });
 });
 
@@ -196,9 +235,9 @@ describe('rebuildItemStatesFromEvents — misconception tags survive rebuild', (
 describe('rebuildItemStatesFromEvents — related-evidence (cross-skill) events', () => {
   it('applies an indirect nudge AFTER direct history without touching accuracy counts', async () => {
     fakeDb.mathAnswerEvents.rows = [
-      makeEvent({ id: 'd1', mode: 'practice', itemId: 'MUL_8x7', isCorrect: true, reviewGrade: 'good', createdAt: '2026-06-01T10:00:00.000Z' }),
+      makeEvent({ id: 'd1', sessionId: 'direct-session', mode: 'practice', itemId: 'MUL_8x7', isCorrect: true, reviewGrade: 'good', createdAt: '2026-06-01T10:00:00.000Z' }),
       makeEvent({
-        id: 'r1', mode: 'practice', itemId: 'MUL_8x7',
+        id: 'r1', sessionId: 'related-session', mode: 'practice', itemId: 'MUL_8x7',
         relatedEvidence: true, evidenceSourceItemId: 'AREA_RECT_8x7',
         reviewGrade: 'hard', studentAnswer: null, latencyMs: 0,
         createdAt: '2026-06-02T10:00:00.000Z',

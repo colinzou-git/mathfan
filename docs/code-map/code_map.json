@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-16T06:02:42.079233+00:00",
+  "generated_at": "2026-07-16T06:10:53.677079+00:00",
   "repo_root": "/home/ubuntu/mathfan",
   "package": {
     "name": "mathfan",
@@ -421,9 +421,9 @@
     {
       "path": "PROGRESS.md",
       "ext": ".md",
-      "bytes": 8997,
-      "lines": 144,
-      "sha1": "1ed0ce1089b9",
+      "bytes": 9046,
+      "lines": 145,
+      "sha1": "df3e0c261411",
       "imports": [],
       "exports": [],
       "functions": [],
@@ -3690,9 +3690,9 @@
     {
       "path": "src/features/learning/eventRebuild.ts",
       "ext": ".ts",
-      "bytes": 7476,
-      "lines": 173,
-      "sha1": "0b177ffb996a",
+      "bytes": 7968,
+      "lines": 183,
+      "sha1": "b751c4580219",
       "imports": [
         "../../db/dexie",
         "../../types/math",
@@ -3705,11 +3705,14 @@
         "../scheduler/scheduler",
         "./learningEvents"
       ],
-      "exports": [],
+      "exports": [
+        "shouldApplyEventToScheduler"
+      ],
       "functions": [
         "gradeFromEvent",
         "rebuildItemStatesFromEvents",
-        "rebuildMultFactStatsFromEvents"
+        "rebuildMultFactStatsFromEvents",
+        "shouldApplyEventToScheduler"
       ],
       "classes": [],
       "interfaces": [],
@@ -7623,9 +7626,9 @@
     {
       "path": "src/tests/eventRebuild.test.ts",
       "ext": ".ts",
-      "bytes": 11075,
-      "lines": 279,
-      "sha1": "1a4c74bc740f",
+      "bytes": 13150,
+      "lines": 318,
+      "sha1": "016a0b237d8a",
       "imports": [
         "../features/learning/eventRebuild",
         "../features/learning/learningEvents",

@@ -19,6 +19,18 @@ import type { MultiplicationFactKey } from '../multiplication/types';
 import { legacyClassifyByLatency } from '../practice/answerChecker';
 import type { ReviewGrade } from '../../types/math';
 
+export function shouldApplyEventToScheduler(event: MathAnswerEvent, scheduledBySessionCard: Set<string>): boolean {
+  if (event.isRetry) return false;
+  const explicit = event.schedulingTelemetry?.schedulingEligible ?? event.schedulingEligible;
+  if (explicit === false) return false;
+  const cardKey = deriveCardKeyFromEvent(event);
+  if (!cardKey) return false;
+  const key = `${event.sessionId}|${cardKey}`;
+  if (explicit === undefined && scheduledBySessionCard.has(key)) return false;
+  scheduledBySessionCard.add(key);
+  return true;
+}
+
 /**
  * Derive the FSRS review grade from a stored event.
  * If reviewGrade was recorded, use it directly.
@@ -104,6 +116,7 @@ export async function rebuildItemStatesFromEvents(
   }
 
   const rebuilt = new Set<string>();
+  const scheduledBySessionCard = new Set<string>();
   for (const [cardKey, cardEvents] of byCard) {
     // Reconstruct a representative item (any event's itemId) purely to seed
     // skillId/difficulty for createInitialState — all events in this group
@@ -119,18 +132,15 @@ export async function rebuildItemStatesFromEvents(
     // untouched — matching the live write path and preserving legacy rows.
     let sawDirect = false;
     for (const event of cardEvents) {
-      // Skip retry events — they are logged for stats but don't update the
-      // scheduler. Old events that pre-date isRetry may lack the field; treat
-      // missing as false (first attempt) to preserve existing behaviour.
-      if (event.isRetry) continue;
-
       if (event.relatedEvidence) {
         // Indirect nudge — FSRS-only, and only once the card has direct history.
         if (!sawDirect) continue;
+        if (!shouldApplyEventToScheduler(event, scheduledBySessionCard)) continue;
         state = applyRelatedEvidence(state, new Date(event.createdAt));
         continue;
       }
 
+      if (!shouldApplyEventToScheduler(event, scheduledBySessionCard)) continue;
       sawDirect = true;
       const eventItem = makeItemFromId(event.itemId) ?? seedItem;
       state = applyReview(
