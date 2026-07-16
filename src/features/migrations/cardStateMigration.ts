@@ -103,6 +103,20 @@ export async function isCardStateMigrationComplete(): Promise<boolean> {
   return runs.some(r => r.status === 'completed');
 }
 
+async function recoverInterruptedRuns(): Promise<void> {
+  const interrupted = await db.dataMigrationRuns.where('kind').equals(MIGRATION_KIND).and(run => run.status === 'started').toArray();
+  for (const run of interrupted) {
+    const rollback = await rollbackCardStateMigration(run.id);
+    if (!rollback.ok) {
+      await db.dataMigrationRuns.update(run.id, {
+        status: 'failed',
+        completedAt: new Date().toISOString(),
+        error: `Interrupted migration could not be rolled back: ${rollback.error ?? 'missing backup'}`,
+      });
+    }
+  }
+}
+
 async function preflight(): Promise<{ ok: true; eventCount: number; studentIds: string[]; unparseable: number } | { ok: false; error: string }> {
   try {
     const events = await db.mathAnswerEvents
@@ -182,6 +196,8 @@ export async function runCardStateMigration(): Promise<MigrationRunResult> {
   if (await isCardStateMigrationComplete()) {
     return { status: 'skipped', runId: '' };
   }
+
+  await recoverInterruptedRuns();
 
   const runId = generateId();
   const startedAt = new Date().toISOString();

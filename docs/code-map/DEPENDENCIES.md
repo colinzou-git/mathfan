@@ -17,6 +17,7 @@
 | @vitejs/plugin-react | 2 |
 | argparse | 2 |
 | datetime | 2 |
+| dexie | 2 |
 | jszip | 2 |
 | node:fs | 2 |
 | ssl | 2 |
@@ -27,7 +28,6 @@
 | @testing-library/jest-dom | 1 |
 | ast | 1 |
 | dataclasses | 1 |
-| dexie | 1 |
 | eslint | 1 |
 | eslint-plugin-react-hooks | 1 |
 | eslint-plugin-react-refresh | 1 |
