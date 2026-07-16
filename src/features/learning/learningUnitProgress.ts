@@ -1,5 +1,6 @@
 import type { PracticeItem, StudentItemState } from '../../types/math';
 import type { MathAnswerEvent } from './learningEvents';
+import { compareEventsChronologically } from './eventOrdering';
 import { describeLearningCard, deriveCardKeyFromEvent } from '../scheduler/cardModel';
 
 export interface LearningUnitProgress {
@@ -69,7 +70,7 @@ export function deriveLearningUnitProgress(args: {
   for (const cardKey of cardKeys) {
     const descriptor = descriptors.get(cardKey);
     const state = statesByCard.get(cardKey);
-    const events = (eventsByCard.get(cardKey) ?? []).sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+    const events = (eventsByCard.get(cardKey) ?? []).sort(compareEventsChronologically);
     const kind = descriptor?.kind ?? (cardKey.startsWith('fact:') ? 'atomic_fact' : 'template');
     const schemaId = descriptor?.schemaId ?? events.at(-1)?.schemaId ?? cardKey;
     const instances = new Set(events.map(event => event.itemInstanceId ?? event.itemId));

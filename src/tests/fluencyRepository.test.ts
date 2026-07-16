@@ -40,3 +40,26 @@ describe('mathAnswerEventRepo.getDirectCorrectFirstAttempts', () => {
     expect(result.map(row => row.id)).toEqual(['same-a', 'same-b', 'later']);
   });
 });
+
+describe('ordered math answer event reads', () => {
+  it('returns chronological rows regardless of insertion or ID order', async () => {
+    await db.mathAnswerEvents.bulkPut([
+      event('000-newest', { createdAt: '2026-01-03T00:00:00.000Z' }),
+      event('zzz-oldest', { createdAt: '2026-01-01T00:00:00.000Z' }),
+      event('b-tie', { createdAt: '2026-01-02T00:00:00.000Z' }),
+      event('a-tie', { createdAt: '2026-01-02T00:00:00.000Z' }),
+    ]);
+    expect((await mathAnswerEventRepo.getAllChronological('student')).map(row => row.id))
+      .toEqual(['zzz-oldest', 'a-tie', 'b-tie', '000-newest']);
+    expect((await mathAnswerEventRepo.getRecentChronological('student', 2)).map(row => row.id))
+      .toEqual(['b-tie', '000-newest']);
+  });
+
+  it('excludes invalid timestamps from indexed chronological reads', async () => {
+    await db.mathAnswerEvents.bulkPut([
+      event('valid', { createdAt: '2026-01-01T00:00:00.000Z' }),
+      event('invalid', { createdAt: 'not-a-date' }),
+    ]);
+    expect((await mathAnswerEventRepo.getAllChronological('student')).map(row => row.id)).toEqual(['valid']);
+  });
+});

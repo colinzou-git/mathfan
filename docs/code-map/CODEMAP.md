@@ -1,6 +1,6 @@
 # Code Map Overview
 
-Generated: 2026-07-16 09:52:29 UTC
+Generated: 2026-07-16 10:01:46 UTC
 
 Repo root: `/home/ubuntu/mathfan`
 Output folder: `/home/ubuntu/mathfan/docs/code-map`
@@ -14,9 +14,9 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 - Package name: `mathfan`
 - Version: `1.2.0`
 - Module type: `module`
-- Scanned files: **283**
-- Scanned lines: **52,706**
-- Scanned bytes: **2,221,297**
+- Scanned files: **285**
+- Scanned lines: **52,824**
+- Scanned bytes: **2,227,024**
 
 ## NPM scripts
 
@@ -101,7 +101,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 | src/features/practice/usePracticeSession.ts | 774 | Local persistence/database layer. | usePracticeSession, CorrectResult, LastSessionSummary, SessionState, usePracticeSession, commit, getStaticItem, usePracticeSession |
 | src/features/goals/GoalEvaluationSession.tsx | 712 | Exports reusable code: GoalEvaluationSession. | GoalEvaluationSession, buildNewLearningCandidates, buildReviewFindings, buildUpdatedState, confirmCancel, continueNext, evaluationArgs, GoalEvaluationSession |
 | src/features/curriculum/areaItems.ts | 609 | Practice item definitions and ID generators for a math curriculum topic. | apChoiceId, areaPerimCmpId, areaPerimCompareItemIds, areaPerimeterChoiceItemIds, AreaPerimeterChoiceKind, AreaPerimeterSchema, AreaPerimVariant, areaRectangleItemIds |
-| src/features/diagnosis/DiagnosticSession.tsx | 604 | Exports reusable code: DiagnosticSession. | DiagnosticSession, complete, DiagnosticSession, onKey |
+| src/features/goals/goalEvaluationEngine.ts | 605 | Exports reusable code: ADAPTIVE_GOAL_EVALUATION_CONFIRMATION_COUNT, ADAPTIVE_GOAL_EVALUATION_HISTORICAL_PRIOR_CAP, ADAPTIVE_GOAL_EVALUATION_QUESTION_COUNT, AdaptiveGoalEvaluationArgs, AdaptiveGoalEvaluationItem. | ADAPTIVE_GOAL_EVALUATION_CONFIRMATION_COUNT, ADAPTIVE_GOAL_EVALUATION_HISTORICAL_PRIOR_CAP, ADAPTIVE_GOAL_EVALUATION_QUESTION_COUNT, AdaptiveGoalEvaluationArgs, AdaptiveGoalEvaluationItem, AdaptiveGoalEvaluationPhase, AdaptiveGoalEvaluationResponse, AdaptiveGoalEvaluationResult |
 
 ## Repository tree, filtered
 
@@ -206,6 +206,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   │   ├── GoalsPage.tsx
 │   │   │   └── types.ts
 │   │   ├── learning
+│   │   │   ├── eventOrdering.ts
 │   │   │   ├── eventRebuild.ts
 │   │   │   ├── eventValidation.ts
 │   │   │   ├── learningEvents.ts
@@ -334,6 +335,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   ├── diagnosticSession.test.tsx
 │   │   ├── divisionRedesign.test.tsx
 │   │   ├── driveSyncErrors.test.ts
+│   │   ├── eventOrdering.test.ts
 │   │   ├── eventRebuild.test.ts
 │   │   ├── fluencyEngine.test.ts
 │   │   ├── fluencyRepository.test.ts

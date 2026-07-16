@@ -4,7 +4,7 @@
 
 | Package | Import count |
 | --- | --- |
-| vitest | 85 |
+| vitest | 86 |
 | react | 35 |
 | @testing-library/react | 19 |
 | pathlib | 8 |
@@ -105,6 +105,7 @@
 | src/db/dexie.ts | ../features/multiplication/types |
 | src/db/dexie.ts | ../types/math |
 | src/db/repositories.ts | ../features/goals/types |
+| src/db/repositories.ts | ../features/learning/eventOrdering |
 | src/db/repositories.ts | ../features/learning/learningEvents |
 | src/db/repositories.ts | ../features/multiplication/types |
 | src/db/repositories.ts | ../features/profile/learnerIdentity |
@@ -249,6 +250,7 @@
 | src/features/goals/goalEvaluationEngine.ts | ../../types/math |
 | src/features/goals/goalEvaluationEngine.ts | ../../utils/rng |
 | src/features/goals/goalEvaluationEngine.ts | ../curriculum/makeItemFromId |
+| src/features/goals/goalEvaluationEngine.ts | ../learning/eventOrdering |
 | src/features/goals/goalEvaluationEngine.ts | ../learning/learningEvents |
 | src/features/goals/goalEvaluationEngine.ts | ../mastery/grade3MasteryMap |
 | src/features/goals/goalEvaluationEngine.ts | ../mastery/skillMapping |
@@ -317,6 +319,7 @@
 | src/features/goals/types.ts | ../../types/math |
 | src/features/goals/types.ts | ../learning/learningEvents |
 | src/features/goals/types.ts | ../mastery/skillMasteryEngine |
+| src/features/learning/eventOrdering.ts | ./learningEvents |
 | src/features/learning/eventRebuild.ts | ../../db/dexie |
 | src/features/learning/eventRebuild.ts | ../../types/math |
 | src/features/learning/eventRebuild.ts | ../curriculum/makeItemFromId |
@@ -326,6 +329,7 @@
 | src/features/learning/eventRebuild.ts | ../practice/answerChecker |
 | src/features/learning/eventRebuild.ts | ../scheduler/cardModel |
 | src/features/learning/eventRebuild.ts | ../scheduler/scheduler |
+| src/features/learning/eventRebuild.ts | ./eventOrdering |
 | src/features/learning/eventRebuild.ts | ./learningEvents |
 | src/features/learning/eventValidation.ts | ./learningEvents |
 | src/features/learning/learningEvents.ts | ../../db/dexie |
@@ -334,6 +338,7 @@
 | src/features/learning/learningEvents.ts | ./schedulingTelemetry |
 | src/features/learning/learningUnitProgress.ts | ../../types/math |
 | src/features/learning/learningUnitProgress.ts | ../scheduler/cardModel |
+| src/features/learning/learningUnitProgress.ts | ./eventOrdering |
 | src/features/learning/learningUnitProgress.ts | ./learningEvents |
 | src/features/learning/recordAnswer.ts | ../../db/dexie |
 | src/features/learning/recordAnswer.ts | ../../db/repositories |
@@ -355,6 +360,7 @@
 | src/features/learningPlan/dailyLessonPlanner.ts | ../adaptive/relatedItemMapping |
 | src/features/learningPlan/dailyLessonPlanner.ts | ../curriculum/makeItemFromId |
 | src/features/learningPlan/dailyLessonPlanner.ts | ../goals/types |
+| src/features/learningPlan/dailyLessonPlanner.ts | ../learning/eventOrdering |
 | src/features/learningPlan/dailyLessonPlanner.ts | ../learning/learningEvents |
 | src/features/learningPlan/dailyLessonPlanner.ts | ../learning/learningUnitProgress |
 | src/features/learningPlan/dailyLessonPlanner.ts | ../mastery/grade3MasteryMap |
@@ -732,6 +738,8 @@
 | src/tests/divisionRedesign.test.tsx | ../features/visuals/VisualModel |
 | src/tests/divisionRedesign.test.tsx | ../utils/rng |
 | src/tests/driveSyncErrors.test.ts | ../features/sync/driveSync |
+| src/tests/eventOrdering.test.ts | ../features/learning/eventOrdering |
+| src/tests/eventOrdering.test.ts | ../features/learning/learningEvents |
 | src/tests/eventRebuild.test.ts | ../features/learning/eventRebuild |
 | src/tests/eventRebuild.test.ts | ../features/learning/learningEvents |
 | src/tests/eventRebuild.test.ts | ../types/math |

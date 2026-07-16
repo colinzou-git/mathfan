@@ -63,4 +63,17 @@ describe('adaptive daily lesson planning', () => {
     expect(estimateItemSeconds(makeItemFromId('WRD2_muls_4_5_8')!, [])).toBe(45);
     expect(allocateLessonSegments(600, { retrieval: 20, focus: 20, transfer: 20 })).toEqual({ retrieval: 5, focus: 10, transfer: 5 });
   });
+
+  it('estimates from the five newest qualifying events independent of input order', () => {
+    const item = makeItemFromId('MUL_3x4')!;
+    const events = [10, 20, 30, 40, 50, 60].map((seconds, index) => ({
+      id: `event-${6 - index}`, studentId, sessionId: `session-${index}`,
+      itemId: item.id, mode: 'practice' as const, promptShown: item.prompt,
+      correctAnswer: item.answer, studentAnswer: item.answer, isCorrect: true,
+      isRetry: false, hintUsed: false, latencyMs: seconds * 1000,
+      createdAt: `2026-01-0${index + 1}T00:00:00.000Z`,
+    })).reverse();
+    expect(estimateItemSeconds(item, events)).toBe(40);
+    expect(estimateItemSeconds(item, [...events].reverse())).toBe(40);
+  });
 });

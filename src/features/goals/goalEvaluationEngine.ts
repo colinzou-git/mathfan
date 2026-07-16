@@ -7,6 +7,7 @@ import { makeItemFromId as defaultMakeItemFromId } from '../curriculum/makeItemF
 import type { PracticeItem, SessionConfig, StudentItemState } from '../../types/math';
 import { mulberry32, shuffled, type Rng } from '../../utils/rng';
 import { deriveCardKey } from '../scheduler/cardModel';
+import { compareEventsChronologically } from '../learning/eventOrdering';
 
 export type AdaptiveGoalEvaluationPhase = 'screening' | 'adaptive_probe' | 'confirmation';
 
@@ -241,7 +242,7 @@ function historicalEvidence(
 
   const result = new Map<string, { correctWeight: number; totalWeight: number }>();
   for (const [skillId, events] of bySkill) {
-    const sorted = events.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    const sorted = events.sort((a, b) => compareEventsChronologically(b, a));
     let correctWeight = 0;
     let totalWeight = 0;
     sorted.forEach((event, index) => {

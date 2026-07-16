@@ -11,6 +11,7 @@ import { getRelatedSkillIds } from '../adaptive/relatedItemMapping';
 import { rankFocusSkills } from './focusSkillSelector';
 import { deriveLearningUnitProgress } from '../learning/learningUnitProgress';
 import { learnerLocalDateKey } from '../time/localDate';
+import { chronologicalEvents } from '../learning/eventOrdering';
 
 export type LessonSegmentKind = 'retrieval' | 'focus' | 'transfer';
 export interface PlannedLessonItem { item: PracticeItem; cardKey: string; segment: LessonSegmentKind; rationale: string; schedulingEligible: boolean }
@@ -22,7 +23,11 @@ export interface LessonAllocation { retrieval: number; focus: number; transfer: 
 
 const COMPLEX_TYPES = new Set(['word_problem', 'elapsed_time', 'area_perimeter_compare', 'perimeter_unknown_side']);
 export function estimateItemSeconds(item: PracticeItem, events: MathAnswerEvent[]): number {
-  const history = events.filter(event => event.itemId === item.id && event.isCorrect).slice(-5).map(event => event.latencyMs).filter(value => value > 0);
+  const history = chronologicalEvents(events)
+    .filter(event => event.itemId === item.id && event.isCorrect)
+    .slice(-5)
+    .map(event => event.latencyMs)
+    .filter(value => value > 0);
   if (history.length) return Math.max(8, Math.min(90, Math.round(history.reduce((sum, value) => sum + value, 0) / history.length / 1000)));
   if (COMPLEX_TYPES.has(item.itemType) || item.wordProblemSpec?.steps.length === 2) return 45;
   if (item.visualSpec || item.measurementSpec || item.fractionSpec || item.divisionSpec || item.arithmeticSpec) return 30;

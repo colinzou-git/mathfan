@@ -330,6 +330,17 @@ describe('Adaptive Goal Evaluation evidence model', () => {
     expect(evidence.alpha + evidence.beta).toBeLessThanOrEqual(4 + ADAPTIVE_GOAL_EVALUATION_HISTORICAL_PRIOR_CAP);
   });
 
+  it('weights historical evidence by timestamp rather than insertion order', () => {
+    const oldWrong = event({ id: 'z-old', isCorrect: false, createdAt: '2026-01-01T00:00:00.000Z' });
+    const newCorrect = event({ id: 'a-new', isCorrect: true, createdAt: '2026-06-01T00:00:00.000Z' });
+    const forward = buildAdaptiveGoalSkillEvidence(baseArgs({ mathAnswerEvents: [oldWrong, newCorrect] }))
+      .find(item => item.skillId === 'g3-mul-tables-basic')!;
+    const reversed = buildAdaptiveGoalSkillEvidence(baseArgs({ mathAnswerEvents: [newCorrect, oldWrong] }))
+      .find(item => item.skillId === 'g3-mul-tables-basic')!;
+    expect(reversed.historicalCorrectWeight).toBe(forward.historicalCorrectWeight);
+    expect(forward.historicalCorrectWeight).toBeGreaterThan(forward.historicalWeight / 2);
+  });
+
   it('produces recommendation-ready strengths, skills to strengthen, ready-next skills, and top candidates', () => {
     const responses = selectedResponses(n => n % 4 !== 0);
     const result = buildAdaptiveGoalEvaluationResult(baseArgs({ responses }));

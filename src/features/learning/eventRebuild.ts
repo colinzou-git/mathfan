@@ -22,6 +22,7 @@ import { deriveMasteryFromEvents } from '../multiplication/masteryEngine';
 import type { MultiplicationFactKey } from '../multiplication/types';
 import { legacyClassifyByLatency } from '../practice/answerChecker';
 import type { ReviewGrade } from '../../types/math';
+import { compareEventsChronologically } from './eventOrdering';
 
 export function shouldApplyEventToScheduler(event: MathAnswerEvent, scheduledBySessionCard: Set<string>): boolean {
   if (event.isRetry) return false;
@@ -109,7 +110,7 @@ export async function rebuildItemStatesFromEvents(
     return;
   }
 
-  events.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  events.sort(compareEventsChronologically);
 
   const byCard = new Map<string, MathAnswerEvent[]>();
   for (const e of events) {

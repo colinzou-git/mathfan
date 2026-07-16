@@ -4,6 +4,7 @@ import type { MathAnswerEvent } from '../features/learning/learningEvents';
 import type { QuizSession, MultiplicationFactStats, MultiplicationFactKey } from '../features/multiplication/types';
 import type { GoalEvaluation, GoalEvent, LearningGoal, LearningGoalStatus } from '../features/goals/types';
 import { profileCreationMatch } from '../features/profile/learnerIdentity';
+import { chronologicalEvents, compareEventsChronologically } from '../features/learning/eventOrdering';
 
 export const studentRepo = {
   async getAll(): Promise<StudentProfile[]> {
@@ -111,7 +112,23 @@ export const mathAnswerEventRepo = {
     await db.mathAnswerEvents.bulkPut(events);
   },
   async getAll(studentId: string): Promise<MathAnswerEvent[]> {
+    // Ordering intentionally unspecified. Recency-sensitive callers must use an ordered method below.
     return db.mathAnswerEvents.where('studentId').equals(studentId).toArray();
+  },
+  async getAllChronological(studentId: string): Promise<MathAnswerEvent[]> {
+    const events = await db.mathAnswerEvents
+      .where('[studentId+createdAt]')
+      .between([studentId, ''], [studentId, '\uffff'])
+      .toArray();
+    return chronologicalEvents(events);
+  },
+  async getRecentChronological(studentId: string, limit: number): Promise<MathAnswerEvent[]> {
+    if (limit <= 0) return [];
+    const events = await db.mathAnswerEvents
+      .where('[studentId+createdAt]')
+      .between([studentId, ''], [studentId, '\uffff'])
+      .toArray();
+    return chronologicalEvents(events).slice(-limit);
   },
   async getForDateRange(studentId: string, start: Date, end: Date): Promise<MathAnswerEvent[]> {
     return db.mathAnswerEvents
@@ -148,7 +165,7 @@ export const mathAnswerEventRepo = {
         && Number.isFinite(e.latencyMs)
         && e.latencyMs > 0)
       .toArray();
-    return events.sort((a, b) => a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id));
+    return events.sort(compareEventsChronologically);
   },
 };
 

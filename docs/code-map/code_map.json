@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-16T09:52:29.179649+00:00",
+  "generated_at": "2026-07-16T10:01:46.087997+00:00",
   "repo_root": "/home/ubuntu/mathfan",
   "package": {
     "name": "mathfan",
@@ -421,9 +421,9 @@
     {
       "path": "PROGRESS.md",
       "ext": ".md",
-      "bytes": 9503,
-      "lines": 157,
-      "sha1": "b46aeb0e40e3",
+      "bytes": 9553,
+      "lines": 158,
+      "sha1": "3e9f7ef4e9c3",
       "imports": [],
       "exports": [],
       "functions": [],
@@ -1218,11 +1218,12 @@
     {
       "path": "src/db/repositories.ts",
       "ext": ".ts",
-      "bytes": 15418,
-      "lines": 356,
-      "sha1": "5c2fb79d1a98",
+      "bytes": 16196,
+      "lines": 373,
+      "sha1": "26dd64f26028",
       "imports": [
         "../features/goals/types",
+        "../features/learning/eventOrdering",
         "../features/learning/learningEvents",
         "../features/multiplication/types",
         "../features/profile/learnerIdentity",
@@ -3216,13 +3217,14 @@
     {
       "path": "src/features/goals/goalEvaluationEngine.ts",
       "ext": ".ts",
-      "bytes": 23674,
-      "lines": 604,
-      "sha1": "d3b181be3b8d",
+      "bytes": 23744,
+      "lines": 605,
+      "sha1": "8b775baa0764",
       "imports": [
         "../../types/math",
         "../../utils/rng",
         "../curriculum/makeItemFromId",
+        "../learning/eventOrdering",
         "../learning/learningEvents",
         "../mastery/grade3MasteryMap",
         "../mastery/skillMapping",
@@ -3719,11 +3721,41 @@
       "read_error": null
     },
     {
+      "path": "src/features/learning/eventOrdering.ts",
+      "ext": ".ts",
+      "bytes": 890,
+      "lines": 21,
+      "sha1": "cd08330364ef",
+      "imports": [
+        "./learningEvents"
+      ],
+      "exports": [
+        "chronologicalEvents",
+        "compareEventsChronologically",
+        "validEventTimeMs"
+      ],
+      "functions": [
+        "chronologicalEvents",
+        "compareEventsChronologically",
+        "validEventTimeMs"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Exports reusable code: chronologicalEvents, compareEventsChronologically, validEventTimeMs.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/features/learning/eventRebuild.ts",
       "ext": ".ts",
-      "bytes": 8932,
-      "lines": 203,
-      "sha1": "bfc1409182a1",
+      "bytes": 8976,
+      "lines": 204,
+      "sha1": "dd91c60bb413",
       "imports": [
         "../../db/dexie",
         "../../types/math",
@@ -3734,6 +3766,7 @@
         "../practice/answerChecker",
         "../scheduler/cardModel",
         "../scheduler/scheduler",
+        "./eventOrdering",
         "./learningEvents"
       ],
       "exports": [
@@ -3835,12 +3868,13 @@
     {
       "path": "src/features/learning/learningUnitProgress.ts",
       "ext": ".ts",
-      "bytes": 4881,
-      "lines": 115,
-      "sha1": "a59268e30473",
+      "bytes": 4925,
+      "lines": 116,
+      "sha1": "a4a1e67e2979",
       "imports": [
         "../../types/math",
         "../scheduler/cardModel",
+        "./eventOrdering",
         "./learningEvents"
       ],
       "exports": [
@@ -4003,14 +4037,15 @@
     {
       "path": "src/features/learningPlan/dailyLessonPlanner.ts",
       "ext": ".ts",
-      "bytes": 8881,
-      "lines": 89,
-      "sha1": "984f7291dd75",
+      "bytes": 8987,
+      "lines": 94,
+      "sha1": "ddb1643f6fe9",
       "imports": [
         "../../types/math",
         "../adaptive/relatedItemMapping",
         "../curriculum/makeItemFromId",
         "../goals/types",
+        "../learning/eventOrdering",
         "../learning/learningEvents",
         "../learning/learningUnitProgress",
         "../mastery/grade3MasteryMap",
@@ -7633,9 +7668,9 @@
     {
       "path": "src/tests/dailyLessonPlanner.test.ts",
       "ext": ".ts",
-      "bytes": 5573,
-      "lines": 67,
-      "sha1": "71641084b639",
+      "bytes": 6285,
+      "lines": 80,
+      "sha1": "571e86056bd3",
       "imports": [
         "../features/curriculum/makeItemFromId",
         "../features/goals/types",
@@ -7863,6 +7898,30 @@
       "read_error": null
     },
     {
+      "path": "src/tests/eventOrdering.test.ts",
+      "ext": ".ts",
+      "bytes": 1099,
+      "lines": 24,
+      "sha1": "ad8407b11c0a",
+      "imports": [
+        "../features/learning/eventOrdering",
+        "../features/learning/learningEvents",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/tests/eventRebuild.test.ts",
       "ext": ".ts",
       "bytes": 15508,
@@ -7922,9 +7981,9 @@
     {
       "path": "src/tests/fluencyRepository.test.ts",
       "ext": ".ts",
-      "bytes": 1844,
-      "lines": 43,
-      "sha1": "b6d8af594aae",
+      "bytes": 2967,
+      "lines": 66,
+      "sha1": "46821eacfe15",
       "imports": [
         "../db/dexie",
         "../db/repositories",
@@ -8064,9 +8123,9 @@
     {
       "path": "src/tests/goalEvaluationEngine.test.tsx",
       "ext": ".tsx",
-      "bytes": 13968,
-      "lines": 342,
-      "sha1": "56fad35084e9",
+      "bytes": 14779,
+      "lines": 353,
+      "sha1": "b3a2c32f706d",
       "imports": [
         "../features/curriculum/makeItemFromId",
         "../features/goals/goalEvaluationEngine",
