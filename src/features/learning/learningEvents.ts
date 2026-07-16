@@ -75,7 +75,10 @@ export interface MathAnswerEvent {
    * imported) to avoid a dependency cycle through fluencyEngine.
    */
   ratingReason?: 'incorrect' | 'independent_correct' | 'fast_fluent_correct' | 'slow_fluent_correct'
-    | 'supported_correct' | 'same_session_repeat' | 'not_scheduling_eligible';
+    | 'supported_correct' | 'same_session_repeat' | 'not_scheduling_eligible'
+    | 'untimed_assessment_correct' | 'untimed_assessment_incorrect';
+  /** Whether latency was eligible to affect the review grade. */
+  gradingContext?: 'practice' | 'untimed_assessment' | 'fluency_assessment';
   /** Task-complexity policy applied — see ResponsePolicyKind in features/scheduler/responsePolicy. */
   responsePolicy?: 'atomic_fluency' | 'procedural' | 'conceptual' | 'multi_step' | 'visual_interpretation';
   /** Speed classification — see FluencyBand in features/fluency/fluencyEngine. Only meaningful for atomic_fluency cards. */

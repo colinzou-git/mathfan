@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-16T11:20:07.133338+00:00",
+  "generated_at": "2026-07-16T18:54:28.297248+00:00",
   "repo_root": "/home/ubuntu/mathfan",
   "package": {
     "name": "mathfan",
@@ -3015,9 +3015,9 @@
     {
       "path": "src/features/fluency/fluencyEngine.ts",
       "ext": ".ts",
-      "bytes": 2891,
-      "lines": 81,
-      "sha1": "4ff60645e166",
+      "bytes": 3020,
+      "lines": 82,
+      "sha1": "446710c824a2",
       "imports": [
         "../learning/learningEvents",
         "../scheduler/responsePolicy"
@@ -3407,9 +3407,9 @@
     {
       "path": "src/features/goals/GoalEvaluationSession.tsx",
       "ext": ".tsx",
-      "bytes": 33192,
-      "lines": 712,
-      "sha1": "416fc86569f4",
+      "bytes": 33649,
+      "lines": 728,
+      "sha1": "44583dc69b54",
       "imports": [
         "../../components/NumPad",
         "../../db/repositories",
@@ -3891,9 +3891,9 @@
     {
       "path": "src/features/learning/learningEvents.ts",
       "ext": ".ts",
-      "bytes": 5491,
-      "lines": 122,
-      "sha1": "feeb1c46f258",
+      "bytes": 5702,
+      "lines": 125,
+      "sha1": "afd1161e4694",
       "imports": [
         "../../db/dexie",
         "../../types/math",
@@ -4013,9 +4013,9 @@
     {
       "path": "src/features/learning/schedulingTelemetry.ts",
       "ext": ".ts",
-      "bytes": 6981,
-      "lines": 141,
-      "sha1": "f4fa0677f0d1",
+      "bytes": 7139,
+      "lines": 144,
+      "sha1": "318e7a36bafb",
       "imports": [
         "../../types/math",
         "../curriculum/practiceContentSpec",
@@ -4997,9 +4997,9 @@
     {
       "path": "src/features/practice/answerChecker.ts",
       "ext": ".ts",
-      "bytes": 7536,
-      "lines": 215,
-      "sha1": "dba63732922d",
+      "bytes": 8277,
+      "lines": 235,
+      "sha1": "7fbf50eeace5",
       "imports": [
         "../../types/math",
         "../fluency/fluencyEngine",
@@ -5032,7 +5032,9 @@
         "RatingReason"
       ],
       "components": [],
-      "hooks": [],
+      "hooks": [
+        "useLatencyForFsrs"
+      ],
       "css_classes": [],
       "json_keys": [],
       "purpose": "Practice session UI and/or quiz interaction logic.",
@@ -5493,14 +5495,15 @@
     {
       "path": "src/features/scheduler/responsePolicy.ts",
       "ext": ".ts",
-      "bytes": 2293,
-      "lines": 76,
-      "sha1": "c6cc8b0d3f26",
+      "bytes": 2387,
+      "lines": 78,
+      "sha1": "cc4366cac415",
       "imports": [
         "../../types/math",
         "./cardModel"
       ],
       "exports": [
+        "AnswerGradingContext",
         "DEFAULT_FLUENCY_EASY_MS",
         "DEFAULT_FLUENCY_HARD_MS",
         "policyForCard",
@@ -5518,6 +5521,7 @@
         "ResponsePolicy"
       ],
       "types": [
+        "AnswerGradingContext",
         "ResponsePolicyKind"
       ],
       "components": [],
@@ -7443,9 +7447,9 @@
     {
       "path": "src/tests/answerChecker.test.ts",
       "ext": ".ts",
-      "bytes": 9308,
-      "lines": 209,
-      "sha1": "f6ac29226f63",
+      "bytes": 10084,
+      "lines": 227,
+      "sha1": "ade802e11f4b",
       "imports": [
         "../features/fluency/fluencyEngine",
         "../features/practice/answerChecker",
@@ -8029,9 +8033,9 @@
     {
       "path": "src/tests/fluencyEngine.test.ts",
       "ext": ".ts",
-      "bytes": 4788,
-      "lines": 99,
-      "sha1": "91ceaf047050",
+      "bytes": 5369,
+      "lines": 113,
+      "sha1": "27e2c75510c3",
       "imports": [
         "../features/fluency/fluencyEngine",
         "../features/learning/learningEvents",
@@ -8236,9 +8240,9 @@
     {
       "path": "src/tests/goalEvaluationSession.test.tsx",
       "ext": ".tsx",
-      "bytes": 14099,
-      "lines": 376,
-      "sha1": "a95f829338ca",
+      "bytes": 14962,
+      "lines": 399,
+      "sha1": "ddd66f3ac74c",
       "imports": [
         "../db/repositories",
         "../features/goals/goalEvaluationPersistence",
@@ -9409,9 +9413,9 @@
     {
       "path": "src/tests/schedulingTelemetry.test.ts",
       "ext": ".ts",
-      "bytes": 5524,
-      "lines": 81,
-      "sha1": "3e31ab616dc5",
+      "bytes": 6521,
+      "lines": 111,
+      "sha1": "359fb2b905c3",
       "imports": [
         "../features/analytics/learningQuality",
         "../features/analytics/schedulingCalibration",

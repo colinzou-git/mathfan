@@ -180,6 +180,29 @@ afterEach(() => {
   cleanup();
 });
 
+describe('untimed grading', () => {
+  it('persists evaluation latency without using it to strengthen or weaken the review grade', async () => {
+    renderEvaluation();
+    await startEvaluation();
+    await answerCurrent();
+    await waitFor(() => expect(recordGoalEvaluationAnswer).toHaveBeenCalledTimes(1));
+
+    const write = vi.mocked(recordGoalEvaluationAnswer).mock.calls[0][0];
+    expect(write.event.latencyMs).toBeGreaterThan(0);
+    expect(write.event).toMatchObject({
+      reviewGrade: 'good',
+      ratingReason: 'untimed_assessment_correct',
+      gradingContext: 'untimed_assessment',
+    });
+    expect(write.event.schedulingTelemetry?.rating).toMatchObject({
+      reviewGrade: 'good',
+      ratingReason: 'untimed_assessment_correct',
+      gradingContext: 'untimed_assessment',
+      fluencyBaselineSource: 'not_applicable',
+    });
+  });
+});
+
 describe('GoalEvaluationSession', () => {
   it('starts and cancels with confirmation', async () => {
     const callbacks = renderEvaluation();

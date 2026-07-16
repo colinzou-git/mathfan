@@ -9,7 +9,7 @@ import { GRADE3_MASTERY_MAP, getGrade3Skill } from '../mastery/grade3MasteryMap'
 import { inferGrade3SkillId } from '../mastery/skillMapping';
 import { planLearningUnitsForSkill } from '../mastery/skillPracticePlanner';
 import { checkAnswer, type RatingReason } from '../practice/answerChecker';
-import type { ResponsePolicyKind } from '../scheduler/responsePolicy';
+import type { AnswerGradingContext, ResponsePolicyKind } from '../scheduler/responsePolicy';
 import type { FluencyBand } from '../fluency/fluencyEngine';
 import { QuestionRenderer } from '../practice/QuestionRenderer';
 import { applyReview, createInitialState } from '../scheduler/scheduler';
@@ -60,6 +60,7 @@ interface PendingWrite {
   reviewGrade: ReviewGrade;
   ratingReason: RatingReason;
   responsePolicy: ResponsePolicyKind;
+  gradingContext: AnswerGradingContext;
   fluencyBand: FluencyBand;
   item: PracticeItem;
   skillId: string;
@@ -352,6 +353,7 @@ export function GoalEvaluationSession({ studentId, onCancel, onReturnToGoals, on
         latencyMs: pending.latencyMs,
         ratingReason: pending.ratingReason,
         responsePolicy: pending.responsePolicy,
+        gradingContext: pending.gradingContext,
         fluencyBand: pending.fluencyBand,
         detectedMisconceptions: misconceptionUpdate?.detected.length ? misconceptionUpdate.detected : undefined,
         confirmedMisconceptions: misconceptionUpdate?.confirmed.length ? misconceptionUpdate.confirmed : undefined,
@@ -366,7 +368,20 @@ export function GoalEvaluationSession({ studentId, onCancel, onReturnToGoals, on
           item: pending.item,
           stateBefore: existing ?? createInitialState(studentId, pending.item),
           stateAfter: schedulingApplied ? stateAfter : undefined,
-          response: { reviewGrade: pending.reviewGrade, ratingReason: pending.ratingReason, responsePolicy: pending.responsePolicy, fluencyBand: pending.fluencyBand, hintUsed: false, isRetry: false, schedulingEligible, schedulingApplied, schedulerErrorCode: misconceptionUpdate?.schedulerErrorCode },
+          response: {
+            reviewGrade: pending.reviewGrade,
+            ratingReason: pending.ratingReason,
+            responsePolicy: pending.responsePolicy,
+            gradingContext: pending.gradingContext,
+            fluencyBand: pending.fluencyBand,
+            fluencyBaselineSource: 'not_applicable',
+            fluencySampleCount: 0,
+            hintUsed: false,
+            isRetry: false,
+            schedulingEligible,
+            schedulingApplied,
+            schedulerErrorCode: misconceptionUpdate?.schedulerErrorCode,
+          },
           selection: { origin: 'goal', rationaleCodes: ['active_goal', 'diagnostic_coverage', schedulingReason] },
           presentationIndex: 1, attemptNo: 1, now: nowDate,
           schedulingReason,
@@ -454,7 +469,7 @@ export function GoalEvaluationSession({ studentId, onCancel, onReturnToGoals, on
   const submit = useCallback(() => {
     if (!currentItem || !selection || saving || phase !== 'active' || !input.trim()) return;
     const latencyMs = Math.max(1, Math.round(performance.now() - startMsRef.current));
-    const checked = checkAnswer(currentItem, input, latencyMs);
+    const checked = checkAnswer(currentItem, input, latencyMs, { gradingContext: 'untimed_assessment' });
     const pending: PendingWrite = {
       eventId: generateId(),
       attemptId: generateId(),
@@ -465,6 +480,7 @@ export function GoalEvaluationSession({ studentId, onCancel, onReturnToGoals, on
       reviewGrade: checked.reviewGrade,
       ratingReason: checked.ratingReason,
       responsePolicy: checked.policyKind,
+      gradingContext: checked.gradingContext,
       fluencyBand: checked.fluencyBand,
       item: currentItem,
       skillId: selection.skillId,

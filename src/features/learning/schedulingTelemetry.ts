@@ -1,7 +1,7 @@
 import type { MasteryLevel, PracticeItem, ReviewGrade, SelectionContext, SelectionOrigin, StudentItemState } from '../../types/math';
 import type { FluencyBand } from '../fluency/fluencyEngine';
 import type { RatingReason } from '../practice/answerChecker';
-import type { ResponsePolicyKind } from '../scheduler/responsePolicy';
+import type { AnswerGradingContext, ResponsePolicyKind } from '../scheduler/responsePolicy';
 import { describeLearningCard } from '../scheduler/cardModel';
 import { currentRetrievability } from '../scheduler/fsrsAdapter';
 import { contentSpecForItem } from '../curriculum/practiceContentSpec';
@@ -58,6 +58,7 @@ export interface SchedulingTelemetry {
   before?: SchedulingStateSnapshot;
   after?: SchedulingStateSnapshot;
   rating: { reviewGrade: ReviewGrade; ratingReason?: RatingReason; responsePolicy?: ResponsePolicyKind; fluencyBand?: FluencyBand;
+    gradingContext?: AnswerGradingContext;
     fluencyBaselineSource?: 'student' | 'policy_default' | 'not_applicable'; fluencySampleCount?: number;
     fluencyFastCutoffMs?: number; fluencySlowCutoffMs?: number };
   instance: ItemInstanceTelemetry;
@@ -67,6 +68,7 @@ export interface ResponseTelemetryEvidence {
   reviewGrade: ReviewGrade;
   ratingReason?: RatingReason;
   responsePolicy?: ResponsePolicyKind;
+  gradingContext?: AnswerGradingContext;
   fluencyBand?: FluencyBand;
   fluencyBaselineSource?: 'student' | 'policy_default' | 'not_applicable';
   fluencySampleCount?: number;
@@ -133,6 +135,7 @@ export function buildSchedulingTelemetry(args: {
     after: args.stateAfter ? snapshotSchedulingState(args.stateAfter, args.now) : undefined,
     rating: { reviewGrade: args.response.reviewGrade, ratingReason: args.response.ratingReason,
       responsePolicy: args.response.responsePolicy, fluencyBand: args.response.fluencyBand,
+      gradingContext: args.response.gradingContext,
       fluencyBaselineSource: args.response.fluencyBaselineSource, fluencySampleCount: args.response.fluencySampleCount,
       fluencyFastCutoffMs: args.response.fluencyFastCutoffMs, fluencySlowCutoffMs: args.response.fluencySlowCutoffMs },
     instance: telemetryForItem(args.item),

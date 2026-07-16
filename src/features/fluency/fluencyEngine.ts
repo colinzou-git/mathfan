@@ -37,6 +37,7 @@ export function deriveFluencyBaseline(
 ): StudentFluencyBaseline | null {
   const latencies = events
     .filter(e => !e.isRetry && !e.relatedEvidence && e.isCorrect)
+    .filter(e => e.gradingContext === undefined || e.gradingContext === 'practice' || e.gradingContext === 'fluency_assessment')
     .filter(e => (e.cardKey ?? e.itemId) === cardFamily)
     .map(e => e.latencyMs)
     .sort((a, b) => a - b);

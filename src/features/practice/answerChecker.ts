@@ -1,5 +1,10 @@
 import type { PracticeItem, ReviewGrade } from '../../types/math';
-import { policyForItem, DEFAULT_FLUENCY_EASY_MS, DEFAULT_FLUENCY_HARD_MS } from '../scheduler/responsePolicy';
+import {
+  policyForItem,
+  DEFAULT_FLUENCY_EASY_MS,
+  DEFAULT_FLUENCY_HARD_MS,
+  type AnswerGradingContext,
+} from '../scheduler/responsePolicy';
 import { classifyFluency, type FluencyBand, type StudentFluencyBaseline } from '../fluency/fluencyEngine';
 
 // Legacy fixed thresholds — kept only for classifying pre-#27 historical events
@@ -18,7 +23,9 @@ export type RatingReason =
   | 'slow_fluent_correct'
   | 'supported_correct'
   | 'same_session_repeat'
-  | 'not_scheduling_eligible';
+  | 'not_scheduling_eligible'
+  | 'untimed_assessment_correct'
+  | 'untimed_assessment_incorrect';
 
 export interface ResponseEvidence {
   isCorrect: boolean;
@@ -26,6 +33,7 @@ export interface ResponseEvidence {
   ratingReason: RatingReason;
   fluencyBand: FluencyBand;
   policyKind: ReturnType<typeof policyForItem>['kind'];
+  gradingContext: AnswerGradingContext;
   schedulingEligible: boolean;
   fluencyBaselineSource: 'student' | 'policy_default' | 'not_applicable';
   fluencySampleCount: number;
@@ -50,6 +58,8 @@ export interface CheckAnswerOptions {
   hintUsed?: boolean;
   /** Student-relative latency baseline for this card, when available. Falls back to policy defaults when omitted. */
   studentFluency?: StudentFluencyBaseline | null;
+  /** Whether latency is valid FSRS evidence for this answer. */
+  gradingContext?: AnswerGradingContext;
 }
 
 export function checkAnswer(
@@ -87,6 +97,7 @@ export function checkAnswer(
     latencyMs,
     hintUsed: options.hintUsed ?? false,
     studentFluency: options.studentFluency,
+    gradingContext: options.gradingContext ?? 'practice',
   });
 
   return { ...evidence, latencyMs, correctAnswer, studentAnswer };
@@ -112,11 +123,14 @@ export function classifyResponse(
     latencyMs: number;
     hintUsed: boolean;
     studentFluency?: StudentFluencyBaseline | null;
+    gradingContext?: AnswerGradingContext;
   }
 ): ResponseEvidence {
   const policy = policyForItem(item);
   const { isCorrect, latencyMs, hintUsed, studentFluency } = context;
-  const fluencyMetadata = policy.useLatencyForFsrs
+  const gradingContext = context.gradingContext ?? 'practice';
+  const useLatencyForFsrs = policy.useLatencyForFsrs && gradingContext !== 'untimed_assessment';
+  const fluencyMetadata = useLatencyForFsrs
     ? {
         fluencyBaselineSource: studentFluency ? 'student' as const : 'policy_default' as const,
         fluencySampleCount: studentFluency?.sampleCount ?? 0,
@@ -129,9 +143,10 @@ export function classifyResponse(
     return {
       isCorrect: false,
       reviewGrade: 'again',
-      ratingReason: 'incorrect',
+      ratingReason: gradingContext === 'untimed_assessment' ? 'untimed_assessment_incorrect' : 'incorrect',
       fluencyBand: 'not_applicable',
       policyKind: policy.kind,
+      gradingContext,
       schedulingEligible: true,
       ...fluencyMetadata,
     };
@@ -147,18 +162,20 @@ export function classifyResponse(
       ratingReason: 'supported_correct',
       fluencyBand: 'not_applicable',
       policyKind: policy.kind,
+      gradingContext,
       schedulingEligible: false,
       ...fluencyMetadata,
     };
   }
 
-  if (!policy.useLatencyForFsrs) {
+  if (!useLatencyForFsrs) {
     return {
       isCorrect: true,
       reviewGrade: 'good',
-      ratingReason: 'independent_correct',
-      fluencyBand: classifyFluency(latencyMs, policy, studentFluency),
+      ratingReason: gradingContext === 'untimed_assessment' ? 'untimed_assessment_correct' : 'independent_correct',
+      fluencyBand: 'not_applicable',
       policyKind: policy.kind,
+      gradingContext,
       schedulingEligible: true,
       ...fluencyMetadata,
     };
@@ -172,6 +189,7 @@ export function classifyResponse(
       ratingReason: 'slow_fluent_correct',
       fluencyBand,
       policyKind: policy.kind,
+      gradingContext,
       schedulingEligible: true,
       ...fluencyMetadata,
     };
@@ -185,6 +203,7 @@ export function classifyResponse(
       ratingReason: 'fast_fluent_correct',
       fluencyBand,
       policyKind: policy.kind,
+      gradingContext,
       schedulingEligible: true,
       ...fluencyMetadata,
     };
@@ -195,6 +214,7 @@ export function classifyResponse(
     ratingReason: 'independent_correct',
     fluencyBand,
     policyKind: policy.kind,
+    gradingContext,
     schedulingEligible: true,
     ...fluencyMetadata,
   };

@@ -15,6 +15,8 @@ export type ResponsePolicyKind =
   | 'multi_step'
   | 'visual_interpretation';
 
+export type AnswerGradingContext = 'practice' | 'untimed_assessment' | 'fluency_assessment';
+
 export interface ResponsePolicy {
   kind: ResponsePolicyKind;
   useLatencyForFsrs: boolean;

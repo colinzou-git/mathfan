@@ -72,6 +72,20 @@ describe('deriveFluencyBaseline', () => {
     const baseline = deriveFluencyBaseline(events, 'fact:mul:7x8');
     expect(baseline!.medianMs).toBeLessThan(2000);
   });
+
+  it('excludes untimed assessment latency from personal fluency evidence', () => {
+    const events = [
+      ...Array.from({ length: MIN_BASELINE_SAMPLES }, (_, i) => event({ latencyMs: 1000 + i })),
+      ...Array.from({ length: MIN_BASELINE_SAMPLES }, () => event({
+        latencyMs: 50_000,
+        mode: 'goal_evaluation',
+        gradingContext: 'untimed_assessment',
+      })),
+    ];
+    const baseline = deriveFluencyBaseline(events, 'fact:mul:7x8');
+    expect(baseline!.sampleCount).toBe(MIN_BASELINE_SAMPLES);
+    expect(baseline!.medianMs).toBeLessThan(2000);
+  });
 });
 
 describe('classifyFluency', () => {

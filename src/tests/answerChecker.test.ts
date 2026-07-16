@@ -192,6 +192,24 @@ describe('checkAnswer — carries the full response evidence', () => {
     expect(r.policyKind).toBe('atomic_fluency');
     expect(r.schedulingEligible).toBe(true);
   });
+  it('grades untimed atomic assessments by correctness, not latency', () => {
+    const fast = checkAnswer(mulFact, '56', 500, { gradingContext: 'untimed_assessment' });
+    const slow = checkAnswer(mulFact, '56', 20_000, { gradingContext: 'untimed_assessment' });
+    const wrong = checkAnswer(mulFact, '55', 500, { gradingContext: 'untimed_assessment' });
+
+    expect(fast).toMatchObject({
+      reviewGrade: 'good',
+      ratingReason: 'untimed_assessment_correct',
+      gradingContext: 'untimed_assessment',
+      fluencyBand: 'not_applicable',
+      fluencyBaselineSource: 'not_applicable',
+    });
+    expect(slow.reviewGrade).toBe('good');
+    expect(wrong).toMatchObject({
+      reviewGrade: 'again',
+      ratingReason: 'untimed_assessment_incorrect',
+    });
+  });
   it('passes hintUsed through to a non-scheduling-eligible grade', () => {
     const r = checkAnswer(mulFact, '56', 900, { hintUsed: true });
     expect(r.schedulingEligible).toBe(false);

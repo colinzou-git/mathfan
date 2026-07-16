@@ -27,6 +27,36 @@ describe('scheduling telemetry', () => {
     expect(telemetry.instance.displayedChoices).toEqual([12, 7]);
   });
 
+  it('records when an assessment intentionally ignores latency', () => {
+    const telemetry = buildSchedulingTelemetry({
+      item,
+      stateBefore: before,
+      stateAfter: after,
+      response: {
+        reviewGrade: 'good',
+        ratingReason: 'untimed_assessment_correct',
+        responsePolicy: 'atomic_fluency',
+        gradingContext: 'untimed_assessment',
+        fluencyBand: 'not_applicable',
+        fluencyBaselineSource: 'not_applicable',
+        hintUsed: false,
+        isRetry: false,
+        schedulingEligible: true,
+      },
+      selection: { origin: 'goal', rationaleCodes: ['diagnostic_coverage'] },
+      presentationIndex: 1,
+      attemptNo: 1,
+      now: new Date('2026-01-06T00:00:00Z'),
+    });
+    expect(telemetry.rating).toMatchObject({
+      reviewGrade: 'good',
+      ratingReason: 'untimed_assessment_correct',
+      gradingContext: 'untimed_assessment',
+      fluencyBand: 'not_applicable',
+      fluencyBaselineSource: 'not_applicable',
+    });
+  });
+
   it('serializes bounded structured item parameters', () => {
     expect(telemetryForItem({ ...item, arithmeticSpec: { operation: 'addition', a: 38, b: 27, mode: 'compute', structure: { operation: 'addition', digits: 2, regrouping: 'ones_only', columnActions: [{ place: 'ones', action: 'compose' }] } } }).parameters).toMatchObject({ a: 38, b: 27 });
   });
