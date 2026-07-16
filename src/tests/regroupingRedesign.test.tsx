@@ -4,6 +4,7 @@ import { makeAdditionItem, makeSubtractionItem, generateArithmeticItem } from '.
 import { makeItemFromId } from '../features/curriculum/makeItemFromId';
 import {
   analyzeArithmeticStructure,
+  buildArithmeticTrace,
   buildRegroupingWorkedExample,
   generateArithmeticErrorAnalysis,
   generateArithmeticInstructionItem,
@@ -22,6 +23,56 @@ import { mulberry32 } from '../utils/rng';
 afterEach(cleanup);
 
 describe('arithmetic structure analysis and generation', () => {
+  it('builds exact golden traces for carries, borrows, and across-zero chains', () => {
+    expect(buildArithmeticTrace('addition', 47, 28)).toMatchObject({
+      result: 75,
+      columns: [
+        { place: 'ones', topBefore: 7, bottom: 8, topAfterBorrowOrCarry: 15, resultDigit: 5 },
+        { place: 'tens', topBefore: 4, bottom: 2, topAfterBorrowOrCarry: 7, resultDigit: 7 },
+      ],
+      actions: [{ kind: 'compose', fromPlace: 'ones', toPlace: 'tens', sourceBefore: 15, sourceAfter: 5 }],
+    });
+    expect(buildArithmeticTrace('addition', 568, 275).result).toBe(843);
+    expect(buildArithmeticTrace('subtraction', 52, 28).result).toBe(24);
+    expect(buildArithmeticTrace('subtraction', 532, 174).result).toBe(358);
+    const acrossZero = buildArithmeticTrace('subtraction', 703, 458);
+    expect(acrossZero).toMatchObject({
+      result: 245,
+      regroupingProfile: 'across_zero',
+      actions: [
+        { kind: 'decompose', fromPlace: 'hundreds', toPlace: 'tens', sourceBefore: 7, sourceAfter: 6, targetBefore: 0, targetAfter: 10 },
+        { kind: 'decompose', fromPlace: 'tens', toPlace: 'ones', sourceBefore: 10, sourceAfter: 9, targetBefore: 3, targetAfter: 13 },
+      ],
+      columns: [
+        { place: 'ones', topAfterBorrowOrCarry: 13, bottom: 8, resultDigit: 5 },
+        { place: 'tens', topAfterBorrowOrCarry: 9, bottom: 5, resultDigit: 4 },
+        { place: 'hundreds', topAfterBorrowOrCarry: 6, bottom: 4, resultDigit: 2 },
+      ],
+    });
+    expect(buildArithmeticTrace('subtraction', 900, 376)).toMatchObject({
+      result: 524, regroupingProfile: 'multiple_zeroes',
+    });
+    expect(buildArithmeticTrace('subtraction', 864, 321).actions).toEqual([]);
+  });
+
+  it('conserves place value and computes exact results across thousands of operand pairs', () => {
+    const placeValue = { ones: 1, tens: 10, hundreds: 100, thousands: 1000 };
+    for (let a = 10; a < 1000; a += 7) {
+      for (let b = 10; b <= a; b += 13) {
+        for (const operation of ['addition', 'subtraction'] as const) {
+          const trace = buildArithmeticTrace(operation, a, b);
+          expect(trace.result).toBe(operation === 'addition' ? a + b : a - b);
+          expect(trace.columns.every(column => column.resultDigit >= 0 && column.resultDigit <= 9)).toBe(true);
+          for (const action of trace.actions) {
+            const sourceChange = (action.sourceBefore - action.sourceAfter) * placeValue[action.fromPlace];
+            const targetChange = (action.targetAfter - action.targetBefore) * placeValue[action.toPlace];
+            expect(sourceChange).toBe(targetChange);
+          }
+        }
+      }
+    }
+  });
+
   it('classifies exact column actions and zero chains', () => {
     expect(analyzeArithmeticStructure('addition', 47, 28).regrouping).toBe('ones_only');
     expect(analyzeArithmeticStructure('addition', 56, 47).regrouping).toBe('ones_and_tens');
@@ -76,10 +127,16 @@ describe('place-value instruction, misconceptions, and hints', () => {
     const spec = item.arithmeticSpec!;
     expect(buildRegroupingWorkedExample(spec).some(step => step.highlightPlace === 'ones')).toBe(true);
     const shown = simulateArithmeticMisconception(spec, 'sub_across_zero_error');
-    expect(shown).not.toBe(item.answer);
+    expect(shown?.answer).not.toBe(item.answer);
     const analysis = generateArithmeticErrorAnalysis(spec, 'sub_across_zero_error');
     expect(analysis.answerInput).toBe('choice');
     expect(analysis.arithmeticSpec?.workedError?.errorCode).toBe('sub_across_zero_error');
+    expect(analysis.arithmeticSpec?.workedError?.shownWork).toEqual([
+      'Borrowed from hundreds to ones but skipped updating the tens column.',
+    ]);
+    const worked = buildRegroupingWorkedExample(spec);
+    expect(worked.map(step => step.explanation)).toContain('hundreds: 7 → 6; tens: 0 → 10.');
+    expect(worked.map(step => step.explanation)).toContain('tens: 10 → 9; ones: 3 → 13.');
     for (const mode of ['choose_regroup_step', 'complete_expanded_form', 'estimate_then_compute'] as const) {
       const instructional = generateArithmeticInstructionItem(item, mode);
       expect(instructional.arithmeticSpec?.mode).toBe(mode);
@@ -90,7 +147,7 @@ describe('place-value instruction, misconceptions, and hints', () => {
   it('detects counterfactual errors and gives place-specific progressive hints', () => {
     const item = makeSubtractionItem(703, 458);
     const wrong = simulateArithmeticMisconception(item.arithmeticSpec!, 'sub_across_zero_error')!;
-    expect(detectMistakes(item, wrong)).toContain('arithmetic:sub_across_zero_error');
+    expect(detectMistakes(item, wrong.answer)).toContain('arithmetic:sub_across_zero_error');
     expect(getHint(item, 1)!.text).toMatch(/ones column/i);
     expect(getHint(item, 2)!.text).toMatch(/decompose/i);
     expect(getHint(item, 3)!.text).not.toContain(String(item.answer));
@@ -118,7 +175,36 @@ describe('place-value instruction, misconceptions, and hints', () => {
       const simulated = simulateArithmeticMisconception(spec, code);
       expect(simulated, code).not.toBeNull();
       const item = spec.operation === 'addition' ? makeAdditionItem(spec.a, spec.b) : makeSubtractionItem(spec.a, spec.b);
-      expect(detectMistakes(item, simulated!)).toContain(`arithmetic:${code}`);
+      expect(detectMistakes(item, simulated!.answer)).toContain(`arithmetic:${code}`);
+    }
+  });
+
+  it('returns deterministic alternative algorithms only when applicable and wrong', () => {
+    const codes = [
+      'sub_failed_to_regroup_ones', 'sub_failed_to_regroup_tens', 'sub_across_zero_error',
+      'sub_borrowed_without_reducing_source', 'sub_place_value_shift_10', 'sub_place_value_shift_100',
+      'add_failed_to_carry_ones', 'add_failed_to_carry_tens', 'add_double_carried',
+      'copied_operand_or_partial_result',
+    ] as const;
+    const specs = [
+      makeAdditionItem(47, 28).arithmeticSpec!,
+      makeAdditionItem(568, 275).arithmeticSpec!,
+      makeSubtractionItem(52, 28).arithmeticSpec!,
+      makeSubtractionItem(532, 174).arithmeticSpec!,
+      makeSubtractionItem(703, 458).arithmeticSpec!,
+      makeSubtractionItem(900, 376).arithmeticSpec!,
+    ];
+    for (const spec of specs) {
+      const correct = spec.operation === 'addition' ? spec.a + spec.b : spec.a - spec.b;
+      for (const code of codes) {
+        const first = simulateArithmeticMisconception(spec, code);
+        const second = simulateArithmeticMisconception(spec, code);
+        expect(second).toEqual(first);
+        if (first) {
+          expect(first.answer).not.toBe(correct);
+          expect(first.shownWork.length).toBeGreaterThan(0);
+        }
+      }
     }
   });
 

@@ -21,6 +21,36 @@ export type ArithmeticMisconceptionCode =
   | 'add_double_carried'
   | 'copied_operand_or_partial_result';
 
+export type ArithmeticPlace = 'ones' | 'tens' | 'hundreds' | 'thousands';
+
+export interface ColumnValue {
+  place: ArithmeticPlace;
+  topBefore: number;
+  bottom: number;
+  topAfterBorrowOrCarry: number;
+  resultDigit: number;
+}
+
+export interface RegroupingAction {
+  kind: 'compose' | 'decompose';
+  fromPlace: ArithmeticPlace;
+  toPlace: ArithmeticPlace;
+  sourceBefore: number;
+  sourceAfter: number;
+  targetBefore: number;
+  targetAfter: number;
+}
+
+export interface ArithmeticTrace {
+  operation: 'addition' | 'subtraction';
+  a: number;
+  b: number;
+  columns: ColumnValue[];
+  actions: RegroupingAction[];
+  result: number;
+  regroupingProfile: RegroupingProfile;
+}
+
 export interface ArithmeticStructure {
   operation: 'addition' | 'subtraction';
   digits: 2 | 3;
@@ -58,34 +88,108 @@ export interface ArithmeticGenerationConstraints {
 export interface ArithmeticGeneratorContext { rng?: Rng; recentItemIds?: string[] }
 
 const digit = (value: number, place: number) => Math.floor(value / 10 ** place) % 10;
+const PLACES: ArithmeticPlace[] = ['ones', 'tens', 'hundreds', 'thousands'];
+
+function profileForTrace(operation: ArithmeticTrace['operation'], a: number, actions: RegroupingAction[]): RegroupingProfile {
+  if (actions.length === 0) return 'none';
+  const actionPlaces = new Set(actions.map(action => operation === 'addition' ? action.fromPlace : action.toPlace));
+  if (operation === 'subtraction'
+    && actions.some(action => action.fromPlace === 'hundreds' && action.toPlace === 'tens' && action.targetBefore === 0)
+    && actions.some(action => action.fromPlace === 'tens' && action.toPlace === 'ones' && action.sourceBefore === 10)) {
+    return digit(a, 0) === 0 ? 'multiple_zeroes' : 'across_zero';
+  }
+  const ones = actionPlaces.has('ones');
+  const tens = actionPlaces.has('tens');
+  return ones && tens ? 'ones_and_tens' : ones ? 'ones_only' : 'tens_only';
+}
+
+export function buildArithmeticTrace(
+  operation: 'addition' | 'subtraction',
+  a: number,
+  b: number,
+): ArithmeticTrace {
+  if (!Number.isInteger(a) || !Number.isInteger(b) || a < 0 || b < 0) throw new Error('Column arithmetic requires nonnegative integers');
+  if (operation === 'subtraction' && a < b) throw new Error('Grade 3 subtraction trace requires a nonnegative result');
+  const width = Math.max(2, String(Math.max(a, b)).length);
+  const top = Array.from({ length: width + 1 }, (_, index) => digit(a, index));
+  const bottom = Array.from({ length: width + 1 }, (_, index) => digit(b, index));
+  const columns: ColumnValue[] = [];
+  const actions: RegroupingAction[] = [];
+  let carry = 0;
+
+  for (let index = 0; index < width; index++) {
+    const place = PLACES[index];
+    const topBefore = top[index];
+    if (operation === 'addition') {
+      const total = top[index] + bottom[index] + carry;
+      const resultDigit = total % 10;
+      const nextCarry = Math.floor(total / 10);
+      columns.push({ place, topBefore, bottom: bottom[index], topAfterBorrowOrCarry: total, resultDigit });
+      if (nextCarry) {
+        actions.push({
+          kind: 'compose', fromPlace: place, toPlace: PLACES[index + 1],
+          sourceBefore: total, sourceAfter: resultDigit,
+          targetBefore: top[index + 1], targetAfter: top[index + 1] + nextCarry,
+        });
+      }
+      carry = nextCarry;
+    } else {
+      if (top[index] < bottom[index]) {
+        let source = index + 1;
+        while (source < top.length && top[source] === 0) source++;
+        if (source >= top.length) throw new Error('Unable to find a source column to decompose');
+        while (source > index) {
+          const target = source - 1;
+          const sourceBefore = top[source];
+          const targetBefore = top[target];
+          top[source] -= 1;
+          top[target] += 10;
+          actions.push({
+            kind: 'decompose', fromPlace: PLACES[source], toPlace: PLACES[target],
+            sourceBefore, sourceAfter: top[source], targetBefore, targetAfter: top[target],
+          });
+          source--;
+        }
+      }
+      const resultDigit = top[index] - bottom[index];
+      columns.push({
+        place, topBefore, bottom: bottom[index],
+        topAfterBorrowOrCarry: top[index], resultDigit,
+      });
+    }
+  }
+  if (operation === 'addition' && carry) {
+    columns.push({
+      place: PLACES[width], topBefore: 0, bottom: 0,
+      topAfterBorrowOrCarry: carry, resultDigit: carry,
+    });
+  } else if (top[width] > 0) {
+    columns.push({
+      place: PLACES[width], topBefore: digit(a, width), bottom: digit(b, width),
+      topAfterBorrowOrCarry: top[width], resultDigit: top[width] - bottom[width],
+    });
+  }
+  const result = columns.reduce((sum, column, index) => sum + column.resultDigit * 10 ** index, 0);
+  const trace = { operation, a, b, columns, actions, result, regroupingProfile: 'none' as RegroupingProfile };
+  trace.regroupingProfile = profileForTrace(operation, a, actions);
+  return trace;
+}
 
 export function analyzeArithmeticStructure(
   operation: 'addition' | 'subtraction', a: number, b: number,
 ): ArithmeticStructure {
+  const trace = buildArithmeticTrace(operation, a, b);
   const digits: 2 | 3 = Math.max(a, b) >= 100 ? 3 : 2;
-  let ones: boolean;
-  let tens: boolean;
-  if (operation === 'addition') {
-    ones = digit(a, 0) + digit(b, 0) >= 10;
-    tens = digit(a, 1) + digit(b, 1) + (ones ? 1 : 0) >= 10;
-  } else {
-    ones = digit(a, 0) < digit(b, 0);
-    tens = digit(a, 1) - (ones ? 1 : 0) < digit(b, 1);
-  }
-
-  let regrouping: RegroupingProfile = ones && tens ? 'ones_and_tens' : ones ? 'ones_only' : tens ? 'tens_only' : 'none';
-  if (operation === 'subtraction' && ones && digit(a, 1) === 0) {
-    regrouping = digit(a, 0) === 0 ? 'multiple_zeroes' : 'across_zero';
-  }
   return {
     operation,
     digits,
-    regrouping,
-    columnActions: [
-      { place: 'ones', action: ones ? (operation === 'addition' ? 'compose' : 'decompose') : 'none' },
-      { place: 'tens', action: tens ? (operation === 'addition' ? 'compose' : 'decompose') : 'none' },
-      ...(digits === 3 ? [{ place: 'hundreds' as const, action: 'none' as const }] : []),
-    ],
+    regrouping: trace.regroupingProfile,
+    columnActions: (['ones', 'tens', 'hundreds'] as const).slice(0, digits).map(place => ({
+      place,
+      action: trace.actions.some(action => (operation === 'addition' ? action.fromPlace : action.toPlace) === place)
+        ? operation === 'addition' ? 'compose' as const : 'decompose' as const
+        : 'none' as const,
+    })),
   };
 }
 
@@ -97,39 +201,77 @@ export function arithmeticTemplateKey(spec: ArithmeticQuestionSpec): string {
 export function buildRegroupingWorkedExample(spec: ArithmeticQuestionSpec): WorkedStep[] {
   const symbol = spec.operation === 'addition' ? '+' : '−';
   const steps: WorkedStep[] = [{ expression: `${spec.a} ${symbol} ${spec.b}`, explanation: 'Line up hundreds, tens, and ones by place value.' }];
-  for (const column of spec.structure.columnActions) {
-    if (column.action === 'none') continue;
+  const trace = buildArithmeticTrace(spec.operation, spec.a, spec.b);
+  for (const action of trace.actions) {
     steps.push({
-      expression: column.action === 'compose' ? '10 ones make 1 ten' : '1 larger unit becomes 10 smaller units',
-      explanation: `${column.action === 'compose' ? 'Compose' : 'Decompose'} in the ${column.place} column before continuing.`,
-      highlightPlace: column.place,
+      expression: action.kind === 'compose'
+        ? `${action.sourceBefore} ${action.fromPlace} become ${action.sourceAfter} ${action.fromPlace} and 1 ${action.toPlace}`
+        : `1 ${action.fromPlace} becomes 10 ${action.toPlace}`,
+      explanation: `${action.fromPlace}: ${action.sourceBefore} → ${action.sourceAfter}; ${action.toPlace}: ${action.targetBefore} → ${action.targetAfter}.`,
+      highlightPlace: action.toPlace === 'thousands' ? 'hundreds' : action.toPlace,
     });
   }
-  steps.push({ expression: 'Check each column', explanation: 'Work from ones to tens to hundreds, then use an estimate to check reasonableness.' });
+  for (const column of trace.columns.slice(0, spec.structure.digits)) {
+    steps.push({
+      expression: `${column.topAfterBorrowOrCarry} ${spec.operation === 'addition' ? '+' : '−'} ${column.bottom} → ${column.resultDigit}`,
+      explanation: `Compute the ${column.place} column.`,
+      highlightPlace: column.place === 'thousands' ? 'hundreds' : column.place,
+    });
+  }
   return steps;
+}
+
+export interface ArithmeticMisconceptionSimulation {
+  answer: number;
+  shownWork: string[];
 }
 
 export function simulateArithmeticMisconception(
   spec: ArithmeticQuestionSpec,
   code: ArithmeticMisconceptionCode,
-): number | null {
+): ArithmeticMisconceptionSimulation | null {
   const { a, b, operation } = spec;
   const correct = operation === 'addition' ? a + b : a - b;
-  if (code === 'copied_operand_or_partial_result') return a;
+  const result = (answer: number, shownWork: string[]) =>
+    Number.isInteger(answer) && answer !== correct && answer >= 0 ? { answer, shownWork } : null;
+  if (code === 'copied_operand_or_partial_result') return result(a, ['Copied the first operand as the result.']);
   if (operation === 'addition') {
-    if (code === 'add_failed_to_carry_ones' && digit(a, 0) + digit(b, 0) >= 10) return correct - 10;
-    if (code === 'add_failed_to_carry_tens' && spec.structure.columnActions[1].action === 'compose') return correct - 100;
-    if (code === 'add_double_carried' && spec.structure.regrouping !== 'none') return correct + (spec.structure.regrouping === 'ones_only' ? 10 : 100);
+    const trace = buildArithmeticTrace(operation, a, b);
+    const onesCarry = trace.actions.find(action => action.kind === 'compose' && action.fromPlace === 'ones');
+    const tensCarry = trace.actions.find(action => action.kind === 'compose' && action.fromPlace === 'tens');
+    if (code === 'add_failed_to_carry_ones' && onesCarry) return result(correct - 10, ['Composed the ones but did not add the new ten.']);
+    if (code === 'add_failed_to_carry_tens' && tensCarry) return result(correct - 100, ['Composed the tens but did not add the new hundred.']);
+    if (code === 'add_double_carried' && (onesCarry || tensCarry)) {
+      const placeValue = tensCarry ? 100 : 10;
+      return result(correct + placeValue, [`Added the composed ${tensCarry ? 'hundred' : 'ten'} twice.`]);
+    }
     return null;
   }
-  if (code === 'sub_failed_to_regroup_ones' && spec.structure.columnActions[0].action === 'decompose') {
-    return correct - 10;
+  const trace = buildArithmeticTrace(operation, a, b);
+  const digitwise = (skipPlace?: ArithmeticPlace) => {
+    const digits = trace.columns.slice(0, spec.structure.digits).map((column, index) =>
+      skipPlace === column.place ? Math.abs(digit(a, index) - digit(b, index)) : column.resultDigit);
+    return digits.reduce((sum, value, index) => sum + value * 10 ** index, 0);
+  };
+  if (code === 'sub_failed_to_regroup_ones' && trace.actions.some(action => action.toPlace === 'ones')) {
+    return result(digitwise('ones'), ['Subtracted the smaller ones digit from the larger without regrouping.']);
   }
-  if (code === 'sub_failed_to_regroup_tens' && spec.structure.columnActions[1].action === 'decompose') return correct - 100;
-  if (code === 'sub_across_zero_error' && (spec.structure.regrouping === 'across_zero' || spec.structure.regrouping === 'multiple_zeroes')) return correct + 10;
-  if (code === 'sub_borrowed_without_reducing_source' && spec.structure.regrouping !== 'none') return correct + 10;
-  if (code === 'sub_place_value_shift_10') return correct + 10;
-  if (code === 'sub_place_value_shift_100') return correct + 100;
+  if (code === 'sub_failed_to_regroup_tens' && trace.actions.some(action => action.toPlace === 'tens')) {
+    return result(digitwise('tens'), ['Subtracted the smaller tens digit from the larger without regrouping.']);
+  }
+  if (code === 'sub_across_zero_error' && (trace.regroupingProfile === 'across_zero' || trace.regroupingProfile === 'multiple_zeroes')) {
+    const ones = digit(a, 0) + 10 - digit(b, 0);
+    const tens = Math.abs(digit(a, 1) - digit(b, 1));
+    const hundreds = digit(a, 2) - 1 - digit(b, 2);
+    return result(ones + tens * 10 + hundreds * 100, ['Borrowed from hundreds to ones but skipped updating the tens column.']);
+  }
+  if (code === 'sub_borrowed_without_reducing_source' && trace.actions.length) {
+    const first = trace.actions[trace.actions.length - 1];
+    const placeValue = 10 ** PLACES.indexOf(first.fromPlace);
+    return result(correct + placeValue, [`Regrouped into ${first.toPlace} but did not reduce ${first.fromPlace}.`]);
+  }
+  if (code === 'sub_place_value_shift_10') return result(a - Math.floor(b / 10), ['Aligned the second number one place too far right.']);
+  if (code === 'sub_place_value_shift_100') return result(a - Math.floor(b / 100), ['Aligned the second number two places too far right.']);
   return null;
 }
 
@@ -137,10 +279,12 @@ export function generateArithmeticErrorAnalysis(
   spec: ArithmeticQuestionSpec,
   errorCode: ArithmeticMisconceptionCode,
 ): PracticeItem {
-  const shownAnswer = simulateArithmeticMisconception(spec, errorCode) ?? (spec.operation === 'addition' ? spec.a + spec.b : spec.a - spec.b) + 10;
+  const simulation = simulateArithmeticMisconception(spec, errorCode);
+  if (!simulation) throw new Error(`${errorCode} is not applicable to ${spec.a} and ${spec.b}`);
+  const shownAnswer = simulation.answer;
   const correctPlace = errorCode.includes('ones') || errorCode.includes('10') ? 'ones' : errorCode.includes('tens') || errorCode.includes('100') ? 'tens' : 'regrouping';
   const choices = ['ones', 'tens', 'hundreds', 'regrouping'];
-  const errorSpec: ArithmeticQuestionSpec = { ...spec, mode: 'error_analysis', workedError: { shownAnswer, errorCode } };
+  const errorSpec: ArithmeticQuestionSpec = { ...spec, mode: 'error_analysis', workedError: { shownAnswer, errorCode, shownWork: simulation.shownWork } };
   return {
     id: `ARERR_${spec.operation}_${spec.a}_${spec.b}_${errorCode}`,
     skillId: `g3-${spec.operation === 'addition' ? 'add' : 'sub'}-${spec.structure.digits}digit-regrouping`,

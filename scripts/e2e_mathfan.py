@@ -384,9 +384,12 @@ def subtraction_across_zero_lesson(page: Page) -> None:
         values = [int(value) for value in re.findall(r"\d+", prompt)]
         a, b = values[:2]
         if prompt.startswith("A learner wrote"):
-            shown = values[2]
-            correct = a - b
-            place = "ones" if shown == correct - 10 else "tens" if shown == correct - 100 else "regrouping"
+            expected_places = {
+                (703, 458): "regrouping",
+                (900, 376): "ones",
+                (804, 576): "regrouping",
+            }
+            place = expected_places[(a, b)]
             page.get_by_role("button", name=place, exact=True).click()
             completed_error_analysis = True
         else:
@@ -429,7 +432,8 @@ def division_model_choice_lesson(page: Page) -> None:
     open_mastery_skill(page, "Division Word Problems")
     prompt = page.locator(".drill-q > div").first.inner_text()
     dividend, divisor = [int(value) for value in re.findall(r"\d+", prompt)][:2]
-    expect(page.get_by_role("figure", name=re.compile(rf"sharing model for {dividend} objects", re.I))).to_be_visible()
+    interpretation = "grouping" if re.search(r"in each|groups of", prompt, re.I) else "sharing"
+    expect(page.get_by_role("figure", name=re.compile(rf"{interpretation} model for {dividend} objects", re.I))).to_be_visible()
     page.get_by_role("button", name=f"{dividend} ÷ {divisor}", exact=True).click()
     expect(page.get_by_text(re.compile(r"Correct!|New personal best!"))).to_be_visible()
 

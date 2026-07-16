@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-16T10:11:10.656067+00:00",
+  "generated_at": "2026-07-16T10:34:32.924936+00:00",
   "repo_root": "/home/ubuntu/mathfan",
   "package": {
     "name": "mathfan",
@@ -421,9 +421,9 @@
     {
       "path": "PROGRESS.md",
       "ext": ".md",
-      "bytes": 9603,
-      "lines": 159,
-      "sha1": "d7841e6e53a1",
+      "bytes": 9653,
+      "lines": 160,
+      "sha1": "8805a3cb597e",
       "imports": [],
       "exports": [],
       "functions": [],
@@ -570,9 +570,9 @@
     {
       "path": "scripts/e2e_mathfan.py",
       "ext": ".py",
-      "bytes": 45469,
-      "lines": 818,
-      "sha1": "8402e93c78b9",
+      "bytes": 45618,
+      "lines": 822,
+      "sha1": "d2594d2bebac",
       "imports": [
         "__future__",
         "json",
@@ -2480,9 +2480,9 @@
     {
       "path": "src/features/curriculum/regrouping.ts",
       "ext": ".ts",
-      "bytes": 10639,
-      "lines": 220,
-      "sha1": "b87a0b35efe3",
+      "bytes": 17230,
+      "lines": 364,
+      "sha1": "26cc2f52cb12",
       "imports": [
         "../../types/math",
         "../../utils/rng"
@@ -2492,13 +2492,19 @@
         "ArithmeticGenerationConstraints",
         "ArithmeticGeneratorContext",
         "ArithmeticMisconceptionCode",
+        "ArithmeticMisconceptionSimulation",
+        "ArithmeticPlace",
         "ArithmeticQuestionSpec",
         "ArithmeticStructure",
         "arithmeticTemplateKey",
+        "ArithmeticTrace",
+        "buildArithmeticTrace",
         "buildRegroupingWorkedExample",
+        "ColumnValue",
         "generateArithmeticErrorAnalysis",
         "generateArithmeticInstructionItem",
         "generateArithmeticOperands",
+        "RegroupingAction",
         "RegroupingProfile",
         "simulateArithmeticMisconception",
         "WorkedStep"
@@ -2506,23 +2512,32 @@
       "functions": [
         "analyzeArithmeticStructure",
         "arithmeticTemplateKey",
+        "buildArithmeticTrace",
         "buildRegroupingWorkedExample",
         "digit",
+        "digitwise",
         "generateArithmeticErrorAnalysis",
         "generateArithmeticInstructionItem",
         "generateArithmeticOperands",
+        "profileForTrace",
+        "result",
         "simulateArithmeticMisconception"
       ],
       "classes": [],
       "interfaces": [
         "ArithmeticGenerationConstraints",
         "ArithmeticGeneratorContext",
+        "ArithmeticMisconceptionSimulation",
         "ArithmeticQuestionSpec",
         "ArithmeticStructure",
+        "ArithmeticTrace",
+        "ColumnValue",
+        "RegroupingAction",
         "WorkedStep"
       ],
       "types": [
         "ArithmeticMisconceptionCode",
+        "ArithmeticPlace",
         "RegroupingProfile"
       ],
       "components": [],
@@ -4228,9 +4243,9 @@
     {
       "path": "src/features/mastery/misconceptionEngine.ts",
       "ext": ".ts",
-      "bytes": 19239,
+      "bytes": 19247,
       "lines": 455,
-      "sha1": "02ccb29db97c",
+      "sha1": "eb1a1c12d611",
       "imports": [
         "../../types/math",
         "../curriculum/divisionItems",
@@ -4346,9 +4361,9 @@
     {
       "path": "src/features/mastery/skillMapping.ts",
       "ext": ".ts",
-      "bytes": 8734,
-      "lines": 144,
-      "sha1": "242e94f713fa",
+      "bytes": 8491,
+      "lines": 142,
+      "sha1": "e08e46c064a8",
       "imports": [
         "../../types/math",
         "../curriculum/divisionItems"
@@ -9167,9 +9182,9 @@
     {
       "path": "src/tests/regroupingRedesign.test.tsx",
       "ext": ".tsx",
-      "bytes": 9621,
-      "lines": 177,
-      "sha1": "4b99194dd040",
+      "bytes": 13989,
+      "lines": 263,
+      "sha1": "e3a463029083",
       "imports": [
         "../features/curriculum/arithmeticItems",
         "../features/curriculum/makeItemFromId",

@@ -186,7 +186,7 @@ function detectArithmetic(item: PracticeItem, raw: string | number): string[] {
   if (!item.arithmeticSpec || item.arithmeticSpec.mode === 'error_analysis') return [];
   const answer = Number(raw);
   if (!Number.isFinite(answer) || answer === Number(item.answer)) return [];
-  return ARITHMETIC_MISCONCEPTIONS.filter(code => simulateArithmeticMisconception(item.arithmeticSpec!, code) === answer)
+  return ARITHMETIC_MISCONCEPTIONS.filter(code => simulateArithmeticMisconception(item.arithmeticSpec!, code)?.answer === answer)
     .map(code => `arithmetic:${code}`);
 }
 
