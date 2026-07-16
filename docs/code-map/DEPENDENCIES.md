@@ -607,6 +607,7 @@
 | src/features/sync/snapshot.ts | ../learning/learningEvents |
 | src/features/sync/snapshot.ts | ../learning/schedulingTelemetry |
 | src/features/sync/snapshot.ts | ../multiplication/types |
+| src/features/sync/snapshot.ts | ../profile/profileBootstrap |
 | src/features/sync/snapshot.ts | ../scheduler/cardModel |
 | src/features/sync/snapshot.ts | ./learnerKeyMerge |
 | src/features/sync/snapshot.ts | ./timeUtil |
@@ -865,6 +866,7 @@
 | src/tests/learnerIdentity.test.ts | ../types/math |
 | src/tests/learnerKeyMerge.test.ts | ../db/dexie |
 | src/tests/learnerKeyMerge.test.ts | ../features/learning/learningEvents |
+| src/tests/learnerKeyMerge.test.ts | ../features/profile/profileBootstrap |
 | src/tests/learnerKeyMerge.test.ts | ../features/sync/learnerKeyMerge |
 | src/tests/learnerKeyMerge.test.ts | ../features/sync/snapshot |
 | src/tests/learnerKeyMerge.test.ts | ../types/math |

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-16T22:03:31.927708+00:00",
+  "generated_at": "2026-07-16T22:36:19.567303+00:00",
   "repo_root": "/home/ubuntu/mathfan",
   "package": {
     "name": "mathfan",
@@ -570,9 +570,9 @@
     {
       "path": "scripts/e2e_mathfan.py",
       "ext": ".py",
-      "bytes": 49999,
-      "lines": 893,
-      "sha1": "112d6273017a",
+      "bytes": 51962,
+      "lines": 932,
+      "sha1": "7e7670175c29",
       "imports": [
         "__future__",
         "json",
@@ -593,6 +593,7 @@
         "create_profile",
         "daily_review_requested_rounds",
         "desktop_student_journey",
+        "distinct_same_name_learners",
         "division_decomposition_lesson",
         "division_model_choice_lesson",
         "elapsed_cross_hour_lesson",
@@ -625,6 +626,7 @@
         "create_profile",
         "daily_review_requested_rounds",
         "desktop_student_journey",
+        "distinct_same_name_learners",
         "division_decomposition_lesson",
         "division_model_choice_lesson",
         "elapsed_cross_hour_lesson",
@@ -6203,9 +6205,9 @@
     {
       "path": "src/features/sync/snapshot.ts",
       "ext": ".ts",
-      "bytes": 20734,
-      "lines": 378,
-      "sha1": "aaa582298720",
+      "bytes": 21421,
+      "lines": 392,
+      "sha1": "0670c6d254af",
       "imports": [
         "../../db/dexie",
         "../../types/math",
@@ -6216,6 +6218,7 @@
         "../learning/learningEvents",
         "../learning/schedulingTelemetry",
         "../multiplication/types",
+        "../profile/profileBootstrap",
         "../scheduler/cardModel",
         "./learnerKeyMerge",
         "./timeUtil"
@@ -6241,6 +6244,7 @@
         "mergeSnapshot",
         "normalizeSnapshot",
         "orphanReportInTransaction",
+        "remapEvaluations",
         "validateSnapshot"
       ],
       "classes": [],
@@ -8725,12 +8729,13 @@
     {
       "path": "src/tests/learnerKeyMerge.test.ts",
       "ext": ".ts",
-      "bytes": 11215,
-      "lines": 218,
-      "sha1": "f28a0e9a81d2",
+      "bytes": 16790,
+      "lines": 282,
+      "sha1": "66d9ac1425fe",
       "imports": [
         "../db/dexie",
         "../features/learning/learningEvents",
+        "../features/profile/profileBootstrap",
         "../features/sync/learnerKeyMerge",
         "../features/sync/snapshot",
         "../types/math",

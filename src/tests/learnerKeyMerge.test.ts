@@ -1,10 +1,11 @@
 import 'fake-indexeddb/auto';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { db } from '../db/dexie';
 import { buildSnapshot, findOrphanedStudentReferences, mergeSnapshot, type AppSnapshot } from '../features/sync/snapshot';
 import { remapStudentId, resolveCanonicalStudentIds, resolveLearnerKeyDuplicate } from '../features/sync/learnerKeyMerge';
 import type { StudentProfile } from '../types/math';
 import type { MathAnswerEvent } from '../features/learning/learningEvents';
+import { loadActiveProfileSelection, saveActiveProfileSelection } from '../features/profile/profileBootstrap';
 
 function makeProfile(overrides: Partial<StudentProfile> = {}): StudentProfile {
   return {
@@ -48,6 +49,7 @@ function emptySnapshot(overrides: Partial<AppSnapshot> = {}): AppSnapshot {
 }
 
 async function clearAll() {
+  localStorage.clear();
   await db.students.clear();
   await db.itemStates.clear();
   await db.attempts.clear();
@@ -189,14 +191,76 @@ describe('mergeSnapshot learnerKey deduplication', () => {
     expect(await findOrphanedStudentReferences()).toEqual({ orphanCount: 0, byTable: {} });
   });
 
+  it('re-keys nested answer events in goal evaluations', async () => {
+    const local = makeProfile({ id: 'local-id', learnerKey: 'shared-key' });
+    const remote = makeProfile({ id: 'remote-id', learnerKey: 'shared-key' });
+    await db.students.put(local);
+    await db.mathAnswerEvents.bulkPut([eventFor('local-1', 'local-id'), eventFor('local-2', 'local-id')]);
+    await mergeSnapshot(emptySnapshot({
+      students: [remote],
+      mathAnswerEvents: [eventFor('remote-1', 'remote-id')],
+      goalEvaluations: [{
+        id: 'evaluation', studentId: 'remote-id', status: 'in_progress', source: 'manual', answers: [],
+        answerEvents: [eventFor('nested', 'remote-id')], currentQuestionIndex: 0, plannedQuestionCount: 1,
+        itemIds: ['MUL_7x8'], targetSkillIds: [], createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-01-01T00:00:00Z',
+      }],
+    }));
+    const evaluation = await db.goalEvaluations.get('evaluation');
+    expect(evaluation?.studentId).toBe('local-id');
+    expect(evaluation?.answerEvents?.[0].studentId).toBe('local-id');
+  });
+
   it('re-keys existing local children when the remote id wins', async () => {
     const local = makeProfile({ id: 'local-id', learnerKey: 'shared-key' });
     const remote = makeProfile({ id: 'remote-id', learnerKey: 'shared-key' });
     await db.students.put(local);
+    await db.mathAnswerEvents.put(eventFor('local-event', 'local-id'));
+    await db.attempts.put({ id: 'local-attempt', studentId: 'local-id', itemId: 'MUL_7x8', skillId: 'mul', sessionId: 'local-session', promptShown: '7x8', correctAnswer: 56, studentAnswer: 56, isCorrect: true, latencyMs: 1000, reviewGrade: 'good', createdAt: '2026-01-01T00:00:00Z' });
     await db.sessions.put({ id: 'local-session', studentId: 'local-id', startedAt: '2026-01-01T00:00:00Z', mode: 'multiplication', plannedQuestionCount: 1, completedQuestionCount: 0, correctCount: 0, averageLatencyMs: 0 });
+    await db.itemStates.put({ studentId: 'local-id', cardKey: 'fact:mul:7x8', lastItemId: 'MUL_7x8', skillId: 'mul', attemptCount: 1, correctCount: 1, lastCorrect: true, lastLatencyMs: 1000, medianLatencyMs: 1000, ease: 2.5, stabilityDays: 1, difficulty: .2, masteryLevel: 'learning', mistakePatterns: [] });
+    await db.multFactStats.put({ studentId: 'local-id', key: '7x8', left: 7, right: 8, answer: 56, totalAttempts: 1, correctAttempts: 1, incorrectAttempts: 0, accuracy: 1, averageResponseTimeMs: 1000, lastResponseTimeMs: 1000, lastPracticedAt: '2026-01-01T00:00:00Z', lastQuizAt: null, masteryScore: 10, masteryState: 'learning', streakCorrect: 1, streakIncorrect: 0, everTested: true });
+    await db.quizSessions.put({ id: 'local-quiz', studentId: 'local-id', category: 'multiplication', quizLength: 1, startedAt: '2026-01-01T00:00:00Z', completedAt: null, answerLogs: [], correctCount: 0, incorrectCount: 0, accuracy: 0, averageResponseTimeMs: null, weakFactsDiscovered: [], strongFactsConfirmed: [], forgottenFactsDiscovered: [], untestedFactsCovered: [], recommendedPracticeFacts: [] });
+    await db.learningGoals.put({ id: 'local-goal', studentId: 'local-id', title: 'Goal', source: 'manual', status: 'active', durationDays: 7, startDate: '2026-01-01', targetDate: '2026-01-08', targets: [], createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-01-01T00:00:00Z' });
+    await db.goalEvents.put({ id: 'local-goal-event', studentId: 'local-id', goalId: 'local-goal', type: 'created', createdAt: '2026-01-01T00:00:00Z' });
+    await db.goalEvaluations.put({ id: 'local-evaluation', studentId: 'local-id', status: 'in_progress', source: 'manual', answers: [], answerEvents: [eventFor('nested-local', 'local-id')], currentQuestionIndex: 0, plannedQuestionCount: 1, itemIds: [], targetSkillIds: [], createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-01-01T00:00:00Z' });
     await mergeSnapshot(emptySnapshot({ students: [remote], mathAnswerEvents: [eventFor('r1', 'remote-id'), eventFor('r2', 'remote-id')] }));
     expect((await db.students.toArray()).map(row => row.id)).toEqual(['remote-id']);
-    expect((await db.sessions.get('local-session'))?.studentId).toBe('remote-id');
+    for (const table of [db.mathAnswerEvents, db.attempts, db.sessions, db.itemStates, db.multFactStats, db.quizSessions, db.learningGoals, db.goalEvents, db.goalEvaluations]) {
+      expect((await table.toArray()).every(row => row.studentId === 'remote-id')).toBe(true);
+    }
+    expect((await db.goalEvaluations.get('local-evaluation'))?.answerEvents?.[0].studentId).toBe('remote-id');
+    expect((await db.itemStates.get(['remote-id', 'fact:mul:7x8']))?.reps).toBe(3);
+    expect(await findOrphanedStudentReferences()).toEqual({ orphanCount: 0, byTable: {} });
+  });
+
+  it('updates a legacy active-profile id selection to the canonical profile', async () => {
+    const local = makeProfile({ id: 'local-id', learnerKey: 'shared-key' });
+    const remote = makeProfile({ id: 'remote-id', learnerKey: 'shared-key' });
+    await db.students.put(local);
+    saveActiveProfileSelection({ ...local, learnerKey: undefined });
+
+    await mergeSnapshot(emptySnapshot({
+      students: [remote],
+      mathAnswerEvents: [eventFor('r1', 'remote-id'), eventFor('r2', 'remote-id')],
+    }));
+
+    expect(loadActiveProfileSelection()).toEqual({ learnerKey: 'shared-key' });
+  });
+
+  it('rolls back profile and child rewrites when the transaction fails', async () => {
+    const local = makeProfile({ id: 'local-id', learnerKey: 'shared-key' });
+    const remote = makeProfile({ id: 'remote-id', learnerKey: 'shared-key' });
+    await db.students.put(local);
+    await db.sessions.put({ id: 'local-session', studentId: 'local-id', startedAt: '2026-01-01T00:00:00Z', mode: 'multiplication', plannedQuestionCount: 1, completedQuestionCount: 0, correctCount: 0, averageLatencyMs: 0 });
+    const write = vi.spyOn(db.mathAnswerEvents, 'bulkPut').mockRejectedValueOnce(new Error('forced write failure'));
+
+    await expect(mergeSnapshot(emptySnapshot({ students: [remote], mathAnswerEvents: [eventFor('r1', 'remote-id')] })))
+      .rejects.toThrow(/forced write failure/);
+
+    expect((await db.students.toArray()).map(profile => profile.id)).toEqual(['local-id']);
+    expect(await db.mathAnswerEvents.count()).toBe(0);
+    expect((await db.sessions.get('local-session'))?.studentId).toBe('local-id');
+    write.mockRestore();
   });
 });
 
