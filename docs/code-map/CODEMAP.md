@@ -1,6 +1,6 @@
 # Code Map Overview
 
-Generated: 2026-07-16 05:51:52 UTC
+Generated: 2026-07-16 06:02:42 UTC
 
 Repo root: `/home/ubuntu/mathfan`
 Output folder: `/home/ubuntu/mathfan/docs/code-map`
@@ -15,8 +15,8 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 - Version: `1.2.0`
 - Module type: `module`
 - Scanned files: **275**
-- Scanned lines: **50,534**
-- Scanned bytes: **2,103,359**
+- Scanned lines: **50,641**
+- Scanned bytes: **2,112,197**
 
 ## NPM scripts
 
@@ -74,11 +74,11 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 | --- | --- | --- | --- |
 | src/App.tsx | 401 | Top-level React app shell: routes/screens, global state, and feature wiring. | App, exportMigrationDiagnostics, handleQuizDone, handleSessionDone, pickOperation, retryMigration, runBootstrap, selectProfile |
 | src/features/sync/SyncWidget.tsx | 156 | Cloud sync/auth/data transfer logic. | GoogleIcon, SyncWidget, friendlyError, GoogleIcon, initials, SyncWidget, timeSince |
-| src/features/sync/snapshot.ts | 256 | Local persistence/database layer. | AppSnapshot, OrphanReport, remoteHasNewerUpdatedAt, validateSnapshot, validTimeMs, buildSnapshot, findOrphanedStudentReferences, mergeCardStateCollision |
+| src/features/sync/snapshot.ts | 324 | Local persistence/database layer. | AppSnapshot, AppSnapshotV3, normalizeSnapshot, OrphanReport, remoteHasNewerUpdatedAt, SnapshotFormatMetadata, SnapshotNormalizationProblem, SnapshotNormalizationResult |
 | vite.config.ts | 82 | Vite build/PWA configuration. | buildInfoPlugin |
 | package.json | 53 | Project package metadata, scripts, dependencies, and dev tooling. |  |
 | src/main.tsx | 21 | React entry point that mounts the app. |  |
-| src/features/sync/driveSync.ts | 163 | Cloud sync/auth/data transfer logic. | DriveFileInfo, SyncResult, SyncStatus, authFetch, downloadSnapshot, findSyncFile, getDriveFileInfo, newestSyncFile |
+| src/features/sync/driveSync.ts | 164 | Cloud sync/auth/data transfer logic. | DriveFileInfo, SyncResult, SyncStatus, authFetch, downloadSnapshot, findSyncFile, getDriveFileInfo, newestSyncFile |
 | src/features/sync/useSync.ts | 99 | Cloud sync/auth/data transfer logic. | useSync, initAuth, SyncState, useSync, recordSync, useSync |
 | src/features/sync/learnerKeyMerge.ts | 69 | Cloud sync/auth/data transfer logic. | remapStudentId, resolveCanonicalStudentIds, resolveLearnerKeyDuplicate, StudentIdAliasMap, resolveCanonicalStudentIds, resolveLearnerKeyDuplicate |
 | src/features/sync/timeUtil.ts | 13 | Cloud sync/auth/data transfer logic. | remoteHasNewerUpdatedAt, validTimeMs, remoteHasNewerUpdatedAt, validTimeMs |
@@ -573,59 +573,59 @@ Purpose: Local persistence/database layer.
    6: import type { GoalEvaluation, GoalEvent, LearningGoal } from '../goals/types';
    7: import { remapStudentId, resolveCanonicalStudentIds, resolveLearnerKeyDuplicate, type StudentIdAliasMap } from './learnerKeyMerge';
    8: import { validTimeMs, remoteHasNewerUpdatedAt } from './timeUtil';
-   9:
-  10: export interface AppSnapshot {
-  11:   appId: 'mathfan';
-  12:   snapshotVersion: 1 | 2;
-  13:   snapshotAt: string;
-  14:   students: StudentProfile[];
-  15:   itemStates: StudentItemState[];
-  16:   attempts: AttemptLog[];
-  17:   sessions: PracticeSession[];
-  18:   // Added in quiz feature — absent in older snapshots; treat missing as []
-  19:   multFactStats?: MultiplicationFactStats[];
-  20:   quizSessions?: QuizSession[];
-  21:   // Added with canonical event log — absent in older snapshots; treat missing as []
-  22:   mathAnswerEvents?: MathAnswerEvent[];
-  23:   learningGoals?: LearningGoal[];
-  24:   goalEvents?: GoalEvent[];
-  25:   goalEvaluations?: GoalEvaluation[];
-  26: }
-  27:
-  28: // ── Build ─────────────────────────────────────────────────────────────────────
-  29:
-  30: export async function buildSnapshot(): Promise<AppSnapshot> {
-  31:   const tables = [
-  32:     db.students,
-  33:     db.itemStates,
-  34:     db.attempts,
-  35:     db.sessions,
-  36:     db.multFactStats,
-  37:     db.quizSessions,
-  38:     db.mathAnswerEvents,
-  39:     db.learningGoals,
-  40:     db.goalEvents,
-  41:     db.goalEvaluations,
-  42:   ];
-  43:
-  44:   return db.transaction('r', tables, async () => {
-  45:     const [
-  46:       students,
-  47:       itemStates,
-  48:       attempts,
-  49:       sessions,
-  50:       multFactStats,
-  51:       quizSessions,
-  52:       mathAnswerEvents,
-  53:       learningGoals,
-  54:       goalEvents,
-  55:       goalEvaluations,
-  56:     ] = await Promise.all([
-  57:       db.students.toArray(),
-  58:       db.itemStates.toArray(),
-  59:       db.attempts.toArray(),
-  60:       db.sessions.toArray(),
-... (195 more lines)
+   9: import { makeItemFromId } from '../curriculum/makeItemFromId';
+  10: import { deriveCardKey } from '../scheduler/cardModel';
+  11: import { CARD_MODEL_VERSION } from '../learning/schedulingTelemetry';
+  12:
+  13: export interface SnapshotFormatMetadata {
+  14:   appVersion: string;
+  15:   schemaVersion: 3;
+  16:   cardModelVersion: string;
+  17:   exportedAt: string;
+  18: }
+  19:
+  20: export interface AppSnapshot {
+  21:   appId: 'mathfan';
+  22:   snapshotVersion: 1 | 2 | 3;
+  23:   snapshotAt: string;
+  24:   metadata?: SnapshotFormatMetadata;
+  25:   students: StudentProfile[];
+  26:   itemStates: StudentItemState[];
+  27:   attempts: AttemptLog[];
+  28:   sessions: PracticeSession[];
+  29:   // Added in quiz feature — absent in older snapshots; treat missing as []
+  30:   multFactStats?: MultiplicationFactStats[];
+  31:   quizSessions?: QuizSession[];
+  32:   // Added with canonical event log — absent in older snapshots; treat missing as []
+  33:   mathAnswerEvents?: MathAnswerEvent[];
+  34:   learningGoals?: LearningGoal[];
+  35:   goalEvents?: GoalEvent[];
+  36:   goalEvaluations?: GoalEvaluation[];
+  37: }
+  38:
+  39: // ── Build ─────────────────────────────────────────────────────────────────────
+  40:
+  41: export async function buildSnapshot(): Promise<AppSnapshotV3> {
+  42:   const tables = [
+  43:     db.students,
+  44:     db.itemStates,
+  45:     db.attempts,
+  46:     db.sessions,
+  47:     db.multFactStats,
+  48:     db.quizSessions,
+  49:     db.mathAnswerEvents,
+  50:     db.learningGoals,
+  51:     db.goalEvents,
+  52:     db.goalEvaluations,
+  53:   ];
+  54:
+  55:   return db.transaction('r', tables, async () => {
+  56:     const [
+  57:       students,
+  58:       itemStates,
+  59:       attempts,
+  60:       sessions,
+... (263 more lines)
 ```
 
 ### `vite.config.ts`
@@ -787,8 +787,8 @@ Purpose: React entry point that mounts the app.
 Purpose: Cloud sync/auth/data transfer logic.
 
 ```text
-   1: import type { AppSnapshot } from './snapshot';
-   2: import { buildSnapshot, mergeSnapshot, validateSnapshot } from './snapshot';
+   1: import type { AppSnapshotV3 } from './snapshot';
+   2: import { buildSnapshot, mergeNormalizedSnapshot, normalizeSnapshot } from './snapshot';
    3: import { getToken } from '../auth/googleAuth';
    4:
    5: const FILE_NAME = 'mathfan-data.json';
@@ -834,7 +834,7 @@ Purpose: Cloud sync/auth/data transfer logic.
   45:   return newestSyncFile(data.files as DriveListFile[] | undefined)?.id ?? null;
   46: }
   47:
-  48: async function uploadSnapshot(snapshot: AppSnapshot, existingId?: string): Promise<void> {
+  48: async function uploadSnapshot(snapshot: AppSnapshotV3, existingId?: string): Promise<void> {
   49:   const body = JSON.stringify(snapshot);
   50:
   51:   if (existingId) {
@@ -847,7 +847,7 @@ Purpose: Cloud sync/auth/data transfer logic.
   58:   } else {
   59:     // Create new file in appDataFolder (multipart POST)
   60:     const metadata = JSON.stringify({ name: FILE_NAME, parents: ['appDataFolder'] });
-... (102 more lines)
+... (103 more lines)
 ```
 
 ### `src/features/sync/useSync.ts`

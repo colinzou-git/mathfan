@@ -46,7 +46,7 @@ describe('buildSnapshot transaction consistency', () => {
     for (const name of tableNames) expect(tables[name]!.toArray).toHaveBeenCalledOnce();
     expect(result).toMatchObject({
       appId: 'mathfan',
-      snapshotVersion: 2,
+      snapshotVersion: 3,
       students: [{ id: 'student-1' }],
       itemStates: [],
       mathAnswerEvents: [],

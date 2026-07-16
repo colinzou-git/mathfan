@@ -232,7 +232,8 @@ describe('goal snapshot v2', () => {
 
     const snapshot = await buildSnapshot();
 
-    expect(snapshot.snapshotVersion).toBe(2);
+    expect(snapshot.snapshotVersion).toBe(3);
+    expect(snapshot.metadata).toMatchObject({ schemaVersion: 3, cardModelVersion: 'canonical-card-v1' });
     expect(snapshot.learningGoals).toHaveLength(1);
     expect(snapshot.goalEvents).toHaveLength(1);
     expect(snapshot.goalEvaluations).toHaveLength(1);

@@ -1,5 +1,5 @@
-import type { AppSnapshot } from './snapshot';
-import { buildSnapshot, mergeSnapshot, validateSnapshot } from './snapshot';
+import type { AppSnapshotV3 } from './snapshot';
+import { buildSnapshot, mergeNormalizedSnapshot, normalizeSnapshot } from './snapshot';
 import { getToken } from '../auth/googleAuth';
 
 const FILE_NAME = 'mathfan-data.json';
@@ -45,7 +45,7 @@ async function findSyncFile(): Promise<string | null> {
   return newestSyncFile(data.files as DriveListFile[] | undefined)?.id ?? null;
 }
 
-async function uploadSnapshot(snapshot: AppSnapshot, existingId?: string): Promise<void> {
+async function uploadSnapshot(snapshot: AppSnapshotV3, existingId?: string): Promise<void> {
   const body = JSON.stringify(snapshot);
 
   if (existingId) {
@@ -83,14 +83,15 @@ async function uploadSnapshot(snapshot: AppSnapshot, existingId?: string): Promi
   }
 }
 
-async function downloadSnapshot(): Promise<AppSnapshot | null> {
+async function downloadSnapshot(): Promise<AppSnapshotV3 | null> {
   const fileId = await findSyncFile();
   if (!fileId) return null;
   const res = await authFetch(`${FILES_URL}/${fileId}?alt=media`);
   if (!res.ok) throw new Error(`Drive download failed: ${res.status}`);
   const raw = await res.json();
-  if (!validateSnapshot(raw)) throw new Error('Drive snapshot is invalid');
-  return raw;
+  const normalized = normalizeSnapshot(raw);
+  if (!normalized.snapshot || normalized.problems.length) throw new Error(`Drive snapshot is invalid: ${normalized.problems.map(problem => problem.message).join(' ')}`);
+  return normalized.snapshot;
 }
 
 // ── Public ────────────────────────────────────────────────────────────────────
@@ -102,7 +103,7 @@ async function downloadSnapshot(): Promise<AppSnapshot | null> {
 export async function pullAndMerge(): Promise<SyncResult> {
   try {
     const remote = await downloadSnapshot();
-    if (remote) await mergeSnapshot(remote);
+    if (remote) await mergeNormalizedSnapshot(remote);
     return { ok: true, syncedAt: new Date().toISOString() };
   } catch (err) {
     return { ok: false, error: String(err) };

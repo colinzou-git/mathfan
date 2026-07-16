@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-16T05:51:52.699766+00:00",
+  "generated_at": "2026-07-16T06:02:42.079233+00:00",
   "repo_root": "/home/ubuntu/mathfan",
   "package": {
     "name": "mathfan",
@@ -421,9 +421,9 @@
     {
       "path": "PROGRESS.md",
       "ext": ".md",
-      "bytes": 8959,
-      "lines": 143,
-      "sha1": "8ab51794f1cd",
+      "bytes": 8997,
+      "lines": 144,
+      "sha1": "1ed0ce1089b9",
       "imports": [],
       "exports": [],
       "functions": [],
@@ -5878,9 +5878,9 @@
     {
       "path": "src/features/sync/driveSync.ts",
       "ext": ".ts",
-      "bytes": 5326,
-      "lines": 163,
-      "sha1": "aab36ffa84ee",
+      "bytes": 5508,
+      "lines": 164,
+      "sha1": "8a9f756acfd8",
       "imports": [
         "../auth/googleAuth",
         "./snapshot"
@@ -5954,23 +5954,31 @@
     {
       "path": "src/features/sync/snapshot.ts",
       "ext": ".ts",
-      "bytes": 11597,
-      "lines": 256,
-      "sha1": "eaa638410f6e",
+      "bytes": 17696,
+      "lines": 324,
+      "sha1": "6b9700add2dc",
       "imports": [
         "../../db/dexie",
         "../../types/math",
+        "../curriculum/makeItemFromId",
         "../goals/types",
         "../learning/eventRebuild",
         "../learning/learningEvents",
+        "../learning/schedulingTelemetry",
         "../multiplication/types",
+        "../scheduler/cardModel",
         "./learnerKeyMerge",
         "./timeUtil"
       ],
       "exports": [
         "AppSnapshot",
+        "AppSnapshotV3",
+        "normalizeSnapshot",
         "OrphanReport",
         "remoteHasNewerUpdatedAt",
+        "SnapshotFormatMetadata",
+        "SnapshotNormalizationProblem",
+        "SnapshotNormalizationResult",
         "validateSnapshot",
         "validTimeMs"
       ],
@@ -5978,16 +5986,23 @@
         "buildSnapshot",
         "findOrphanedStudentReferences",
         "mergeCardStateCollision",
+        "mergeNormalizedSnapshot",
         "mergeSnapshot",
+        "normalizeSnapshot",
         "orphanReportInTransaction",
         "validateSnapshot"
       ],
       "classes": [],
       "interfaces": [
         "AppSnapshot",
-        "OrphanReport"
+        "OrphanReport",
+        "SnapshotFormatMetadata",
+        "SnapshotNormalizationProblem",
+        "SnapshotNormalizationResult"
       ],
-      "types": [],
+      "types": [
+        "AppSnapshotV3"
+      ],
       "components": [],
       "hooks": [],
       "css_classes": [],
@@ -7945,9 +7960,9 @@
     {
       "path": "src/tests/goalSnapshot.test.ts",
       "ext": ".ts",
-      "bytes": 12625,
-      "lines": 399,
-      "sha1": "6fdf46ecbedb",
+      "bytes": 12731,
+      "lines": 400,
+      "sha1": "83e76e52e72b",
       "imports": [
         "../features/goals/types",
         "../features/learning/learningEvents",
@@ -9152,7 +9167,7 @@
       "ext": ".ts",
       "bytes": 2117,
       "lines": 57,
-      "sha1": "39d88ebea9b6",
+      "sha1": "09dd6324ab21",
       "imports": [
         "../features/sync/snapshot",
         "vitest"
@@ -9173,9 +9188,9 @@
     {
       "path": "src/tests/snapshotValidation.test.ts",
       "ext": ".ts",
-      "bytes": 5356,
-      "lines": 151,
-      "sha1": "e7ce6e0b05d5",
+      "bytes": 7769,
+      "lines": 187,
+      "sha1": "5f6c11e82f7c",
       "imports": [
         "../features/sync/snapshot",
         "vitest"

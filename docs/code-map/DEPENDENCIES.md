@@ -556,10 +556,13 @@
 | src/features/sync/learnerKeyMerge.ts | ./snapshot |
 | src/features/sync/snapshot.ts | ../../db/dexie |
 | src/features/sync/snapshot.ts | ../../types/math |
+| src/features/sync/snapshot.ts | ../curriculum/makeItemFromId |
 | src/features/sync/snapshot.ts | ../goals/types |
 | src/features/sync/snapshot.ts | ../learning/eventRebuild |
 | src/features/sync/snapshot.ts | ../learning/learningEvents |
+| src/features/sync/snapshot.ts | ../learning/schedulingTelemetry |
 | src/features/sync/snapshot.ts | ../multiplication/types |
+| src/features/sync/snapshot.ts | ../scheduler/cardModel |
 | src/features/sync/snapshot.ts | ./learnerKeyMerge |
 | src/features/sync/snapshot.ts | ./timeUtil |
 | src/features/sync/SyncWidget.tsx | ../auth/googleAuth |

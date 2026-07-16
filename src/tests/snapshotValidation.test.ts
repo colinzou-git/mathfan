@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { validateSnapshot } from '../features/sync/snapshot';
+import { normalizeSnapshot, validateSnapshot } from '../features/sync/snapshot';
 import type { AppSnapshot } from '../features/sync/snapshot';
 
 function validSnapshot(overrides: Partial<AppSnapshot> = {}): AppSnapshot {
@@ -37,8 +37,44 @@ describe('validateSnapshot — valid inputs', () => {
   });
 
   it('accepts snapshot with non-empty arrays', () => {
-    const snap = validSnapshot({ students: [{ id: 's1' } as never] });
+    const snap = validSnapshot({ students: [{ id: 's1', displayName: 'Alex' } as never] });
     expect(validateSnapshot(snap)).toBe(true);
+  });
+});
+
+describe('normalizeSnapshot — legacy card compatibility', () => {
+  it('converts a v1 itemId state and canonicalizes multiplication orientation', () => {
+    const raw = validSnapshot({
+      students: [{ id: 's1', displayName: 'Alex' } as never],
+      itemStates: [{ studentId: 's1', itemId: 'MUL_8x7', skillId: 'mul', attemptCount: 4, correctCount: 3, lastCorrect: true, lastLatencyMs: 900, medianLatencyMs: 1000, ease: 2.5, stabilityDays: 8, difficulty: .2, reps: 4, lapses: 1, masteryLevel: 'strong', mistakePatterns: [] } as never],
+    });
+    const result = normalizeSnapshot(raw);
+    expect(result.problems).toEqual([]);
+    expect(result.snapshot?.snapshotVersion).toBe(3);
+    expect(result.snapshot?.itemStates[0]).toMatchObject({ cardKey: 'fact:mul:7x8', lastItemId: 'MUL_8x7', attemptCount: 4, reps: 4 });
+  });
+
+  it('merges mixed legacy orientations deterministically', () => {
+    const base = { studentId: 's1', skillId: 'mul', correctCount: 1, lastCorrect: true, lastLatencyMs: 900, medianLatencyMs: 900, ease: 2.5, difficulty: .2, lapses: 0, masteryLevel: 'learning', mistakePatterns: [] };
+    const result = normalizeSnapshot(validSnapshot({ students: [{ id: 's1', displayName: 'Alex' } as never], itemStates: [
+      { ...base, itemId: 'MUL_7x8', attemptCount: 2, stabilityDays: 3, reps: 2 },
+      { ...base, itemId: 'MUL_8x7', attemptCount: 5, stabilityDays: 9, reps: 5 },
+    ] as never }));
+    expect(result.snapshot?.itemStates).toHaveLength(1);
+    expect(result.snapshot?.itemStates[0]).toMatchObject({ cardKey: 'fact:mul:7x8', attemptCount: 5, stabilityDays: 9, reps: 5 });
+  });
+
+  it('reports and skips an unparseable optional legacy cache row', () => {
+    const result = normalizeSnapshot(validSnapshot({ itemStates: [{ studentId: 's1', itemId: 'REMOVED_ITEM' }] as never }));
+    expect(result.problems).toEqual([]);
+    expect(result.warnings).toEqual([expect.objectContaining({ table: 'itemStates', code: 'unparseable_legacy_item', recordId: 'REMOVED_ITEM' })]);
+    expect(result.snapshot?.itemStates).toEqual([]);
+  });
+
+  it('returns structural problems before any merge is possible', () => {
+    const result = normalizeSnapshot({ appId: 'mathfan', snapshotVersion: 1, students: [] });
+    expect(result.snapshot).toBeUndefined();
+    expect(result.problems.map(problem => problem.code)).toContain('missing_array');
   });
 });
 

@@ -6,11 +6,22 @@ import { db } from '../../db/dexie';
 import type { GoalEvaluation, GoalEvent, LearningGoal } from '../goals/types';
 import { remapStudentId, resolveCanonicalStudentIds, resolveLearnerKeyDuplicate, type StudentIdAliasMap } from './learnerKeyMerge';
 import { validTimeMs, remoteHasNewerUpdatedAt } from './timeUtil';
+import { makeItemFromId } from '../curriculum/makeItemFromId';
+import { deriveCardKey } from '../scheduler/cardModel';
+import { CARD_MODEL_VERSION } from '../learning/schedulingTelemetry';
+
+export interface SnapshotFormatMetadata {
+  appVersion: string;
+  schemaVersion: 3;
+  cardModelVersion: string;
+  exportedAt: string;
+}
 
 export interface AppSnapshot {
   appId: 'mathfan';
-  snapshotVersion: 1 | 2;
+  snapshotVersion: 1 | 2 | 3;
   snapshotAt: string;
+  metadata?: SnapshotFormatMetadata;
   students: StudentProfile[];
   itemStates: StudentItemState[];
   attempts: AttemptLog[];
@@ -27,7 +38,7 @@ export interface AppSnapshot {
 
 // ── Build ─────────────────────────────────────────────────────────────────────
 
-export async function buildSnapshot(): Promise<AppSnapshot> {
+export async function buildSnapshot(): Promise<AppSnapshotV3> {
   const tables = [
     db.students,
     db.itemStates,
@@ -67,8 +78,9 @@ export async function buildSnapshot(): Promise<AppSnapshot> {
     ]);
     return {
       appId: 'mathfan',
-      snapshotVersion: 2,
+      snapshotVersion: 3,
       snapshotAt: new Date().toISOString(),
+      metadata: { appVersion: __APP_VERSION__, schemaVersion: 3, cardModelVersion: CARD_MODEL_VERSION, exportedAt: new Date().toISOString() },
       students,
       itemStates,
       attempts,
@@ -146,7 +158,80 @@ export async function findOrphanedStudentReferences(): Promise<OrphanReport> {
   return db.transaction('r', [db.students, db.itemStates, db.attempts, db.sessions, db.multFactStats, db.quizSessions, db.mathAnswerEvents, db.learningGoals, db.goalEvents, db.goalEvaluations], orphanReportInTransaction);
 }
 
+export type AppSnapshotV3 = AppSnapshot & { snapshotVersion: 3; metadata: SnapshotFormatMetadata };
+export interface SnapshotNormalizationProblem { table: string; recordId?: string; code: string; message: string }
+export interface SnapshotNormalizationResult { snapshot?: AppSnapshotV3; problems: SnapshotNormalizationProblem[]; warnings: SnapshotNormalizationProblem[] }
+
+const requiredArrays = ['students', 'itemStates', 'attempts', 'sessions'] as const;
+
+export function normalizeSnapshot(raw: unknown): SnapshotNormalizationResult {
+  const problems: SnapshotNormalizationProblem[] = [];
+  const warnings: SnapshotNormalizationProblem[] = [];
+  if (!raw || typeof raw !== 'object') return { problems: [{ table: 'snapshot', code: 'invalid_root', message: 'Snapshot must be an object.' }], warnings };
+  const source = raw as Record<string, unknown>;
+  if (source.appId !== 'mathfan' || ![1, 2, 3].includes(source.snapshotVersion as number)) problems.push({ table: 'snapshot', code: 'unsupported_version', message: 'Snapshot app ID or version is not supported.' });
+  for (const table of requiredArrays) if (!Array.isArray(source[table])) problems.push({ table, code: 'missing_array', message: `${table} must be an array.` });
+  if (problems.length) return { problems, warnings };
+
+  const version = source.snapshotVersion as 1 | 2 | 3;
+  const students = (source.students as StudentProfile[]).filter((profile, index) => {
+    const valid = profile && typeof profile.id === 'string' && typeof profile.displayName === 'string';
+    if (!valid) problems.push({ table: 'students', recordId: String(index), code: 'invalid_profile', message: 'Student profile is missing required identity fields.' });
+    return valid;
+  });
+  if (problems.length) return { problems, warnings };
+  const allChildArrays = ['attempts', 'sessions', 'multFactStats', 'quizSessions', 'mathAnswerEvents', 'learningGoals', 'goalEvents', 'goalEvaluations'] as const;
+  const childRows = Object.fromEntries(allChildArrays.map(table => [table, Array.isArray(source[table]) ? source[table] : []])) as Record<typeof allChildArrays[number], Array<{ studentId: string }>>;
+  if (version >= 2 && (!Array.isArray(source.learningGoals) || !Array.isArray(source.goalEvents) || !Array.isArray(source.goalEvaluations))) {
+    problems.push({ table: 'snapshot', code: 'missing_v2_tables', message: 'Version 2+ snapshots require goal arrays.' });
+    return { problems, warnings };
+  }
+  const evidenceCounts: Record<string, number> = {};
+  for (const event of childRows.mathAnswerEvents) if (typeof event.studentId === 'string') evidenceCounts[event.studentId] = (evidenceCounts[event.studentId] ?? 0) + 1;
+  const aliases = resolveCanonicalStudentIds([], students, evidenceCounts);
+  const canonicalProfiles = compoundMerge(students.map(profile => ({ ...profile, id: aliases.get(profile.id) ?? profile.id })), profile => profile.id, (a, b) => resolveLearnerKeyDuplicate(a, b, evidenceCounts));
+
+  const normalizedStates: StudentItemState[] = [];
+  for (const [index, value] of (source.itemStates as unknown[]).entries()) {
+    if (!value || typeof value !== 'object') { warnings.push({ table: 'itemStates', recordId: String(index), code: 'invalid_state', message: 'Item state is not an object and was skipped.' }); continue; }
+    const row = value as Record<string, unknown>;
+    if (typeof row.studentId !== 'string') { problems.push({ table: 'itemStates', recordId: String(index), code: 'missing_owner', message: 'Item state is missing studentId.' }); continue; }
+    let state: StudentItemState | undefined;
+    if (typeof row.cardKey === 'string') state = row as unknown as StudentItemState;
+    else if (typeof row.itemId === 'string') {
+      const item = makeItemFromId(row.itemId);
+      if (item) {
+        const { itemId, ...legacy } = row;
+        state = { ...legacy, studentId: row.studentId, cardKey: deriveCardKey(item), lastItemId: itemId } as unknown as StudentItemState;
+      }
+    }
+    if (!state) { warnings.push({ table: 'itemStates', recordId: String(row.itemId ?? index), code: 'unparseable_legacy_item', message: 'Legacy cache row could not be reconstructed and was skipped; answer events remain importable.' }); continue; }
+    normalizedStates.push(remapStudentId(state, aliases));
+  }
+  if (problems.length) return { problems, warnings };
+  const itemStates = compoundMerge(normalizedStates, row => `${row.studentId}|${row.cardKey}`, mergeCardStateCollision);
+  const remappedChildren = Object.fromEntries(Object.entries(childRows).map(([table, rows]) => [table, rows.map(row => remapStudentId(row, aliases))]));
+  const snapshotAt = typeof source.snapshotAt === 'string' ? source.snapshotAt : new Date().toISOString();
+  return {
+    snapshot: {
+      appId: 'mathfan', snapshotVersion: 3, snapshotAt,
+      metadata: { appVersion: typeof (source.metadata as Record<string, unknown> | undefined)?.appVersion === 'string' ? String((source.metadata as Record<string, unknown>).appVersion) : 'legacy', schemaVersion: 3, cardModelVersion: CARD_MODEL_VERSION, exportedAt: snapshotAt },
+      students: canonicalProfiles, itemStates,
+      attempts: remappedChildren.attempts as AttemptLog[], sessions: remappedChildren.sessions as PracticeSession[],
+      multFactStats: remappedChildren.multFactStats as MultiplicationFactStats[], quizSessions: remappedChildren.quizSessions as QuizSession[],
+      mathAnswerEvents: remappedChildren.mathAnswerEvents as MathAnswerEvent[], learningGoals: remappedChildren.learningGoals as LearningGoal[],
+      goalEvents: remappedChildren.goalEvents as GoalEvent[], goalEvaluations: remappedChildren.goalEvaluations as GoalEvaluation[],
+    }, problems, warnings,
+  };
+}
+
 export async function mergeSnapshot(remote: AppSnapshot): Promise<void> {
+  const normalized = normalizeSnapshot(remote);
+  if (!normalized.snapshot || normalized.problems.length) throw new Error(`Snapshot normalization failed: ${normalized.problems.map(problem => `${problem.table}:${problem.code}`).join(', ')}`);
+  return mergeNormalizedSnapshot(normalized.snapshot);
+}
+
+export async function mergeNormalizedSnapshot(remote: AppSnapshotV3): Promise<void> {
   let aliases: StudentIdAliasMap = new Map();
   const affectedStudentIds = new Set<string>();
 
@@ -234,22 +319,5 @@ export async function mergeSnapshot(remote: AppSnapshot): Promise<void> {
 }
 
 export function validateSnapshot(raw: unknown): raw is AppSnapshot {
-  if (!raw || typeof raw !== 'object') return false;
-  const s = raw as Record<string, unknown>;
-  const hasBaseShape =
-    s.appId === 'mathfan' &&
-    (s.snapshotVersion === 1 || s.snapshotVersion === 2) &&
-    Array.isArray(s.students) &&
-    Array.isArray(s.itemStates) &&
-    Array.isArray(s.attempts) &&
-    Array.isArray(s.sessions);
-
-  if (!hasBaseShape) return false;
-  if (s.snapshotVersion === 1) return true;
-
-  return (
-    Array.isArray(s.learningGoals) &&
-    Array.isArray(s.goalEvents) &&
-    Array.isArray(s.goalEvaluations)
-  );
+  return normalizeSnapshot(raw).snapshot !== undefined;
 }
