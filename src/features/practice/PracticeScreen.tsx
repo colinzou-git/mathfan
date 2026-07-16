@@ -31,7 +31,7 @@ interface Props {
 export function PracticeScreen({
   studentId, config, settings, onUpdateSettings, onDone, onOpenSettings, onPlayAgain, onBack,
 }: Props) {
-  const { state, startSession, submitAnswer, retrySave, nextQuestion } = usePracticeSession(studentId);
+  const { state, startSession, submitAnswer, retrySave, nextQuestion, retryAuxiliaryWrites, dismissAuxiliaryWarning } = usePracticeSession(studentId);
   const [input, setInput] = useState('');
   const [showSettings, setShowSettings] = useState(false);
   const [showTutor, setShowTutor] = useState(false);
@@ -235,6 +235,10 @@ export function PracticeScreen({
         adaptiveLessonFocus={config.lessonKind === 'adaptive_daily_lesson' ? config.focusSkillId : undefined}
         adaptiveLessonSegments={config.lessonSegments}
         uniqueSchedulingCards={config.preplannedItems ? new Set(config.preplannedItems.map(deriveCardKey)).size : undefined}
+        auxiliaryWarning={state.auxiliarySaveStatus === 'error' ? state.auxiliarySaveError ?? undefined : undefined}
+        auxiliarySaving={state.auxiliarySaveStatus === 'saving'}
+        onRetryAuxiliary={retryAuxiliaryWrites}
+        onDismissAuxiliary={dismissAuxiliaryWarning}
         onDone={onDone}
         onPlayAgain={quitting || config.lessonKind === 'adaptive_daily_lesson' ? undefined : onPlayAgain}
         onBack={onBack}

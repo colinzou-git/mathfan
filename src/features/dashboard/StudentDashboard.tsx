@@ -16,6 +16,7 @@ import { getOrCreateDailyLessonPlan } from '../learningPlan/dailyLessonPersisten
 import { regenerateDailyLessonPlan } from '../learningPlan/dailyLessonPersistence';
 import type { PlanDailyLessonArgs } from '../learningPlan/dailyLessonPlanner';
 import { learnerLocalDateKey } from '../time/localDate';
+import { retryRecentRelatedEvidenceRepairs } from '../adaptive/relatedEvidenceRepair';
 
 export type PracticeOp =
   | 'multiplication' | 'division' | 'addition' | 'subtraction' | 'fraction'
@@ -101,6 +102,10 @@ export function StudentDashboard({ profile, lastSyncedAt, onStartDailyReview, on
   const roundsInputRef = useRef<HTMLInputElement>(null);
   const lessonArgsRef = useRef<PlanDailyLessonArgs | null>(null);
   const [regeneratingLesson, setRegeneratingLesson] = useState(false);
+
+  useEffect(() => {
+    void retryRecentRelatedEvidenceRepairs(profile.id).catch(() => undefined);
+  }, [profile.id]);
 
   // Focus and select the rounds input when the modal opens so keyboard users
   // can type a count immediately.

@@ -723,16 +723,23 @@ describe('usePracticeSession — session-level related evidence ledger', () => {
     expect(recordRelatedEvidenceWrites).not.toHaveBeenCalled();
   });
 
-  it('does not consume a deferred reservation when persistence fails', async () => {
+  it('completes direct work and exposes retry when deferred persistence fails', async () => {
     vi.mocked(itemStateRepo.getForStudent).mockResolvedValue([factState]);
     vi.mocked(recordRelatedEvidenceWrites).mockRejectedValueOnce(new Error('disk full')).mockResolvedValueOnce(undefined);
     const { result } = renderHook(() => usePracticeSession(STUDENT_ID));
     await act(async () => { await result.current.startSession({ mode: 'area', sessionLength: 1, specificItemIds: ['AREA_RECT_3x4'] }); });
     await act(async () => { await result.current.submitAnswer('12'); });
     await act(async () => { await result.current.nextQuestion(); });
-    expect(result.current.state.phase).toBe('correct');
-    await act(async () => { await result.current.nextQuestion(); });
-    expect(recordRelatedEvidenceWrites).toHaveBeenCalledTimes(2);
     expect(result.current.state.phase).toBe('complete');
+    expect(result.current.state.auxiliarySaveStatus).toBe('error');
+    expect(result.current.state.auxiliarySaveError).toMatch(/answers are saved/i);
+    await act(async () => { await result.current.retryAuxiliaryWrites(); });
+    expect(recordRelatedEvidenceWrites).toHaveBeenCalledTimes(2);
+    const firstId = vi.mocked(recordRelatedEvidenceWrites).mock.calls[0][0][0].event.id;
+    const retryId = vi.mocked(recordRelatedEvidenceWrites).mock.calls[1][0][0].event.id;
+    expect(firstId).toMatch(/^related:id-\d+:fact%3Amul%3A3x4$/);
+    expect(retryId).toBe(firstId);
+    expect(result.current.state.phase).toBe('complete');
+    expect(result.current.state.auxiliarySaveStatus).toBe('complete');
   });
 });

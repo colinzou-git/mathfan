@@ -4,7 +4,7 @@
 
 | Package | Import count |
 | --- | --- |
-| vitest | 87 |
+| vitest | 88 |
 | react | 35 |
 | @testing-library/react | 19 |
 | pathlib | 8 |
@@ -124,6 +124,13 @@
 | src/features/adaptive/relatedEvidence.ts | ../scheduler/scheduler |
 | src/features/adaptive/relatedEvidence.ts | ./adaptiveItemSelector |
 | src/features/adaptive/relatedEvidence.ts | ./relatedItemMapping |
+| src/features/adaptive/relatedEvidenceRepair.ts | ../../db/repositories |
+| src/features/adaptive/relatedEvidenceRepair.ts | ../curriculum/makeItemFromId |
+| src/features/adaptive/relatedEvidenceRepair.ts | ../learning/recordAnswer |
+| src/features/adaptive/relatedEvidenceRepair.ts | ../learning/schedulingTelemetry |
+| src/features/adaptive/relatedEvidenceRepair.ts | ../scheduler/cardModel |
+| src/features/adaptive/relatedEvidenceRepair.ts | ../scheduler/scheduler |
+| src/features/adaptive/relatedEvidenceRepair.ts | ./relatedEvidence |
 | src/features/adaptive/relatedItemMapping.ts | ../../types/math |
 | src/features/adaptive/relatedItemMapping.ts | ../curriculum/practiceContentSpec |
 | src/features/adaptive/relatedItemMapping.ts | ../mastery/skillMapping |
@@ -190,6 +197,7 @@
 | src/features/dashboard/StudentDashboard.tsx | ../../db/repositories |
 | src/features/dashboard/StudentDashboard.tsx | ../../types/math |
 | src/features/dashboard/StudentDashboard.tsx | ../../utils/rng |
+| src/features/dashboard/StudentDashboard.tsx | ../adaptive/relatedEvidenceRepair |
 | src/features/dashboard/StudentDashboard.tsx | ../curriculum/describeItem |
 | src/features/dashboard/StudentDashboard.tsx | ../curriculum/makeItemFromId |
 | src/features/dashboard/StudentDashboard.tsx | ../goals/dailyNewGoalPlanner |
@@ -970,6 +978,8 @@
 | src/tests/relatedEvidence.test.ts | ../features/scheduler/cardModel |
 | src/tests/relatedEvidence.test.ts | ../features/stats/todayAchievement |
 | src/tests/relatedEvidence.test.ts | ../types/math |
+| src/tests/relatedEvidenceRepair.test.ts | ../features/adaptive/relatedEvidenceRepair |
+| src/tests/relatedEvidenceRepair.test.ts | ../features/learning/learningEvents |
 | src/tests/responsePolicy.test.ts | ../features/scheduler/cardModel |
 | src/tests/responsePolicy.test.ts | ../features/scheduler/responsePolicy |
 | src/tests/responsePolicy.test.ts | ../types/math |

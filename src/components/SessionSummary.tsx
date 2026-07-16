@@ -22,6 +22,10 @@ interface Props {
   adaptiveLessonFocus?: string;
   adaptiveLessonSegments?: Array<{ kind: 'retrieval' | 'focus' | 'transfer'; itemInstanceIds: string[] }>;
   uniqueSchedulingCards?: number;
+  auxiliaryWarning?: string;
+  auxiliarySaving?: boolean;
+  onRetryAuxiliary?: () => void;
+  onDismissAuxiliary?: () => void;
   onDone: () => void;
   onPlayAgain?: () => void;
   onBack?: () => void;
@@ -43,6 +47,10 @@ export function SessionSummary({
   adaptiveLessonFocus,
   adaptiveLessonSegments,
   uniqueSchedulingCards,
+  auxiliaryWarning,
+  auxiliarySaving,
+  onRetryAuxiliary,
+  onDismissAuxiliary,
   onDone,
   onPlayAgain,
   onBack,
@@ -77,6 +85,16 @@ export function SessionSummary({
         <p style={s.headline}>
           You solved {completedCount} {completedCount === 1 ? 'problem' : 'problems'}.
         </p>
+
+        {auxiliaryWarning && (
+          <div role="alert" style={s.auxiliaryWarning}>
+            <p style={{ margin: 0 }}>{auxiliaryWarning}</p>
+            <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
+              {onRetryAuxiliary && <button type="button" style={s.secondaryBtn} disabled={auxiliarySaving} onClick={onRetryAuxiliary}>{auxiliarySaving ? 'Saving…' : 'Retry schedule update'}</button>}
+              {onDismissAuxiliary && <button type="button" style={s.secondaryBtn} onClick={onDismissAuxiliary}>Dismiss</button>}
+            </div>
+          </div>
+        )}
 
         {/* Kid-friendly, non-shaming framing */}
         <div style={s.buckets}>
@@ -214,6 +232,10 @@ const s: Record<string, CSSProperties> = {
     fontWeight: 600,
     color: '#1f2937',
     margin: '0 0 16px',
+  },
+  auxiliaryWarning: {
+    background: '#fff7ed', border: '1px solid #fdba74', color: '#9a3412',
+    borderRadius: '10px', padding: '12px', marginBottom: '16px', fontSize: '14px',
   },
   buckets: {
     display: 'flex',

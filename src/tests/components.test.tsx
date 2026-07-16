@@ -34,6 +34,21 @@ describe('TutorChat', () => {
 });
 
 describe('SessionSummary', () => {
+  it('shows a nonblocking retry and dismiss warning for auxiliary schedule saves', () => {
+    const retry = vi.fn();
+    const dismiss = vi.fn();
+    render(<SessionSummary completedCount={1} correctCount={1} latencies={[1000]} fastestMs={1000}
+      auxiliaryWarning="Your answers are saved. One schedule update is waiting."
+      onRetryAuxiliary={retry} onDismissAuxiliary={dismiss} onDone={() => {}} />);
+    expect(screen.getByRole('heading', { name: 'Session Complete!' })).toBeVisible();
+    expect(screen.getByText(/Your answers are saved/i)).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Retry schedule update' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }));
+    expect(retry).toHaveBeenCalledOnce();
+    expect(dismiss).toHaveBeenCalledOnce();
+    expect(screen.getByRole('button', { name: 'Home' })).toBeEnabled();
+  });
+
   it('shows first-try accuracy (not completion %) and a missed-facts list', () => {
     render(
       <SessionSummary

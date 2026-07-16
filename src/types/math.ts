@@ -323,6 +323,10 @@ export interface PracticeSession {
   lessonKind?: 'adaptive_daily_lesson';
   focusSkillId?: string;
   lessonSegments?: Array<{ kind: 'retrieval' | 'focus' | 'transfer'; itemInstanceIds: string[] }>;
+  /** Retryable state for derived, nonblocking related-evidence persistence. */
+  relatedEvidenceStatus?: 'not_applicable' | 'pending' | 'complete' | 'error';
+  relatedEvidenceError?: string;
+  relatedEvidenceLastAttemptAt?: string;
 }
 
 export interface PersistedPlannedLessonItem {

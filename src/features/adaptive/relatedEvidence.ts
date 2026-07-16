@@ -31,6 +31,11 @@ export interface RelatedEvidenceUpdate {
   after: StudentItemState;
 }
 
+/** Stable identity makes a retry/reload safe: one related event per session/card. */
+export function relatedEvidenceEventId(sessionId: string, cardKey: string): string {
+  return `related:${sessionId}:${encodeURIComponent(cardKey)}`;
+}
+
 /**
  * Compute the mild FSRS nudges for the facts embedded in `item`. Pure — does not
  * mutate `stateMap` or persist anything; the caller applies and records them.
