@@ -78,6 +78,8 @@ export interface SessionState {
   missedFacts: string[];
   /** Prior session of the same mode (captured at start), for comparison. */
   lastSession: LastSessionSummary | null;
+  saveStatus: 'idle' | 'saving' | 'error';
+  saveError: string | null;
 }
 
 // ── Internal state helpers ────────────────────────────────────────────────────
@@ -101,6 +103,8 @@ const INITIAL: SessionState = {
   fastestMs: null,
   missedFacts: [],
   lastSession: null,
+  saveStatus: 'idle',
+  saveError: null,
 };
 
 // ── Hook ──────────────────────────────────────────────────────────────────────
@@ -130,6 +134,12 @@ export function usePracticeSession(studentId: string) {
   const currentPresentationIndexRef = useRef<number>(1);
   const directEvidenceCardsRef = useRef(new Set<string>());
   const pendingRelatedEvidenceRef = useRef(new Map<string, { cardKey: string; relatedItemId: string; sourceItemId: string }>());
+  const pendingSaveRef = useRef<null | {
+    payload: PracticeAnswerPayload;
+    cardKey: string;
+    schedulingEligible: boolean;
+    commit: () => void;
+  }>(null);
 
   const resolveItem = useCallback((id: string): PItem => {
     return dynamicItemsRef.current.get(id) ?? getStaticItem(id);
@@ -328,12 +338,11 @@ export function usePracticeSession(studentId: string) {
 
   const submitAnswer = useCallback(async (rawInput: string) => {
     const prev = stateRef.current;
-    if (prev.phase !== 'active' || !prev.currentItem || !prev.sessionId) return;
+    if (prev.phase !== 'active' || prev.saveStatus !== 'idle' || !prev.currentItem || !prev.sessionId) return;
 
     const item = prev.currentItem;
     const latencyMs = Date.now() - questionStartRef.current;
     const attemptNo = currentAttemptsRef.current + 1;
-    currentAttemptsRef.current = attemptNo;
     const isFirstAttemptAtPresentation = attemptNo === 1;
     const result = checkAnswer(item, rawInput, latencyMs, { hintUsed: !isFirstAttemptAtPresentation });
     const now = appNow();
@@ -384,11 +393,6 @@ export function usePracticeSession(studentId: string) {
         const merged = Array.from(new Set([...(updated.mistakePatterns ?? []), ...newTags]));
         updated = { ...updated, mistakePatterns: merged };
       }
-    }
-
-    // Mutate refs before setState — safe because this is a plain event handler, not an updater.
-    if (isFirstAttemptAtPresentation) {
-      statesRef.current.set(cardKey, updated);
     }
 
     // Compute possible indirect evidence now, but defer its scheduler write to
@@ -516,28 +520,10 @@ export function usePracticeSession(studentId: string) {
       };
     }
 
-    stateRef.current = nextState;
-    setState(nextState);
-
-    // Await the write so FSRS item state is durably saved; retry once on transient DB errors.
-    let persisted = false;
-    try {
-      await recordPracticeAnswer(payload);
-      persisted = true;
-    } catch (err) {
-      console.warn('[usePracticeSession] event write failed, retrying…', err);
-      try {
-        await recordPracticeAnswer(payload);
-        persisted = true;
-      } catch (retryErr) {
-        console.error('[usePracticeSession] event write failed after retry; event lost:', retryErr);
-        // Release the scheduling reservation so a later presentation of this
-        // card in the same session can still schedule it, since this write
-        // never actually persisted.
-        if (isFirstSchedulingAttemptInSession) schedulingGuardRef.current.releaseScheduled(cardKey);
-      }
-    }
-    if (persisted) {
+    nextState = { ...nextState, saveStatus: 'idle', saveError: null };
+    const commit = () => {
+      currentAttemptsRef.current = attemptNo;
+      if (isFirstAttemptAtPresentation) statesRef.current.set(cardKey, updated);
       if (isFirstSchedulingAttemptInSession) {
         directEvidenceCardsRef.current.add(cardKey);
         pendingRelatedEvidenceRef.current.delete(cardKey);
@@ -546,13 +532,58 @@ export function usePracticeSession(studentId: string) {
         if (directEvidenceCardsRef.current.has(candidate.cardKey) || pendingRelatedEvidenceRef.current.has(candidate.cardKey)) continue;
         pendingRelatedEvidenceRef.current.set(candidate.cardKey, candidate);
       }
+      pendingSaveRef.current = null;
+      stateRef.current = nextState;
+      setState(nextState);
+    };
+    pendingSaveRef.current = { payload, cardKey, schedulingEligible: isFirstSchedulingAttemptInSession, commit };
+    const savingState = { ...prev, saveStatus: 'saving' as const, saveError: null };
+    stateRef.current = savingState;
+    setState(savingState);
+
+    try {
+      await recordPracticeAnswer(payload);
+      commit();
+      return;
+    } catch (err) {
+      console.warn('[usePracticeSession] event write failed, retrying…', err);
+      try {
+        await recordPracticeAnswer(payload);
+        commit();
+        return;
+      } catch (retryErr) {
+        console.error('[usePracticeSession] event write failed after retry', retryErr);
+        if (isFirstSchedulingAttemptInSession) schedulingGuardRef.current.releaseScheduled(cardKey);
+        const errorState = { ...prev, saveStatus: 'error' as const, saveError: 'Your answer is ready, but it was not saved yet.' };
+        stateRef.current = errorState;
+        setState(errorState);
+      }
     }
   }, [studentId]);
+
+  const retrySave = useCallback(async () => {
+    const pending = pendingSaveRef.current;
+    if (!pending || stateRef.current.saveStatus !== 'error') return;
+    if (pending.schedulingEligible) schedulingGuardRef.current.markScheduled(pending.cardKey);
+    const savingState = { ...stateRef.current, saveStatus: 'saving' as const, saveError: null };
+    stateRef.current = savingState;
+    setState(savingState);
+    try {
+      await recordPracticeAnswer(pending.payload);
+      pending.commit();
+    } catch {
+      if (pending.schedulingEligible) schedulingGuardRef.current.releaseScheduled(pending.cardKey);
+      const errorState = { ...stateRef.current, saveStatus: 'error' as const, saveError: 'Still not saved. Check storage and try again.' };
+      stateRef.current = errorState;
+      setState(errorState);
+    }
+  }, []);
 
   // ── nextQuestion ──────────────────────────────────────────────────────────
 
   const nextQuestion = useCallback(async () => {
     const prev = stateRef.current;
+    if (prev.saveStatus !== 'idle' || pendingSaveRef.current) return;
     const nextId = queueRef.current.shift();
 
     if (!nextId && prev.sessionId && pendingRelatedEvidenceRef.current.size > 0) {
@@ -653,11 +684,12 @@ export function usePracticeSession(studentId: string) {
     schedulingGuardRef.current.reset();
     directEvidenceCardsRef.current.clear();
     pendingRelatedEvidenceRef.current.clear();
+    pendingSaveRef.current = null;
     stateRef.current = INITIAL;
     setState(INITIAL);
   }, []);
 
-  return { state, startSession, submitAnswer, nextQuestion, resetSession };
+  return { state, startSession, submitAnswer, retrySave, nextQuestion, resetSession };
 }
 
 function getStaticItem(id: string): PracticeItem {

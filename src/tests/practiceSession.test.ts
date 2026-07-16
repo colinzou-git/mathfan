@@ -192,6 +192,36 @@ describe('usePracticeSession — wrong first attempt + correct retry', () => {
     expect(result.current.state.phase).toBe('correct');
   });
 
+  it('keeps progress unchanged after two write failures and retries the same payload idempotently', async () => {
+    vi.mocked(recordPracticeAnswer).mockRejectedValueOnce(new Error('DB busy')).mockRejectedValueOnce(new Error('disk full'));
+    const { result } = renderHook(() => usePracticeSession(STUDENT_ID));
+    await act(async () => { await result.current.startSession(SESSION_CONFIG); });
+    await act(async () => { await result.current.submitAnswer('56'); });
+
+    expect(result.current.state).toMatchObject({ phase: 'active', completedCount: 0, correctCount: 0, attemptCount: 0, saveStatus: 'error' });
+    const firstPayload = vi.mocked(recordPracticeAnswer).mock.calls[0][0];
+    expect(vi.mocked(recordPracticeAnswer).mock.calls[1][0]).toBe(firstPayload);
+
+    vi.mocked(recordPracticeAnswer).mockResolvedValueOnce(undefined);
+    await act(async () => { await result.current.retrySave(); });
+    expect(vi.mocked(recordPracticeAnswer).mock.calls[2][0]).toBe(firstPayload);
+    expect(result.current.state).toMatchObject({ phase: 'correct', completedCount: 1, correctCount: 1, attemptCount: 1, saveStatus: 'idle' });
+  });
+
+  it('preserves first-attempt semantics when a failed wrong answer is later saved', async () => {
+    vi.mocked(recordPracticeAnswer).mockRejectedValueOnce(new Error('DB busy')).mockRejectedValueOnce(new Error('disk full'));
+    const { result } = renderHook(() => usePracticeSession(STUDENT_ID));
+    await act(async () => { await result.current.startSession(SESSION_CONFIG); });
+    await act(async () => { await result.current.submitAnswer('15'); });
+    expect(result.current.state.retryKey).toBe(0);
+    vi.mocked(recordPracticeAnswer).mockResolvedValue(undefined);
+    await act(async () => { await result.current.retrySave(); });
+    expect(result.current.state.retryKey).toBe(1);
+    await act(async () => { await result.current.submitAnswer('56'); });
+    const corrected = vi.mocked(recordPracticeAnswer).mock.calls.at(-1)![0];
+    expect(corrected.event).toMatchObject({ isRetry: true, schedulingEligible: false });
+  });
+
   it('persists Daily New for Goals attribution on the session, event, and attempt', async () => {
     const config: SessionConfig = {
       ...SESSION_CONFIG,

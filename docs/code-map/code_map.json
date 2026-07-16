@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-16T06:29:21.449292+00:00",
+  "generated_at": "2026-07-16T06:39:25.082799+00:00",
   "repo_root": "/home/ubuntu/mathfan",
   "package": {
     "name": "mathfan",
@@ -421,9 +421,9 @@
     {
       "path": "PROGRESS.md",
       "ext": ".md",
-      "bytes": 9099,
-      "lines": 146,
-      "sha1": "b82da643390d",
+      "bytes": 9144,
+      "lines": 147,
+      "sha1": "85778963a253",
       "imports": [],
       "exports": [],
       "functions": [],
@@ -570,9 +570,9 @@
     {
       "path": "scripts/e2e_mathfan.py",
       "ext": ".py",
-      "bytes": 39943,
-      "lines": 755,
-      "sha1": "51f9e4f77359",
+      "bytes": 41744,
+      "lines": 783,
+      "sha1": "d8680fe2547b",
       "imports": [
         "__future__",
         "json",
@@ -602,6 +602,7 @@
         "main",
         "open_mastery_skill",
         "overlapping_goal_portfolio",
+        "practice_save_failure_recovery",
         "responsive_navigation",
         "run_practice_journey",
         "run_scenario",
@@ -631,6 +632,7 @@
         "main",
         "open_mastery_skill",
         "overlapping_goal_portfolio",
+        "practice_save_failure_recovery",
         "responsive_navigation",
         "run_practice_journey",
         "run_scenario",
@@ -4928,9 +4930,9 @@
     {
       "path": "src/features/practice/PracticeScreen.tsx",
       "ext": ".tsx",
-      "bytes": 24076,
-      "lines": 556,
-      "sha1": "10f70a9cbac7",
+      "bytes": 24855,
+      "lines": 567,
+      "sha1": "b9280141ac25",
       "imports": [
         "../../components/NumPad",
         "../../components/SessionSummary",
@@ -5008,9 +5010,9 @@
     {
       "path": "src/features/practice/usePracticeSession.ts",
       "ext": ".ts",
-      "bytes": 32039,
-      "lines": 668,
-      "sha1": "55533fb9dd70",
+      "bytes": 33467,
+      "lines": 700,
+      "sha1": "5e9eb769d139",
       "imports": [
         "../../components/opSpecs",
         "../../db/dexie",
@@ -5047,6 +5049,7 @@
         "usePracticeSession"
       ],
       "functions": [
+        "commit",
         "getStaticItem",
         "usePracticeSession"
       ],
@@ -8638,9 +8641,9 @@
     {
       "path": "src/tests/practiceSession.test.ts",
       "ext": ".ts",
-      "bytes": 23739,
-      "lines": 536,
-      "sha1": "89b16bb67d4c",
+      "bytes": 25811,
+      "lines": 566,
+      "sha1": "2b623f3d7753",
       "imports": [
         "../db/repositories",
         "../features/curriculum/makeItemFromId",

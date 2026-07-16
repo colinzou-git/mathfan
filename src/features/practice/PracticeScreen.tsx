@@ -31,7 +31,7 @@ interface Props {
 export function PracticeScreen({
   studentId, config, settings, onUpdateSettings, onDone, onOpenSettings, onPlayAgain, onBack,
 }: Props) {
-  const { state, startSession, submitAnswer, nextQuestion } = usePracticeSession(studentId);
+  const { state, startSession, submitAnswer, retrySave, nextQuestion } = usePracticeSession(studentId);
   const [input, setInput] = useState('');
   const [showSettings, setShowSettings] = useState(false);
   const [showTutor, setShowTutor] = useState(false);
@@ -146,6 +146,8 @@ export function PracticeScreen({
 
       if (showSettings) return;
 
+      if (state.saveStatus !== 'idle') return;
+
       if (e.key === 'Escape') { setShowSettings(true); return; }
 
       if (e.key === 'q' || e.key === 'Q') {
@@ -179,7 +181,6 @@ export function PracticeScreen({
             if (idx < opts.length) {
               e.preventDefault();
               submitAnswer(opts[idx]);
-              setInput('');
             }
             return;
           }
@@ -188,7 +189,6 @@ export function PracticeScreen({
             if (opts.includes(e.key)) {
               e.preventDefault();
               submitAnswer(e.key);
-              setInput('');
             }
             return;
           }
@@ -197,7 +197,6 @@ export function PracticeScreen({
           if (matches.length === 1) {
             e.preventDefault();
             submitAnswer(matches[0]);
-            setInput('');
           }
           return;
         }
@@ -205,7 +204,7 @@ export function PracticeScreen({
           e.preventDefault();
           // Read from ref (not closure) so rapid typing doesn't submit a stale partial value.
           const val = inputLatestRef.current;
-          if (val.trim()) { submitAnswer(val); setInput(''); }
+          if (val.trim()) submitAnswer(val);
         }
       }
     };
@@ -265,9 +264,8 @@ export function PracticeScreen({
   const isVisualItem = state.currentItem != null && hasVisualModel(state.currentItem);
 
   const submitChoice = (choice: string) => {
-    if (isCorrect) return;
+    if (isCorrect || state.saveStatus !== 'idle') return;
     submitAnswer(choice);
-    setInput('');
   };
 
   return (
@@ -337,12 +335,14 @@ export function PracticeScreen({
         <button
           style={st.iconBtn}
           onClick={() => setShowSettings(true)}
+          disabled={state.saveStatus !== 'idle'}
           title="Settings (Esc)"
           tabIndex={-1}
         >⚙️</button>
         <button
           style={{ ...st.iconBtn, ...st.quitIconBtn }}
           onClick={() => setShowQuit(true)}
+          disabled={state.saveStatus !== 'idle'}
           title="Quit session (Q)"
           tabIndex={-1}
         >✕</button>
@@ -387,7 +387,7 @@ export function PracticeScreen({
               inputMode={allowDecimal ? 'decimal' : 'numeric'}
               value={isCorrect ? String(state.currentItem?.answer ?? '') : input}
               onChange={e => { if (!isCorrect) setInput(e.target.value.slice(0, 6)); }}
-              readOnly={isCorrect}
+              readOnly={isCorrect || state.saveStatus !== 'idle'}
               placeholder="?"
               autoComplete="off"
               aria-label="Your answer"
@@ -400,6 +400,13 @@ export function PracticeScreen({
           )}
 
           {hasError && !isCorrect && <p style={st.errorText}>{state.errorText}</p>}
+          {state.saveStatus === 'saving' && <p role="status" style={st.saveText}>Saving…</p>}
+          {state.saveStatus === 'error' && (
+            <div role="alert" style={st.saveError}>
+              <p>{state.saveError}</p>
+              <button style={st.nextBtn} onClick={retrySave}>Retry saving</button>
+            </div>
+          )}
 
           {/* Progressive hint — shown automatically after each wrong attempt */}
           {hasError && !isCorrect && state.currentItem && state.retryKey > 0 && (() => {
@@ -460,14 +467,16 @@ export function PracticeScreen({
           )}
 
           {!isCorrect && !isChoice && (
-            <NumPad
+            <div style={{ pointerEvents: state.saveStatus === 'idle' ? 'auto' : 'none', opacity: state.saveStatus === 'idle' ? 1 : .55 }}>
+              <NumPad
               value={input}
               onChange={setInput}
               allowDecimal={allowDecimal}
               onSubmit={() => {
-                if (input.trim()) { submitAnswer(input); setInput(''); }
+                if (input.trim()) submitAnswer(input);
               }}
-            />
+              />
+            </div>
           )}
 
           {isCorrect && !settings.autoAdvance && (
@@ -532,6 +541,8 @@ const st: Record<string, CSSProperties> = {
     color: 'var(--primary)', cursor: 'pointer', touchAction: 'manipulation',
   },
   errorText: { color: '#ef4444', fontSize: '15px', fontWeight: '600', margin: '10px 0 0' },
+  saveText: { color: '#4f46e5', fontSize: '14px', fontWeight: '700' },
+  saveError: { marginTop: '10px', padding: '10px', borderRadius: '10px', background: '#fff7ed', color: '#9a3412' },
   correctText: { color: '#16a34a', fontSize: '15px', fontWeight: '600', margin: '10px 0 0' },
   subText: { color: '#9ca3af', fontWeight: 'normal' },
   hintText: { color: '#d1d5db', fontSize: '13px', margin: '8px 0 0' },

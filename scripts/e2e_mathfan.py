@@ -636,6 +636,33 @@ def adaptive_lesson_and_manual_fallback(page: Page) -> None:
     expect(page.get_by_role("heading", name="Multiplication", exact=True)).to_be_visible()
 
 
+def practice_save_failure_recovery(page: Page) -> None:
+    create_profile(page, "SaveRecoveryTester", "e2e-save-recovery")
+    page.get_by_role("button", name=re.compile(r"Multiply")).click()
+    page.get_by_label("First number smallest", exact=True).fill("1")
+    page.get_by_label("First number largest", exact=True).fill("1")
+    page.get_by_label("Second number smallest", exact=True).fill("1")
+    page.get_by_label("Second number largest", exact=True).fill("1")
+    page.get_by_label("Number of questions", exact=True).fill("1")
+    page.get_by_role("button", name=re.compile(r"Start — 1 questions")).click()
+    page.evaluate("""() => {
+        window.__mathfanOriginalPut = IDBObjectStore.prototype.put;
+        IDBObjectStore.prototype.put = function(value, key) {
+            if (this.name === 'mathAnswerEvents') throw new DOMException('Simulated storage failure', 'QuotaExceededError');
+            return window.__mathfanOriginalPut.call(this, value, key);
+        };
+    }""")
+    page.get_by_label("Your answer", exact=True).fill("1")
+    page.get_by_label("Your answer", exact=True).press("Enter")
+    expect(page.get_by_role("button", name="Retry saving", exact=True)).to_be_visible()
+    expect(page.get_by_text("0/1 · 0 ✓", exact=True)).to_be_visible()
+    expect(page.get_by_role("button", name=re.compile(r"Next"))).to_have_count(0)
+    page.evaluate("""() => { IDBObjectStore.prototype.put = window.__mathfanOriginalPut; }""")
+    page.get_by_role("button", name="Retry saving", exact=True).click()
+    expect(page.get_by_text(re.compile(r"Correct!|New personal best!"))).to_be_visible()
+    expect(page.get_by_text("1/1 · 1 ✓", exact=True)).to_be_visible()
+
+
 def run_scenario(
     browser: Browser,
     name: str,
@@ -732,6 +759,7 @@ def main() -> int:
             ("two-step-tape", {"width": 820, "height": 1180}, two_step_tape_lesson, False),
             ("overlapping-goal-portfolio", {"width": 820, "height": 1180}, overlapping_goal_portfolio, False),
             ("adaptive-lesson-and-manual", {"width": 390, "height": 844}, adaptive_lesson_and_manual_fallback, False),
+            ("practice-save-recovery", {"width": 390, "height": 844}, practice_save_failure_recovery, False),
         ]
         for name, viewport, scenario, standalone_share in scenarios:
             try:
