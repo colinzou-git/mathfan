@@ -85,7 +85,14 @@ export interface AdaptiveGoalEvaluationArgs {
   itemPoolForSkill?: (skillId: string) => SessionConfig;
 }
 
-type EvaluationRepresentation = 'conceptual' | 'visual' | 'symbolic' | 'word';
+export type EvaluationRepresentation = 'conceptual' | 'visual' | 'symbolic' | 'word';
+
+export interface EvaluationSelectionHistory {
+  usedItemIds: Set<string>;
+  selectedSchemaKeys: Set<string>;
+  selectedRepresentations: Set<EvaluationRepresentation>;
+  selectedDomains: Grade3Domain[];
+}
 
 interface SkillCatalogue {
   skill: MasterySkillNode;
@@ -180,6 +187,21 @@ function itemLookup(catalogue: SkillCatalogue[]): Map<string, AdaptiveGoalEvalua
     for (const item of skillPool.items) map.set(item.item.id, item);
   }
   return map;
+}
+
+export function buildSelectionHistory(
+  responses: AdaptiveGoalEvaluationResponse[],
+  lookup: Map<string, AdaptiveGoalEvaluationItem>,
+): EvaluationSelectionHistory {
+  const selected = responses
+    .map(response => lookup.get(response.itemId))
+    .filter((item): item is AdaptiveGoalEvaluationItem => Boolean(item));
+  return {
+    usedItemIds: new Set(responses.map(response => response.itemId)),
+    selectedSchemaKeys: new Set(selected.map(item => item.schemaKey)),
+    selectedRepresentations: new Set(selected.map(item => item.representation)),
+    selectedDomains: selected.map(item => item.domain),
+  };
 }
 
 export function validateAdaptiveGoalEvaluationCatalogue(args: Omit<AdaptiveGoalEvaluationArgs, 'responses'>): string[] {
@@ -290,14 +312,8 @@ export function buildAdaptiveGoalSkillEvidence(args: AdaptiveGoalEvaluationArgs)
   return Array.from(bySkill.values());
 }
 
-function usedItemIds(args: AdaptiveGoalEvaluationArgs): Set<string> {
-  return new Set(args.responses.map(response => response.itemId));
-}
-
 function selectedDomains(args: AdaptiveGoalEvaluationArgs, lookup: Map<string, AdaptiveGoalEvaluationItem>): Grade3Domain[] {
-  return args.responses
-    .map(response => lookup.get(response.itemId)?.domain)
-    .filter((domain): domain is Grade3Domain => Boolean(domain));
+  return buildSelectionHistory(args.responses, lookup).selectedDomains;
 }
 
 function wouldBreakConsecutiveDomain(args: AdaptiveGoalEvaluationArgs, domain: Grade3Domain, lookup: Map<string, AdaptiveGoalEvaluationItem>): boolean {
@@ -354,22 +370,17 @@ function topCandidates(evidence: AdaptiveGoalSkillEvidence[], graph: readonly Ma
   });
 }
 
-function itemScore(
+export function itemScore(
   candidate: AdaptiveGoalEvaluationItem,
   evidence: AdaptiveGoalSkillEvidence,
-  args: AdaptiveGoalEvaluationArgs,
+  history: EvaluationSelectionHistory,
   rng: Rng,
 ): number {
-  const selected = args.responses
-    .map(response => response.itemId)
-    .map(itemId => candidate.item.id === itemId ? candidate : null)
-    .filter((item): item is AdaptiveGoalEvaluationItem => Boolean(item));
-  const selectedSchemas = new Set(selected.map(item => item.schemaKey));
   const targetDifficulty = evidence.mean >= 0.72 ? 0.75 : evidence.mean <= 0.45 ? 0.35 : 0.55;
   const difficultyFit = 1 - Math.min(1, Math.abs(candidate.item.difficulty - targetDifficulty));
-  const schemaNovelty = selectedSchemas.has(candidate.schemaKey) ? -0.2 : 0.15;
-  const representationBonus = candidate.representation === 'visual' || candidate.representation === 'word' ? 0.08 : 0;
-  return difficultyFit + schemaNovelty + representationBonus + rng() * 0.0001;
+  const schemaNovelty = history.selectedSchemaKeys.has(candidate.schemaKey) ? -0.2 : 0.15;
+  const representationNovelty = history.selectedRepresentations.has(candidate.representation) ? 0 : 0.08;
+  return difficultyFit + schemaNovelty + representationNovelty + rng() * 0.0001;
 }
 
 function selectFromSkills(
@@ -380,7 +391,7 @@ function selectFromSkills(
   rationale: string,
 ): AdaptiveGoalEvaluationSelection {
   const lookup = itemLookup(catalogue);
-  const used = usedItemIds(args);
+  const history = buildSelectionHistory(args.responses, lookup);
   const scheduledCards = new Set(args.scheduledCardKeys ?? []);
   const rng = rngFor(args, `item:${rationale}:${skillIds.join('|')}`);
   const evidenceBySkill = new Map(evidence.map(item => [item.skillId, item]));
@@ -388,13 +399,13 @@ function selectFromSkills(
   let eligible = catalogue
     .filter(pool => skillSet.has(pool.skill.id))
     .flatMap(pool => pool.items)
-    .filter(item => !used.has(item.item.id))
+    .filter(item => !history.usedItemIds.has(item.item.id))
     .filter(item => !wouldBreakConsecutiveDomain(args, item.domain, lookup));
 
   if (eligible.length === 0) {
     eligible = catalogue
       .flatMap(pool => pool.items)
-      .filter(item => !used.has(item.item.id))
+      .filter(item => !history.usedItemIds.has(item.item.id))
       .filter(item => !wouldBreakConsecutiveDomain(args, item.domain, lookup));
   }
 
@@ -402,19 +413,21 @@ function selectFromSkills(
     throw new Error('Adaptive Goal Evaluation cannot select another resolved, non-repeated item with the current catalogue constraints.');
   }
 
-  eligible.sort((a, b) => {
-    const aFreshCard = scheduledCards.has(deriveCardKey(a.item)) ? 0 : 1;
-    const bFreshCard = scheduledCards.has(deriveCardKey(b.item)) ? 0 : 1;
-    if (bFreshCard !== aFreshCard) return bFreshCard - aFreshCard;
-    const aEvidence = evidenceBySkill.get(a.skillId)!;
-    const bEvidence = evidenceBySkill.get(b.skillId)!;
-    const scoreA = itemScore(a, aEvidence, args, rng);
-    const scoreB = itemScore(b, bEvidence, args, rng);
-    if (scoreB !== scoreA) return scoreB - scoreA;
-    return a.item.id.localeCompare(b.item.id);
-  });
+  const scored = eligible
+    .slice()
+    .sort((a, b) => a.item.id.localeCompare(b.item.id))
+    .map(candidate => ({
+      candidate,
+      freshCard: scheduledCards.has(deriveCardKey(candidate.item)) ? 0 : 1,
+      score: itemScore(candidate, evidenceBySkill.get(candidate.skillId)!, history, rng),
+    }))
+    .sort((a, b) => {
+      if (b.freshCard !== a.freshCard) return b.freshCard - a.freshCard;
+      if (b.score !== a.score) return b.score - a.score;
+      return a.candidate.item.id.localeCompare(b.candidate.item.id);
+    });
 
-  const selected = eligible[0];
+  const selected = scored[0].candidate;
   const cardKey = deriveCardKey(selected.item);
   const schedulingEligible = !scheduledCards.has(cardKey);
   return {

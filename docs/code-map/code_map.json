@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-16T09:42:45.302075+00:00",
+  "generated_at": "2026-07-16T09:52:29.179649+00:00",
   "repo_root": "/home/ubuntu/mathfan",
   "package": {
     "name": "mathfan",
@@ -421,9 +421,9 @@
     {
       "path": "PROGRESS.md",
       "ext": ".md",
-      "bytes": 9453,
-      "lines": 156,
-      "sha1": "c183b029acfe",
+      "bytes": 9503,
+      "lines": 157,
+      "sha1": "b46aeb0e40e3",
       "imports": [],
       "exports": [],
       "functions": [],
@@ -3216,9 +3216,9 @@
     {
       "path": "src/features/goals/goalEvaluationEngine.ts",
       "ext": ".ts",
-      "bytes": 23294,
-      "lines": 591,
-      "sha1": "e34d27f32974",
+      "bytes": 23674,
+      "lines": 604,
+      "sha1": "d3b181be3b8d",
       "imports": [
         "../../types/math",
         "../../utils/rng",
@@ -3242,7 +3242,11 @@
         "AdaptiveGoalSkillEvidence",
         "buildAdaptiveGoalEvaluationResult",
         "buildAdaptiveGoalSkillEvidence",
+        "buildSelectionHistory",
+        "EvaluationRepresentation",
+        "EvaluationSelectionHistory",
         "GoalEvaluationCandidate",
+        "itemScore",
         "planFullAdaptiveGoalEvaluation",
         "selectNextAdaptiveGoalEvaluationItem",
         "validateAdaptiveGoalEvaluationCatalogue"
@@ -3251,6 +3255,7 @@
         "buildAdaptiveGoalEvaluationResult",
         "buildAdaptiveGoalSkillEvidence",
         "buildCatalogue",
+        "buildSelectionHistory",
         "dependentSkillIds",
         "directFirstAttempt",
         "hashString",
@@ -3269,7 +3274,6 @@
         "selectNextAdaptiveGoalEvaluationItem",
         "selectScreening",
         "topCandidates",
-        "usedItemIds",
         "validateAdaptiveGoalEvaluationCatalogue",
         "wouldBreakConsecutiveDomain"
       ],
@@ -3281,6 +3285,7 @@
         "AdaptiveGoalEvaluationResult",
         "AdaptiveGoalEvaluationSelection",
         "AdaptiveGoalSkillEvidence",
+        "EvaluationSelectionHistory",
         "GoalEvaluationCandidate",
         "SkillCatalogue"
       ],
@@ -8059,9 +8064,9 @@
     {
       "path": "src/tests/goalEvaluationEngine.test.tsx",
       "ext": ".tsx",
-      "bytes": 10547,
-      "lines": 271,
-      "sha1": "72c0ac848867",
+      "bytes": 13968,
+      "lines": 342,
+      "sha1": "56fad35084e9",
       "imports": [
         "../features/curriculum/makeItemFromId",
         "../features/goals/goalEvaluationEngine",

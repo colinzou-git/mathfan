@@ -12,10 +12,13 @@ import {
   ADAPTIVE_GOAL_EVALUATION_QUESTION_COUNT,
   buildAdaptiveGoalEvaluationResult,
   buildAdaptiveGoalSkillEvidence,
+  buildSelectionHistory,
+  itemScore,
   planFullAdaptiveGoalEvaluation,
   selectNextAdaptiveGoalEvaluationItem,
   validateAdaptiveGoalEvaluationCatalogue,
 } from '../features/goals/goalEvaluationEngine';
+import type { AdaptiveGoalEvaluationItem, AdaptiveGoalSkillEvidence } from '../features/goals/goalEvaluationEngine';
 import { GRADE3_MASTERY_MAP, type Grade3Domain } from '../features/mastery/grade3MasteryMap';
 
 const STUDENT_ID = 'student-1';
@@ -157,6 +160,35 @@ describe('Adaptive Goal Evaluation planning constraints', () => {
     expect(second.map(selection => selection.item.id)).toEqual(first.map(selection => selection.item.id));
   });
 
+  it('is independent of candidate catalogue order', () => {
+    const skillId = 'g3-mul-tables-basic';
+    const ids = planPracticeForSkill(skillId, { sessionLength: 40 }).specificItemIds ?? [];
+    const forward = selectNextAdaptiveGoalEvaluationItem(baseArgs({
+      itemPoolForSkill: id => ({
+        mode: 'daily_review', sessionLength: 40,
+        specificItemIds: id === skillId ? ids : planPracticeForSkill(id, { sessionLength: 40 }).specificItemIds,
+      }),
+    }));
+    const reversed = selectNextAdaptiveGoalEvaluationItem(baseArgs({
+      itemPoolForSkill: id => ({
+        mode: 'daily_review', sessionLength: 40,
+        specificItemIds: id === skillId ? [...ids].reverse() : planPracticeForSkill(id, { sessionLength: 40 }).specificItemIds,
+      }),
+    }));
+    expect(reversed?.item.id).toBe(forward?.item.id);
+  });
+
+  it('produces schema and representation diversity across the 30-question fixture', () => {
+    const plan = fullPlan();
+    const schemas = new Set(plan.map(selection => selection.item.schemaId ?? selection.item.itemType));
+    const representations = new Set(plan.map(selection =>
+      selection.item.itemType === 'word_problem' || selection.item.itemType === 'measurement_word' ? 'word'
+        : selection.item.visualModelType && selection.item.visualModelType !== 'none' ? 'visual'
+          : 'symbolic'));
+    expect(schemas.size).toBeGreaterThanOrEqual(12);
+    expect(representations.size).toBeGreaterThanOrEqual(3);
+  });
+
   it('takes different paths after different response sequences', () => {
     const correct = fullPlan(99, () => true).map(selection => selection.item.id);
     const incorrect = fullPlan(99, () => false).map(selection => selection.item.id);
@@ -190,6 +222,45 @@ describe('Adaptive Goal Evaluation planning constraints', () => {
       const result = checkAnswer(selection.item, String(selection.item.answer), 1000);
       expect(result.isCorrect).toBe(true);
     }
+  });
+});
+
+describe('Adaptive Goal Evaluation novelty scoring', () => {
+  const makeCandidate = (
+    id: string,
+    schemaKey: string,
+    representation: AdaptiveGoalEvaluationItem['representation'],
+  ): AdaptiveGoalEvaluationItem => ({
+    item: {
+      id, skillId: 'skill', itemType: 'multiplication_fact', prompt: id,
+      answer: 1, tags: [], difficulty: .55,
+    },
+    skillId: 'skill',
+    domain: 'multiplication',
+    schemaKey,
+    representation,
+  });
+  const schemaA = makeCandidate('a', 'schema-a', 'symbolic');
+  const schemaB = makeCandidate('b', 'schema-b', 'visual');
+  const evidence = {
+    skillId: 'skill', domain: 'multiplication', alpha: 2, beta: 2, mean: .5,
+    variance: .05, uncertainty: 1, historicalWeight: 0, historicalCorrectWeight: 0,
+    evaluationAttempts: 1, evaluationCorrect: 1, evaluationIncorrect: 0,
+  } satisfies AdaptiveGoalSkillEvidence;
+
+  it('uses prior catalogue items to penalize repeated schemas and reward a new representation', () => {
+    const lookup = new Map([[schemaA.item.id, schemaA], [schemaB.item.id, schemaB]]);
+    const history = buildSelectionHistory([{ itemId: schemaA.item.id, isCorrect: true }], lookup);
+    const repeatedScore = itemScore(schemaA, evidence, history, () => 0);
+    const novelScore = itemScore(schemaB, evidence, history, () => 0);
+    expect(history.selectedSchemaKeys).toEqual(new Set(['schema-a']));
+    expect(history.selectedRepresentations).toEqual(new Set(['symbolic']));
+    expect(novelScore - repeatedScore).toBeCloseTo(.43);
+  });
+
+  it('keeps exact used item IDs in the exclusion history', () => {
+    const history = buildSelectionHistory([{ itemId: schemaA.item.id, isCorrect: true }], new Map([[schemaA.item.id, schemaA]]));
+    expect(history.usedItemIds.has(schemaA.item.id)).toBe(true);
   });
 });
 

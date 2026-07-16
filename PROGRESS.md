@@ -75,8 +75,9 @@ Issues #40–#60 are being fixed and validated one at a time in numeric order be
 | 52 | **implemented and validated; committed** |
 | 53 | **implemented and validated; committed** |
 | 54 | **implemented and validated; committed** |
-| 55 | **in progress** |
-| 56–60 | open |
+| 55 | **implemented and validated; committed** |
+| 56 | **in progress** |
+| 57–60 | open |
 
 ## Current focus
 
@@ -96,10 +97,10 @@ explicitly ask Claude to close them in a future session.
 **Branch D is merged and deployed** via PR #39 (merge ac10dea). GitHub issue #36 is closed.
 
 **Active branch:** `fix/open-issues-40-60` (created after the first focused commit).
-**Active issue:** #55 (in progress).
+**Active issue:** #56 (in progress).
 **Next concrete step:**
-1. Read issue #55 and inspect its targeted code paths.
-2. Implement, validate, and commit #55.
+1. Read issue #56 and inspect its targeted code paths.
+2. Implement, validate, and commit #56.
 3. After #60, run final full checks, merge to main, deploy, and re-check live issues.
 
 Issue #30 validation completed on 2026-07-15: `npm run ci` (73 files / 1,279 tests),
