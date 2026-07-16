@@ -18,6 +18,7 @@ import {
   type PreparedUserDataExport,
   type UserDataExportFormat,
 } from '../export/userDataExport';
+import { mergeNormalizedSnapshot, normalizeSnapshot, type SnapshotNormalizationProblem } from '../sync/snapshot';
 
 interface Props {
   profile: StudentProfile;
@@ -45,6 +46,16 @@ type ExportUiState =
     }
   | { status: 'success'; format: UserDataExportFormat; filename: string; warning?: string }
   | { status: 'error'; message: string };
+
+type ImportUiState =
+  | { status: 'idle' }
+  | { status: 'importing' }
+  | { status: 'success'; warnings: SnapshotNormalizationProblem[] }
+  | { status: 'error'; problems: SnapshotNormalizationProblem[] };
+
+function snapshotProblemLabel(problem: SnapshotNormalizationProblem): string {
+  return `${problem.table}${problem.recordId ? ` record ${problem.recordId}` : ''}: ${problem.message}`;
+}
 
 /** Known Gemini models with a free tier. Each has its own daily quota. */
 const AI_MODELS = ['gemini-2.0-flash', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'];
@@ -90,9 +101,11 @@ export function SettingsPage({ profile, onUpdateProfile, onBack, onSwitchStudent
   const [dailyNewLimitsError, setDailyNewLimitsError] = useState<string | null>(null);
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
   const [exportState, setExportState] = useState<ExportUiState>({ status: 'idle' });
+  const [importState, setImportState] = useState<ImportUiState>({ status: 'idle' });
   const [profileWritePending, setProfileWritePending] = useState(false);
   const [profileWriteError, setProfileWriteError] = useState<string | null>(null);
   const exportControlRef = useRef<HTMLDivElement>(null);
+  const importFileRef = useRef<HTMLInputElement>(null);
   const latestProfileRef = useRef(profile);
   const pendingProfileWriteRef = useRef<Promise<void>>(Promise.resolve());
   const pendingWriteCountRef = useRef(0);
@@ -387,6 +400,30 @@ export function SettingsPage({ profile, onUpdateProfile, onBack, onSwitchStudent
   const exportDisabled = exportState.status === 'exporting' || syncStatus === 'syncing';
   const syncActionDisabled = syncStatus === 'syncing' || exportState.status === 'exporting';
 
+  const importBackup = async (file: File) => {
+    setImportState({ status: 'importing' });
+    try {
+      const parsed = JSON.parse(await file.text()) as unknown;
+      const rawSnapshot = parsed && typeof parsed === 'object' && 'snapshot' in parsed
+        ? (parsed as { snapshot: unknown }).snapshot
+        : parsed;
+      const normalized = normalizeSnapshot(rawSnapshot);
+      if (!normalized.snapshot || normalized.problems.length) {
+        setImportState({ status: 'error', problems: normalized.problems });
+        return;
+      }
+      await mergeNormalizedSnapshot(normalized.snapshot);
+      setImportState({ status: 'success', warnings: normalized.warnings });
+    } catch (error) {
+      setImportState({
+        status: 'error',
+        problems: [{ table: 'snapshot', code: 'read_failed', message: error instanceof Error ? error.message : 'The backup could not be read.' }],
+      });
+    } finally {
+      if (importFileRef.current) importFileRef.current.value = '';
+    }
+  };
+
   const exportControl = (
     <div ref={exportControlRef} style={s.exportControl}>
       <button
@@ -456,6 +493,46 @@ export function SettingsPage({ profile, onUpdateProfile, onBack, onSwitchStudent
       )}
       {exportState.status === 'error' && (
         <p role="alert" style={{ color: '#b91c1c', fontSize: '13px', margin: '8px 0 0' }}>{exportState.message}</p>
+      )}
+      <div style={{ ...s.syncActions, marginTop: '12px' }}>
+        <input
+          ref={importFileRef}
+          type="file"
+          accept="application/json,.json"
+          aria-label="Choose MathFan backup"
+          style={{ display: 'none' }}
+          onChange={event => {
+            const file = event.target.files?.[0];
+            if (file) void importBackup(file);
+          }}
+        />
+        <button
+          type="button"
+          style={s.outBtn}
+          disabled={importState.status === 'importing' || syncStatus === 'syncing'}
+          onClick={() => importFileRef.current?.click()}
+        >
+          {importState.status === 'importing' ? 'Importing…' : 'Import Backup'}
+        </button>
+      </div>
+      <p style={{ ...s.rowDesc, marginTop: '6px' }}>Restore a MathFan JSON backup from this device. Existing progress is safely merged.</p>
+      {importState.status === 'success' && (
+        <div role="status" style={{ color: '#15803d', fontSize: '13px', marginTop: '8px' }}>
+          <p style={{ margin: 0 }}>Backup imported successfully. Your restored progress is ready.</p>
+          {importState.warnings.map((warning, index) => (
+            <p key={`${warning.table}-${warning.recordId ?? index}`} style={{ color: '#b45309', margin: '4px 0 0' }}>
+              {snapshotProblemLabel(warning)}
+            </p>
+          ))}
+        </div>
+      )}
+      {importState.status === 'error' && (
+        <div role="alert" style={{ color: '#b91c1c', fontSize: '13px', marginTop: '8px' }}>
+          <p style={{ margin: 0 }}>This backup was not imported. Your current progress was not changed.</p>
+          {importState.problems.map((problem, index) => (
+            <p key={`${problem.table}-${problem.recordId ?? index}`} style={{ margin: '4px 0 0' }}>{snapshotProblemLabel(problem)}</p>
+          ))}
+        </div>
       )}
     </>
   );
