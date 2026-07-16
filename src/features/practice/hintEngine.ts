@@ -13,6 +13,7 @@
  */
 
 import type { PracticeItem, PerimeterReasoningSpec } from '../../types/math';
+import { withLegacyContentSpec } from '../curriculum/practiceContentSpec';
 
 export interface HintResult {
   text: string;
@@ -21,6 +22,7 @@ export interface HintResult {
 
 export function getHint(item: PracticeItem, wrongAttempts: number): HintResult | null {
   if (wrongAttempts <= 0) return null;
+  item = withLegacyContentSpec(item);
 
   const { itemType, factA, factB } = item;
   const a = factA ?? 0;

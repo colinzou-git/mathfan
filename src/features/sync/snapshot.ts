@@ -9,6 +9,7 @@ import { validTimeMs, remoteHasNewerUpdatedAt } from './timeUtil';
 import { makeItemFromId } from '../curriculum/makeItemFromId';
 import { deriveCardKey } from '../scheduler/cardModel';
 import { CARD_MODEL_VERSION } from '../learning/schedulingTelemetry';
+import { validatePracticeItem, withLegacyContentSpec } from '../curriculum/practiceContentSpec';
 
 export interface SnapshotFormatMetadata {
   appVersion: string;
@@ -236,7 +237,29 @@ export function normalizeSnapshot(raw: unknown): SnapshotNormalizationResult {
   }
   if (problems.length) return { problems, warnings };
   const itemStates = compoundMerge(normalizedStates, row => `${row.studentId}|${row.cardKey}`, mergeCardStateCollision);
-  const remappedChildren = Object.fromEntries(Object.entries(childRows).map(([table, rows]) => [table, rows.map(row => remapStudentId(row, aliases))]));
+  const normalizedDailyLessonPlans: PersistedDailyLessonPlan[] = [];
+  for (const [index, rawPlan] of childRows.dailyLessonPlans.entries()) {
+    const plan = remapStudentId(rawPlan, aliases) as PersistedDailyLessonPlan;
+    if (!Array.isArray(plan.items)) {
+      problems.push({ table: 'dailyLessonPlans', recordId: String(index), code: 'invalid_items', message: 'Daily lesson items must be an array.' });
+      continue;
+    }
+    const items = plan.items.map(value => ({ ...value, item: withLegacyContentSpec(value.item) }));
+    const invalid = items.flatMap(value => validatePracticeItem(value.item));
+    if (invalid.length) {
+      problems.push({
+        table: 'dailyLessonPlans', recordId: plan.id, code: 'invalid_practice_item',
+        message: invalid.map(problem => `${problem.path}: ${problem.message}`).join('; '),
+      });
+      continue;
+    }
+    normalizedDailyLessonPlans.push({ ...plan, items });
+  }
+  if (problems.length) return { problems, warnings };
+  const remappedChildren = Object.fromEntries(Object.entries(childRows).map(([table, rows]) => [
+    table,
+    table === 'dailyLessonPlans' ? normalizedDailyLessonPlans : rows.map(row => remapStudentId(row, aliases)),
+  ]));
   const snapshotAt = typeof source.snapshotAt === 'string' ? source.snapshotAt : new Date().toISOString();
   return {
     snapshot: {

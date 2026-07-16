@@ -1,5 +1,4 @@
 import type { PracticeItem, GradeLevel } from '../../types/math';
-import type { DivisionQuestionSpec } from './divisionItems';
 
 const SKILL_WORD = 'SKILL_WORD_PROBLEMS';
 
@@ -38,7 +37,6 @@ const NAMES = ['Sam', 'Mia', 'Leo', 'Ava', 'Max', 'Zoe', 'Ben', 'Lily'];
 export function makeWordProblem(schema: Schema, a: number, b: number): PracticeItem {
   let prompt: string;
   let answer: number;
-  let divisionSpec: DivisionQuestionSpec | undefined;
   let wordProblemSpec: WordProblemSpec;
 
   if (schema === 'eg') {
@@ -61,10 +59,6 @@ export function makeWordProblem(schema: Schema, a: number, b: number): PracticeI
     const p = a * b, c = pick(CONTAINERS), n = pick(NOUNS);
     prompt = `${p} ${n} are shared equally into ${a} ${c}. How many ${n} per ${c.replace(/s$/, '')}?`;
     answer = b;
-    divisionSpec = {
-      schema: 'equal_sharing', dividend: p, divisor: a, quotient: b,
-      context: { interpretation: 'sharing', noun: n, groupNoun: c }, unknownPosition: 'group_size',
-    };
     wordProblemSpec = { steps: [{ operation: 'divide', a: p, b: a, result: answer }], unknownPosition: 'group_size', contextSchema: 'equal_sharing', quantities: [{ label: n, value: p }, { label: c, value: a }], suggestedModel: 'equal_groups' };
   }
 
@@ -79,7 +73,6 @@ export function makeWordProblem(schema: Schema, a: number, b: number): PracticeI
     difficulty: schema === 'dv' ? 0.6 : 0.5,
     factA: a,
     factB: b,
-    divisionSpec,
     wordProblemSpec,
   };
 }

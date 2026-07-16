@@ -1,6 +1,6 @@
 # Code Map Overview
 
-Generated: 2026-07-16 10:58:32 UTC
+Generated: 2026-07-16 11:20:07 UTC
 
 Repo root: `/home/ubuntu/mathfan`  
 Output folder: `/home/ubuntu/mathfan/docs/code-map`
@@ -14,9 +14,9 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 - Package name: `mathfan`
 - Version: `1.2.0`
 - Module type: `module`
-- Scanned files: **285**
-- Scanned lines: **53,416**
-- Scanned bytes: **2,256,194**
+- Scanned files: **287**
+- Scanned lines: **53,773**
+- Scanned bytes: **2,273,110**
 
 ## NPM scripts
 
@@ -74,7 +74,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 | --- | --- | --- | --- |
 | src/App.tsx | 401 | Top-level React app shell: routes/screens, global state, and feature wiring. | App, exportMigrationDiagnostics, handleQuizDone, handleSessionDone, pickOperation, retryMigration, runBootstrap, selectProfile |
 | src/features/sync/SyncWidget.tsx | 156 | Cloud sync/auth/data transfer logic. | GoogleIcon, SyncWidget, friendlyError, GoogleIcon, initials, SyncWidget, timeSince |
-| src/features/sync/snapshot.ts | 355 | Local persistence/database layer. | AppSnapshot, AppSnapshotV3, normalizeSnapshot, OrphanReport, remoteHasNewerUpdatedAt, SnapshotFormatMetadata, SnapshotNormalizationProblem, SnapshotNormalizationResult |
+| src/features/sync/snapshot.ts | 378 | Local persistence/database layer. | AppSnapshot, AppSnapshotV3, normalizeSnapshot, OrphanReport, remoteHasNewerUpdatedAt, SnapshotFormatMetadata, SnapshotNormalizationProblem, SnapshotNormalizationResult |
 | vite.config.ts | 82 | Vite build/PWA configuration. | buildInfoPlugin |
 | package.json | 53 | Project package metadata, scripts, dependencies, and dev tooling. |  |
 | src/main.tsx | 21 | React entry point that mounts the app. |  |
@@ -98,7 +98,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 | src/features/stats/QuizStatsView.tsx | 135 | Progress/statistics screens or calculations. | FactGroup, QuizStatsView, avgSecStr, FactGroup, fmt, QuizStatsView |
 | src/features/stats/TodayAchievementSection.tsx | 125 | Progress/statistics screens or calculations. | AchievementTile, TodayAchievementSection, AchievementTile, TodayAchievementSection |
 | src/features/mastery/skillPracticePlanner.ts | 905 | Grade 3 skill practice planner: maps skill IDs to SessionConfig for the mastery map. | buildDivisionFocusSequence, buildFocusSequence, buildRegroupingFocusSequence, FocusSequence, FocusSequenceContext, planFractionFocusSequence, planLearningUnitsForSkill, PlanOptions |
-| src/features/practice/usePracticeSession.ts | 820 | Local persistence/database layer. | usePracticeSession, CorrectResult, LastSessionSummary, SessionState, usePracticeSession, commit, getStaticItem, planned |
+| src/features/practice/usePracticeSession.ts | 821 | Local persistence/database layer. | usePracticeSession, CorrectResult, LastSessionSummary, SessionState, usePracticeSession, commit, getStaticItem, planned |
 | src/features/goals/GoalEvaluationSession.tsx | 712 | Exports reusable code: GoalEvaluationSession. | GoalEvaluationSession, buildNewLearningCandidates, buildReviewFindings, buildUpdatedState, confirmCancel, continueNext, evaluationArgs, GoalEvaluationSession |
 | src/features/curriculum/areaItems.ts | 609 | Practice item definitions and ID generators for a math curriculum topic. | apChoiceId, areaPerimCmpId, areaPerimCompareItemIds, areaPerimeterChoiceItemIds, AreaPerimeterChoiceKind, AreaPerimeterSchema, AreaPerimVariant, areaRectangleItemIds |
 | src/features/goals/goalEvaluationEngine.ts | 605 | Exports reusable code: ADAPTIVE_GOAL_EVALUATION_CONFIRMATION_COUNT, ADAPTIVE_GOAL_EVALUATION_HISTORICAL_PRIOR_CAP, ADAPTIVE_GOAL_EVALUATION_QUESTION_COUNT, AdaptiveGoalEvaluationArgs, AdaptiveGoalEvaluationItem. | ADAPTIVE_GOAL_EVALUATION_CONFIRMATION_COUNT, ADAPTIVE_GOAL_EVALUATION_HISTORICAL_PRIOR_CAP, ADAPTIVE_GOAL_EVALUATION_QUESTION_COUNT, AdaptiveGoalEvaluationArgs, AdaptiveGoalEvaluationItem, AdaptiveGoalEvaluationPhase, AdaptiveGoalEvaluationResponse, AdaptiveGoalEvaluationResult |
@@ -175,6 +175,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   │   ├── multiplicationItems.ts
 │   │   │   ├── numberTheoryItems.ts
 │   │   │   ├── patternItems.ts
+│   │   │   ├── practiceContentSpec.ts
 │   │   │   ├── regrouping.ts
 │   │   │   ├── roundingItems.ts
 │   │   │   ├── twoStepItems.ts
@@ -370,6 +371,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   ├── misconceptionEngine.test.ts
 │   │   ├── multiplicationQuiz.test.ts
 │   │   ├── newCurriculum.test.ts
+│   │   ├── practiceContentSpec.test.ts
 │   │   ├── practiceMetrics.test.ts
 │   │   ├── practiceNavigation.test.ts
 │   │   ├── practiceSession.test.ts
@@ -586,56 +588,56 @@ Purpose: Local persistence/database layer.
    9: import { makeItemFromId } from '../curriculum/makeItemFromId';
   10: import { deriveCardKey } from '../scheduler/cardModel';
   11: import { CARD_MODEL_VERSION } from '../learning/schedulingTelemetry';
-  12: 
-  13: export interface SnapshotFormatMetadata {
-  14:   appVersion: string;
-  15:   schemaVersion: 3;
-  16:   cardModelVersion: string;
-  17:   exportedAt: string;
-  18: }
-  19: 
-  20: export interface AppSnapshot {
-  21:   appId: 'mathfan';
-  22:   snapshotVersion: 1 | 2 | 3;
-  23:   snapshotAt: string;
-  24:   metadata?: SnapshotFormatMetadata;
-  25:   students: StudentProfile[];
-  26:   itemStates: StudentItemState[];
-  27:   attempts: AttemptLog[];
-  28:   sessions: PracticeSession[];
-  29:   // Added in quiz feature — absent in older snapshots; treat missing as []
-  30:   multFactStats?: MultiplicationFactStats[];
-  31:   quizSessions?: QuizSession[];
-  32:   // Added with canonical event log — absent in older snapshots; treat missing as []
-  33:   mathAnswerEvents?: MathAnswerEvent[];
-  34:   learningGoals?: LearningGoal[];
-  35:   goalEvents?: GoalEvent[];
-  36:   goalEvaluations?: GoalEvaluation[];
-  37:   dailyLessonPlans?: PersistedDailyLessonPlan[];
-  38: }
-  39: 
-  40: // ── Build ─────────────────────────────────────────────────────────────────────
-  41: 
-  42: export async function buildSnapshot(): Promise<AppSnapshotV3> {
-  43:   const tables = [
-  44:     db.students,
-  45:     db.itemStates,
-  46:     db.attempts,
-  47:     db.sessions,
-  48:     db.multFactStats,
-  49:     db.quizSessions,
-  50:     db.mathAnswerEvents,
-  51:     db.learningGoals,
-  52:     db.goalEvents,
-  53:     db.goalEvaluations,
-  54:     db.dailyLessonPlans,
-  55:   ];
-  56: 
-  57:   return db.transaction('r', tables, async () => {
-  58:     const [
-  59:       students,
-  60:       itemStates,
-... (294 more lines)
+  12: import { validatePracticeItem, withLegacyContentSpec } from '../curriculum/practiceContentSpec';
+  13: 
+  14: export interface SnapshotFormatMetadata {
+  15:   appVersion: string;
+  16:   schemaVersion: 3;
+  17:   cardModelVersion: string;
+  18:   exportedAt: string;
+  19: }
+  20: 
+  21: export interface AppSnapshot {
+  22:   appId: 'mathfan';
+  23:   snapshotVersion: 1 | 2 | 3;
+  24:   snapshotAt: string;
+  25:   metadata?: SnapshotFormatMetadata;
+  26:   students: StudentProfile[];
+  27:   itemStates: StudentItemState[];
+  28:   attempts: AttemptLog[];
+  29:   sessions: PracticeSession[];
+  30:   // Added in quiz feature — absent in older snapshots; treat missing as []
+  31:   multFactStats?: MultiplicationFactStats[];
+  32:   quizSessions?: QuizSession[];
+  33:   // Added with canonical event log — absent in older snapshots; treat missing as []
+  34:   mathAnswerEvents?: MathAnswerEvent[];
+  35:   learningGoals?: LearningGoal[];
+  36:   goalEvents?: GoalEvent[];
+  37:   goalEvaluations?: GoalEvaluation[];
+  38:   dailyLessonPlans?: PersistedDailyLessonPlan[];
+  39: }
+  40: 
+  41: // ── Build ─────────────────────────────────────────────────────────────────────
+  42: 
+  43: export async function buildSnapshot(): Promise<AppSnapshotV3> {
+  44:   const tables = [
+  45:     db.students,
+  46:     db.itemStates,
+  47:     db.attempts,
+  48:     db.sessions,
+  49:     db.multFactStats,
+  50:     db.quizSessions,
+  51:     db.mathAnswerEvents,
+  52:     db.learningGoals,
+  53:     db.goalEvents,
+  54:     db.goalEvaluations,
+  55:     db.dailyLessonPlans,
+  56:   ];
+  57: 
+  58:   return db.transaction('r', tables, async () => {
+  59:     const [
+  60:       students,
+... (317 more lines)
 ```
 
 ### `vite.config.ts`

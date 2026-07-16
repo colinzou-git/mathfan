@@ -4,7 +4,7 @@
 
 | Package | Import count |
 | --- | --- |
-| vitest | 86 |
+| vitest | 87 |
 | react | 35 |
 | @testing-library/react | 19 |
 | pathlib | 8 |
@@ -125,6 +125,7 @@
 | src/features/adaptive/relatedEvidence.ts | ./adaptiveItemSelector |
 | src/features/adaptive/relatedEvidence.ts | ./relatedItemMapping |
 | src/features/adaptive/relatedItemMapping.ts | ../../types/math |
+| src/features/adaptive/relatedItemMapping.ts | ../curriculum/practiceContentSpec |
 | src/features/adaptive/relatedItemMapping.ts | ../mastery/skillMapping |
 | src/features/ai/gemini.ts | ./aiConfig |
 | src/features/ai/TutorChat.tsx | ./aiConfig |
@@ -161,6 +162,7 @@
 | src/features/curriculum/makeItemFromId.ts | ./multiplicationItems |
 | src/features/curriculum/makeItemFromId.ts | ./numberTheoryItems |
 | src/features/curriculum/makeItemFromId.ts | ./patternItems |
+| src/features/curriculum/makeItemFromId.ts | ./practiceContentSpec |
 | src/features/curriculum/makeItemFromId.ts | ./regrouping |
 | src/features/curriculum/makeItemFromId.ts | ./roundingItems |
 | src/features/curriculum/makeItemFromId.ts | ./twoStepItems |
@@ -175,13 +177,13 @@
 | src/features/curriculum/multiplicationItems.ts | ./divisionItems |
 | src/features/curriculum/numberTheoryItems.ts | ../../types/math |
 | src/features/curriculum/patternItems.ts | ../../types/math |
+| src/features/curriculum/practiceContentSpec.ts | ../../types/math |
 | src/features/curriculum/regrouping.ts | ../../types/math |
 | src/features/curriculum/regrouping.ts | ../../utils/rng |
 | src/features/curriculum/roundingItems.ts | ../../types/math |
 | src/features/curriculum/twoStepItems.ts | ../../types/math |
 | src/features/curriculum/twoStepItems.ts | ./wordProblemItems |
 | src/features/curriculum/wordProblemItems.ts | ../../types/math |
-| src/features/curriculum/wordProblemItems.ts | ./divisionItems |
 | src/features/dashboard/ProfileSetup.tsx | ../../types/math |
 | src/features/dashboard/ProfileSetup.tsx | ../../utils/id |
 | src/features/dashboard/ProfileSetup.tsx | ../profile/learnerIdentity |
@@ -220,6 +222,7 @@
 | src/features/diagnosis/DiagnosticSession.tsx | ../time/clock |
 | src/features/diagnosis/DiagnosticSession.tsx | ./diagnosticPersistence |
 | src/features/diagnosis/DiagnosticSession.tsx | ./diagnosticPlanner |
+| src/features/export/userDataExport.ts | ../curriculum/practiceContentSpec |
 | src/features/export/userDataExport.ts | ../learning/schedulingTelemetry |
 | src/features/export/userDataExport.ts | ../scheduler/fsrsAdapter |
 | src/features/export/userDataExport.ts | ../sync/snapshot |
@@ -346,6 +349,7 @@
 | src/features/learning/recordAnswer.ts | ../multiplication/types |
 | src/features/learning/recordAnswer.ts | ./learningEvents |
 | src/features/learning/schedulingTelemetry.ts | ../../types/math |
+| src/features/learning/schedulingTelemetry.ts | ../curriculum/practiceContentSpec |
 | src/features/learning/schedulingTelemetry.ts | ../fluency/fluencyEngine |
 | src/features/learning/schedulingTelemetry.ts | ../practice/answerChecker |
 | src/features/learning/schedulingTelemetry.ts | ../scheduler/cardModel |
@@ -391,6 +395,7 @@
 | src/features/mastery/Grade3MasteryMapPage.tsx | ./todayPlanEngine |
 | src/features/mastery/misconceptionEngine.ts | ../../types/math |
 | src/features/mastery/misconceptionEngine.ts | ../curriculum/divisionItems |
+| src/features/mastery/misconceptionEngine.ts | ../curriculum/practiceContentSpec |
 | src/features/mastery/misconceptionEngine.ts | ../curriculum/regrouping |
 | src/features/mastery/ParentNextActionCard.tsx | ../../types/math |
 | src/features/mastery/ParentNextActionCard.tsx | ./grade3MasteryMap |
@@ -400,6 +405,7 @@
 | src/features/mastery/SkillDetailPanel.tsx | ./skillMasteryEngine |
 | src/features/mastery/skillMapping.ts | ../../types/math |
 | src/features/mastery/skillMapping.ts | ../curriculum/divisionItems |
+| src/features/mastery/skillMapping.ts | ../curriculum/practiceContentSpec |
 | src/features/mastery/skillMasteryEngine.ts | ../../types/math |
 | src/features/mastery/skillMasteryEngine.ts | ../learning/learningEvents |
 | src/features/mastery/skillMasteryEngine.ts | ./misconceptionEngine |
@@ -465,6 +471,7 @@
 | src/features/practice/answerChecker.ts | ../fluency/fluencyEngine |
 | src/features/practice/answerChecker.ts | ../scheduler/responsePolicy |
 | src/features/practice/hintEngine.ts | ../../types/math |
+| src/features/practice/hintEngine.ts | ../curriculum/practiceContentSpec |
 | src/features/practice/metrics.ts | ../../types/math |
 | src/features/practice/PracticeScreen.tsx | ../../components/NumPad |
 | src/features/practice/PracticeScreen.tsx | ../../components/SessionSummary |
@@ -496,6 +503,7 @@
 | src/features/practice/usePracticeSession.ts | ../curriculum/fractionItems |
 | src/features/practice/usePracticeSession.ts | ../curriculum/makeItemFromId |
 | src/features/practice/usePracticeSession.ts | ../curriculum/multiplicationItems |
+| src/features/practice/usePracticeSession.ts | ../curriculum/practiceContentSpec |
 | src/features/practice/usePracticeSession.ts | ../curriculum/roundingItems |
 | src/features/practice/usePracticeSession.ts | ../fluency/fluencyEngine |
 | src/features/practice/usePracticeSession.ts | ../learning/learningEvents |
@@ -593,6 +601,7 @@
 | src/features/sync/snapshot.ts | ../../db/dexie |
 | src/features/sync/snapshot.ts | ../../types/math |
 | src/features/sync/snapshot.ts | ../curriculum/makeItemFromId |
+| src/features/sync/snapshot.ts | ../curriculum/practiceContentSpec |
 | src/features/sync/snapshot.ts | ../goals/types |
 | src/features/sync/snapshot.ts | ../learning/eventRebuild |
 | src/features/sync/snapshot.ts | ../learning/learningEvents |
@@ -628,6 +637,7 @@
 | src/features/visuals/SharingGroupingModel.tsx | ../curriculum/divisionItems |
 | src/features/visuals/TapeDiagramModel.tsx | ../curriculum/wordProblemItems |
 | src/features/visuals/VisualModel.tsx | ../../types/math |
+| src/features/visuals/VisualModel.tsx | ../curriculum/practiceContentSpec |
 | src/features/visuals/VisualModel.tsx | ./AreaGrid |
 | src/features/visuals/VisualModel.tsx | ./AreaPerimeterCompareModel |
 | src/features/visuals/VisualModel.tsx | ./ArrayModel |
@@ -651,6 +661,7 @@
 | src/features/visuals/VisualModel.tsx | ./TapeDiagramModel |
 | src/features/visuals/VisualModel.tsx | ./visualModelUtils |
 | src/features/visuals/visualModelUtils.ts | ../../types/math |
+| src/features/visuals/visualModelUtils.ts | ../curriculum/practiceContentSpec |
 | src/features/visuals/visualModelUtils.ts | ./ShapeModel |
 | src/main.tsx | ./App.tsx |
 | src/tests/adaptiveRelatedItemSelection.test.ts | ../features/adaptive/adaptiveItemSelector |
@@ -902,6 +913,12 @@
 | src/tests/newCurriculum.test.ts | ../features/curriculum/numberTheoryItems |
 | src/tests/newCurriculum.test.ts | ../features/curriculum/roundingItems |
 | src/tests/newCurriculum.test.ts | ../features/curriculum/wordProblemItems |
+| src/tests/practiceContentSpec.test.ts | ../features/curriculum/makeItemFromId |
+| src/tests/practiceContentSpec.test.ts | ../features/curriculum/practiceContentSpec |
+| src/tests/practiceContentSpec.test.ts | ../features/learning/schedulingTelemetry |
+| src/tests/practiceContentSpec.test.ts | ../features/mastery/skillMapping |
+| src/tests/practiceContentSpec.test.ts | ../features/visuals/visualModelUtils |
+| src/tests/practiceContentSpec.test.ts | ../types/math |
 | src/tests/practiceMetrics.test.ts | ../features/practice/metrics |
 | src/tests/practiceMetrics.test.ts | ../types/math |
 | src/tests/practiceNavigation.test.ts | ../features/practice/practiceNavigation |
@@ -981,6 +998,7 @@
 | src/tests/skillPracticePlanner.test.ts | ../features/mastery/skillMapping |
 | src/tests/skillPracticePlanner.test.ts | ../features/mastery/skillPracticePlanner |
 | src/tests/snapshotBuild.test.ts | ../features/sync/snapshot |
+| src/tests/snapshotValidation.test.ts | ../features/curriculum/makeItemFromId |
 | src/tests/snapshotValidation.test.ts | ../features/sync/snapshot |
 | src/tests/speech.test.ts | ../features/audio/speech |
 | src/tests/statsEngine.test.ts | ../features/stats/statsEngine |

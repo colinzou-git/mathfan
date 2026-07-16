@@ -92,6 +92,15 @@ export type AnswerInput = 'numeric' | 'choice';
 
 export type FractionMode = 'equivalent' | 'compare';
 
+export const PRACTICE_CONTENT_SPEC_VERSION = 1 as const;
+export type PracticeContentSpec =
+  | { domain: 'fraction'; version: 1; data: FractionQuestionSpec }
+  | { domain: 'arithmetic'; version: 1; data: ArithmeticQuestionSpec }
+  | { domain: 'division'; version: 1; data: DivisionQuestionSpec }
+  | { domain: 'measurement_data'; version: 1; data: MeasurementDataSpec }
+  | { domain: 'word_problem'; version: 1; data: WordProblemSpec }
+  | { domain: 'area_perimeter'; version: 1; data: PerimeterReasoningSpec };
+
 export interface StudentProfile {
   id: string;
   /** Durable UUID identifying this learner across devices/reinstalls. Absent on legacy profiles. */
@@ -178,6 +187,8 @@ export interface PracticeItem {
   instanceKey?: string;
   /** Defaults to grade 3 when absent — see features/scheduler/cardModel. */
   gradeLevel?: GradeLevel;
+  /** Versioned primary domain contract. Legacy fields remain readable through contentSpecForItem(). */
+  contentSpec?: PracticeContentSpec;
   /**
    * Structured visual payload (issue #30) — prefer this over prompt/ID parsing.
    * See features/visuals/types.ts. `visualModelType` is retained for compatibility

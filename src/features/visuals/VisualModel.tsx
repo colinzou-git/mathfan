@@ -38,6 +38,7 @@ import { ScaledBarGraphModel } from './ScaledBarGraphModel';
 import { LinePlotModel } from './LinePlotModel';
 import { ElapsedTimeLineModel } from './ElapsedTimeLineModel';
 import { TapeDiagramModel } from './TapeDiagramModel';
+import { contentSpecForItem } from '../curriculum/practiceContentSpec';
 
 interface Props {
   item: PracticeItem;
@@ -55,28 +56,44 @@ function parseEqualGroupsFromId(itemId: string): { groups: number; perGroup: num
 
 export function VisualModel({ item, color, revealAnswer = false }: Props) {
   const { itemType, factA, factB, id, prompt, visualSpec } = item;
+  const contentSpec = contentSpecForItem(item);
 
-  if (item.arithmeticSpec) {
-    return <PlaceValueRegroupModel spec={item.arithmeticSpec} revealAnswer={revealAnswer} color={color} />;
+  if (contentSpec?.domain === 'arithmetic') {
+    return <PlaceValueRegroupModel spec={contentSpec.data} revealAnswer={revealAnswer} color={color} />;
   }
 
-  if (item.divisionSpec) {
-    const spec = item.divisionSpec;
+  if (contentSpec?.domain === 'division') {
+    const spec = contentSpec.data;
     if (spec.schema.startsWith('decompose_') || spec.schema === 'verify_with_multiplication') return <DivisionDecompositionModel spec={spec} revealAnswer={revealAnswer} />;
     if (spec.context) return <SharingGroupingModel spec={spec} revealAnswer={revealAnswer} />;
     return <DivisionArrayModel spec={spec} revealAnswer={revealAnswer} />;
   }
 
-  if (item.measurementSpec) {
-    if (item.measurementSpec.kind === 'bar_graph') return <ScaledBarGraphModel spec={item.measurementSpec} revealAnswer={revealAnswer} />;
-    if (item.measurementSpec.kind === 'line_plot') return <LinePlotModel spec={item.measurementSpec} />;
-    if (item.measurementSpec.kind === 'elapsed_time') return <ElapsedTimeLineModel spec={item.measurementSpec} revealAnswer={revealAnswer} />;
+  if (contentSpec?.domain === 'measurement_data') {
+    if (contentSpec.data.kind === 'bar_graph') return <ScaledBarGraphModel spec={contentSpec.data} revealAnswer={revealAnswer} />;
+    if (contentSpec.data.kind === 'line_plot') return <LinePlotModel spec={contentSpec.data} />;
+    if (contentSpec.data.kind === 'elapsed_time') return <ElapsedTimeLineModel spec={contentSpec.data} revealAnswer={revealAnswer} />;
   }
 
-  if (item.wordProblemSpec?.suggestedModel === 'bar') return <TapeDiagramModel spec={item.wordProblemSpec} revealAnswer={revealAnswer} />;
+  if (contentSpec?.domain === 'word_problem' && contentSpec.data.suggestedModel === 'bar') {
+    return <TapeDiagramModel spec={contentSpec.data} revealAnswer={revealAnswer} />;
+  }
+  if (contentSpec?.domain === 'word_problem' && contentSpec.data.contextSchema === 'equal_sharing') {
+    const step = contentSpec.data.steps.find(value => value.operation === 'divide');
+    if (step) {
+      return <SharingGroupingModel spec={{
+        schema: 'equal_sharing',
+        dividend: step.a,
+        divisor: step.b,
+        quotient: step.result,
+        context: { interpretation: 'sharing', noun: 'items', groupNoun: 'groups' },
+        unknownPosition: 'group_size',
+      }} revealAnswer={revealAnswer} />;
+    }
+  }
 
-  if (item.fractionSpec) {
-    const spec = item.fractionSpec;
+  if (contentSpec?.domain === 'fraction') {
+    const spec = contentSpec.data;
     if (spec.kind === 'equivalent_visual') {
       return <FractionEquivalenceModel left={spec.left} right={spec.right} revealAnswer={revealAnswer} color={color} />;
     }

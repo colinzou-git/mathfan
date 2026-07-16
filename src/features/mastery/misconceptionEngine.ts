@@ -2,6 +2,7 @@ import Fraction from 'fraction.js';
 import type { MisconceptionEvidence, PracticeItem } from '../../types/math';
 import { simulateArithmeticMisconception, type ArithmeticMisconceptionCode } from '../curriculum/regrouping';
 import { simulateDivisionMisconception, type DivisionMisconceptionCode } from '../curriculum/divisionItems';
+import { contentSpecForItem } from '../curriculum/practiceContentSpec';
 
 /**
  * Detects common misconception patterns in a wrong student answer.
@@ -20,7 +21,7 @@ export function detectMistakes(
   item: PracticeItem,
   studentAnswer: string | number,
 ): string[] {
-  if (item.measurementSpec) return detectMeasurement(item, studentAnswer);
+  if (contentSpecForItem(item)?.domain === 'measurement_data') return detectMeasurement(item, studentAnswer);
   switch (item.itemType) {
     case 'multiplication_fact':
     case 'unknown_factor':
@@ -115,7 +116,7 @@ export function itemTargetsMisconception(item: PracticeItem, code: string): bool
   if (family === 'fraction_number_line') return item.itemType === 'fraction_number_line';
   if (family === 'fraction') return item.itemType.startsWith('fraction_');
   if (family === 'arithmetic') return item.itemType === 'addition_fact' || item.itemType === 'subtraction_fact';
-  if (family === 'measurement') return Boolean(item.measurementSpec);
+  if (family === 'measurement') return contentSpecForItem(item)?.domain === 'measurement_data';
   if (family === 'mul') return item.itemType === 'multiplication_fact' || item.itemType === 'unknown_factor';
   if (family === 'div') return item.itemType === 'division_fact';
   return false;
@@ -157,7 +158,9 @@ export function hasUnresolvedMisconceptionForSkill(
 }
 
 function detectMeasurement(item: PracticeItem, raw: string | number): string[] {
-  const spec = item.measurementSpec!, answer = Number(raw), correct = Number(item.answer);
+  const content = contentSpecForItem(item);
+  if (content?.domain !== 'measurement_data') return [];
+  const spec = content.data, answer = Number(raw), correct = Number(item.answer);
   if (!Number.isFinite(answer) || answer === correct) return [];
   const patterns: string[] = [];
   if (spec.kind === 'elapsed_time') {
@@ -183,10 +186,11 @@ const ARITHMETIC_MISCONCEPTIONS: ArithmeticMisconceptionCode[] = [
 ];
 
 function detectArithmetic(item: PracticeItem, raw: string | number): string[] {
-  if (!item.arithmeticSpec || item.arithmeticSpec.mode === 'error_analysis') return [];
+  const content = contentSpecForItem(item);
+  if (content?.domain !== 'arithmetic' || content.data.mode === 'error_analysis') return [];
   const answer = Number(raw);
   if (!Number.isFinite(answer) || answer === Number(item.answer)) return [];
-  return ARITHMETIC_MISCONCEPTIONS.filter(code => simulateArithmeticMisconception(item.arithmeticSpec!, code)?.answer === answer)
+  return ARITHMETIC_MISCONCEPTIONS.filter(code => simulateArithmeticMisconception(content.data, code)?.answer === answer)
     .map(code => `arithmetic:${code}`);
 }
 
@@ -251,8 +255,9 @@ function detectDivision(item: PracticeItem, raw: string | number): string[] {
 
   const patterns: string[] = [];
 
-  if (item.divisionSpec) {
-    const spec = item.divisionSpec;
+  const content = contentSpecForItem(item);
+  if (content?.domain === 'division') {
+    const spec = content.data;
     const codes: DivisionMisconceptionCode[] = [
       'div_swapped_dividend_divisor', 'div_used_multiplication_result',
       'div_shared_vs_grouped_confusion', 'div_partial_quotient_missing',
@@ -281,7 +286,8 @@ function detectDivision(item: PracticeItem, raw: string | number): string[] {
 // fraction_compare: ID = FCMP_n1_d1_n2_d2, answer = '<' | '=' | '>'
 
 function detectFractionCompare(item: PracticeItem, sa: string): string[] {
-  const structured = item.fractionSpec?.kind === 'compare' ? item.fractionSpec : null;
+  const content = contentSpecForItem(item);
+  const structured = content?.domain === 'fraction' && content.data.kind === 'compare' ? content.data : null;
   const m = item.id.match(/^FCMP_(\d+)_(\d+)_(\d+)_(\d+)$/);
   if (!structured && !m) return [];
 
@@ -329,7 +335,8 @@ function detectFractionCompare(item: PracticeItem, sa: string): string[] {
 }
 
 function detectFractionNumberLine(item: PracticeItem, raw: string | number): string[] {
-  const spec = item.fractionSpec?.kind === 'locate_number_line' ? item.fractionSpec : null;
+  const content = contentSpecForItem(item);
+  const spec = content?.domain === 'fraction' && content.data.kind === 'locate_number_line' ? content.data : null;
   const expected = spec?.value.numerator ?? item.factA;
   const answer = Number(raw);
   return expected != null && answer === expected + 1
@@ -341,7 +348,8 @@ function detectFractionNumberLine(item: PracticeItem, raw: string | number): str
 // fraction_equivalent: ID = FEQ_n_d_targetDen, answer = n * (targetDen / d)
 
 function detectFractionEquivalent(item: PracticeItem, raw: string | number): string[] {
-  const structured = item.fractionSpec?.kind === 'equivalent_visual' ? item.fractionSpec : null;
+  const content = contentSpecForItem(item);
+  const structured = content?.domain === 'fraction' && content.data.kind === 'equivalent_visual' ? content.data : null;
   const m = item.id.match(/^FEQ_(\d+)_(\d+)_(\d+)$/);
   if (!structured && !m) return [];
 
@@ -418,7 +426,8 @@ function detectAreaRectangle(item: PracticeItem, raw: string | number): string[]
 }
 
 function detectPerimeterUnknownSide(item: PracticeItem, raw: string | number): string[] {
-  const spec = item.reasoningSpec;
+  const content = contentSpecForItem(item);
+  const spec = content?.domain === 'area_perimeter' ? content.data : undefined;
   if (!spec) return [];
   const sa = Number(raw);
   if (!Number.isFinite(sa)) return [];

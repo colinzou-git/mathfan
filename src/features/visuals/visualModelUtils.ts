@@ -1,5 +1,6 @@
 import type { PracticeItem } from '../../types/math';
 import type { ShapeName } from './ShapeModel';
+import { contentSpecForItem } from '../curriculum/practiceContentSpec';
 
 export function parseFractionFromPrompt(prompt: string): { n: number; d: number } | null {
   const m = prompt.match(/(\d+)\/(\d+)/);
@@ -51,13 +52,13 @@ export function geoShapeFromItemId(id: string): ShapeName | null {
 /** Returns true when VisualModel will render a non-null visual for the item. */
 export function hasVisualModel(item: PracticeItem): boolean {
   const { itemType, factA, factB, id, prompt } = item;
+  const contentSpec = contentSpecForItem(item);
 
   if (item.visualSpec) return true;
-  if (item.fractionSpec) return true;
-  if (item.arithmeticSpec) return true;
-  if (item.divisionSpec) return true;
-  if (item.measurementSpec && item.measurementSpec.kind !== 'measurement_context') return true;
-  if (item.wordProblemSpec?.suggestedModel === 'bar') return true;
+  if (contentSpec?.domain === 'fraction' || contentSpec?.domain === 'arithmetic' || contentSpec?.domain === 'division') return true;
+  if (contentSpec?.domain === 'measurement_data' && contentSpec.data.kind !== 'measurement_context') return true;
+  if (contentSpec?.domain === 'word_problem' && contentSpec.data.suggestedModel === 'bar') return true;
+  if (contentSpec?.domain === 'word_problem' && contentSpec.data.contextSchema === 'equal_sharing') return true;
 
   if ((itemType === 'multiplication_fact' || itemType === 'unknown_factor') &&
       factA != null && factB != null &&

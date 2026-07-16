@@ -4,6 +4,7 @@ import type { RatingReason } from '../practice/answerChecker';
 import type { ResponsePolicyKind } from '../scheduler/responsePolicy';
 import { describeLearningCard } from '../scheduler/cardModel';
 import { currentRetrievability } from '../scheduler/fsrsAdapter';
+import { contentSpecForItem } from '../curriculum/practiceContentSpec';
 
 export const SCHEDULING_TELEMETRY_VERSION = 1 as const;
 export const CARD_MODEL_VERSION = 'canonical-card-v1';
@@ -102,8 +103,7 @@ function flattenParameters(value: unknown, prefix = '', out: Record<string, Para
 }
 
 export function telemetryForItem(item: PracticeItem): ItemInstanceTelemetry {
-  const structured = item.fractionSpec ?? item.arithmeticSpec ?? item.divisionSpec ?? item.measurementSpec
-    ?? item.wordProblemSpec ?? item.reasoningSpec ?? item.visualSpec;
+  const structured = contentSpecForItem(item)?.data ?? item.visualSpec;
   const parameters = structured ? flattenParameters(structured) : undefined;
   return {
     promptVersion: 'curriculum-v1', displayedChoices: item.choices ? [...item.choices] : undefined,

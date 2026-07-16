@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { normalizeSnapshot, validateSnapshot } from '../features/sync/snapshot';
 import type { AppSnapshot } from '../features/sync/snapshot';
+import { makeItemFromId } from '../features/curriculum/makeItemFromId';
 
 function validSnapshot(overrides: Partial<AppSnapshot> = {}): AppSnapshot {
   return {
@@ -76,6 +77,43 @@ describe('normalizeSnapshot — legacy card compatibility', () => {
     const result = normalizeSnapshot({ appId: 'mathfan', snapshotVersion: 1, students: [] });
     expect(result.snapshot).toBeUndefined();
     expect(result.problems.map(problem => problem.code)).toContain('missing_array');
+  });
+});
+
+describe('normalizeSnapshot — practice content contracts', () => {
+  it('repairs a single legacy content field in a persisted daily lesson', () => {
+    const item = makeItemFromId('FEQ_1_2_4')!;
+    const legacyItem = { ...item, contentSpec: undefined };
+    const result = normalizeSnapshot(validSnapshot({
+      dailyLessonPlans: [{
+        id: 'lesson-1', studentId: 's1', localDate: '2026-06-01', timezone: 'UTC',
+        plannerVersion: 'legacy', revision: 1, generatedAt: '', updatedAt: '', status: 'planned',
+        estimatedMinutes: 1, completedItemInstanceIds: [], warnings: [],
+        items: [{ item: legacyItem, cardKey: 'x', segment: 'focus', rationale: 'legacy', schedulingEligible: true }],
+      }],
+    }));
+    expect(result.problems).toEqual([]);
+    expect(result.snapshot?.dailyLessonPlans?.[0].items[0].item.contentSpec?.domain).toBe('fraction');
+  });
+
+  it('rejects contradictory persisted items with multiple primary legacy specs', () => {
+    const fraction = makeItemFromId('FEQ_1_2_4')!;
+    const arithmetic = makeItemFromId('ADD_47p28')!;
+    const contradictory = {
+      ...fraction, contentSpec: undefined, arithmeticSpec: arithmetic.arithmeticSpec,
+    };
+    const result = normalizeSnapshot(validSnapshot({
+      dailyLessonPlans: [{
+        id: 'lesson-1', studentId: 's1', localDate: '2026-06-01', timezone: 'UTC',
+        plannerVersion: 'legacy', revision: 1, generatedAt: '', updatedAt: '', status: 'planned',
+        estimatedMinutes: 1, completedItemInstanceIds: [], warnings: [],
+        items: [{ item: contradictory, cardKey: 'x', segment: 'focus', rationale: 'invalid', schedulingEligible: true }],
+      }],
+    }));
+    expect(result.snapshot).toBeUndefined();
+    expect(result.problems).toContainEqual(expect.objectContaining({
+      table: 'dailyLessonPlans', code: 'invalid_practice_item',
+    }));
   });
 });
 

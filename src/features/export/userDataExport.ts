@@ -1,6 +1,7 @@
 import { buildSnapshot, type AppSnapshot } from '../sync/snapshot';
 import { ADAPTIVE_SELECTOR_VERSION, CARD_MODEL_VERSION, DAILY_LESSON_PLANNER_VERSION, GOAL_PORTFOLIO_VERSION, RESPONSE_POLICY_VERSION } from '../learning/schedulingTelemetry';
 import { FSRS_CONFIG_VERSION } from '../scheduler/fsrsAdapter';
+import { PRACTICE_CONTENT_SPEC_VERSION } from '../curriculum/practiceContentSpec';
 
 export type UserDataExportFormat = 'json' | 'zip';
 export type UserDataExportDelivery = 'download' | 'share';
@@ -125,6 +126,7 @@ export function buildExportMetadata(
       cardModel: CARD_MODEL_VERSION, responsePolicy: RESPONSE_POLICY_VERSION,
       adaptiveSelector: ADAPTIVE_SELECTOR_VERSION, dailyLessonPlanner: DAILY_LESSON_PLANNER_VERSION,
       goalPortfolio: GOAL_PORTFOLIO_VERSION, fsrsConfig: FSRS_CONFIG_VERSION,
+      practiceContentSpec: `practice-content-v${PRACTICE_CONTENT_SPEC_VERSION}`,
     },
   };
 }

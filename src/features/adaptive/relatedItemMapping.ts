@@ -1,5 +1,6 @@
 import type { ItemType, PracticeItem } from '../../types/math';
 import { inferGrade3SkillId } from '../mastery/skillMapping';
+import { contentSpecForItem } from '../curriculum/practiceContentSpec';
 
 /**
  * Maps a higher-level practice item to the underlying calculation item IDs it
@@ -48,8 +49,9 @@ function computeRelatedItemIds(item: PracticeItem): string[] {
   const id = item.id;
   let m: RegExpMatchArray | null;
 
-  if (item.divisionSpec) {
-    const spec = item.divisionSpec;
+  const contentSpec = contentSpecForItem(item);
+  if (contentSpec?.domain === 'division') {
+    const spec = contentSpec.data;
     const embedded = spec.decomposition?.map(part => divId(part.dividendPart, spec.divisor)) ?? [];
     if (spec.context) embedded.unshift(divId(spec.dividend, spec.divisor));
     return [...embedded, mulId(spec.divisor, spec.quotient)];
@@ -59,7 +61,7 @@ function computeRelatedItemIds(item: PracticeItem): string[] {
   if ((m = id.match(/^WORD_([a-z]+)_(\d+)_(\d+)$/))) {
     const schema = m[1], a = +m[2], b = +m[3];
     // dv: (a*b) shared into a groups → b each, i.e. (a*b) ÷ a
-    if (schema === 'dv') return [divId(a * b, a)];
+    if (schema === 'dv') return [divId(a * b, a), mulId(a, b)];
     return [mulId(a, b)];
   }
 

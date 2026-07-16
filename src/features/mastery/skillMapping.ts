@@ -1,5 +1,6 @@
 import type { PracticeItem } from '../../types/math';
 import { divisionSkillIdForSchema } from '../curriculum/divisionItems';
+import { contentSpecForItem } from '../curriculum/practiceContentSpec';
 
 /**
  * Maps a PracticeItem to a Grade 3 mastery skill ID from GRADE3_MASTERY_MAP.
@@ -9,10 +10,11 @@ import { divisionSkillIdForSchema } from '../curriculum/divisionItems';
  */
 export function inferGrade3SkillId(item: PracticeItem): string | null {
   const { id, itemType, tags, factA, factB } = item;
+  const contentSpec = contentSpecForItem(item);
 
   // Preserve historical single-step division story evidence under its original broad skill.
   if (id.startsWith('WORD_dv_')) return 'g3-div-meaning';
-  if (item.divisionSpec) return divisionSkillIdForSchema(item.divisionSpec.schema, item.divisionSpec.divisor);
+  if (contentSpec?.domain === 'division') return divisionSkillIdForSchema(contentSpec.data.schema, contentSpec.data.divisor);
 
   // ── Multiplication ────────────────────────────────────────────────────────
   if (itemType === 'multiplication_fact' || itemType === 'unknown_factor') {
@@ -54,8 +56,8 @@ export function inferGrade3SkillId(item: PracticeItem): string | null {
 
   // ── Addition regrouping ───────────────────────────────────────────────────
   if (itemType === 'addition_fact') {
-    if (item.arithmeticSpec && item.arithmeticSpec.structure.regrouping !== 'none') {
-      return item.arithmeticSpec.structure.digits === 3 ? 'g3-add-3digit-regrouping' : 'g3-add-2digit-regrouping';
+    if (contentSpec?.domain === 'arithmetic' && contentSpec.data.structure.regrouping !== 'none') {
+      return contentSpec.data.structure.digits === 3 ? 'g3-add-3digit-regrouping' : 'g3-add-2digit-regrouping';
     }
     const a = factA ?? 0;
     const b = factB ?? 0;
@@ -72,11 +74,11 @@ export function inferGrade3SkillId(item: PracticeItem): string | null {
 
   // ── Subtraction regrouping ────────────────────────────────────────────────
   if (itemType === 'subtraction_fact') {
-    if (item.arithmeticSpec && (item.arithmeticSpec.structure.regrouping === 'across_zero' || item.arithmeticSpec.structure.regrouping === 'multiple_zeroes')) {
+    if (contentSpec?.domain === 'arithmetic' && (contentSpec.data.structure.regrouping === 'across_zero' || contentSpec.data.structure.regrouping === 'multiple_zeroes')) {
       return 'g3-sub-across-zero';
     }
-    if (item.arithmeticSpec && item.arithmeticSpec.structure.regrouping !== 'none') {
-      return item.arithmeticSpec.structure.digits === 3 ? 'g3-sub-3digit-regrouping' : 'g3-sub-2digit-regrouping';
+    if (contentSpec?.domain === 'arithmetic' && contentSpec.data.structure.regrouping !== 'none') {
+      return contentSpec.data.structure.digits === 3 ? 'g3-sub-3digit-regrouping' : 'g3-sub-2digit-regrouping';
     }
     // makeSubtractionItem always sets factA = minuend (larger), factB = subtrahend (smaller)
     const a = factA ?? 0;
@@ -94,14 +96,14 @@ export function inferGrade3SkillId(item: PracticeItem): string | null {
 
   // ── Fractions ─────────────────────────────────────────────────────────────
   if (itemType === 'fraction_equivalent') {
-    if (item.fractionSpec?.kind === 'unit_fraction_model') return 'g3-frac-unit';
+    if (contentSpec?.domain === 'fraction' && contentSpec.data.kind === 'unit_fraction_model') return 'g3-frac-unit';
     // Unit fractions (numerator = 1) map to the unit-fraction skill.
     // FEQ ID format: FEQ_${n}_${d}_${targetDen}; parse n from the ID.
     const m = id.match(/^FEQ_(\d+)_/);
     return m && m[1] === '1' ? 'g3-frac-unit' : 'g3-frac-equivalent';
   }
   if (itemType === 'fraction_compare') {
-    const strategy = item.fractionSpec?.kind === 'compare' ? item.fractionSpec.strategy : 'general';
+    const strategy = contentSpec?.domain === 'fraction' && contentSpec.data.kind === 'compare' ? contentSpec.data.strategy : 'general';
     if (strategy === 'same_denominator') return 'g3-frac-compare-same-denominator';
     if (strategy === 'same_numerator') return 'g3-frac-compare-same-numerator';
     return 'g3-frac-compare';
