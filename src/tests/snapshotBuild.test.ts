@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const { dbMock, tableNames, transactionMock } = vi.hoisted(() => {
   const names = [
     'students', 'itemStates', 'attempts', 'sessions', 'multFactStats',
-    'quizSessions', 'mathAnswerEvents', 'learningGoals', 'goalEvents', 'goalEvaluations',
+    'quizSessions', 'mathAnswerEvents', 'learningGoals', 'goalEvents', 'goalEvaluations', 'dailyLessonPlans',
   ] as const;
   let insideTransaction = false;
   const database: Record<string, { toArray: ReturnType<typeof vi.fn> }> = {};
@@ -51,6 +51,7 @@ describe('buildSnapshot transaction consistency', () => {
       itemStates: [],
       mathAnswerEvents: [],
       goalEvaluations: [],
+      dailyLessonPlans: [],
     });
   });
 });

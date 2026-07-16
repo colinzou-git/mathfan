@@ -34,6 +34,7 @@ import { allMeasurementItemIds, allDataItemIds } from '../../components/opSpecs'
 import { mulberry32, randomSeed } from '../../utils/rng';
 import type { PracticeItem as PItem } from '../../types/math';
 import { buildSchedulingTelemetry, DAILY_LESSON_PLANNER_VERSION, type SelectionContext } from '../learning/schedulingTelemetry';
+import { completeDailyLessonPlan, markDailyLessonProgress } from '../learningPlan/dailyLessonPersistence';
 
 // ── Public types ──────────────────────────────────────────────────────────────
 
@@ -543,12 +544,18 @@ export function usePracticeSession(studentId: string) {
 
     try {
       await recordPracticeAnswer(payload);
+      if (result.isCorrect && configRef.current?.lessonPlanId) {
+        await markDailyLessonProgress(configRef.current.lessonPlanId, item.instanceKey ?? item.id, createdAt);
+      }
       commit();
       return;
     } catch (err) {
       console.warn('[usePracticeSession] event write failed, retrying…', err);
       try {
         await recordPracticeAnswer(payload);
+        if (result.isCorrect && configRef.current?.lessonPlanId) {
+          await markDailyLessonProgress(configRef.current.lessonPlanId, item.instanceKey ?? item.id, createdAt);
+        }
         commit();
         return;
       } catch (retryErr) {
@@ -570,6 +577,9 @@ export function usePracticeSession(studentId: string) {
     setState(savingState);
     try {
       await recordPracticeAnswer(pending.payload);
+      if (pending.payload.event.isCorrect && pending.payload.event.lessonPlanId) {
+        await markDailyLessonProgress(pending.payload.event.lessonPlanId, pending.payload.event.itemInstanceId ?? pending.payload.event.itemId, pending.payload.event.createdAt);
+      }
       pending.commit();
     } catch {
       if (pending.schedulingEligible) schedulingGuardRef.current.releaseScheduled(pending.cardKey);
@@ -631,6 +641,9 @@ export function usePracticeSession(studentId: string) {
         ? Math.round(prev.latencies.reduce((s, v) => s + v, 0) / prev.latencies.length)
         : 0;
       const isEnding = !nextId;
+      if (isEnding && configRef.current?.lessonPlanId) {
+        await completeDailyLessonPlan(configRef.current.lessonPlanId, appNow().toISOString());
+      }
       sessionRepo.get(prev.sessionId).then(s => {
         if (!s) return;
         if (isEnding && prev.completedCount === 0) {

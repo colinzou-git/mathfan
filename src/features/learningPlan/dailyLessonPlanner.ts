@@ -10,6 +10,7 @@ import { inferGrade3SkillId } from '../mastery/skillMapping';
 import { getRelatedSkillIds } from '../adaptive/relatedItemMapping';
 import { rankFocusSkills } from './focusSkillSelector';
 import { deriveLearningUnitProgress } from '../learning/learningUnitProgress';
+import { learnerLocalDateKey } from '../time/localDate';
 
 export type LessonSegmentKind = 'retrieval' | 'focus' | 'transfer';
 export interface PlannedLessonItem { item: PracticeItem; cardKey: string; segment: LessonSegmentKind; rationale: string; schedulingEligible: boolean }
@@ -83,5 +84,5 @@ export function planDailyLesson(args: PlanDailyLessonArgs): DailyLessonPlan {
   if (transferAll.length < 3) warnings.push({ code: 'sparse_transfer', message: 'Transfer content is shorter because no unrelated new skill was introduced.' });
   const segmentCounts = { retrieval: planned.filter(value => value.segment === 'retrieval').length, focus: planned.filter(value => value.segment === 'focus').length, transfer: planned.filter(value => value.segment === 'transfer').length };
   const estimatedMinutes = Math.max(1, Math.ceil(planned.reduce((sum, value) => sum + estimateItemSeconds(value.item, args.events), 0) / 60));
-  return { id: `lesson:${args.studentId}:${args.now.slice(0, 10)}`, studentId: args.studentId, generatedAt: args.now, estimatedMinutes, focusSkillId: focusCandidate?.skillId, focusSkillTitle: focusCandidate ? getGrade3Skill(focusCandidate.skillId)?.title ?? focusCandidate.skillId : undefined, items: planned, segmentCounts, warnings };
+  return { id: `lesson:${args.studentId}:${learnerLocalDateKey(new Date(args.now), args.timezone)}`, studentId: args.studentId, generatedAt: args.now, estimatedMinutes, focusSkillId: focusCandidate?.skillId, focusSkillTitle: focusCandidate ? getGrade3Skill(focusCandidate.skillId)?.title ?? focusCandidate.skillId : undefined, items: planned, segmentCounts, warnings };
 }

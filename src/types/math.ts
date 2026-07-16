@@ -277,6 +277,32 @@ export interface PracticeSession {
   lessonSegments?: Array<{ kind: 'retrieval' | 'focus' | 'transfer'; itemInstanceIds: string[] }>;
 }
 
+export interface PersistedPlannedLessonItem {
+  item: PracticeItem;
+  cardKey: string;
+  segment: 'retrieval' | 'focus' | 'transfer';
+  rationale: string;
+  schedulingEligible: boolean;
+}
+
+export interface PersistedDailyLessonPlan {
+  id: string;
+  studentId: string;
+  localDate: string;
+  timezone: string;
+  plannerVersion: string;
+  revision: number;
+  generatedAt: string;
+  updatedAt: string;
+  status: 'planned' | 'in_progress' | 'completed' | 'replaced';
+  focusSkillId?: string;
+  focusSkillTitle?: string;
+  estimatedMinutes: number;
+  items: PersistedPlannedLessonItem[];
+  completedItemInstanceIds: string[];
+  warnings: Array<{ code: string; message: string }>;
+}
+
 // ── Stats types ───────────────────────────────────────────────────────────────
 
 export interface DayStats {

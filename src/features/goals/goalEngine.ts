@@ -1,4 +1,5 @@
 import type { MathAnswerEvent } from '../learning/learningEvents';
+import { learnerLocalDateKey } from '../time/localDate';
 import type { StudentSkillSummary, SkillSummaryStatus } from '../mastery/skillMasteryEngine';
 import { inferGrade3SkillId } from '../mastery/skillMapping';
 import { makeItemFromId } from '../curriculum/makeItemFromId';
@@ -102,14 +103,7 @@ function calendarDayNumber(date: string): number {
 }
 
 export function localDateInTimeZone(iso: string, timezone: string): string {
-  const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone: timezone,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).formatToParts(new Date(iso));
-  const part = (type: string) => parts.find(p => p.type === type)?.value ?? '';
-  return `${part('year')}-${part('month')}-${part('day')}`;
+  return learnerLocalDateKey(new Date(iso), timezone);
 }
 
 function isDirectFirstAttempt(event: MathAnswerEvent): boolean {

@@ -17,6 +17,17 @@ vi.mock('../features/time/clock', () => ({
   appNow: () => new Date(fixedNow),
 }));
 
+vi.mock('../features/learningPlan/dailyLessonPersistence', () => ({
+  getOrCreateDailyLessonPlan: vi.fn(async ({ studentId, now, timezone }: { studentId: string; now: string; timezone: string }) => ({
+    id: `lesson:${studentId}:2026-06-17:r1`, studentId, localDate: '2026-06-17', timezone,
+    plannerVersion: 'daily-lesson-v1', revision: 1, generatedAt: now, updatedAt: now, status: 'planned',
+    focusSkillId: 'g3-mul-meaning', focusSkillTitle: 'Understand Multiplication', estimatedMinutes: 5,
+    completedItemInstanceIds: [], warnings: [],
+    items: [{ item: { id: 'MUL_2x3', skillId: 'g3-mul-meaning', itemType: 'multiplication_fact', prompt: '2 × 3', answer: 6, tags: [], difficulty: .2 }, cardKey: 'fact:mul:2x3', segment: 'focus', rationale: 'test', schedulingEligible: true }],
+  })),
+  regenerateDailyLessonPlan: vi.fn(),
+}));
+
 const store: {
   goals: LearningGoal[];
   events: MathAnswerEvent[];
@@ -193,6 +204,14 @@ describe('dashboard Goals entry', () => {
     expect(onStartDailyReview).toHaveBeenCalledWith(expect.objectContaining({ mode: 'adaptive_lesson', lessonKind: 'adaptive_daily_lesson', preplannedItems: expect.any(Array) }));
     fireEvent.click(screen.getByRole('button', { name: /Multiply/i }));
     expect(onPickOperation).toHaveBeenCalledWith('multiplication');
+  });
+
+  it('clears a Grade 3 lesson when the profile switches to an unsupported grade', async () => {
+    const props = { onStartDailyReview: vi.fn(), onPickOperation: vi.fn(), onOpenStats: vi.fn(), onOpenSettings: vi.fn(), onStartQuiz: vi.fn(), onOpenAchievementDetail: vi.fn(), onOpenMasteryMap: vi.fn(), onOpenGoals: vi.fn() };
+    const view = render(<StudentDashboard profile={profile()} {...props} />);
+    expect(await screen.findByRole('button', { name: 'Start lesson' })).toBeInTheDocument();
+    view.rerender(<StudentDashboard profile={{ ...profile(), id: 'student-2', gradeLevel: 4 }} {...props} />);
+    await waitFor(() => expect(screen.queryByRole('button', { name: /lesson/i })).not.toBeInTheDocument());
   });
 
   it('places Daily New for Goals between Daily Review and the Grade 3 Math Map, then opens Goals', async () => {

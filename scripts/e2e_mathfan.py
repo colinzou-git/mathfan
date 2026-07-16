@@ -597,9 +597,17 @@ def adaptive_lesson_and_manual_fallback(page: Page) -> None:
     page.reload(wait_until="domcontentloaded")
     lesson = page.get_by_role("region", name="Start Today’s Lesson")
     expect(lesson).to_be_visible()
-    expect(lesson).to_contain_text("Focus: Times Tables 1–5")
     lesson.get_by_role("button", name="See plan", exact=True).click()
     expect(lesson.get_by_text("Why this plan?", exact=True)).to_be_visible()
+    lesson.get_by_role("button", name="Regenerate plan", exact=True).click()
+    expect(lesson.get_by_text(re.compile(r"Plan date .* revision 2"))).to_be_visible()
+    expect(lesson).to_contain_text("Focus: Times Tables 1–5")
+    first_plan = page.evaluate("""async () => { const db = await new Promise((resolve, reject) => { const r = indexedDB.open('mathfan'); r.onsuccess = () => resolve(r.result); r.onerror = () => reject(r.error); }); const rows = await new Promise((resolve, reject) => { const r = db.transaction('dailyLessonPlans').objectStore('dailyLessonPlans').getAll(); r.onsuccess = () => resolve(r.result); r.onerror = () => reject(r.error); }); db.close(); return rows[0].items.map(entry => entry.item.id); }""")
+    page.reload(wait_until="domcontentloaded")
+    lesson = page.get_by_role("region", name="Start Today’s Lesson")
+    expect(lesson).to_be_visible()
+    resumed_plan = page.evaluate("""async () => { const db = await new Promise((resolve, reject) => { const r = indexedDB.open('mathfan'); r.onsuccess = () => resolve(r.result); r.onerror = () => reject(r.error); }); const rows = await new Promise((resolve, reject) => { const r = db.transaction('dailyLessonPlans').objectStore('dailyLessonPlans').getAll(); r.onsuccess = () => resolve(r.result); r.onerror = () => reject(r.error); }); db.close(); return rows[0].items.map(entry => entry.item.id); }""")
+    assert resumed_plan == first_plan, "Today’s Lesson item order changed after reload"
     lesson.get_by_role("button", name="Start lesson", exact=True).click()
     for _ in range(30):
         if page.get_by_role("button", name="Home", exact=True).count():

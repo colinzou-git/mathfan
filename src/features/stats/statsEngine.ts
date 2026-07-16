@@ -5,6 +5,7 @@ import type {
 import type { MathAnswerEvent } from '../learning/learningEvents';
 import { tableFromItemId } from '../curriculum/multiplicationItems';
 import { itemPrompt } from '../curriculum/describeItem';
+import { learnerLocalDateKey } from '../time/localDate';
 
 // ── MathAnswerEvent adapters ──────────────────────────────────────────────────
 
@@ -32,7 +33,8 @@ export function eventsToAttemptLogs(events: MathAnswerEvent[]): AttemptLog[] {
 
 // ── Date helpers ──────────────────────────────────────────────────────────────
 
-export function localDateStr(iso: string): string {
+export function localDateStr(iso: string, timezone?: string): string {
+  if (timezone) return learnerLocalDateKey(new Date(iso), timezone);
   // Returns "YYYY-MM-DD" in local time from an ISO timestamp.
   return new Date(iso).toLocaleDateString('en-CA'); // en-CA uses YYYY-MM-DD
 }
@@ -150,8 +152,20 @@ export function computeDayStats(
 export function computeTodayStats(
   attempts: AttemptLog[],
   sessions: PracticeSession[],
-  now = new Date()
+  now = new Date(),
+  timezone?: string,
 ): DayStats {
+  if (timezone) {
+    const date = learnerLocalDateKey(now, timezone);
+    const slice = attempts.filter(attempt => learnerLocalDateKey(new Date(attempt.createdAt), timezone) === date);
+    const sessionSlice = sessions.filter(session => learnerLocalDateKey(new Date(session.startedAt), timezone) === date);
+    const correct = slice.filter(attempt => attempt.isCorrect);
+    const latencies = correct.map(attempt => attempt.latencyMs);
+    return { date, questionsAnswered: slice.length, correctCount: correct.length, accuracy: slice.length ? correct.length / slice.length : 0,
+      sessionCount: sessionSlice.length, minutesPracticed: sessionMinutes(sessionSlice),
+      averageCorrectLatencyMs: latencies.length ? Math.round(latencies.reduce((sum, value) => sum + value, 0) / latencies.length) : 0,
+      fastestCorrectLatencyMs: latencies.length ? Math.min(...latencies) : 0 };
+  }
   return computeDayStats(now, attempts, sessions);
 }
 
@@ -230,12 +244,23 @@ export function computePerTableStats(
 // ── Streak ────────────────────────────────────────────────────────────────────
 
 /** Count of consecutive days (ending today) on which at least one question was answered. */
-export function computeStreak(attempts: AttemptLog[], now = new Date()): number {
-  const activeDates = new Set(attempts.map(a => localDateStr(a.createdAt)));
+export function computeStreak(attempts: AttemptLog[], now = new Date(), timezone?: string): number {
+  const activeDates = new Set(attempts.map(a => localDateStr(a.createdAt, timezone)));
   let streak = 0;
+  if (!timezone) {
+    for (let i = 0; i < 365; i++) {
+      const d = addDays(startOfLocalDay(now), -i);
+      if (activeDates.has(localDateStr(d.toISOString()))) streak++;
+      else break;
+    }
+    return streak;
+  }
+  const today = learnerLocalDateKey(now, timezone);
   for (let i = 0; i < 365; i++) {
-    const d = addDays(startOfLocalDay(now), -i);
-    if (activeDates.has(localDateStr(d.toISOString()))) {
+    const d = new Date(`${today}T12:00:00.000Z`);
+    d.setUTCDate(d.getUTCDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    if (activeDates.has(key)) {
       streak++;
     } else {
       break;

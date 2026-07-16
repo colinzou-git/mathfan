@@ -1,4 +1,4 @@
-import type { StudentProfile, StudentItemState, AttemptLog, PracticeSession } from '../../types/math';
+import type { StudentProfile, StudentItemState, AttemptLog, PracticeSession, PersistedDailyLessonPlan } from '../../types/math';
 import type { MultiplicationFactStats, QuizSession } from '../multiplication/types';
 import type { MathAnswerEvent } from '../learning/learningEvents';
 import { rebuildMultFactStatsFromEvents, rebuildItemStatesFromEvents } from '../learning/eventRebuild';
@@ -34,6 +34,7 @@ export interface AppSnapshot {
   learningGoals?: LearningGoal[];
   goalEvents?: GoalEvent[];
   goalEvaluations?: GoalEvaluation[];
+  dailyLessonPlans?: PersistedDailyLessonPlan[];
 }
 
 // ── Build ─────────────────────────────────────────────────────────────────────
@@ -50,6 +51,7 @@ export async function buildSnapshot(): Promise<AppSnapshotV3> {
     db.learningGoals,
     db.goalEvents,
     db.goalEvaluations,
+    db.dailyLessonPlans,
   ];
 
   return db.transaction('r', tables, async () => {
@@ -64,6 +66,7 @@ export async function buildSnapshot(): Promise<AppSnapshotV3> {
       learningGoals,
       goalEvents,
       goalEvaluations,
+      dailyLessonPlans,
     ] = await Promise.all([
       db.students.toArray(),
       db.itemStates.toArray(),
@@ -75,6 +78,7 @@ export async function buildSnapshot(): Promise<AppSnapshotV3> {
       db.learningGoals.toArray(),
       db.goalEvents.toArray(),
       db.goalEvaluations.toArray(),
+      db.dailyLessonPlans.toArray(),
     ]);
     return {
       appId: 'mathfan',
@@ -91,6 +95,7 @@ export async function buildSnapshot(): Promise<AppSnapshotV3> {
       learningGoals,
       goalEvents,
       goalEvaluations,
+      dailyLessonPlans,
     };
   });
 }
@@ -130,6 +135,17 @@ function mergeCardStateCollision(a: StudentItemState, b: StudentItemState): Stud
   };
 }
 
+function mergeDailyLessonPlan(a: PersistedDailyLessonPlan, b: PersistedDailyLessonPlan): PersistedDailyLessonPlan {
+  if (a.status === 'completed' && b.status !== 'completed') return a;
+  if (b.status === 'completed' && a.status !== 'completed') return b;
+  // A revision's item list is immutable. Prefer local in-progress content and only union progress.
+  const preferred = a.status === 'in_progress' ? a : remoteHasNewerUpdatedAt(b.updatedAt, a.updatedAt) ? b : a;
+  return {
+    ...preferred,
+    completedItemInstanceIds: Array.from(new Set([...a.completedItemInstanceIds, ...b.completedItemInstanceIds])),
+  };
+}
+
 function compoundMerge<T>(rows: T[], key: (row: T) => string, merge: (a: T, b: T) => T): T[] {
   const result = new Map<string, T>();
   for (const row of rows) {
@@ -145,6 +161,7 @@ async function orphanReportInTransaction(): Promise<OrphanReport> {
     itemStates: await db.itemStates.toArray(), attempts: await db.attempts.toArray(), sessions: await db.sessions.toArray(),
     multFactStats: await db.multFactStats.toArray(), quizSessions: await db.quizSessions.toArray(), mathAnswerEvents: await db.mathAnswerEvents.toArray(),
     learningGoals: await db.learningGoals.toArray(), goalEvents: await db.goalEvents.toArray(), goalEvaluations: await db.goalEvaluations.toArray(),
+    dailyLessonPlans: await db.dailyLessonPlans.toArray(),
   };
   const byTable: Record<string, string[]> = {};
   for (const [name, rows] of Object.entries(tables)) {
@@ -155,7 +172,7 @@ async function orphanReportInTransaction(): Promise<OrphanReport> {
 }
 
 export async function findOrphanedStudentReferences(): Promise<OrphanReport> {
-  return db.transaction('r', [db.students, db.itemStates, db.attempts, db.sessions, db.multFactStats, db.quizSessions, db.mathAnswerEvents, db.learningGoals, db.goalEvents, db.goalEvaluations], orphanReportInTransaction);
+  return db.transaction('r', [db.students, db.itemStates, db.attempts, db.sessions, db.multFactStats, db.quizSessions, db.mathAnswerEvents, db.learningGoals, db.goalEvents, db.goalEvaluations, db.dailyLessonPlans], orphanReportInTransaction);
 }
 
 export type AppSnapshotV3 = AppSnapshot & { snapshotVersion: 3; metadata: SnapshotFormatMetadata };
@@ -180,7 +197,7 @@ export function normalizeSnapshot(raw: unknown): SnapshotNormalizationResult {
     return valid;
   });
   if (problems.length) return { problems, warnings };
-  const allChildArrays = ['attempts', 'sessions', 'multFactStats', 'quizSessions', 'mathAnswerEvents', 'learningGoals', 'goalEvents', 'goalEvaluations'] as const;
+  const allChildArrays = ['attempts', 'sessions', 'multFactStats', 'quizSessions', 'mathAnswerEvents', 'learningGoals', 'goalEvents', 'goalEvaluations', 'dailyLessonPlans'] as const;
   const childRows = Object.fromEntries(allChildArrays.map(table => [table, Array.isArray(source[table]) ? source[table] : []])) as Record<typeof allChildArrays[number], Array<{ studentId: string }>>;
   if (version >= 2 && (!Array.isArray(source.learningGoals) || !Array.isArray(source.goalEvents) || !Array.isArray(source.goalEvaluations))) {
     problems.push({ table: 'snapshot', code: 'missing_v2_tables', message: 'Version 2+ snapshots require goal arrays.' });
@@ -221,6 +238,7 @@ export function normalizeSnapshot(raw: unknown): SnapshotNormalizationResult {
       multFactStats: remappedChildren.multFactStats as MultiplicationFactStats[], quizSessions: remappedChildren.quizSessions as QuizSession[],
       mathAnswerEvents: remappedChildren.mathAnswerEvents as MathAnswerEvent[], learningGoals: remappedChildren.learningGoals as LearningGoal[],
       goalEvents: remappedChildren.goalEvents as GoalEvent[], goalEvaluations: remappedChildren.goalEvaluations as GoalEvaluation[],
+      dailyLessonPlans: remappedChildren.dailyLessonPlans as PersistedDailyLessonPlan[],
     }, problems, warnings,
   };
 }
@@ -248,6 +266,7 @@ export async function mergeNormalizedSnapshot(remote: AppSnapshotV3): Promise<vo
       db.learningGoals,
       db.goalEvents,
       db.goalEvaluations,
+      db.dailyLessonPlans,
     ],
     async () => {
       const localProfiles = await db.students.toArray();
@@ -275,6 +294,7 @@ export async function mergeNormalizedSnapshot(remote: AppSnapshotV3): Promise<vo
       const multFactStats = compoundMerge(remap([...(await db.multFactStats.toArray()), ...(remote.multFactStats ?? [])]), row => `${row.studentId}|${row.key}`, (a, b) => b.totalAttempts > a.totalAttempts ? b : a);
       const goals = compoundMerge(remap([...(await db.learningGoals.toArray()), ...(remote.learningGoals ?? [])]), row => row.id, (a, b) => remoteHasNewerUpdatedAt(b.updatedAt, a.updatedAt) ? b : a);
       const evaluations = compoundMerge(remap([...(await db.goalEvaluations.toArray()), ...(remote.goalEvaluations ?? [])]), row => row.id, (a, b) => remoteHasNewerUpdatedAt(b.updatedAt, a.updatedAt) ? b : a);
+      const dailyLessonPlans = compoundMerge(remap([...(await db.dailyLessonPlans.toArray()), ...(remote.dailyLessonPlans ?? [])]), row => row.id, mergeDailyLessonPlan);
       const normalizedEvents = remap(allEvents);
       const sessions = byId(remap([...(await db.sessions.toArray()), ...remote.sessions]));
       const attempts = byId(remap([...(await db.attempts.toArray()), ...remote.attempts]));
@@ -289,6 +309,7 @@ export async function mergeNormalizedSnapshot(remote: AppSnapshotV3): Promise<vo
       await db.goalEvents.bulkPut(goalEvents);
       await db.learningGoals.bulkPut(goals);
       await db.goalEvaluations.bulkPut(evaluations);
+      await db.dailyLessonPlans.bulkPut(dailyLessonPlans);
       await db.itemStates.bulkPut(itemStates);
       await db.multFactStats.bulkPut(multFactStats);
 
@@ -297,6 +318,7 @@ export async function mergeNormalizedSnapshot(remote: AppSnapshotV3): Promise<vo
         await Promise.all([
           db.itemStates.where('studentId').equals(losingId).delete(),
           db.multFactStats.where('studentId').equals(losingId).delete(),
+          db.dailyLessonPlans.where('studentId').equals(losingId).delete(),
           db.students.delete(losingId),
         ]);
       }

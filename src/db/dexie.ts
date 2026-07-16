@@ -4,6 +4,7 @@ import type {
   StudentItemState,
   AttemptLog,
   PracticeSession,
+  PersistedDailyLessonPlan,
 } from '../types/math';
 import type { MultiplicationFactStats, QuizSession } from '../features/multiplication/types';
 import type { MathAnswerEvent } from '../features/learning/learningEvents';
@@ -23,6 +24,7 @@ export class MathFanDB extends Dexie {
   goalEvaluations!: Table<GoalEvaluation>;
   migrationBackups!: Table<MigrationBackup>;
   dataMigrationRuns!: Table<DataMigrationRun>;
+  dailyLessonPlans!: Table<PersistedDailyLessonPlan>;
 
   constructor() {
     super('mathfan');
@@ -83,6 +85,9 @@ export class MathFanDB extends Dexie {
     // from mathAnswerEvents on next app boot.
     this.version(8).stores({
       itemStates: '[studentId+cardKey], studentId, cardKey, skillId, nextDueAt, masteryLevel',
+    });
+    this.version(9).stores({
+      dailyLessonPlans: 'id, [studentId+localDate], studentId, status, generatedAt',
     });
   }
 }

@@ -4,7 +4,7 @@
 
 | Package | Import count |
 | --- | --- |
-| vitest | 82 |
+| vitest | 83 |
 | react | 35 |
 | @testing-library/react | 19 |
 | pathlib | 8 |
@@ -189,6 +189,7 @@
 | src/features/dashboard/StudentDashboard.tsx | ../curriculum/describeItem |
 | src/features/dashboard/StudentDashboard.tsx | ../curriculum/makeItemFromId |
 | src/features/dashboard/StudentDashboard.tsx | ../goals/dailyNewGoalPlanner |
+| src/features/dashboard/StudentDashboard.tsx | ../learningPlan/dailyLessonPersistence |
 | src/features/dashboard/StudentDashboard.tsx | ../learningPlan/dailyLessonPlanner |
 | src/features/dashboard/StudentDashboard.tsx | ../mastery/grade3MasteryMap |
 | src/features/dashboard/StudentDashboard.tsx | ../mastery/skillMasteryEngine |
@@ -196,6 +197,7 @@
 | src/features/dashboard/StudentDashboard.tsx | ../stats/todayAchievement |
 | src/features/dashboard/StudentDashboard.tsx | ../stats/TodayAchievementSection |
 | src/features/dashboard/StudentDashboard.tsx | ../time/clock |
+| src/features/dashboard/StudentDashboard.tsx | ../time/localDate |
 | src/features/diagnosis/diagnosticCompletion.ts | ../sync/driveSync |
 | src/features/diagnosis/diagnosticPersistence.ts | ../learning/recordAnswer |
 | src/features/diagnosis/diagnosticPlanner.ts | ../../types/math |
@@ -241,6 +243,7 @@
 | src/features/goals/goalEngine.ts | ../learning/learningEvents |
 | src/features/goals/goalEngine.ts | ../mastery/skillMapping |
 | src/features/goals/goalEngine.ts | ../mastery/skillMasteryEngine |
+| src/features/goals/goalEngine.ts | ../time/localDate |
 | src/features/goals/goalEngine.ts | ./types |
 | src/features/goals/goalEvaluationEngine.ts | ../../types/math |
 | src/features/goals/goalEvaluationEngine.ts | ../../utils/rng |
@@ -342,6 +345,11 @@
 | src/features/learning/schedulingTelemetry.ts | ../scheduler/cardModel |
 | src/features/learning/schedulingTelemetry.ts | ../scheduler/fsrsAdapter |
 | src/features/learning/schedulingTelemetry.ts | ../scheduler/responsePolicy |
+| src/features/learningPlan/dailyLessonPersistence.ts | ../../db/dexie |
+| src/features/learningPlan/dailyLessonPersistence.ts | ../../types/math |
+| src/features/learningPlan/dailyLessonPersistence.ts | ../learning/schedulingTelemetry |
+| src/features/learningPlan/dailyLessonPersistence.ts | ../time/localDate |
+| src/features/learningPlan/dailyLessonPersistence.ts | ./dailyLessonPlanner |
 | src/features/learningPlan/dailyLessonPlanner.ts | ../../types/math |
 | src/features/learningPlan/dailyLessonPlanner.ts | ../adaptive/relatedItemMapping |
 | src/features/learningPlan/dailyLessonPlanner.ts | ../curriculum/makeItemFromId |
@@ -353,6 +361,7 @@
 | src/features/learningPlan/dailyLessonPlanner.ts | ../mastery/skillMasteryEngine |
 | src/features/learningPlan/dailyLessonPlanner.ts | ../mastery/skillPracticePlanner |
 | src/features/learningPlan/dailyLessonPlanner.ts | ../scheduler/cardModel |
+| src/features/learningPlan/dailyLessonPlanner.ts | ../time/localDate |
 | src/features/learningPlan/dailyLessonPlanner.ts | ./focusSkillSelector |
 | src/features/learningPlan/focusSkillSelector.ts | ../curriculum/makeItemFromId |
 | src/features/learningPlan/focusSkillSelector.ts | ../goals/types |
@@ -479,6 +488,7 @@
 | src/features/practice/usePracticeSession.ts | ../curriculum/roundingItems |
 | src/features/practice/usePracticeSession.ts | ../learning/recordAnswer |
 | src/features/practice/usePracticeSession.ts | ../learning/schedulingTelemetry |
+| src/features/practice/usePracticeSession.ts | ../learningPlan/dailyLessonPersistence |
 | src/features/practice/usePracticeSession.ts | ../mastery/misconceptionEngine |
 | src/features/practice/usePracticeSession.ts | ../scheduler/cardModel |
 | src/features/practice/usePracticeSession.ts | ../scheduler/dailyReviewQueue |
@@ -538,6 +548,7 @@
 | src/features/stats/statsEngine.ts | ../curriculum/describeItem |
 | src/features/stats/statsEngine.ts | ../curriculum/multiplicationItems |
 | src/features/stats/statsEngine.ts | ../learning/learningEvents |
+| src/features/stats/statsEngine.ts | ../time/localDate |
 | src/features/stats/StatsPage.tsx | ../../components/MasteryGrid |
 | src/features/stats/StatsPage.tsx | ../../components/MiniCalendar |
 | src/features/stats/StatsPage.tsx | ../../components/StatsGraph |
@@ -672,6 +683,11 @@
 | src/tests/components.test.tsx | ../features/mastery/SkillTile |
 | src/tests/components.test.tsx | ../features/mastery/todayPlanEngine |
 | src/tests/components.test.tsx | ../types/math |
+| src/tests/dailyLessonPersistence.test.ts | ../db/dexie |
+| src/tests/dailyLessonPersistence.test.ts | ../features/learningPlan/dailyLessonPersistence |
+| src/tests/dailyLessonPersistence.test.ts | ../features/time/localDate |
+| src/tests/dailyLessonPersistence.test.ts | ../types/math |
+| src/tests/dailyLessonPersistence.test.ts | ../utils/rng |
 | src/tests/dailyLessonPlanner.test.ts | ../features/curriculum/makeItemFromId |
 | src/tests/dailyLessonPlanner.test.ts | ../features/goals/types |
 | src/tests/dailyLessonPlanner.test.ts | ../features/learningPlan/dailyLessonPlanner |

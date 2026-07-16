@@ -9,6 +9,7 @@ describe('goal Dexie schema', () => {
     expect(tableNames).toContain('learningGoals');
     expect(tableNames).toContain('goalEvents');
     expect(tableNames).toContain('goalEvaluations');
+    expect(tableNames).toContain('dailyLessonPlans');
 
     db.close();
   });

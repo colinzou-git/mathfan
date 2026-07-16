@@ -225,6 +225,13 @@ describe('computeStreak', () => {
   });
 });
 
+describe('learner-timezone daily stats', () => {
+  it('keeps the prior Los Angeles calendar day after UTC midnight', () => {
+    const attempts = [attempt({ createdAt: '2026-07-17T00:15:00.000Z' })];
+    expect(computeStreak(attempts, new Date('2026-07-17T00:30:00.000Z'), 'America/Los_Angeles')).toBe(1);
+  });
+});
+
 // ── computePerTableStats ──────────────────────────────────────────────────────
 
 describe('computePerTableStats', () => {

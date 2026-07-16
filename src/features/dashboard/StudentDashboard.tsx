@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
-import type { StudentProfile, SessionConfig } from '../../types/math';
+import type { PersistedDailyLessonPlan, StudentProfile, SessionConfig } from '../../types/math';
 import { itemStateRepo, learningGoalRepo, mathAnswerEventRepo, sessionRepo } from '../../db/repositories';
 import { computeTodayStats, computeStreak, eventsToAttemptLogs } from '../stats/statsEngine';
 import { appNow } from '../time/clock';
@@ -11,8 +11,11 @@ import { deriveGrade3SkillSummaries, type StudentSkillSummary } from '../mastery
 import { GRADE3_MASTERY_MAP } from '../mastery/grade3MasteryMap';
 import { makeItemFromId } from '../curriculum/makeItemFromId';
 import { planDailyNewForGoals, type DailyNewGoalPlan, type DailyNewGoalTile } from '../goals/dailyNewGoalPlanner';
-import { planDailyLesson, type DailyLessonPlan } from '../learningPlan/dailyLessonPlanner';
 import { mulberry32 } from '../../utils/rng';
+import { getOrCreateDailyLessonPlan } from '../learningPlan/dailyLessonPersistence';
+import { regenerateDailyLessonPlan } from '../learningPlan/dailyLessonPersistence';
+import type { PlanDailyLessonArgs } from '../learningPlan/dailyLessonPlanner';
+import { learnerLocalDateKey } from '../time/localDate';
 
 export type PracticeOp =
   | 'multiplication' | 'division' | 'addition' | 'subtraction' | 'fraction'
@@ -88,7 +91,7 @@ export function StudentDashboard({ profile, lastSyncedAt, onStartDailyReview, on
   const [dueByGroup, setDueByGroup] = useState<Record<string, DueGroup>>({});
   const [dailyNewPlan, setDailyNewPlan] = useState<DailyNewGoalPlan | null>(null);
   const [dailyNewError, setDailyNewError] = useState<string | null>(null);
-  const [lessonPlan, setLessonPlan] = useState<DailyLessonPlan | null>(null);
+  const [lessonPlan, setLessonPlan] = useState<PersistedDailyLessonPlan | null>(null);
   const [lessonError, setLessonError] = useState<string | null>(null);
   const [lessonDetailsOpen, setLessonDetailsOpen] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
@@ -96,6 +99,8 @@ export function StudentDashboard({ profile, lastSyncedAt, onStartDailyReview, on
   const [extraOpen, setExtraOpen] = useState(false);
   const [selectedExtraId, setSelectedExtraId] = useState<string | null>(null);
   const roundsInputRef = useRef<HTMLInputElement>(null);
+  const lessonArgsRef = useRef<PlanDailyLessonArgs | null>(null);
+  const [regeneratingLesson, setRegeneratingLesson] = useState(false);
 
   // Focus and select the rounds input when the modal opens so keyboard users
   // can type a count immediately.
@@ -107,6 +112,7 @@ export function StudentDashboard({ profile, lastSyncedAt, onStartDailyReview, on
   }, [selectedGroup]);
 
   useEffect(() => {
+    let alive = true;
     (async () => {
       const now = appNow();
       const nowStr = now.toISOString();
@@ -116,9 +122,10 @@ export function StudentDashboard({ profile, lastSyncedAt, onStartDailyReview, on
         sessionRepo.getAll(profile.id),
         learningGoalRepo.list(profile.id),
       ]);
+      if (!alive) return;
       const attempts = eventsToAttemptLogs(events);
-      const todayStats = computeTodayStats(attempts, sessions, now);
-      const streak = computeStreak(attempts, now);
+      const todayStats = computeTodayStats(attempts, sessions, now, profile.timezone);
+      const streak = computeStreak(attempts, now, profile.timezone);
 
       const dueStates = states.filter(s => s.nextDueAt && s.nextDueAt <= nowStr);
 
@@ -165,13 +172,21 @@ export function StudentDashboard({ profile, lastSyncedAt, onStartDailyReview, on
         setDailyNewError(null);
         if (profile.gradeLevel === 3) {
           try {
-            const seed = [...`${profile.id}:${nowStr.slice(0, 10)}`].reduce((sum, char) => (sum * 31 + char.charCodeAt(0)) >>> 0, 2166136261);
-            const lesson = planDailyLesson({ studentId: profile.id, gradeLevel: profile.gradeLevel, now: nowStr, timezone: profile.timezone, settings: profile.settings, events, itemStates: states, skillSummaries: completeSummaries, goals, rng: mulberry32(seed) });
+            const localDate = learnerLocalDateKey(now, profile.timezone);
+            const seed = [...`${profile.id}:${localDate}`].reduce((sum, char) => (sum * 31 + char.charCodeAt(0)) >>> 0, 2166136261);
+            const lessonArgs = { studentId: profile.id, gradeLevel: profile.gradeLevel, now: nowStr, timezone: profile.timezone, settings: profile.settings, events, itemStates: states, skillSummaries: completeSummaries, goals, rng: mulberry32(seed) };
+            lessonArgsRef.current = lessonArgs;
+            const lesson = await getOrCreateDailyLessonPlan(lessonArgs);
+            if (!alive) return;
             setLessonPlan(lesson.items.length ? lesson : null); setLessonError(lesson.items.length ? null : 'Not enough valid content for an adaptive lesson yet.');
           } catch (lessonFailure) {
             console.warn('[StudentDashboard] Today’s Lesson failed', lessonFailure);
             setLessonPlan(null); setLessonError('Today’s lesson could not load. Existing practice options are still available.');
           }
+        } else {
+          lessonArgsRef.current = null;
+          setLessonPlan(null);
+          setLessonError(null);
         }
       } catch (err) {
         console.warn('[StudentDashboard] Daily New for Goals failed', err);
@@ -179,6 +194,7 @@ export function StudentDashboard({ profile, lastSyncedAt, onStartDailyReview, on
         setDailyNewError(err instanceof Error ? err.message : 'Daily New for Goals could not load.');
       }
     })();
+    return () => { alive = false; };
   }, [profile.id, profile.gradeLevel, profile.timezone, profile.settings, lastSyncedAt]);
 
   const sortedGroups = GROUP_ORDER.filter(k => dueByGroup[k]);
@@ -202,15 +218,33 @@ export function StudentDashboard({ profile, lastSyncedAt, onStartDailyReview, on
 
   const startAdaptiveLesson = () => {
     if (!lessonPlan) return;
+    const completed = new Set(lessonPlan.completedItemInstanceIds);
+    const remainingItems = lessonPlan.items.filter(value => !completed.has(value.item.instanceKey ?? value.item.id));
+    if (remainingItems.length === 0) return;
     const contributingGoals = lessonPlan.focusSkillId ? (dailyNewPlan?.tiles.find(tile => tile.skillId === lessonPlan.focusSkillId)?.goalIds ?? []) : [];
     const contributingTargets = lessonPlan.focusSkillId ? (dailyNewPlan?.tiles.find(tile => tile.skillId === lessonPlan.focusSkillId)?.targetIds ?? []) : [];
     onStartDailyReview({
-      mode: 'adaptive_lesson', sessionLength: lessonPlan.items.length, preplannedItems: lessonPlan.items.map(value => value.item),
+      mode: 'adaptive_lesson', sessionLength: remainingItems.length, preplannedItems: remainingItems.map(value => value.item),
       lessonPlanId: lessonPlan.id, lessonKind: 'adaptive_daily_lesson', focusSkillId: lessonPlan.focusSkillId,
-      lessonSegments: (['retrieval', 'focus', 'transfer'] as const).map(kind => ({ kind, itemInstanceIds: lessonPlan.items.filter(value => value.segment === kind).map(value => value.item.id) })),
-      lessonRationales: Object.fromEntries(lessonPlan.items.map(value => [value.item.id, value.rationale])),
+      lessonSegments: (['retrieval', 'focus', 'transfer'] as const).map(kind => ({ kind, itemInstanceIds: remainingItems.filter(value => value.segment === kind).map(value => value.item.id) })),
+      lessonRationales: Object.fromEntries(remainingItems.map(value => [value.item.id, value.rationale])),
       goalIds: contributingGoals, goalTargetIds: contributingTargets,
     });
+  };
+
+  const regenerateLesson = async () => {
+    if (!lessonArgsRef.current || regeneratingLesson) return;
+    setRegeneratingLesson(true);
+    try {
+      const next = await regenerateDailyLessonPlan(lessonArgsRef.current);
+      setLessonPlan(next);
+      setLessonError(null);
+    } catch (error) {
+      console.warn('[StudentDashboard] Today’s Lesson regeneration failed', error);
+      setLessonError('Today’s lesson could not be refreshed yet. Your current plan is still saved.');
+    } finally {
+      setRegeneratingLesson(false);
+    }
   };
 
   const openExtra = () => {
@@ -220,6 +254,7 @@ export function StudentDashboard({ profile, lastSyncedAt, onStartDailyReview, on
   };
 
   const selectedExtra = dailyNewPlan?.extraChoices.find(tile => tile.id === selectedExtraId) ?? dailyNewPlan?.extraChoices[0] ?? null;
+  const lessonRemainingCount = lessonPlan?.items.filter(value => !lessonPlan.completedItemInstanceIds.includes(value.item.instanceKey ?? value.item.id)).length ?? 0;
 
   return (
     <div style={s.container}>
@@ -262,9 +297,9 @@ export function StudentDashboard({ profile, lastSyncedAt, onStartDailyReview, on
       <section aria-label="Start Today’s Lesson" style={s.dailyNewSection}>
         <h2 style={s.tileTitle}>Start Today&apos;s Lesson</h2>
         {lessonPlan ? <>
-          <p style={s.dailyNewCopy}>{lessonPlan.estimatedMinutes} min · {lessonPlan.segmentCounts.retrieval} due review · Focus: {lessonPlan.focusSkillTitle ?? 'mixed practice'} · {lessonPlan.segmentCounts.transfer} transfer</p>
-          <div style={s.actions}><button style={s.dailyNewStart} onClick={startAdaptiveLesson}>Start lesson</button><button style={s.secondaryBtn} aria-expanded={lessonDetailsOpen} onClick={() => setLessonDetailsOpen(value => !value)}>See plan</button></div>
-          {lessonDetailsOpen && <div role="note" style={s.dailyNewNotice}><strong>Why this plan?</strong><p>It uses only genuinely due retrieval cards, one priority focus skill, and learned transfer contexts.</p>{lessonPlan.warnings.map(warning => <p key={warning.code}>{warning.message}</p>)}</div>}
+          <p style={s.dailyNewCopy}>{lessonPlan.estimatedMinutes} min · {lessonPlan.items.filter(value => value.segment === 'retrieval').length} due review · Focus: {lessonPlan.focusSkillTitle ?? 'mixed practice'} · {lessonPlan.items.filter(value => value.segment === 'transfer').length} transfer</p>
+          <div style={s.actions}><button style={s.dailyNewStart} disabled={lessonRemainingCount === 0} onClick={startAdaptiveLesson}>{lessonRemainingCount === 0 ? 'Completed today' : lessonPlan.completedItemInstanceIds.length ? 'Resume lesson' : 'Start lesson'}</button><button style={s.secondaryBtn} aria-expanded={lessonDetailsOpen} onClick={() => setLessonDetailsOpen(value => !value)}>See plan</button></div>
+          {lessonDetailsOpen && <div role="note" style={s.dailyNewNotice}><strong>Why this plan?</strong><p>It uses only genuinely due retrieval cards, one priority focus skill, and learned transfer contexts.</p><p>Plan date {lessonPlan.localDate} · revision {lessonPlan.revision}</p><button style={s.secondaryBtn} disabled={regeneratingLesson} onClick={regenerateLesson}>{regeneratingLesson ? 'Refreshing...' : 'Regenerate plan'}</button>{lessonPlan.warnings.map(warning => <p key={warning.code}>{warning.message}</p>)}</div>}
         </> : <div role="status" style={s.dailyNewNotice}>{lessonError ?? 'Building today’s lesson...'}</div>}
       </section>
 

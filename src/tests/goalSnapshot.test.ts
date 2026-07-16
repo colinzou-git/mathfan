@@ -58,6 +58,7 @@ const mockDb = vi.hoisted(() => {
     learningGoals: new MemoryTable<LearningGoal>(byId),
     goalEvents: new MemoryTable<GoalEvent>(byId),
     goalEvaluations: new MemoryTable<GoalEvaluation>(byId),
+    dailyLessonPlans: new MemoryTable<{ id: string; studentId: string }>(byId),
     async transaction<T>(_mode: string, _tables: unknown[], callback: () => Promise<T>): Promise<T> {
       return callback();
     },
@@ -212,6 +213,7 @@ beforeEach(() => {
     mockDb.learningGoals,
     mockDb.goalEvents,
     mockDb.goalEvaluations,
+    mockDb.dailyLessonPlans,
   ]) {
     table.rows = [];
   }
@@ -265,6 +267,21 @@ describe('goal snapshot v2', () => {
     expect((await mockDb.learningGoals.get('goal-2'))?.title).toBe('Local valid');
     expect((await mockDb.goalEvaluations.get('eval-1'))?.currentQuestionIndex).toBe(9);
     expect((await mockDb.goalEvaluations.get('eval-2'))?.currentQuestionIndex).toBe(2);
+  });
+
+  it('does not overwrite an in-progress lesson revision item list during sync', async () => {
+    const local = {
+      id: 'lesson:s:2026-06-17:r1', studentId: 'student-1', localDate: '2026-06-17', timezone: 'UTC',
+      plannerVersion: 'daily-lesson-v1', revision: 1, generatedAt: '2026-06-17T00:00:00.000Z', updatedAt: '2026-06-17T01:00:00.000Z',
+      status: 'in_progress', estimatedMinutes: 5, completedItemInstanceIds: ['local-item'], warnings: [],
+      items: [{ item: { id: 'local-item' }, cardKey: 'template:local', segment: 'focus', rationale: 'local', schedulingEligible: true }],
+    };
+    mockDb.dailyLessonPlans.rows = [local];
+    await mergeSnapshot(baseSnapshot({ dailyLessonPlans: [{
+      ...local, status: 'planned', updatedAt: '2026-06-17T02:00:00.000Z', completedItemInstanceIds: [],
+      items: [{ item: { id: 'remote-item' }, cardKey: 'template:remote', segment: 'focus', rationale: 'remote', schedulingEligible: true }],
+    }] as never }));
+    expect((mockDb.dailyLessonPlans.rows[0] as never as { items: Array<{ item: { id: string } }> }).items[0].item.id).toBe('local-item');
   });
 
   it('unions goal events by ID without replacing existing local events', async () => {

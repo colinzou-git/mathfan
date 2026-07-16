@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-16T07:14:01.351447+00:00",
+  "generated_at": "2026-07-16T07:50:02.233674+00:00",
   "repo_root": "/home/ubuntu/mathfan",
   "package": {
     "name": "mathfan",
@@ -421,9 +421,9 @@
     {
       "path": "PROGRESS.md",
       "ext": ".md",
-      "bytes": 9265,
-      "lines": 149,
-      "sha1": "658443e3008a",
+      "bytes": 9364,
+      "lines": 150,
+      "sha1": "0e3d79a3bfc4",
       "imports": [],
       "exports": [],
       "functions": [],
@@ -570,9 +570,9 @@
     {
       "path": "scripts/e2e_mathfan.py",
       "ext": ".py",
-      "bytes": 41744,
-      "lines": 783,
-      "sha1": "d8680fe2547b",
+      "bytes": 43157,
+      "lines": 791,
+      "sha1": "ef6b7fb924ea",
       "imports": [
         "__future__",
         "json",
@@ -1184,9 +1184,9 @@
     {
       "path": "src/db/dexie.ts",
       "ext": ".ts",
-      "bytes": 3879,
-      "lines": 91,
-      "sha1": "c02c6f647989",
+      "bytes": 4083,
+      "lines": 96,
+      "sha1": "3f824642a695",
       "imports": [
         "../features/goals/types",
         "../features/learning/learningEvents",
@@ -2662,9 +2662,9 @@
     {
       "path": "src/features/dashboard/StudentDashboard.tsx",
       "ext": ".tsx",
-      "bytes": 29601,
-      "lines": 569,
-      "sha1": "8d7bdbc4af8b",
+      "bytes": 31826,
+      "lines": 604,
+      "sha1": "a9035e4b16bb",
       "imports": [
         "../../db/repositories",
         "../../types/math",
@@ -2672,6 +2672,7 @@
         "../curriculum/describeItem",
         "../curriculum/makeItemFromId",
         "../goals/dailyNewGoalPlanner",
+        "../learningPlan/dailyLessonPersistence",
         "../learningPlan/dailyLessonPlanner",
         "../mastery/grade3MasteryMap",
         "../mastery/skillMasteryEngine",
@@ -2679,6 +2680,7 @@
         "../stats/todayAchievement",
         "../stats/TodayAchievementSection",
         "../time/clock",
+        "../time/localDate",
         "react"
       ],
       "exports": [
@@ -2690,6 +2692,7 @@
         "completeSkillSummaries",
         "handleStartReview",
         "openExtra",
+        "regenerateLesson",
         "startAdaptiveLesson",
         "startDailyNewTile",
         "StudentDashboard"
@@ -3110,15 +3113,16 @@
     {
       "path": "src/features/goals/goalEngine.ts",
       "ext": ".ts",
-      "bytes": 16616,
-      "lines": 508,
-      "sha1": "15c645435a2e",
+      "bytes": 16415,
+      "lines": 502,
+      "sha1": "fa9fed072dd2",
       "imports": [
         "../../types/math",
         "../curriculum/makeItemFromId",
         "../learning/learningEvents",
         "../mastery/skillMapping",
         "../mastery/skillMasteryEngine",
+        "../time/localDate",
         "./types"
       ],
       "exports": [
@@ -3164,7 +3168,6 @@
         "isDirectFirstAttempt",
         "localDateInTimeZone",
         "mistakePatterns",
-        "part",
         "safeDateMs",
         "skillEvents",
         "skillStates",
@@ -3944,11 +3947,43 @@
       "read_error": null
     },
     {
+      "path": "src/features/learningPlan/dailyLessonPersistence.ts",
+      "ext": ".ts",
+      "bytes": 3390,
+      "lines": 72,
+      "sha1": "ebc69ecf6b3c",
+      "imports": [
+        "../../db/dexie",
+        "../../types/math",
+        "../learning/schedulingTelemetry",
+        "../time/localDate",
+        "./dailyLessonPlanner"
+      ],
+      "exports": [],
+      "functions": [
+        "completeDailyLessonPlan",
+        "getOrCreateDailyLessonPlan",
+        "markDailyLessonProgress",
+        "materialize",
+        "regenerateDailyLessonPlan"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Local persistence/database layer.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/features/learningPlan/dailyLessonPlanner.ts",
       "ext": ".ts",
-      "bytes": 8791,
-      "lines": 88,
-      "sha1": "0546dd7c6615",
+      "bytes": 8881,
+      "lines": 89,
+      "sha1": "984f7291dd75",
       "imports": [
         "../../types/math",
         "../adaptive/relatedItemMapping",
@@ -3961,6 +3996,7 @@
         "../mastery/skillMasteryEngine",
         "../mastery/skillPracticePlanner",
         "../scheduler/cardModel",
+        "../time/localDate",
         "./focusSkillSelector"
       ],
       "exports": [
@@ -5061,9 +5097,9 @@
     {
       "path": "src/features/practice/usePracticeSession.ts",
       "ext": ".ts",
-      "bytes": 33459,
-      "lines": 700,
-      "sha1": "d8df9d8aa298",
+      "bytes": 34369,
+      "lines": 713,
+      "sha1": "fa23b3f70686",
       "imports": [
         "../../components/opSpecs",
         "../../db/dexie",
@@ -5083,6 +5119,7 @@
         "../curriculum/roundingItems",
         "../learning/recordAnswer",
         "../learning/schedulingTelemetry",
+        "../learningPlan/dailyLessonPersistence",
         "../mastery/misconceptionEngine",
         "../scheduler/cardModel",
         "../scheduler/dailyReviewQueue",
@@ -5702,14 +5739,15 @@
     {
       "path": "src/features/stats/statsEngine.ts",
       "ext": ".ts",
-      "bytes": 14885,
-      "lines": 395,
-      "sha1": "b93e06926ea3",
+      "bytes": 16300,
+      "lines": 420,
+      "sha1": "19acd9867920",
       "imports": [
         "../../types/math",
         "../curriculum/describeItem",
         "../curriculum/multiplicationItems",
-        "../learning/learningEvents"
+        "../learning/learningEvents",
+        "../time/localDate"
       ],
       "exports": [
         "addDays",
@@ -6012,9 +6050,9 @@
     {
       "path": "src/features/sync/snapshot.ts",
       "ext": ".ts",
-      "bytes": 17696,
-      "lines": 324,
-      "sha1": "6b9700add2dc",
+      "bytes": 19022,
+      "lines": 346,
+      "sha1": "14a9bd3b165d",
       "imports": [
         "../../db/dexie",
         "../../types/math",
@@ -6044,6 +6082,7 @@
         "buildSnapshot",
         "findOrphanedStudentReferences",
         "mergeCardStateCollision",
+        "mergeDailyLessonPlan",
         "mergeNormalizedSnapshot",
         "mergeSnapshot",
         "normalizeSnapshot",
@@ -6240,6 +6279,31 @@
       "css_classes": [],
       "json_keys": [],
       "purpose": "Exports reusable code: _resetClock, appNow, appNowMs, DEBUG_SCALE, disableDebugSpeed.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/features/time/localDate.ts",
+      "ext": ".ts",
+      "bytes": 469,
+      "lines": 12,
+      "sha1": "489e57b8e583",
+      "imports": [],
+      "exports": [
+        "learnerLocalDateKey"
+      ],
+      "functions": [
+        "learnerLocalDateKey",
+        "part"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Exports reusable code: learnerLocalDateKey.",
       "too_large": false,
       "read_error": null
     },
@@ -7447,6 +7511,35 @@
       "read_error": null
     },
     {
+      "path": "src/tests/dailyLessonPersistence.test.ts",
+      "ext": ".ts",
+      "bytes": 3603,
+      "lines": 62,
+      "sha1": "0e42e21b9267",
+      "imports": [
+        "../db/dexie",
+        "../features/learningPlan/dailyLessonPersistence",
+        "../features/time/localDate",
+        "../types/math",
+        "../utils/rng",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [
+        "base"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Local persistence/database layer.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/tests/dailyLessonPlanner.test.ts",
       "ext": ".ts",
       "bytes": 5573,
@@ -7793,9 +7886,9 @@
     {
       "path": "src/tests/goalDexieSchema.test.ts",
       "ext": ".ts",
-      "bytes": 788,
-      "lines": 27,
-      "sha1": "5bd4a7217920",
+      "bytes": 842,
+      "lines": 28,
+      "sha1": "ca5acabb5acb",
       "imports": [
         "../db/dexie",
         "vitest"
@@ -8018,9 +8111,9 @@
     {
       "path": "src/tests/goalSnapshot.test.ts",
       "ext": ".ts",
-      "bytes": 12731,
-      "lines": 400,
-      "sha1": "83e76e52e72b",
+      "bytes": 13956,
+      "lines": 417,
+      "sha1": "d8a202bb78cd",
       "imports": [
         "../features/goals/types",
         "../features/learning/learningEvents",
@@ -8054,9 +8147,9 @@
     {
       "path": "src/tests/goalsPage.test.tsx",
       "ext": ".tsx",
-      "bytes": 14954,
-      "lines": 405,
-      "sha1": "47e5f148e663",
+      "bytes": 16520,
+      "lines": 424,
+      "sha1": "4c4615b4e7c4",
       "imports": [
         "../db/repositories",
         "../features/dashboard/StudentDashboard",
@@ -9255,9 +9348,9 @@
     {
       "path": "src/tests/snapshotBuild.test.ts",
       "ext": ".ts",
-      "bytes": 2117,
-      "lines": 57,
-      "sha1": "09dd6324ab21",
+      "bytes": 2165,
+      "lines": 58,
+      "sha1": "99a796c33b4a",
       "imports": [
         "../features/sync/snapshot",
         "vitest"
@@ -9278,9 +9371,9 @@
     {
       "path": "src/tests/snapshotValidation.test.ts",
       "ext": ".ts",
-      "bytes": 7769,
-      "lines": 187,
-      "sha1": "5f6c11e82f7c",
+      "bytes": 7797,
+      "lines": 188,
+      "sha1": "359b3acc8199",
       "imports": [
         "../features/sync/snapshot",
         "vitest"
@@ -9335,9 +9428,9 @@
     {
       "path": "src/tests/statsEngine.test.ts",
       "ext": ".ts",
-      "bytes": 12780,
-      "lines": 313,
-      "sha1": "f4c36b087adc",
+      "bytes": 13097,
+      "lines": 320,
+      "sha1": "6c24e9598e29",
       "imports": [
         "../features/stats/statsEngine",
         "../types/math",
@@ -9531,9 +9624,9 @@
     {
       "path": "src/types/math.ts",
       "ext": ".ts",
-      "bytes": 13188,
-      "lines": 388,
-      "sha1": "c4a401154091",
+      "bytes": 13866,
+      "lines": 414,
+      "sha1": "fa44bf5f60b6",
       "imports": [
         "../features/curriculum/divisionItems",
         "../features/curriculum/measurementTypes",
@@ -9559,6 +9652,8 @@
         "PerimeterReasoningSpec",
         "PeriodComparison",
         "PeriodStats",
+        "PersistedDailyLessonPlan",
+        "PersistedPlannedLessonItem",
         "PerTableStats",
         "PracticeItem",
         "PracticeOrigin",
@@ -9585,6 +9680,8 @@
         "PerimeterReasoningSpec",
         "PeriodComparison",
         "PeriodStats",
+        "PersistedDailyLessonPlan",
+        "PersistedPlannedLessonItem",
         "PerTableStats",
         "PracticeItem",
         "PracticeSession",

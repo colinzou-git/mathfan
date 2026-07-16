@@ -33,6 +33,7 @@ describe('validateSnapshot — valid inputs', () => {
       multFactStats: [],
       quizSessions: [],
       mathAnswerEvents: [],
+      dailyLessonPlans: [],
     }))).toBe(true);
   });
 
