@@ -223,6 +223,8 @@ export function usePracticeSession(studentId: string) {
           sessionLength,
           now,
           rng,
+          repeatPolicy: config.repeatPolicy,
+          rounds: config.rounds,
         });
         // Backfill candidates may come from outside the original specificItemIds —
         // register any not already known so resolveItem() can find them.

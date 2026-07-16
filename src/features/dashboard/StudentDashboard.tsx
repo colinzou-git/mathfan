@@ -208,6 +208,8 @@ export function StudentDashboard({ profile, lastSyncedAt, onStartDailyReview, on
       mode: 'daily_review',
       specificItemIds: group.ids,
       sessionLength: group.ids.length * rounds,
+      repeatPolicy: 'user_requested_rounds',
+      rounds,
     });
     setSelectedGroup(null);
   };
@@ -445,6 +447,7 @@ export function StudentDashboard({ profile, lastSyncedAt, onStartDailyReview, on
               {dueByGroup[selectedGroup].ids.length} question{dueByGroup[selectedGroup].ids.length !== 1 ? 's' : ''} due
             </p>
             <p style={s.modalLabel}>How many rounds?</p>
+            <p style={s.modalHint}>Rounds repeat these cards in this session. Only the first presentation updates long-term review timing.</p>
             <div style={s.modalCountRow}>
               <button style={s.adjBtn} aria-label="Fewer rounds" onClick={() => setPracticeRounds(r => Math.max(1, r - 1))}>−</button>
               <input
@@ -594,6 +597,7 @@ const s: Record<string, CSSProperties> = {
   modalTitle: { fontSize: '20px', fontWeight: 'bold', margin: '0 0 4px', color: '#1f2937' },
   modalSub: { fontSize: '14px', color: '#6b7280', margin: '0 0 20px' },
   modalLabel: { fontSize: '14px', fontWeight: '600', color: '#374151', margin: '0 0 10px' },
+  modalHint: { fontSize: '12px', color: '#6b7280', margin: '-4px 0 12px', lineHeight: 1.4 },
   modalCountRow: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '16px', marginBottom: '10px' },
   adjBtn: { width: '38px', height: '38px', border: '2px solid #e5e7eb', borderRadius: '8px', background: '#fff', fontSize: '20px', cursor: 'pointer', fontWeight: '600', color: '#374151' },
   modalCount: { fontSize: '34px', fontWeight: 'bold', color: '#1f2937', width: '80px', textAlign: 'center', border: '2px solid #e5e7eb', borderRadius: '10px', padding: '2px 0', background: '#fff', fontFamily: 'inherit' },

@@ -434,6 +434,28 @@ describe('usePracticeSession — adaptive selection', () => {
     expect(seen).toEqual(new Set(ids));
   });
 
+  it('daily_review user rounds produce the exact requested presentation count', async () => {
+    const ids = ['MUL_2x3', 'MUL_4x5'];
+    const { result } = renderHook(() => usePracticeSession(STUDENT_ID));
+    await act(async () => {
+      await result.current.startSession({ mode: 'daily_review', sessionLength: 6, specificItemIds: ids, repeatPolicy: 'user_requested_rounds', rounds: 3 });
+    });
+    expect(result.current.state.totalPlanned).toBe(6);
+    for (let i = 0; i < 6; i++) {
+      const current = result.current.state.currentItem!;
+      await act(async () => { await result.current.submitAnswer(String(current.answer)); });
+      await act(async () => { await result.current.nextQuestion(); });
+    }
+    const writes = vi.mocked(recordPracticeAnswer).mock.calls.map(call => call[0]);
+    expect(writes).toHaveLength(6);
+    for (const itemId of ids) {
+      const cardWrites = writes.filter(write => write.event.itemId === itemId);
+      expect(cardWrites.map(write => write.event.presentationIndex)).toEqual([1, 2, 3]);
+      expect(cardWrites.map(write => write.event.schedulingEligible)).toEqual([true, false, false]);
+      expect(cardWrites.filter(write => write.updatedState)).toHaveLength(1);
+    }
+  });
+
   it('word_problem mode builds a problem around the student\'s weak/due multiplication fact', async () => {
     // MUL_8x7 is due and still being learned — generation should target it
     // rather than relying on a random pool happening to include 8 × 7.

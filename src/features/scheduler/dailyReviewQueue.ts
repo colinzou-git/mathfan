@@ -11,6 +11,8 @@ export interface DailyReviewQueueArgs {
   sessionLength: number;
   now: Date;
   rng: Rng;
+  repeatPolicy?: 'none' | 'user_requested_rounds';
+  rounds?: number;
 }
 
 function isDueNow(state: StudentItemState, nowStr: string): boolean {
@@ -38,6 +40,10 @@ export function buildDailyReviewQueue(args: DailyReviewQueueArgs): string[] {
     if (usedCardKeys.has(cardKey)) continue;
     usedCardKeys.add(cardKey);
     requestedDeduped.push(id);
+  }
+
+  if (args.repeatPolicy === 'user_requested_rounds') {
+    return buildRepeatedReviewQueue(requestedDeduped, args.rounds ?? 1, rng);
   }
 
   const order = shuffled(requestedDeduped, rng);
@@ -70,4 +76,12 @@ export function buildDailyReviewQueue(args: DailyReviewQueueArgs): string[] {
 
   // No distinct eligible cards remain — a shorter queue is correct, not a repeat.
   return [...order, ...backfill];
+}
+
+export function buildRepeatedReviewQueue(baseItemIds: string[], rounds: number, rng: Rng): string[] {
+  const queue: string[] = [];
+  for (let round = 0; round < Math.max(1, Math.floor(rounds)); round++) {
+    queue.push(...shuffled(baseItemIds, rng));
+  }
+  return queue;
 }

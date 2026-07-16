@@ -20,6 +20,30 @@ function state(itemId: string, overrides: Partial<StudentItemState> = {}): Stude
 const rng = () => 0.5; // deterministic, no shuffling surprises
 
 describe('buildDailyReviewQueue', () => {
+  it('presents two canonical cards exactly three times when rounds are requested', () => {
+    const queue = buildDailyReviewQueue({
+      requestedItemIds: ['MUL_2x3', 'MUL_4x5'], states: new Map(), sessionLength: 6, now: NOW, rng,
+      repeatPolicy: 'user_requested_rounds', rounds: 3,
+    });
+    expect(queue).toHaveLength(6);
+    expect(queue.filter(id => id === 'MUL_2x3')).toHaveLength(3);
+    expect(queue.filter(id => id === 'MUL_4x5')).toHaveLength(3);
+  });
+
+  it('folds commutative orientations to one presentation per requested round', () => {
+    const queue = buildDailyReviewQueue({
+      requestedItemIds: ['MUL_7x8', 'MUL_8x7'], states: new Map(), sessionLength: 6, now: NOW, rng,
+      repeatPolicy: 'user_requested_rounds', rounds: 3,
+    });
+    expect(queue).toEqual(['MUL_7x8', 'MUL_7x8', 'MUL_7x8']);
+  });
+
+  it('produces a reproducible seeded round queue without unrelated backfill', () => {
+    const args = { requestedItemIds: ['MUL_2x3', 'MUL_4x5'], states: new Map<string, StudentItemState>(), sessionLength: 8, now: NOW, repeatPolicy: 'user_requested_rounds' as const, rounds: 2 };
+    expect(buildDailyReviewQueue({ ...args, rng: () => .25 })).toEqual(buildDailyReviewQueue({ ...args, rng: () => .25 }));
+    expect(buildDailyReviewQueue({ ...args, rng: () => .25 })).toHaveLength(4);
+  });
+
   it('includes each requested due card at most once, even if requested twice under different orientations', () => {
     const queue = buildDailyReviewQueue({
       requestedItemIds: ['MUL_7x8', 'MUL_8x7'], // same canonical card

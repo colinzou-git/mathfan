@@ -644,6 +644,31 @@ def adaptive_lesson_and_manual_fallback(page: Page) -> None:
     expect(page.get_by_role("heading", name="Multiplication", exact=True)).to_be_visible()
 
 
+def daily_review_requested_rounds(page: Page) -> None:
+    create_profile(page, "RoundsTester", "e2e-review-rounds")
+    page.evaluate("""async () => {
+        const db = await new Promise((resolve, reject) => { const r = indexedDB.open('mathfan'); r.onsuccess = () => resolve(r.result); r.onerror = () => reject(r.error); });
+        const student = await new Promise((resolve, reject) => { const r = db.transaction('students').objectStore('students').getAll(); r.onsuccess = () => resolve(r.result[0]); r.onerror = () => reject(r.error); });
+        const rows = [['MUL_2x3', 'fact:mul:2x3'], ['MUL_4x5', 'fact:mul:4x5']].map(([lastItemId, cardKey]) => ({ studentId: student.id, cardKey, lastItemId, skillId: 'g3-mul-tables-basic', attemptCount: 2, correctCount: 1, lastCorrect: true, lastLatencyMs: 1000, medianLatencyMs: 1000, ease: 2.5, stabilityDays: 1, difficulty: .2, masteryLevel: 'learning', nextDueAt: '2026-01-01T00:00:00.000Z', mistakePatterns: [] }));
+        await new Promise((resolve, reject) => { const tx = db.transaction('itemStates', 'readwrite'); rows.forEach(row => tx.objectStore('itemStates').put(row)); tx.oncomplete = resolve; tx.onerror = () => reject(tx.error); }); db.close();
+    }""")
+    page.reload(wait_until="domcontentloaded")
+    page.locator("button").filter(has_text=re.compile(r"Multiply.*2")).click()
+    expect(page.get_by_text(re.compile(r"Only the first presentation updates long-term review timing"))).to_be_visible()
+    page.get_by_label("Number of rounds", exact=True).fill("3")
+    expect(page.get_by_text(re.compile(r"2 × 3 =\s*6 questions"))).to_be_visible()
+    page.get_by_role("button", name="Start", exact=True).click()
+    for _ in range(6):
+        prompt = page.locator(".drill-q > div").first.inner_text()
+        values = [int(value) for value in re.findall(r"\d+", prompt)]
+        page.get_by_label("Your answer", exact=True).fill(str(values[0] * values[1]))
+        page.get_by_label("Your answer", exact=True).press("Enter")
+        expect(page.get_by_text(re.compile(r"Correct!|New personal best!"))).to_be_visible()
+        page.wait_for_timeout(1200)
+    expect(page.get_by_role("heading", name="Session Complete!", exact=True)).to_be_visible()
+    expect(page.get_by_text("You solved 6 problems.", exact=True)).to_be_visible()
+
+
 def practice_save_failure_recovery(page: Page) -> None:
     create_profile(page, "SaveRecoveryTester", "e2e-save-recovery")
     page.get_by_role("button", name=re.compile(r"Multiply")).click()
@@ -767,6 +792,7 @@ def main() -> int:
             ("two-step-tape", {"width": 820, "height": 1180}, two_step_tape_lesson, False),
             ("overlapping-goal-portfolio", {"width": 820, "height": 1180}, overlapping_goal_portfolio, False),
             ("adaptive-lesson-and-manual", {"width": 390, "height": 844}, adaptive_lesson_and_manual_fallback, False),
+            ("daily-review-requested-rounds", {"width": 390, "height": 844}, daily_review_requested_rounds, False),
             ("practice-save-recovery", {"width": 390, "height": 844}, practice_save_failure_recovery, False),
         ]
         for name, viewport, scenario, standalone_share in scenarios:

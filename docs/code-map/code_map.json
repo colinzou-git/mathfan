@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-16T07:50:02.233674+00:00",
+  "generated_at": "2026-07-16T08:28:56.116348+00:00",
   "repo_root": "/home/ubuntu/mathfan",
   "package": {
     "name": "mathfan",
@@ -421,9 +421,9 @@
     {
       "path": "PROGRESS.md",
       "ext": ".md",
-      "bytes": 9364,
-      "lines": 150,
-      "sha1": "0e3d79a3bfc4",
+      "bytes": 9369,
+      "lines": 151,
+      "sha1": "1fb39c1d1b7b",
       "imports": [],
       "exports": [],
       "functions": [],
@@ -570,9 +570,9 @@
     {
       "path": "scripts/e2e_mathfan.py",
       "ext": ".py",
-      "bytes": 43157,
-      "lines": 791,
-      "sha1": "ef6b7fb924ea",
+      "bytes": 45572,
+      "lines": 817,
+      "sha1": "292e07779d1c",
       "imports": [
         "__future__",
         "json",
@@ -591,6 +591,7 @@
         "area_perimeter_missing_side_lesson",
         "assert_no_horizontal_overflow",
         "create_profile",
+        "daily_review_requested_rounds",
         "desktop_student_journey",
         "division_decomposition_lesson",
         "division_model_choice_lesson",
@@ -621,6 +622,7 @@
         "area_perimeter_missing_side_lesson",
         "assert_no_horizontal_overflow",
         "create_profile",
+        "daily_review_requested_rounds",
         "desktop_student_journey",
         "division_decomposition_lesson",
         "division_model_choice_lesson",
@@ -2662,9 +2664,9 @@
     {
       "path": "src/features/dashboard/StudentDashboard.tsx",
       "ext": ".tsx",
-      "bytes": 31826,
-      "lines": 604,
-      "sha1": "a9035e4b16bb",
+      "bytes": 32121,
+      "lines": 608,
+      "sha1": "73095f62b497",
       "imports": [
         "../../db/repositories",
         "../../types/math",
@@ -5097,9 +5099,9 @@
     {
       "path": "src/features/practice/usePracticeSession.ts",
       "ext": ".ts",
-      "bytes": 34369,
-      "lines": 713,
-      "sha1": "fa23b3f70686",
+      "bytes": 34447,
+      "lines": 715,
+      "sha1": "80e89161502f",
       "imports": [
         "../../components/opSpecs",
         "../../db/dexie",
@@ -5280,9 +5282,9 @@
     {
       "path": "src/features/scheduler/dailyReviewQueue.ts",
       "ext": ".ts",
-      "bytes": 2907,
-      "lines": 74,
-      "sha1": "2649217a6c1b",
+      "bytes": 3391,
+      "lines": 88,
+      "sha1": "ac91e62c6c56",
       "imports": [
         "../../types/math",
         "../../utils/rng",
@@ -5291,10 +5293,12 @@
       ],
       "exports": [
         "buildDailyReviewQueue",
+        "buildRepeatedReviewQueue",
         "DailyReviewQueueArgs"
       ],
       "functions": [
         "buildDailyReviewQueue",
+        "buildRepeatedReviewQueue",
         "isDueNow"
       ],
       "classes": [],
@@ -7613,9 +7617,9 @@
     {
       "path": "src/tests/dailyReviewQueue.test.ts",
       "ext": ".ts",
-      "bytes": 3935,
-      "lines": 123,
-      "sha1": "c4317ed9963d",
+      "bytes": 5260,
+      "lines": 147,
+      "sha1": "260180ea055c",
       "imports": [
         "../features/scheduler/cardModel",
         "../features/scheduler/dailyReviewQueue",
@@ -8147,9 +8151,9 @@
     {
       "path": "src/tests/goalsPage.test.tsx",
       "ext": ".tsx",
-      "bytes": 16520,
-      "lines": 424,
-      "sha1": "4c4615b4e7c4",
+      "bytes": 18140,
+      "lines": 449,
+      "sha1": "f93f9c2fb30e",
       "imports": [
         "../db/repositories",
         "../features/dashboard/StudentDashboard",
@@ -8817,9 +8821,9 @@
     {
       "path": "src/tests/practiceSession.test.ts",
       "ext": ".ts",
-      "bytes": 25811,
-      "lines": 566,
-      "sha1": "2b623f3d7753",
+      "bytes": 27040,
+      "lines": 588,
+      "sha1": "26157dc62326",
       "imports": [
         "../db/repositories",
         "../features/curriculum/makeItemFromId",
@@ -9624,9 +9628,9 @@
     {
       "path": "src/types/math.ts",
       "ext": ".ts",
-      "bytes": 13866,
-      "lines": 414,
-      "sha1": "fa44bf5f60b6",
+      "bytes": 13936,
+      "lines": 416,
+      "sha1": "52b9cf303df2",
       "imports": [
         "../features/curriculum/divisionItems",
         "../features/curriculum/measurementTypes",

@@ -382,6 +382,8 @@ export interface SessionConfig {
   focusSkillId?: string;
   lessonSegments?: Array<{ kind: 'retrieval' | 'focus' | 'transfer'; itemInstanceIds: string[] }>;
   lessonRationales?: Record<string, string>;
+  repeatPolicy?: 'none' | 'user_requested_rounds';
+  rounds?: number;
 }
 
 // ── Growth comparison (period over period) ─────────────────────────────────────

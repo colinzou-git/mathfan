@@ -214,6 +214,31 @@ describe('dashboard Goals entry', () => {
     await waitFor(() => expect(screen.queryByRole('button', { name: /lesson/i })).not.toBeInTheDocument());
   });
 
+  it('passes explicit user-requested rounds to Daily Review', async () => {
+    store.itemStates = ['MUL_2x3', 'MUL_4x5'].map(itemId => ({
+      studentId: 'student-1', cardKey: `fact:mul:${itemId === 'MUL_2x3' ? '2x3' : '4x5'}`, lastItemId: itemId, skillId: 'g3-mul-tables-basic',
+      attemptCount: 2, correctCount: 1, lastCorrect: true, lastLatencyMs: 1000, medianLatencyMs: 1000,
+      ease: 2.5, stabilityDays: 1, difficulty: .2, masteryLevel: 'learning' as const,
+      nextDueAt: '2026-06-01T00:00:00.000Z', mistakePatterns: [],
+    }));
+    const onStartDailyReview = vi.fn();
+    render(<StudentDashboard profile={profile()} onStartDailyReview={onStartDailyReview} onPickOperation={vi.fn()} onOpenStats={vi.fn()} onOpenSettings={vi.fn()} onStartQuiz={vi.fn()} onOpenAchievementDetail={vi.fn()} onOpenMasteryMap={vi.fn()} onOpenGoals={vi.fn()} />);
+    let dueButton: HTMLButtonElement | null | undefined;
+    await waitFor(() => {
+      dueButton = screen.getAllByText('Multiply')
+        .map(node => node.closest('button'))
+        .find(button => button?.textContent?.includes('2'));
+      expect(dueButton).toBeDefined();
+    });
+    fireEvent.click(dueButton!);
+    expect(screen.getByText(/Only the first presentation updates long-term review timing/i)).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('Number of rounds'), { target: { value: '3' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Start' }));
+    expect(onStartDailyReview).toHaveBeenCalledWith(expect.objectContaining({
+      sessionLength: 6, repeatPolicy: 'user_requested_rounds', rounds: 3,
+    }));
+  });
+
   it('places Daily New for Goals between Daily Review and the Grade 3 Math Map, then opens Goals', async () => {
     vi.mocked(mathAnswerEventRepo.getAll).mockResolvedValue([]);
     vi.mocked(itemStateRepo.getForStudent).mockResolvedValue([]);
