@@ -1,4 +1,4 @@
-import type { GradeLevel, PracticeItem, StudentItemState, StudentSettings } from '../../types/math';
+import type { GradeLevel, PracticeItem, SelectionContext, StudentItemState, StudentSettings } from '../../types/math';
 import type { MathAnswerEvent } from '../learning/learningEvents';
 import type { StudentSkillSummary } from '../mastery/skillMasteryEngine';
 import type { LearningGoal } from '../goals/types';
@@ -12,9 +12,17 @@ import { rankFocusSkills } from './focusSkillSelector';
 import { deriveLearningUnitProgress } from '../learning/learningUnitProgress';
 import { learnerLocalDateKey } from '../time/localDate';
 import { chronologicalEvents } from '../learning/eventOrdering';
+import { DAILY_LESSON_PLANNER_VERSION } from '../learning/schedulingTelemetry';
 
 export type LessonSegmentKind = 'retrieval' | 'focus' | 'transfer';
-export interface PlannedLessonItem { item: PracticeItem; cardKey: string; segment: LessonSegmentKind; rationale: string; schedulingEligible: boolean }
+export interface PlannedLessonItem {
+  item: PracticeItem;
+  cardKey: string;
+  segment: LessonSegmentKind;
+  rationale: string;
+  schedulingEligible: boolean;
+  selection: SelectionContext;
+}
 export interface DailyLessonWarning { code: 'sparse_retrieval' | 'unmet_prerequisite' | 'sparse_transfer' | 'no_focus'; message: string }
 export interface DailyLessonPlan { id: string; studentId: string; generatedAt: string; estimatedMinutes: number; focusSkillId?: string; focusSkillTitle?: string; items: PlannedLessonItem[]; segmentCounts: Record<LessonSegmentKind, number>; warnings: DailyLessonWarning[] }
 export interface PlanDailyLessonArgs { studentId: string; gradeLevel: GradeLevel; now: string; timezone: string; settings: StudentSettings; events: MathAnswerEvent[]; itemStates: StudentItemState[]; skillSummaries: StudentSkillSummary[]; goals: LearningGoal[]; rng: () => number }
@@ -77,7 +85,16 @@ export function planDailyLesson(args: PlanDailyLessonArgs): DailyLessonPlan {
   const add = (item: PracticeItem, segment: LessonSegmentKind, rationale: string) => {
     const cardKey = deriveCardKey(item); if (plannedIds.has(item.id) || (segment === 'retrieval' && selectedCards.has(cardKey))) return;
     const schedulingEligible = !selectedCards.has(cardKey); selectedCards.add(cardKey); plannedIds.add(item.id);
-    planned.push({ item, cardKey, segment, rationale, schedulingEligible });
+    planned.push({
+      item, cardKey, segment, rationale, schedulingEligible,
+      selection: {
+        origin: segment === 'retrieval' ? 'due_retrieval' : segment === 'focus' ? 'focus_skill' : 'transfer',
+        plannerVersion: DAILY_LESSON_PLANNER_VERSION,
+        rationaleCodes: [rationale],
+        lessonPlanId: `lesson:${args.studentId}:${learnerLocalDateKey(new Date(args.now), args.timezone)}`,
+        lessonSegment: segment,
+      },
+    });
   };
   retrievalAll.slice(0, allocation.retrieval).forEach(item => add(item, 'retrieval', 'This card is genuinely due for retrieval.'));
   focusAll.slice(0, allocation.focus).forEach((item, index) => add(item, 'focus', index === 0 ? 'Activates and builds today’s priority skill.' : 'Builds independent and near-transfer practice.'));

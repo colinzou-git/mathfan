@@ -363,6 +363,7 @@
 | src/features/learningPlan/dailyLessonPlanner.ts | ../learning/eventOrdering |
 | src/features/learningPlan/dailyLessonPlanner.ts | ../learning/learningEvents |
 | src/features/learningPlan/dailyLessonPlanner.ts | ../learning/learningUnitProgress |
+| src/features/learningPlan/dailyLessonPlanner.ts | ../learning/schedulingTelemetry |
 | src/features/learningPlan/dailyLessonPlanner.ts | ../mastery/grade3MasteryMap |
 | src/features/learningPlan/dailyLessonPlanner.ts | ../mastery/skillMapping |
 | src/features/learningPlan/dailyLessonPlanner.ts | ../mastery/skillMasteryEngine |
@@ -517,6 +518,7 @@
 | src/features/scheduler/dailyReviewQueue.ts | ../../types/math |
 | src/features/scheduler/dailyReviewQueue.ts | ../../utils/rng |
 | src/features/scheduler/dailyReviewQueue.ts | ../curriculum/makeItemFromId |
+| src/features/scheduler/dailyReviewQueue.ts | ../learning/schedulingTelemetry |
 | src/features/scheduler/dailyReviewQueue.ts | ./cardModel |
 | src/features/scheduler/fsrsAdapter.ts | ../../types/math |
 | src/features/scheduler/responsePolicy.ts | ../../types/math |

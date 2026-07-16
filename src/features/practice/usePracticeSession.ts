@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
 import type {
-  PracticeItem, StudentItemState, SessionConfig,
+  PlannedSessionItem, PracticeItem, SelectionContext, StudentItemState, SessionConfig,
 } from '../../types/math';
 import { checkAnswer } from './answerChecker';
 import { classifyAttempts } from './metrics';
@@ -37,7 +37,7 @@ import { buildWordProblemCandidates, buildFactorCandidates } from '../adaptive/c
 import { allMeasurementItemIds, allDataItemIds } from '../../components/opSpecs';
 import { mulberry32, randomSeed } from '../../utils/rng';
 import type { PracticeItem as PItem } from '../../types/math';
-import { buildSchedulingTelemetry, DAILY_LESSON_PLANNER_VERSION, type SelectionContext } from '../learning/schedulingTelemetry';
+import { ADAPTIVE_SELECTOR_VERSION, buildSchedulingTelemetry, DAILY_LESSON_PLANNER_VERSION } from '../learning/schedulingTelemetry';
 import { completeDailyLessonPlan, markDailyLessonProgress } from '../learningPlan/dailyLessonPersistence';
 import { buildFluencyBaselineMap, deriveFluencyBaseline, type FluencyBaselineMap } from '../fluency/fluencyEngine';
 import type { MathAnswerEvent } from '../learning/learningEvents';
@@ -123,7 +123,10 @@ export function usePracticeSession(studentId: string) {
   const stateRef = useRef<SessionState>(INITIAL);
 
   // Mutable refs — accessed inside callbacks without being dependencies
-  const queueRef = useRef<string[]>([]);
+  const queueRef = useRef<PlannedSessionItem[]>([]);
+  const currentSelectionRef = useRef<SelectionContext>({
+    origin: 'manual', rationaleCodes: ['manual_user_choice'],
+  });
   const statesRef = useRef<Map<string, StudentItemState>>(new Map());
   const configRef = useRef<SessionConfig | null>(null);
   const sessionStartRef = useRef<number>(0);
@@ -173,9 +176,9 @@ export function usePracticeSession(studentId: string) {
     fluencyEventsRef.current = fluencyEvents;
     fluencyBaselinesRef.current = buildFluencyBaselineMap(fluencyEvents);
 
-    let queue: string[];
+    let queue: PlannedSessionItem[];
     const {
-      mode, tables, sessionLength, specificItemIds, preplannedItems,
+      mode, tables, sessionLength, specificItemIds, preplannedItems, plannedPracticeItems,
       operandMin, operandMax, operand2Min, operand2Max, fractionMode, grade,
     } = config;
 
@@ -210,9 +213,48 @@ export function usePracticeSession(studentId: string) {
       for (const it of items) dynamicItemsRef.current.set(it.id, it);
       return items.map(it => it.id);
     };
+    const planned = (
+      itemIds: string[],
+      selection: SelectionContext | ((itemId: string) => SelectionContext),
+    ): PlannedSessionItem[] => itemIds.map(itemId => ({
+      itemId,
+      selection: typeof selection === 'function' ? selection(itemId) : selection,
+    }));
+    const manualSelection: SelectionContext = {
+      origin: 'manual', plannerVersion: ADAPTIVE_SELECTOR_VERSION, rationaleCodes: ['manual_user_choice'],
+    };
+    const goalSelection: SelectionContext = config.origin === 'daily_new_for_goals'
+      ? { origin: 'new_learning', plannerVersion: ADAPTIVE_SELECTOR_VERSION, rationaleCodes: ['daily_goal_new_item'] }
+      : { origin: 'goal', plannerVersion: ADAPTIVE_SELECTOR_VERSION, rationaleCodes: ['active_goal'] };
+    const automaticSelection = (itemId: string): SelectionContext => {
+      const itemState = stateForItem(resolveItem(itemId), stateMap);
+      if (itemState?.nextDueAt && itemState.nextDueAt <= now.toISOString()) {
+        return { origin: 'due_retrieval', plannerVersion: ADAPTIVE_SELECTOR_VERSION, rationaleCodes: ['adaptive_due_item'] };
+      }
+      if (itemState && (itemState.masteryLevel === 'learning' || itemState.masteryLevel === 'developing')) {
+        return { origin: 'weak_skill', plannerVersion: ADAPTIVE_SELECTOR_VERSION, rationaleCodes: ['adaptive_weak_item'] };
+      }
+      return { origin: 'new_learning', plannerVersion: ADAPTIVE_SELECTOR_VERSION, rationaleCodes: ['adaptive_new_item'] };
+    };
 
-    if (preplannedItems?.length) {
-      queue = registerDynamic(preplannedItems).slice(0, sessionLength);
+    if (plannedPracticeItems?.length) {
+      registerDynamic(plannedPracticeItems.map(value => value.item));
+      queue = plannedPracticeItems.slice(0, sessionLength).map(value => ({
+        itemId: value.item.id, selection: value.selection,
+      }));
+    } else if (preplannedItems?.length) {
+      queue = planned(registerDynamic(preplannedItems).slice(0, sessionLength), itemId => {
+        const lessonSegment = config.lessonSegments?.find(segment => segment.itemInstanceIds.includes(itemId))?.kind;
+        return lessonSegment
+          ? {
+              origin: lessonSegment === 'retrieval' ? 'due_retrieval' : lessonSegment === 'focus' ? 'focus_skill' : 'transfer',
+              plannerVersion: DAILY_LESSON_PLANNER_VERSION,
+              rationaleCodes: [config.lessonRationales?.[itemId] ?? lessonSegment],
+              lessonPlanId: config.lessonPlanId,
+              lessonSegment,
+            }
+          : automaticSelection(itemId);
+      });
     } else if (specificItemIds?.length) {
       // Focused review: practice exactly the listed items.
       // Reconstruct and register any item not already in the static ITEM_MAP.
@@ -241,7 +283,7 @@ export function usePracticeSession(studentId: string) {
         });
         // Backfill candidates may come from outside the original specificItemIds —
         // register any not already known so resolveItem() can find them.
-        for (const id of queue) {
+        for (const { itemId: id } of queue) {
           if (!ITEM_MAP.has(id) && !dynamicItemsRef.current.has(id)) {
             const backfillItem = makeItemFromId(id);
             if (backfillItem) dynamicItemsRef.current.set(id, backfillItem);
@@ -253,39 +295,42 @@ export function usePracticeSession(studentId: string) {
         // near-random order when there is no history (tie-break jitter).
         const candidates = validIds.map(id => enrichRelatedMetadata(resolveItem(id)));
         for (const c of candidates) dynamicItemsRef.current.set(c.id, c);
-        queue = selectAdaptiveItems(candidates, stateMap, now, sessionLength, selectOpts);
+        queue = planned(
+          selectAdaptiveItems(candidates, stateMap, now, sessionLength, selectOpts),
+          config.goalId || config.goalIds?.length ? goalSelection : manualSelection,
+        );
       }
     } else if (mode === 'multiplication') {
       // First factor from [lo,hi], second from [lo2,hi2].
-      queue = registerDynamic(generateMultiplicationRangeItems(lo, hi, lo2, hi2, sessionLength));
+      queue = planned(registerDynamic(generateMultiplicationRangeItems(lo, hi, lo2, hi2, sessionLength)), manualSelection);
     } else if (mode === 'single_table' && tables?.length) {
-      queue = planTableSession(generateSingleTableItems(tables[0]), sessionLength);
+      queue = planned(planTableSession(generateSingleTableItems(tables[0]), sessionLength), manualSelection);
     } else if (mode === 'multi_table' && tables?.length) {
-      queue = planTableSession(generateMultipleTablesItems(tables), sessionLength);
+      queue = planned(planTableSession(generateMultipleTablesItems(tables), sessionLength), manualSelection);
     } else if (mode === 'addition') {
-      queue = registerDynamic(generateAdditionItems(lo, hi, sessionLength, lo2, hi2));
+      queue = planned(registerDynamic(generateAdditionItems(lo, hi, sessionLength, lo2, hi2)), manualSelection);
     } else if (mode === 'subtraction') {
-      queue = registerDynamic(generateSubtractionItems(lo, hi, sessionLength, lo2, hi2));
+      queue = planned(registerDynamic(generateSubtractionItems(lo, hi, sessionLength, lo2, hi2)), manualSelection);
     } else if (mode === 'division') {
       // operand range = dividend, operand2 range = divisor.
-      queue = registerDynamic(generateDivisionItemsRange(lo2, hi2, sessionLength, lo, hi));
+      queue = planned(registerDynamic(generateDivisionItemsRange(lo2, hi2, sessionLength, lo, hi)), manualSelection);
     } else if (mode === 'fraction') {
       // operand range = numerator, operand2 range = denominator.
-      queue = registerDynamic(generateFractionItems(fractionMode ?? 'equivalent', sessionLength, lo, hi, lo2, hi2));
+      queue = planned(registerDynamic(generateFractionItems(fractionMode ?? 'equivalent', sessionLength, lo, hi, lo2, hi2)), manualSelection);
     } else if (mode === 'word_problem') {
       // Build candidates around the student's weak/due ×/÷ facts first, then mix
       // in variety, and adaptive-select from the combined pool.
       const pool = buildWordProblemCandidates(g, sessionLength, stateMap, now, operandMin, operandMax);
       registerDynamic(pool);
-      queue = selectAdaptiveItems(pool, stateMap, now, sessionLength, selectOpts);
+      queue = planned(selectAdaptiveItems(pool, stateMap, now, sessionLength, selectOpts), automaticSelection);
     } else if (mode === 'rounding') {
-      queue = registerDynamic(generateRoundingItems(g, sessionLength, operandMin, operandMax));
+      queue = planned(registerDynamic(generateRoundingItems(g, sessionLength, operandMin, operandMax)), manualSelection);
     } else if (mode === 'factors') {
       const pool = buildFactorCandidates(g, sessionLength, stateMap, now, operandMin, operandMax);
       registerDynamic(pool);
-      queue = selectAdaptiveItems(pool, stateMap, now, sessionLength, selectOpts);
+      queue = planned(selectAdaptiveItems(pool, stateMap, now, sessionLength, selectOpts), automaticSelection);
     } else if (mode === 'decimals') {
-      queue = registerDynamic(generateDecimalItems(g, sessionLength, operandMin, operandMax));
+      queue = planned(registerDynamic(generateDecimalItems(g, sessionLength, operandMin, operandMax)), manualSelection);
     } else if (mode === 'measurement') {
       // Fixed pool covering time, elapsed time, measurement word, bar graph, and
       // line plot — reusing the same canonical ID lists as the "Practice an
@@ -301,10 +346,14 @@ export function usePracticeSession(studentId: string) {
         .filter(id => dynamicItemsRef.current.has(id) || ITEM_MAP.has(id))
         .map(id => enrichRelatedMetadata(resolveItem(id)));
       for (const c of candidates) dynamicItemsRef.current.set(c.id, c);
-      queue = selectAdaptiveItems(candidates, stateMap, now, sessionLength, selectOpts);
+      queue = planned(selectAdaptiveItems(candidates, stateMap, now, sessionLength, selectOpts), automaticSelection);
     } else {
       const plan = planSession(ALL_ITEMS, stateMap, now, sessionLength);
-      queue = [...plan.dueItems, ...plan.weakItems, ...plan.newItems];
+      queue = [
+        ...planned(plan.dueItems, { origin: 'due_retrieval', plannerVersion: ADAPTIVE_SELECTOR_VERSION, rationaleCodes: ['scheduler_due'] }),
+        ...planned(plan.weakItems, { origin: 'weak_skill', plannerVersion: ADAPTIVE_SELECTOR_VERSION, rationaleCodes: ['scheduler_weak'] }),
+        ...planned(plan.newItems, { origin: 'new_learning', plannerVersion: ADAPTIVE_SELECTOR_VERSION, rationaleCodes: ['scheduler_new'] }),
+      ];
     }
 
     const sessionId = generateId();
@@ -335,7 +384,9 @@ export function usePracticeSession(studentId: string) {
       return;
     }
 
-    const first = resolveItem(queueRef.current.shift()!);
+    const firstPlanned = queueRef.current.shift()!;
+    currentSelectionRef.current = firstPlanned.selection;
+    const first = resolveItem(firstPlanned.itemId);
     questionStartRef.current = Date.now();
     currentAttemptsRef.current = 0;
     currentPresentationIndexRef.current = schedulingGuardRef.current.presentationStarted(deriveCardKey(first));
@@ -370,18 +421,7 @@ export function usePracticeSession(studentId: string) {
     const eventId = generateId();
 
     const existing = stateForItem(item, statesRef.current) ?? createInitialState(studentId, item);
-    const lessonSegment = configRef.current?.lessonSegments?.find(segment => segment.itemInstanceIds.includes(item.id))?.kind;
-    const selection: SelectionContext = lessonSegment
-      ? {
-          origin: lessonSegment === 'retrieval' ? 'due_retrieval' : lessonSegment === 'focus' ? 'focus_skill' : 'transfer',
-          plannerVersion: DAILY_LESSON_PLANNER_VERSION,
-          rationaleCodes: [configRef.current?.lessonRationales?.[item.id] ?? lessonSegment],
-          lessonPlanId: configRef.current?.lessonPlanId,
-          lessonSegment,
-        }
-      : configRef.current?.goalId || configRef.current?.goalIds?.length
-        ? { origin: 'goal', rationaleCodes: ['active_goal'] }
-        : { origin: 'manual', rationaleCodes: ['manual_user_choice'] };
+    const selection = currentSelectionRef.current;
 
     // Presentation-first-attempt (stats: first-try accuracy, misconceptions, retry
     // classification) is distinct from scheduling-first-attempt (issue #28): a card
@@ -489,8 +529,11 @@ export function usePracticeSession(studentId: string) {
         goalTargetIds: configRef.current?.goalTargetIds,
         goalLearningKind: configRef.current?.goalLearningKind,
         lessonPlanId: configRef.current?.lessonPlanId,
-        lessonSegment: configRef.current?.lessonSegments?.find(segment => segment.itemInstanceIds.includes(item.id))?.kind,
-        lessonRationale: configRef.current?.lessonRationales?.[item.id],
+        lessonSegment: selection.lessonSegment,
+        lessonRationale: selection.rationaleCodes[0],
+        selectionOrigin: selection.origin,
+        selectionRationaleCodes: [...selection.rationaleCodes],
+        selectionPlannerVersion: selection.plannerVersion,
         schedulingTelemetry: buildSchedulingTelemetry({
           item, stateBefore: existing, stateAfter: schedulingApplied ? updated : undefined,
           response: {
@@ -654,9 +697,9 @@ export function usePracticeSession(studentId: string) {
   const nextQuestion = useCallback(async () => {
     const prev = stateRef.current;
     if (prev.saveStatus !== 'idle' || pendingSaveRef.current) return;
-    const nextId = queueRef.current.shift();
+    const nextPlanned = queueRef.current.shift();
 
-    if (!nextId && prev.sessionId && pendingRelatedEvidenceRef.current.size > 0) {
+    if (!nextPlanned && prev.sessionId && pendingRelatedEvidenceRef.current.size > 0) {
       const now = appNow();
       const writes: RelatedEvidenceWrite[] = [];
       for (const candidate of pendingRelatedEvidenceRef.current.values()) {
@@ -679,6 +722,8 @@ export function usePracticeSession(studentId: string) {
             lessonPlanId: configRef.current?.lessonPlanId,
             lessonSegment: configRef.current?.lessonSegments?.find(segment => segment.itemInstanceIds.includes(candidate.sourceItemId))?.kind,
             lessonRationale: 'One deferred indirect nudge per canonical card when no direct review occurred.',
+            selectionOrigin: 'related_evidence',
+            selectionRationaleCodes: ['deferred_single_related_evidence'],
             schedulingTelemetry: buildSchedulingTelemetry({
               item: factItem, stateBefore: before, stateAfter: after,
               response: { reviewGrade: RELATED_EVIDENCE_GRADE, hintUsed: false, isRetry: false, evidenceKind: 'related', schedulingEligible: true, schedulingApplied: true },
@@ -701,7 +746,7 @@ export function usePracticeSession(studentId: string) {
       const avgMs = prev.latencies.length
         ? Math.round(prev.latencies.reduce((s, v) => s + v, 0) / prev.latencies.length)
         : 0;
-      const isEnding = !nextId;
+      const isEnding = !nextPlanned;
       if (isEnding && configRef.current?.lessonPlanId) {
         await completeDailyLessonPlan(configRef.current.lessonPlanId, appNow().toISOString());
       }
@@ -729,12 +774,13 @@ export function usePracticeSession(studentId: string) {
     }
 
     let nextState: SessionState;
-    if (!nextId) {
+    if (!nextPlanned) {
       nextState = { ...prev, phase: 'complete', correctResult: null, errorText: null };
     } else {
       questionStartRef.current = Date.now();
       currentAttemptsRef.current = 0;
-      const nextItem = resolveItem(nextId);
+      currentSelectionRef.current = nextPlanned.selection;
+      const nextItem = resolveItem(nextPlanned.itemId);
       currentPresentationIndexRef.current = schedulingGuardRef.current.presentationStarted(deriveCardKey(nextItem));
       nextState = {
         ...prev,

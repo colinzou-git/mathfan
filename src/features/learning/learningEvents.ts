@@ -1,4 +1,4 @@
-import type { ReviewGrade, MasteryLevel, PracticeOrigin, GoalLearningKind } from '../../types/math';
+import type { ReviewGrade, MasteryLevel, PracticeOrigin, GoalLearningKind, SelectionOrigin } from '../../types/math';
 import type { MasteryState } from '../multiplication/types';
 import type { SchedulingTelemetry } from './schedulingTelemetry';
 import { db } from '../../db/dexie';
@@ -39,6 +39,9 @@ export interface MathAnswerEvent {
   lessonPlanId?: string;
   lessonSegment?: 'retrieval' | 'focus' | 'transfer';
   lessonRationale?: string;
+  selectionOrigin?: SelectionOrigin;
+  selectionRationaleCodes?: string[];
+  selectionPlannerVersion?: string;
   goalLearningKind?: GoalLearningKind;
   /**
    * True when this event is INDIRECT evidence from a related higher-level item

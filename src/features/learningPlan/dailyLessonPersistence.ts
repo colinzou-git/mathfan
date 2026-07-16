@@ -7,8 +7,9 @@ import { planDailyLesson, type PlanDailyLessonArgs } from './dailyLessonPlanner'
 function materialize(args: PlanDailyLessonArgs, revision: number): PersistedDailyLessonPlan {
   const planned = planDailyLesson(args);
   const localDate = learnerLocalDateKey(new Date(args.now), args.timezone);
+  const id = `${planned.id}:r${revision}`;
   return {
-    id: `${planned.id}:r${revision}`,
+    id,
     studentId: args.studentId,
     localDate,
     timezone: args.timezone,
@@ -20,7 +21,10 @@ function materialize(args: PlanDailyLessonArgs, revision: number): PersistedDail
     focusSkillId: planned.focusSkillId,
     focusSkillTitle: planned.focusSkillTitle,
     estimatedMinutes: planned.estimatedMinutes,
-    items: planned.items,
+    items: planned.items.map(value => ({
+      ...value,
+      selection: { ...value.selection, lessonPlanId: id },
+    })),
     completedItemInstanceIds: [],
     warnings: planned.warnings,
   };

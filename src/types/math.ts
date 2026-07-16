@@ -11,6 +11,27 @@ export type MasteryLevel = 'new' | 'learning' | 'developing' | 'strong' | 'maste
 export type SessionLength = number; // any positive integer
 export type PracticeOrigin = 'daily_recommended_learning' | 'daily_new_for_goals' | 'goal_page';
 export type GoalLearningKind = 'planned' | 'extra';
+export type SelectionOrigin = 'due_retrieval' | 'weak_skill' | 'new_learning' | 'focus_skill'
+  | 'transfer' | 'goal' | 'diagnostic' | 'manual' | 'quiz' | 'related_evidence';
+
+export interface SelectionContext {
+  origin: SelectionOrigin;
+  plannerVersion?: string;
+  rationaleCodes: string[];
+  priorityScore?: number;
+  lessonPlanId?: string;
+  lessonSegment?: 'retrieval' | 'focus' | 'transfer';
+}
+
+export interface PlannedSessionItem {
+  itemId: string;
+  selection: SelectionContext;
+}
+
+export interface PlannedPracticeItem {
+  item: PracticeItem;
+  selection: SelectionContext;
+}
 
 export type ItemType =
   | 'multiplication_fact'
@@ -299,6 +320,8 @@ export interface PersistedPlannedLessonItem {
   segment: 'retrieval' | 'focus' | 'transfer';
   rationale: string;
   schedulingEligible: boolean;
+  /** Immutable selection provenance; absent on plans persisted before taxonomy v2. */
+  selection?: SelectionContext;
 }
 
 export interface PersistedDailyLessonPlan {
@@ -365,6 +388,8 @@ export interface SessionConfig {
   specificItemIds?: string[];
   /** Concrete generated instances for an ordered adaptive lesson queue. */
   preplannedItems?: PracticeItem[];
+  /** Concrete generated instances with immutable planner selection metadata. */
+  plannedPracticeItems?: PlannedPracticeItem[];
   sessionLength: SessionLength;
   /**
    * First operand range. Meaning depends on mode:

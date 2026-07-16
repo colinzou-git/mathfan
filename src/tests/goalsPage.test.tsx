@@ -201,7 +201,7 @@ describe('dashboard Goals entry', () => {
     fireEvent.click(screen.getByRole('button', { name: 'See plan' }));
     expect(screen.getByText(/Why this plan/i)).toBeInTheDocument();
     fireEvent.click(start);
-    expect(onStartDailyReview).toHaveBeenCalledWith(expect.objectContaining({ mode: 'adaptive_lesson', lessonKind: 'adaptive_daily_lesson', preplannedItems: expect.any(Array) }));
+    expect(onStartDailyReview).toHaveBeenCalledWith(expect.objectContaining({ mode: 'adaptive_lesson', lessonKind: 'adaptive_daily_lesson', plannedPracticeItems: expect.any(Array) }));
     fireEvent.click(screen.getByRole('button', { name: /Multiply/i }));
     expect(onPickOperation).toHaveBeenCalledWith('multiplication');
   });

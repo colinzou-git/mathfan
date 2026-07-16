@@ -499,6 +499,90 @@ describe('usePracticeSession — adaptive selection', () => {
       await act(async () => { await result.current.nextQuestion(); });
     }
     expect(seen).toEqual(new Set(ids));
+    for (const call of vi.mocked(recordPracticeAnswer).mock.calls) {
+      expect(call[0].event).toMatchObject({
+        selectionOrigin: 'due_retrieval',
+        selectionRationaleCodes: ['daily_review_requested_due'],
+        schedulingTelemetry: {
+          selection: { origin: 'due_retrieval', rationaleCodes: ['daily_review_requested_due'] },
+        },
+      });
+    }
+  });
+
+  it('preserves distinct overdue and weak backfill selection metadata through queue progression', async () => {
+    vi.mocked(itemStateRepo.getForStudent).mockResolvedValue([
+      {
+        studentId: STUDENT_ID, cardKey: 'fact:mul:2x2', lastItemId: 'MUL_2x2', skillId: 'mul',
+        attemptCount: 4, correctCount: 3, lastCorrect: true, lastLatencyMs: 0, medianLatencyMs: 0,
+        ease: 2.5, stabilityDays: 1, difficulty: 0.3, masteryLevel: 'developing',
+        nextDueAt: '2026-05-01T00:00:00Z', mistakePatterns: [],
+      },
+      {
+        studentId: STUDENT_ID, cardKey: 'fact:mul:3x3', lastItemId: 'MUL_3x3', skillId: 'mul',
+        attemptCount: 4, correctCount: 1, lastCorrect: false, lastLatencyMs: 0, medianLatencyMs: 0,
+        ease: 2.5, stabilityDays: 1, difficulty: 0.3, masteryLevel: 'learning',
+        nextDueAt: '2026-07-01T00:00:00Z', mistakePatterns: [],
+      },
+    ]);
+    const { result } = renderHook(() => usePracticeSession(STUDENT_ID));
+    await act(async () => {
+      await result.current.startSession({ mode: 'daily_review', sessionLength: 3, specificItemIds: ['MUL_7x8'] });
+    });
+    for (let i = 0; i < 3; i++) {
+      const current = result.current.state.currentItem!;
+      await act(async () => { await result.current.submitAnswer(String(current.answer)); });
+      await act(async () => { await result.current.nextQuestion(); });
+    }
+    const events = vi.mocked(recordPracticeAnswer).mock.calls.map(call => call[0].event);
+    expect(events.find(event => event.itemId === 'MUL_2x2')?.schedulingTelemetry?.selection).toMatchObject({
+      origin: 'due_retrieval', rationaleCodes: ['daily_review_backfill_overdue'],
+    });
+    expect(events.find(event => event.itemId === 'MUL_3x3')?.schedulingTelemetry?.selection).toMatchObject({
+      origin: 'weak_skill', rationaleCodes: ['daily_review_backfill_weak'],
+    });
+  });
+
+  it('keeps explicit table practice manual and daily goal content new-learning', async () => {
+    const manual = renderHook(() => usePracticeSession(STUDENT_ID));
+    await act(async () => {
+      await manual.result.current.startSession({ mode: 'single_table', tables: [7], sessionLength: 1 });
+    });
+    await act(async () => {
+      await manual.result.current.submitAnswer(String(manual.result.current.state.currentItem!.answer));
+    });
+    expect(vi.mocked(recordPracticeAnswer).mock.calls[0][0].event.schedulingTelemetry?.selection.origin).toBe('manual');
+
+    vi.mocked(recordPracticeAnswer).mockClear();
+    const goal = renderHook(() => usePracticeSession(STUDENT_ID));
+    await act(async () => {
+      await goal.result.current.startSession({
+        mode: 'area', sessionLength: 1, specificItemIds: ['AREA_RECT_3x4'],
+        goalId: 'goal-1', origin: 'daily_new_for_goals',
+      });
+    });
+    await act(async () => {
+      await goal.result.current.submitAnswer(String(goal.result.current.state.currentItem!.answer));
+    });
+    expect(vi.mocked(recordPracticeAnswer).mock.calls[0][0].event.schedulingTelemetry?.selection).toMatchObject({
+      origin: 'new_learning', rationaleCodes: ['daily_goal_new_item'],
+    });
+  });
+
+  it('records different origins when the same item is selected manually and by Today Plan', async () => {
+    for (const config of [
+      { mode: 'area', sessionLength: 1, specificItemIds: ['AREA_RECT_3x4'] },
+      { mode: 'daily_review', sessionLength: 1, specificItemIds: ['AREA_RECT_3x4'] },
+    ] satisfies SessionConfig[]) {
+      const hook = renderHook(() => usePracticeSession(STUDENT_ID));
+      await act(async () => { await hook.result.current.startSession(config); });
+      await act(async () => {
+        await hook.result.current.submitAnswer(String(hook.result.current.state.currentItem!.answer));
+      });
+    }
+    expect(vi.mocked(recordPracticeAnswer).mock.calls.map(call =>
+      call[0].event.schedulingTelemetry?.selection.origin,
+    )).toEqual(['manual', 'due_retrieval']);
   });
 
   it('daily_review user rounds produce the exact requested presentation count', async () => {

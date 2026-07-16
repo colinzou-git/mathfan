@@ -1,4 +1,4 @@
-import type { MasteryLevel, PracticeItem, ReviewGrade, StudentItemState } from '../../types/math';
+import type { MasteryLevel, PracticeItem, ReviewGrade, SelectionContext, SelectionOrigin, StudentItemState } from '../../types/math';
 import type { FluencyBand } from '../fluency/fluencyEngine';
 import type { RatingReason } from '../practice/answerChecker';
 import type { ResponsePolicyKind } from '../scheduler/responsePolicy';
@@ -8,21 +8,11 @@ import { currentRetrievability } from '../scheduler/fsrsAdapter';
 export const SCHEDULING_TELEMETRY_VERSION = 1 as const;
 export const CARD_MODEL_VERSION = 'canonical-card-v1';
 export const RESPONSE_POLICY_VERSION = 'task-aware-v1';
-export const ADAPTIVE_SELECTOR_VERSION = 'adaptive-selector-v1';
+export const ADAPTIVE_SELECTOR_VERSION = 'adaptive-selector-v2-selection-taxonomy';
 export const DAILY_LESSON_PLANNER_VERSION = 'daily-lesson-v1';
 export const GOAL_PORTFOLIO_VERSION = 'goal-portfolio-v1';
 
-export type SelectionOrigin = 'due_retrieval' | 'weak_skill' | 'new_learning' | 'focus_skill'
-  | 'transfer' | 'goal' | 'diagnostic' | 'manual' | 'quiz' | 'related_evidence';
-
-export interface SelectionContext {
-  origin: SelectionOrigin;
-  plannerVersion?: string;
-  rationaleCodes: string[];
-  priorityScore?: number;
-  lessonPlanId?: string;
-  lessonSegment?: 'retrieval' | 'focus' | 'transfer';
-}
+export type { SelectionContext, SelectionOrigin };
 
 export interface SchedulingStateSnapshot {
   dueAt?: string;

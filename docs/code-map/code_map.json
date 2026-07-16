@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-16T10:34:32.924936+00:00",
+  "generated_at": "2026-07-16T10:58:32.003998+00:00",
   "repo_root": "/home/ubuntu/mathfan",
   "package": {
     "name": "mathfan",
@@ -2699,9 +2699,9 @@
     {
       "path": "src/features/dashboard/StudentDashboard.tsx",
       "ext": ".tsx",
-      "bytes": 32121,
-      "lines": 608,
-      "sha1": "73095f62b497",
+      "bytes": 32509,
+      "lines": 619,
+      "sha1": "ebb6b6d23eec",
       "imports": [
         "../../db/repositories",
         "../../types/math",
@@ -3849,9 +3849,9 @@
     {
       "path": "src/features/learning/learningEvents.ts",
       "ext": ".ts",
-      "bytes": 5363,
-      "lines": 119,
-      "sha1": "bb9bfcea0827",
+      "bytes": 5491,
+      "lines": 122,
+      "sha1": "feeb1c46f258",
       "imports": [
         "../../db/dexie",
         "../../types/math",
@@ -3971,9 +3971,9 @@
     {
       "path": "src/features/learning/schedulingTelemetry.ts",
       "ext": ".ts",
-      "bytes": 7310,
-      "lines": 151,
-      "sha1": "c21563780398",
+      "bytes": 7014,
+      "lines": 141,
+      "sha1": "0c30da247a57",
       "imports": [
         "../../types/math",
         "../fluency/fluencyEngine",
@@ -3994,8 +3994,6 @@
         "SCHEDULING_TELEMETRY_VERSION",
         "SchedulingStateSnapshot",
         "SchedulingTelemetry",
-        "SelectionContext",
-        "SelectionOrigin",
         "snapshotSchedulingState",
         "telemetryForItem"
       ],
@@ -4010,12 +4008,10 @@
         "ItemInstanceTelemetry",
         "ResponseTelemetryEvidence",
         "SchedulingStateSnapshot",
-        "SchedulingTelemetry",
-        "SelectionContext"
+        "SchedulingTelemetry"
       ],
       "types": [
-        "ParameterValue",
-        "SelectionOrigin"
+        "ParameterValue"
       ],
       "components": [],
       "hooks": [],
@@ -4028,9 +4024,9 @@
     {
       "path": "src/features/learningPlan/dailyLessonPersistence.ts",
       "ext": ".ts",
-      "bytes": 3390,
-      "lines": 72,
-      "sha1": "ebc69ecf6b3c",
+      "bytes": 3502,
+      "lines": 76,
+      "sha1": "fd8a82790128",
       "imports": [
         "../../db/dexie",
         "../../types/math",
@@ -4060,9 +4056,9 @@
     {
       "path": "src/features/learningPlan/dailyLessonPlanner.ts",
       "ext": ".ts",
-      "bytes": 8987,
-      "lines": 94,
-      "sha1": "ddb1643f6fe9",
+      "bytes": 9507,
+      "lines": 111,
+      "sha1": "5925c79bde84",
       "imports": [
         "../../types/math",
         "../adaptive/relatedItemMapping",
@@ -4071,6 +4067,7 @@
         "../learning/eventOrdering",
         "../learning/learningEvents",
         "../learning/learningUnitProgress",
+        "../learning/schedulingTelemetry",
         "../mastery/grade3MasteryMap",
         "../mastery/skillMapping",
         "../mastery/skillMasteryEngine",
@@ -5193,9 +5190,9 @@
     {
       "path": "src/features/practice/usePracticeSession.ts",
       "ext": ".ts",
-      "bytes": 37591,
-      "lines": 774,
-      "sha1": "e0b2c1138827",
+      "bytes": 40642,
+      "lines": 820,
+      "sha1": "6af7a37498b4",
       "imports": [
         "../../components/opSpecs",
         "../../db/dexie",
@@ -5237,6 +5234,7 @@
       "functions": [
         "commit",
         "getStaticItem",
+        "planned",
         "usePracticeSession"
       ],
       "classes": [],
@@ -5378,13 +5376,14 @@
     {
       "path": "src/features/scheduler/dailyReviewQueue.ts",
       "ext": ".ts",
-      "bytes": 3391,
-      "lines": 88,
-      "sha1": "ac91e62c6c56",
+      "bytes": 4509,
+      "lines": 113,
+      "sha1": "33ac630c766b",
       "imports": [
         "../../types/math",
         "../../utils/rng",
         "../curriculum/makeItemFromId",
+        "../learning/schedulingTelemetry",
         "./cardModel"
       ],
       "exports": [
@@ -7764,9 +7763,9 @@
     {
       "path": "src/tests/dailyReviewQueue.test.ts",
       "ext": ".ts",
-      "bytes": 5260,
-      "lines": 147,
-      "sha1": "260180ea055c",
+      "bytes": 5867,
+      "lines": 155,
+      "sha1": "2c2094be25d3",
       "imports": [
         "../features/scheduler/cardModel",
         "../features/scheduler/dailyReviewQueue",
@@ -7775,6 +7774,7 @@
       ],
       "exports": [],
       "functions": [
+        "ids",
         "rng",
         "state"
       ],
@@ -8349,9 +8349,9 @@
     {
       "path": "src/tests/goalsPage.test.tsx",
       "ext": ".tsx",
-      "bytes": 18140,
+      "bytes": 18145,
       "lines": 449,
-      "sha1": "f93f9c2fb30e",
+      "sha1": "ac3f97a16895",
       "imports": [
         "../db/repositories",
         "../features/dashboard/StudentDashboard",
@@ -9019,9 +9019,9 @@
     {
       "path": "src/tests/practiceSession.test.ts",
       "ext": ".ts",
-      "bytes": 30648,
-      "lines": 655,
-      "sha1": "b575964a657d",
+      "bytes": 34950,
+      "lines": 739,
+      "sha1": "fab2e95b6954",
       "imports": [
         "../db/repositories",
         "../features/curriculum/makeItemFromId",
@@ -9828,9 +9828,9 @@
     {
       "path": "src/types/math.ts",
       "ext": ".ts",
-      "bytes": 14492,
-      "lines": 432,
-      "sha1": "14545d34a133",
+      "bytes": 15326,
+      "lines": 457,
+      "sha1": "49524494fb65",
       "imports": [
         "../features/curriculum/divisionItems",
         "../features/curriculum/measurementTypes",
@@ -9860,10 +9860,14 @@
         "PersistedDailyLessonPlan",
         "PersistedPlannedLessonItem",
         "PerTableStats",
+        "PlannedPracticeItem",
+        "PlannedSessionItem",
         "PracticeItem",
         "PracticeOrigin",
         "PracticeSession",
         "ReviewGrade",
+        "SelectionContext",
+        "SelectionOrigin",
         "SessionConfig",
         "SessionLength",
         "SessionMode",
@@ -9889,8 +9893,11 @@
         "PersistedDailyLessonPlan",
         "PersistedPlannedLessonItem",
         "PerTableStats",
+        "PlannedPracticeItem",
+        "PlannedSessionItem",
         "PracticeItem",
         "PracticeSession",
+        "SelectionContext",
         "SessionConfig",
         "Skill",
         "StudentItemState",
@@ -9907,6 +9914,7 @@
         "MasteryLevel",
         "PracticeOrigin",
         "ReviewGrade",
+        "SelectionOrigin",
         "SessionLength",
         "SessionMode",
         "ThemeName"
