@@ -11,6 +11,8 @@ export interface StudentFluencyBaseline {
   p75Ms: number;
 }
 
+export type FluencyBaselineMap = Map<string, StudentFluencyBaseline>;
+
 /** Require at least this many qualifying samples before trusting a personal baseline over policy defaults. */
 export const MIN_BASELINE_SAMPLES = 5;
 
@@ -48,6 +50,17 @@ export function deriveFluencyBaseline(
     p25Ms: percentile(latencies, 0.25),
     p75Ms: percentile(latencies, 0.75),
   };
+}
+
+/** Builds established personal baselines for every canonical card represented in the events. */
+export function buildFluencyBaselineMap(events: MathAnswerEvent[]): FluencyBaselineMap {
+  const cardFamilies = new Set(events.map(event => event.cardKey ?? event.itemId));
+  const baselines: FluencyBaselineMap = new Map();
+  for (const cardFamily of cardFamilies) {
+    const baseline = deriveFluencyBaseline(events, cardFamily);
+    if (baseline) baselines.set(cardFamily, baseline);
+  }
+  return baselines;
 }
 
 /** Classifies latency into a fluency band, preferring a personal baseline over policy defaults. */

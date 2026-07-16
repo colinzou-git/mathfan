@@ -27,6 +27,10 @@ export interface ResponseEvidence {
   fluencyBand: FluencyBand;
   policyKind: ReturnType<typeof policyForItem>['kind'];
   schedulingEligible: boolean;
+  fluencyBaselineSource: 'student' | 'policy_default' | 'not_applicable';
+  fluencySampleCount: number;
+  fluencyFastCutoffMs?: number;
+  fluencySlowCutoffMs?: number;
 }
 
 // Strict patterns — reject trailing/embedded junk that parseFloat silently ignores.
@@ -112,6 +116,14 @@ export function classifyResponse(
 ): ResponseEvidence {
   const policy = policyForItem(item);
   const { isCorrect, latencyMs, hintUsed, studentFluency } = context;
+  const fluencyMetadata = policy.useLatencyForFsrs
+    ? {
+        fluencyBaselineSource: studentFluency ? 'student' as const : 'policy_default' as const,
+        fluencySampleCount: studentFluency?.sampleCount ?? 0,
+        fluencyFastCutoffMs: studentFluency?.p25Ms ?? policy.easyMs,
+        fluencySlowCutoffMs: studentFluency?.p75Ms ?? policy.hardMs,
+      }
+    : { fluencyBaselineSource: 'not_applicable' as const, fluencySampleCount: 0 };
 
   if (!isCorrect) {
     return {
@@ -121,6 +133,7 @@ export function classifyResponse(
       fluencyBand: 'not_applicable',
       policyKind: policy.kind,
       schedulingEligible: true,
+      ...fluencyMetadata,
     };
   }
 
@@ -135,6 +148,7 @@ export function classifyResponse(
       fluencyBand: 'not_applicable',
       policyKind: policy.kind,
       schedulingEligible: false,
+      ...fluencyMetadata,
     };
   }
 
@@ -146,6 +160,7 @@ export function classifyResponse(
       fluencyBand: classifyFluency(latencyMs, policy, studentFluency),
       policyKind: policy.kind,
       schedulingEligible: true,
+      ...fluencyMetadata,
     };
   }
 
@@ -158,6 +173,7 @@ export function classifyResponse(
       fluencyBand,
       policyKind: policy.kind,
       schedulingEligible: true,
+      ...fluencyMetadata,
     };
   }
   // Require an established personal baseline before awarding 'easy' — a
@@ -170,6 +186,7 @@ export function classifyResponse(
       fluencyBand,
       policyKind: policy.kind,
       schedulingEligible: true,
+      ...fluencyMetadata,
     };
   }
   return {
@@ -179,6 +196,7 @@ export function classifyResponse(
     fluencyBand,
     policyKind: policy.kind,
     schedulingEligible: true,
+    ...fluencyMetadata,
   };
 }
 

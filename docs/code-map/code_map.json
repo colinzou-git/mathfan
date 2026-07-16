@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-16T08:28:56.116348+00:00",
+  "generated_at": "2026-07-16T08:37:56.596830+00:00",
   "repo_root": "/home/ubuntu/mathfan",
   "package": {
     "name": "mathfan",
@@ -421,9 +421,9 @@
     {
       "path": "PROGRESS.md",
       "ext": ".md",
-      "bytes": 9369,
-      "lines": 151,
-      "sha1": "1fb39c1d1b7b",
+      "bytes": 9346,
+      "lines": 152,
+      "sha1": "0d76a1e8ce6a",
       "imports": [],
       "exports": [],
       "functions": [],
@@ -1218,9 +1218,9 @@
     {
       "path": "src/db/repositories.ts",
       "ext": ".ts",
-      "bytes": 14754,
-      "lines": 341,
-      "sha1": "75a2316894d1",
+      "bytes": 15418,
+      "lines": 356,
+      "sha1": "5c2fb79d1a98",
       "imports": [
         "../features/goals/types",
         "../features/learning/learningEvents",
@@ -2938,21 +2938,24 @@
     {
       "path": "src/features/fluency/fluencyEngine.ts",
       "ext": ".ts",
-      "bytes": 2310,
-      "lines": 68,
-      "sha1": "a42a43d23a25",
+      "bytes": 2891,
+      "lines": 81,
+      "sha1": "4ff60645e166",
       "imports": [
         "../learning/learningEvents",
         "../scheduler/responsePolicy"
       ],
       "exports": [
+        "buildFluencyBaselineMap",
         "classifyFluency",
         "deriveFluencyBaseline",
         "FluencyBand",
+        "FluencyBaselineMap",
         "MIN_BASELINE_SAMPLES",
         "StudentFluencyBaseline"
       ],
       "functions": [
+        "buildFluencyBaselineMap",
         "classifyFluency",
         "deriveFluencyBaseline",
         "percentile"
@@ -2962,13 +2965,14 @@
         "StudentFluencyBaseline"
       ],
       "types": [
-        "FluencyBand"
+        "FluencyBand",
+        "FluencyBaselineMap"
       ],
       "components": [],
       "hooks": [],
       "css_classes": [],
       "json_keys": [],
-      "purpose": "Exports reusable code: classifyFluency, deriveFluencyBaseline, FluencyBand, MIN_BASELINE_SAMPLES, StudentFluencyBaseline.",
+      "purpose": "Exports reusable code: buildFluencyBaselineMap, classifyFluency, deriveFluencyBaseline, FluencyBand, FluencyBaselineMap.",
       "too_large": false,
       "read_error": null
     },
@@ -3894,9 +3898,9 @@
     {
       "path": "src/features/learning/schedulingTelemetry.ts",
       "ext": ".ts",
-      "bytes": 6363,
-      "lines": 136,
-      "sha1": "9a10ba444f30",
+      "bytes": 6941,
+      "lines": 144,
+      "sha1": "6a88e1c840dc",
       "imports": [
         "../../types/math",
         "../fluency/fluencyEngine",
@@ -4861,9 +4865,9 @@
     {
       "path": "src/features/practice/answerChecker.ts",
       "ext": ".ts",
-      "bytes": 6768,
-      "lines": 197,
-      "sha1": "293e7a7e0906",
+      "bytes": 7536,
+      "lines": 215,
+      "sha1": "dba63732922d",
       "imports": [
         "../../types/math",
         "../fluency/fluencyEngine",
@@ -5099,9 +5103,9 @@
     {
       "path": "src/features/practice/usePracticeSession.ts",
       "ext": ".ts",
-      "bytes": 34447,
-      "lines": 715,
-      "sha1": "80e89161502f",
+      "bytes": 35915,
+      "lines": 738,
+      "sha1": "5efe7a26667b",
       "imports": [
         "../../components/opSpecs",
         "../../db/dexie",
@@ -5119,6 +5123,8 @@
         "../curriculum/makeItemFromId",
         "../curriculum/multiplicationItems",
         "../curriculum/roundingItems",
+        "../fluency/fluencyEngine",
+        "../learning/learningEvents",
         "../learning/recordAnswer",
         "../learning/schedulingTelemetry",
         "../learningPlan/dailyLessonPersistence",
@@ -7270,9 +7276,9 @@
     {
       "path": "src/tests/answerChecker.test.ts",
       "ext": ".ts",
-      "bytes": 8784,
-      "lines": 198,
-      "sha1": "280a6fbc98fb",
+      "bytes": 9308,
+      "lines": 209,
+      "sha1": "f6ac29226f63",
       "imports": [
         "../features/fluency/fluencyEngine",
         "../features/practice/answerChecker",
@@ -7808,9 +7814,9 @@
     {
       "path": "src/tests/fluencyEngine.test.ts",
       "ext": ".ts",
-      "bytes": 4305,
-      "lines": 89,
-      "sha1": "02e90bebbda5",
+      "bytes": 4788,
+      "lines": 99,
+      "sha1": "91ceaf047050",
       "imports": [
         "../features/fluency/fluencyEngine",
         "../features/learning/learningEvents",
@@ -7829,6 +7835,33 @@
       "css_classes": [],
       "json_keys": [],
       "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/fluencyRepository.test.ts",
+      "ext": ".ts",
+      "bytes": 1844,
+      "lines": 43,
+      "sha1": "b6d8af594aae",
+      "imports": [
+        "../db/dexie",
+        "../db/repositories",
+        "../features/learning/learningEvents",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [
+        "event"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Local persistence/database layer.",
       "too_large": false,
       "read_error": null
     },
@@ -8821,12 +8854,13 @@
     {
       "path": "src/tests/practiceSession.test.ts",
       "ext": ".ts",
-      "bytes": 27040,
-      "lines": 588,
-      "sha1": "26157dc62326",
+      "bytes": 28990,
+      "lines": 623,
+      "sha1": "710e45cbc5a6",
       "imports": [
         "../db/repositories",
         "../features/curriculum/makeItemFromId",
+        "../features/learning/learningEvents",
         "../features/learning/recordAnswer",
         "../features/practice/usePracticeSession",
         "../features/time/clock",

@@ -19,7 +19,7 @@ import {
 import { generateFractionItems } from '../curriculum/fractionItems';
 import { generateRoundingItems } from '../curriculum/roundingItems';
 import { generateDecimalItems } from '../curriculum/decimalItems';
-import { itemStateRepo, sessionRepo } from '../../db/repositories';
+import { itemStateRepo, mathAnswerEventRepo, sessionRepo } from '../../db/repositories';
 import { db } from '../../db/dexie';
 import { appNow } from '../time/clock';
 import { generateId } from '../../utils/id';
@@ -35,6 +35,8 @@ import { mulberry32, randomSeed } from '../../utils/rng';
 import type { PracticeItem as PItem } from '../../types/math';
 import { buildSchedulingTelemetry, DAILY_LESSON_PLANNER_VERSION, type SelectionContext } from '../learning/schedulingTelemetry';
 import { completeDailyLessonPlan, markDailyLessonProgress } from '../learningPlan/dailyLessonPersistence';
+import { buildFluencyBaselineMap, deriveFluencyBaseline, type FluencyBaselineMap } from '../fluency/fluencyEngine';
+import type { MathAnswerEvent } from '../learning/learningEvents';
 
 // ── Public types ──────────────────────────────────────────────────────────────
 
@@ -135,6 +137,8 @@ export function usePracticeSession(studentId: string) {
   const currentPresentationIndexRef = useRef<number>(1);
   const directEvidenceCardsRef = useRef(new Set<string>());
   const pendingRelatedEvidenceRef = useRef(new Map<string, { cardKey: string; relatedItemId: string; sourceItemId: string }>());
+  const fluencyEventsRef = useRef<MathAnswerEvent[]>([]);
+  const fluencyBaselinesRef = useRef<FluencyBaselineMap>(new Map());
   const pendingSaveRef = useRef<null | {
     payload: PracticeAnswerPayload;
     cardKey: string;
@@ -156,9 +160,14 @@ export function usePracticeSession(studentId: string) {
     directEvidenceCardsRef.current.clear();
     pendingRelatedEvidenceRef.current.clear();
 
-    const allStates = await itemStateRepo.getForStudent(studentId);
+    const [allStates, fluencyEvents] = await Promise.all([
+      itemStateRepo.getForStudent(studentId),
+      mathAnswerEventRepo.getDirectCorrectFirstAttempts(studentId),
+    ]);
     const stateMap = new Map(allStates.map(s => [s.cardKey, s]));
     statesRef.current = stateMap;
+    fluencyEventsRef.current = fluencyEvents;
+    fluencyBaselinesRef.current = buildFluencyBaselineMap(fluencyEvents);
 
     let queue: string[];
     const {
@@ -347,11 +356,14 @@ export function usePracticeSession(studentId: string) {
     const latencyMs = Date.now() - questionStartRef.current;
     const attemptNo = currentAttemptsRef.current + 1;
     const isFirstAttemptAtPresentation = attemptNo === 1;
-    const result = checkAnswer(item, rawInput, latencyMs, { hintUsed: !isFirstAttemptAtPresentation });
+    const cardKey = deriveCardKey(item);
+    const result = checkAnswer(item, rawInput, latencyMs, {
+      hintUsed: !isFirstAttemptAtPresentation,
+      studentFluency: fluencyBaselinesRef.current.get(cardKey) ?? null,
+    });
     const now = appNow();
     const createdAt = now.toISOString();
 
-    const cardKey = deriveCardKey(item);
     const existing = stateForItem(item, statesRef.current) ?? createInitialState(studentId, item);
     const lessonSegment = configRef.current?.lessonSegments?.find(segment => segment.itemInstanceIds.includes(item.id))?.kind;
     const selection: SelectionContext = lessonSegment
@@ -450,6 +462,8 @@ export function usePracticeSession(studentId: string) {
           response: {
             reviewGrade: result.reviewGrade, ratingReason: eventRatingReason, responsePolicy: result.policyKind,
             fluencyBand: result.fluencyBand, hintUsed: !isFirstAttemptAtPresentation,
+            fluencyBaselineSource: result.fluencyBaselineSource, fluencySampleCount: result.fluencySampleCount,
+            fluencyFastCutoffMs: result.fluencyFastCutoffMs, fluencySlowCutoffMs: result.fluencySlowCutoffMs,
             isRetry: !isFirstAttemptAtPresentation, schedulingEligible: isFirstSchedulingAttemptInSession,
           },
           selection, presentationIndex: currentPresentationIndexRef.current, attemptNo, now,
@@ -534,6 +548,15 @@ export function usePracticeSession(studentId: string) {
       for (const candidate of relatedCandidates) {
         if (directEvidenceCardsRef.current.has(candidate.cardKey) || pendingRelatedEvidenceRef.current.has(candidate.cardKey)) continue;
         pendingRelatedEvidenceRef.current.set(candidate.cardKey, candidate);
+      }
+      if (payload.event.isCorrect && !payload.event.isRetry && !payload.event.relatedEvidence
+        && !payload.event.hintUsed && payload.event.schedulingEligible !== false
+        && payload.event.responsePolicy === 'atomic_fluency'
+        && Number.isFinite(payload.event.latencyMs) && payload.event.latencyMs > 0) {
+        fluencyEventsRef.current.push(payload.event);
+        const baseline = deriveFluencyBaseline(fluencyEventsRef.current, cardKey);
+        if (baseline) fluencyBaselinesRef.current.set(cardKey, baseline);
+        else fluencyBaselinesRef.current.delete(cardKey);
       }
       pendingSaveRef.current = null;
       stateRef.current = nextState;

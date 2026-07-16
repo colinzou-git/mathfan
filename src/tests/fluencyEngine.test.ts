@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { deriveFluencyBaseline, classifyFluency, MIN_BASELINE_SAMPLES } from '../features/fluency/fluencyEngine';
+import { buildFluencyBaselineMap, deriveFluencyBaseline, classifyFluency, MIN_BASELINE_SAMPLES } from '../features/fluency/fluencyEngine';
 import type { MathAnswerEvent } from '../features/learning/learningEvents';
 import type { ResponsePolicy } from '../features/scheduler/responsePolicy';
 
@@ -15,6 +15,16 @@ function event(overrides: Partial<MathAnswerEvent> = {}): MathAnswerEvent {
 }
 
 describe('deriveFluencyBaseline', () => {
+  it('builds a map keyed by canonical card and omits insufficient families', () => {
+    const events = [
+      ...Array.from({ length: MIN_BASELINE_SAMPLES }, (_, i) => event({ latencyMs: 800 + i * 100 })),
+      event({ cardKey: 'fact:mul:2x2', itemId: 'MUL_2x2' }),
+    ];
+    const map = buildFluencyBaselineMap(events);
+    expect(map.get('fact:mul:7x8')?.sampleCount).toBe(MIN_BASELINE_SAMPLES);
+    expect(map.has('fact:mul:2x2')).toBe(false);
+  });
+
   it('returns null below the minimum sample count', () => {
     const events = Array.from({ length: MIN_BASELINE_SAMPLES - 1 }, (_, i) => event({ latencyMs: 1000 + i }));
     expect(deriveFluencyBaseline(events, 'fact:mul:7x8')).toBeNull();

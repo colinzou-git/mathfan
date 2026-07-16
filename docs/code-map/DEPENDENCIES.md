@@ -4,7 +4,7 @@
 
 | Package | Import count |
 | --- | --- |
-| vitest | 83 |
+| vitest | 84 |
 | react | 35 |
 | @testing-library/react | 19 |
 | pathlib | 8 |
@@ -486,6 +486,8 @@
 | src/features/practice/usePracticeSession.ts | ../curriculum/makeItemFromId |
 | src/features/practice/usePracticeSession.ts | ../curriculum/multiplicationItems |
 | src/features/practice/usePracticeSession.ts | ../curriculum/roundingItems |
+| src/features/practice/usePracticeSession.ts | ../fluency/fluencyEngine |
+| src/features/practice/usePracticeSession.ts | ../learning/learningEvents |
 | src/features/practice/usePracticeSession.ts | ../learning/recordAnswer |
 | src/features/practice/usePracticeSession.ts | ../learning/schedulingTelemetry |
 | src/features/practice/usePracticeSession.ts | ../learningPlan/dailyLessonPersistence |
@@ -732,6 +734,9 @@
 | src/tests/fluencyEngine.test.ts | ../features/fluency/fluencyEngine |
 | src/tests/fluencyEngine.test.ts | ../features/learning/learningEvents |
 | src/tests/fluencyEngine.test.ts | ../features/scheduler/responsePolicy |
+| src/tests/fluencyRepository.test.ts | ../db/dexie |
+| src/tests/fluencyRepository.test.ts | ../db/repositories |
+| src/tests/fluencyRepository.test.ts | ../features/learning/learningEvents |
 | src/tests/fractionItems.test.ts | ../features/curriculum/fractionItems |
 | src/tests/fractionRedesign.test.tsx | ../features/curriculum/fractionItems |
 | src/tests/fractionRedesign.test.tsx | ../features/curriculum/makeItemFromId |
@@ -886,6 +891,7 @@
 | src/tests/practiceNavigation.test.ts | ../features/practice/practiceNavigation |
 | src/tests/practiceSession.test.ts | ../db/repositories |
 | src/tests/practiceSession.test.ts | ../features/curriculum/makeItemFromId |
+| src/tests/practiceSession.test.ts | ../features/learning/learningEvents |
 | src/tests/practiceSession.test.ts | ../features/learning/recordAnswer |
 | src/tests/practiceSession.test.ts | ../features/practice/usePracticeSession |
 | src/tests/practiceSession.test.ts | ../features/time/clock |

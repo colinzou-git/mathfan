@@ -135,6 +135,16 @@ describe('classifyResponse — atomic_fluency (multiplication/division facts)', 
     const r = classifyResponse(mulFact, noHint(true, 500, baseline));
     expect(r.reviewGrade).toBe('easy');
     expect(r.ratingReason).toBe('fast_fluent_correct');
+    expect(r).toMatchObject({
+      fluencyBaselineSource: 'student', fluencySampleCount: 10,
+      fluencyFastCutoffMs: 700, fluencySlowCutoffMs: 1400,
+    });
+  });
+  it('records policy-default cutoff telemetry when personal evidence is insufficient', () => {
+    const r = classifyResponse(mulFact, noHint(true, 500));
+    expect(r.reviewGrade).toBe('good');
+    expect(r.fluencyBaselineSource).toBe('policy_default');
+    expect(r.fluencySampleCount).toBe(0);
   });
   it('incorrect always produces again', () => {
     expect(classifyResponse(mulFact, noHint(false, 1000)).reviewGrade).toBe('again');
@@ -147,6 +157,7 @@ describe('classifyResponse — non-atomic policies never use the old universal 4
     const r = classifyResponse(subItem, noHint(true, 30_000));
     expect(r.reviewGrade).toBe('good');
     expect(r.policyKind).not.toBe('atomic_fluency');
+    expect(r.fluencyBaselineSource).toBe('not_applicable');
   });
   it('elapsed-time correct in 15s → good', () => {
     expect(classifyResponse(elapsedTimeItem, noHint(true, 15_000)).reviewGrade).toBe('good');

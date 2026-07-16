@@ -17,6 +17,7 @@ vi.mock('../features/learning/recordAnswer', () => ({
 
 vi.mock('../db/repositories', () => ({
   itemStateRepo: { getForStudent: vi.fn() },
+  mathAnswerEventRepo: { getDirectCorrectFirstAttempts: vi.fn() },
   sessionRepo: {
     getLastByMode: vi.fn(),
     save: vi.fn(),
@@ -40,11 +41,12 @@ vi.mock('../utils/id', () => ({
 
 import { usePracticeSession } from '../features/practice/usePracticeSession';
 import { recordPracticeAnswer, recordRelatedEvidenceWrites } from '../features/learning/recordAnswer';
-import { itemStateRepo, sessionRepo } from '../db/repositories';
+import { itemStateRepo, mathAnswerEventRepo, sessionRepo } from '../db/repositories';
 import { appNow } from '../features/time/clock';
 import { generateId } from '../utils/id';
 import { makeItemFromId } from '../features/curriculum/makeItemFromId';
 import type { SessionConfig } from '../types/math';
+import type { MathAnswerEvent } from '../features/learning/learningEvents';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -68,6 +70,7 @@ beforeEach(() => {
   vi.mocked(recordPracticeAnswer).mockResolvedValue(undefined);
   vi.mocked(recordRelatedEvidenceWrites).mockResolvedValue(undefined);
   vi.mocked(itemStateRepo.getForStudent).mockResolvedValue([]);
+  vi.mocked(mathAnswerEventRepo.getDirectCorrectFirstAttempts).mockResolvedValue([]);
   vi.mocked(sessionRepo.getLastByMode).mockResolvedValue(undefined);
   vi.mocked(sessionRepo.save).mockResolvedValue(undefined);
   vi.mocked(sessionRepo.get).mockResolvedValue(undefined);
@@ -78,6 +81,38 @@ beforeEach(() => {
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('usePracticeSession — wrong first attempt + correct retry', () => {
+  it('uses a newly durable fifth sample when grading the next presentation', async () => {
+    let clock = 0;
+    const nowSpy = vi.spyOn(Date, 'now').mockImplementation(() => clock);
+    const history: MathAnswerEvent[] = [100, 200, 300, 400].map((latencyMs, index) => ({
+      id: `history-${index}`, studentId: STUDENT_ID, sessionId: `old-${index}`,
+      itemId: 'MUL_7x8', cardKey: 'fact:mul:7x8', mode: 'practice', promptShown: '7 × 8',
+      correctAnswer: 56, studentAnswer: 56, isCorrect: true, isRetry: false, hintUsed: false,
+      latencyMs, schedulingEligible: true, responsePolicy: 'atomic_fluency',
+      createdAt: `2026-05-0${index + 1}T10:00:00.000Z`,
+    }));
+    vi.mocked(mathAnswerEventRepo.getDirectCorrectFirstAttempts).mockResolvedValue(history);
+    const { result } = renderHook(() => usePracticeSession(STUDENT_ID));
+
+    await act(async () => {
+      await result.current.startSession({ ...SESSION_CONFIG, repeatPolicy: 'user_requested_rounds', rounds: 2 });
+    });
+    clock = 500;
+    await act(async () => { await result.current.submitAnswer('56'); });
+    expect(vi.mocked(recordPracticeAnswer).mock.calls[0][0].event.reviewGrade).toBe('good');
+
+    await act(async () => { await result.current.nextQuestion(); });
+    clock = 600;
+    await act(async () => { await result.current.submitAnswer('56'); });
+    const secondEvent = vi.mocked(recordPracticeAnswer).mock.calls[1][0].event;
+    expect(secondEvent.reviewGrade).toBe('easy');
+    expect(secondEvent.schedulingTelemetry?.rating).toMatchObject({
+      fluencyBaselineSource: 'student', fluencySampleCount: 5,
+      fluencyFastCutoffMs: 200, fluencySlowCutoffMs: 400,
+    });
+    nowSpy.mockRestore();
+  });
+
   it('records two events: wrong first attempt and correct retry', async () => {
     const { result } = renderHook(() => usePracticeSession(STUDENT_ID));
 

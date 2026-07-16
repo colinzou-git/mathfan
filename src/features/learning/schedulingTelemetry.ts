@@ -64,7 +64,9 @@ export interface SchedulingTelemetry {
   selection: SelectionContext;
   before?: SchedulingStateSnapshot;
   after?: SchedulingStateSnapshot;
-  rating: { reviewGrade: ReviewGrade; ratingReason?: RatingReason; responsePolicy?: ResponsePolicyKind; fluencyBand?: FluencyBand };
+  rating: { reviewGrade: ReviewGrade; ratingReason?: RatingReason; responsePolicy?: ResponsePolicyKind; fluencyBand?: FluencyBand;
+    fluencyBaselineSource?: 'student' | 'policy_default' | 'not_applicable'; fluencySampleCount?: number;
+    fluencyFastCutoffMs?: number; fluencySlowCutoffMs?: number };
   instance: ItemInstanceTelemetry;
 }
 
@@ -73,6 +75,10 @@ export interface ResponseTelemetryEvidence {
   ratingReason?: RatingReason;
   responsePolicy?: ResponsePolicyKind;
   fluencyBand?: FluencyBand;
+  fluencyBaselineSource?: 'student' | 'policy_default' | 'not_applicable';
+  fluencySampleCount?: number;
+  fluencyFastCutoffMs?: number;
+  fluencySlowCutoffMs?: number;
   hintUsed: boolean;
   isRetry: boolean;
   evidenceKind?: 'direct' | 'related';
@@ -129,7 +135,9 @@ export function buildSchedulingTelemetry(args: {
     selection: args.selection, before: args.stateBefore ? snapshotSchedulingState(args.stateBefore, args.now) : undefined,
     after: args.stateAfter ? snapshotSchedulingState(args.stateAfter, args.now) : undefined,
     rating: { reviewGrade: args.response.reviewGrade, ratingReason: args.response.ratingReason,
-      responsePolicy: args.response.responsePolicy, fluencyBand: args.response.fluencyBand },
+      responsePolicy: args.response.responsePolicy, fluencyBand: args.response.fluencyBand,
+      fluencyBaselineSource: args.response.fluencyBaselineSource, fluencySampleCount: args.response.fluencySampleCount,
+      fluencyFastCutoffMs: args.response.fluencyFastCutoffMs, fluencySlowCutoffMs: args.response.fluencySlowCutoffMs },
     instance: telemetryForItem(args.item),
   };
 }

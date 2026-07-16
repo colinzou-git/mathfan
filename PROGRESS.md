@@ -69,8 +69,10 @@ Issues #40–#60 are being fixed and validated one at a time in numeric order be
 | 46 | **implemented and validated; committed** |
 | 47 | **implemented and validated; committed** |
 | 48 | **implemented and validated; committed** |
-| 49 | **implemented and validated; committed next** |
-| 50–60 | open |
+| 49 | **implemented and validated; committed** |
+| 50 | **implemented and validated; committed** |
+| 51 | **in progress** |
+| 52–60 | open |
 
 ## Current focus
 
@@ -90,10 +92,10 @@ explicitly ask Claude to close them in a future session.
 **Branch D is merged and deployed** via PR #39 (merge ac10dea). GitHub issue #36 is closed.
 
 **Active branch:** `fix/open-issues-40-60` (created after the first focused commit).
-**Active issue:** #49 — honor user-requested Daily Review rounds without repeated FSRS updates (implemented and validated; committing next).
+**Active issue:** #51 (in progress).
 **Next concrete step:**
-1. Implement exact canonical-card round queues and round telemetry for #49.
-2. Validate and commit #49, then continue with #50.
+1. Read issue #51 and inspect its targeted code paths.
+2. Implement, validate, and commit #51.
 3. After #60, run final full checks, merge to main, deploy, and re-check live issues.
 
 Issue #30 validation completed on 2026-07-15: `npm run ci` (73 files / 1,279 tests),

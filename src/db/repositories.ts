@@ -135,6 +135,21 @@ export const mathAnswerEventRepo = {
       .and(e => !e.isRetry)
       .toArray();
   },
+  /** Chronological, independent correct atomic attempts suitable for personal fluency baselines. */
+  async getDirectCorrectFirstAttempts(studentId: string): Promise<MathAnswerEvent[]> {
+    const events = await db.mathAnswerEvents
+      .where('studentId').equals(studentId)
+      .and(e => !e.isRetry
+        && !e.relatedEvidence
+        && !e.hintUsed
+        && e.schedulingEligible !== false
+        && e.isCorrect
+        && e.responsePolicy === 'atomic_fluency'
+        && Number.isFinite(e.latencyMs)
+        && e.latencyMs > 0)
+      .toArray();
+    return events.sort((a, b) => a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id));
+  },
 };
 
 // ── Quiz stats ────────────────────────────────────────────────────────────────
