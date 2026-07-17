@@ -171,7 +171,7 @@ function renderGoalsWithInitialSkills(skillIds: string[]) {
 
 async function openWizardToStep(step: 1 | 2 | 3) {
   fireEvent.click(await screen.findByRole('button', { name: /add goal/i }));
-  if (step >= 2) fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+  if (step >= 2) fireEvent.click(await screen.findByRole('button', { name: 'Next' }));
   if (step >= 3) {
     const card = screen.getAllByRole('button').find(button => /total .*day/i.test(button.textContent ?? ''));
     expect(card).toBeDefined();
