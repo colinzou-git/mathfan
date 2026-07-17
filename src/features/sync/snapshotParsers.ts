@@ -3,6 +3,7 @@ import type { MathAnswerEvent } from '../learning/learningEvents';
 import type { MultiplicationFactStats, QuizSession } from '../multiplication/types';
 import type { GoalEvaluation, GoalEvent, LearningGoal } from '../goals/types';
 import type { SnapshotNormalizationProblem } from './snapshot';
+import { GoalEvaluationSelectionValidationError, validatePersistedGoalEvaluationSelection } from '../goals/goalEvaluationSelection';
 
 export type ParseResult<T> =
   | { ok: true; value: T; warnings: SnapshotNormalizationProblem[] }
@@ -113,6 +114,17 @@ export const parseGoalEvaluation = (value: unknown, index: number): ParseResult<
     if (!parsed || !nonempty(parsed.eventId) || !nonempty(parsed.itemId) || !validDate(parsed.answeredAt)) add('invalid_answer', `answers[${answerIndex}] is missing eventId, itemId, or a valid answeredAt.`);
   });
   if (row.answerEvents !== undefined && !Array.isArray(row.answerEvents)) add('invalid_array', 'answerEvents must be an array.');
+  delete row.currentItem;
+  delete row.currentItemId;
+  if (row.status !== 'in_progress') delete row.currentSelection;
+  if (row.currentSelection !== undefined) {
+    try {
+      row.currentSelection = validatePersistedGoalEvaluationSelection({ evaluation: row as unknown as GoalEvaluation, selection: row.currentSelection });
+    } catch (error) {
+      if (error instanceof GoalEvaluationSelectionValidationError) add(error.code, error.message);
+      else add('invalid_goal_selection', 'currentSelection is invalid.');
+    }
+  }
 });
 
 export const parseDailyLessonPlanShape = (value: unknown, index: number): ParseResult<PersistedDailyLessonPlan> => parseRow('dailyLessonPlans', value, index, (row, add) => {

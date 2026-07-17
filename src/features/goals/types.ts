@@ -100,6 +100,20 @@ export interface GoalEvaluationAnswer {
   reviewGrade?: ReviewGrade;
 }
 
+export interface PersistedGoalEvaluationSelection {
+  version: 1;
+  questionIndex: number;
+  selectedAt: string;
+  item: PracticeItem;
+  skillId: string;
+  domain: import('../mastery/grade3MasteryMap').Grade3Domain;
+  phase: 'screening' | 'adaptive_probe' | 'confirmation';
+  rationale: string;
+  cardKey: string;
+  schedulingEligible: boolean;
+  schedulingReason: 'first_card_evidence' | 'same_evaluation_template_repeat';
+}
+
 export interface GoalEvaluation {
   id: string;
   studentId: string;
@@ -119,19 +133,9 @@ export interface GoalEvaluation {
   answers: GoalEvaluationAnswer[];
   /** Canonical cards already allowed to update FSRS during this evaluation. */
   scheduledCardKeys?: string[];
-  /** Immutable pending question snapshot for exact reload/resume. */
-  currentItemId?: string;
-  currentItem?: PracticeItem;
-  currentSelection?: {
-    questionNumber: number;
-    phase: 'screening' | 'adaptive_probe' | 'confirmation';
-    skillId: string;
-    domain: import('../mastery/grade3MasteryMap').Grade3Domain;
-    rationale: string;
-    cardKey: string;
-    schedulingEligible: boolean;
-    schedulingReason: 'first_card_evidence' | 'same_evaluation_template_repeat';
-  };
+  /** Only canonical pending-question state; committed before the question is displayed. */
+  currentSelection?: PersistedGoalEvaluationSelection;
+  selectionRevision?: number;
   resultGoalId?: string;
   answerEvents?: MathAnswerEvent[];
 }

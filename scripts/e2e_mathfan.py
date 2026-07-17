@@ -913,7 +913,40 @@ def goal_evaluation_double_submit(page: Page) -> None:
     page.get_by_role("button", name="Evaluation", exact=True).first.click()
     expect(page.get_by_role("heading", name="Adaptive Goal Evaluation", exact=True)).to_be_visible()
     page.get_by_role("button", name="Start", exact=True).click()
-    expect(page.get_by_label("Question 1 of 30", exact=True)).to_be_visible(timeout=60_000)
+    question = page.get_by_label("Question 1 of 30", exact=True)
+    expect(question).to_be_visible(timeout=60_000)
+    original_prompt = question.text_content()
+    original_selection = page.evaluate("""async () => {
+        const db = await new Promise((resolve, reject) => { const request = indexedDB.open('mathfan'); request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error); });
+        const evaluations = await new Promise((resolve, reject) => { const request = db.transaction('goalEvaluations').objectStore('goalEvaluations').getAll(); request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error); }); db.close();
+        return evaluations[0].currentSelection;
+    }""")
+    assert original_selection, "Goal evaluation displayed a question before persisting currentSelection"
+    page.evaluate("() => history.replaceState({}, '', '/')")
+    page.reload()
+    reload_state = page.evaluate("""async () => {
+        const db = await new Promise((resolve, reject) => { const request = indexedDB.open('mathfan'); request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error); });
+        const rows = await new Promise((resolve, reject) => { const request = db.transaction('goalEvaluations').objectStore('goalEvaluations').getAll(); request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error); }); db.close(); return rows;
+    }""")
+    reload_evaluations = reload_state
+    assert len(reload_evaluations) == 1, f"Reload lost the in-progress goal evaluation: {reload_evaluations}"
+    page.get_by_role("button", name=re.compile(r"Goals")).click()
+    page.get_by_role("button", name="Evaluation", exact=True).first.click()
+    resume_button = page.get_by_role("button", name="Resume question 1", exact=True)
+    try:
+        expect(resume_button).to_be_visible(timeout=5_000)
+    except AssertionError as error:
+        raise AssertionError(f"Reloaded evaluation was not resumable: {reload_evaluations}") from error
+    resume_button.click()
+    question = page.get_by_label("Question 1 of 30", exact=True)
+    expect(question).to_be_visible(timeout=60_000)
+    resumed_selection = page.evaluate("""async () => {
+        const db = await new Promise((resolve, reject) => { const request = indexedDB.open('mathfan'); request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error); });
+        const evaluations = await new Promise((resolve, reject) => { const request = db.transaction('goalEvaluations').objectStore('goalEvaluations').getAll(); request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error); }); db.close();
+        return evaluations[0].currentSelection;
+    }""")
+    assert resumed_selection == original_selection, "Reload changed the persisted pending goal-evaluation question"
+    assert question.text_content() == original_prompt, "Reload rendered a different pending goal-evaluation prompt"
     page.get_by_role("button", name=re.compile(r"^-?\d+(?:\.\d+)?$"), exact=True).first.click(timeout=60_000)
     page.get_by_role("button", name="Check", exact=True).last.dblclick()
     expect(page.get_by_role("button", name="Continue", exact=True)).to_be_visible()

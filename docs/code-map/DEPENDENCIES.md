@@ -4,7 +4,7 @@
 
 | Package | Import count |
 | --- | --- |
-| vitest | 91 |
+| vitest | 92 |
 | react | 35 |
 | @testing-library/react | 19 |
 | pathlib | 8 |
@@ -105,6 +105,7 @@
 | src/db/dexie.ts | ../features/multiplication/types |
 | src/db/dexie.ts | ../types/math |
 | src/db/repositories.ts | ../features/fluency/fluencyEngine |
+| src/db/repositories.ts | ../features/goals/goalEvaluationSelection |
 | src/db/repositories.ts | ../features/goals/types |
 | src/db/repositories.ts | ../features/learning/eventOrdering |
 | src/db/repositories.ts | ../features/learning/learningEvents |
@@ -278,7 +279,14 @@
 | src/features/goals/goalEvaluationPersistence.ts | ../../utils/id |
 | src/features/goals/goalEvaluationPersistence.ts | ../../utils/rng |
 | src/features/goals/goalEvaluationPersistence.ts | ../learning/learningEvents |
+| src/features/goals/goalEvaluationPersistence.ts | ../scheduler/cardModel |
+| src/features/goals/goalEvaluationPersistence.ts | ./goalEvaluationEngine |
+| src/features/goals/goalEvaluationPersistence.ts | ./goalEvaluationSelection |
 | src/features/goals/goalEvaluationPersistence.ts | ./types |
+| src/features/goals/goalEvaluationSelection.ts | ../../types/math |
+| src/features/goals/goalEvaluationSelection.ts | ../curriculum/practiceContentSpec |
+| src/features/goals/goalEvaluationSelection.ts | ../scheduler/cardModel |
+| src/features/goals/goalEvaluationSelection.ts | ./types |
 | src/features/goals/GoalEvaluationSession.tsx | ../../components/NumPad |
 | src/features/goals/GoalEvaluationSession.tsx | ../../db/repositories |
 | src/features/goals/GoalEvaluationSession.tsx | ../../types/math |
@@ -635,6 +643,7 @@
 | src/features/sync/snapshot.ts | ./snapshotParsers |
 | src/features/sync/snapshot.ts | ./timeUtil |
 | src/features/sync/snapshotParsers.ts | ../../types/math |
+| src/features/sync/snapshotParsers.ts | ../goals/goalEvaluationSelection |
 | src/features/sync/snapshotParsers.ts | ../goals/types |
 | src/features/sync/snapshotParsers.ts | ../learning/learningEvents |
 | src/features/sync/snapshotParsers.ts | ../multiplication/types |
@@ -834,7 +843,12 @@
 | src/tests/goalEvaluationEngine.test.tsx | ../features/practice/answerChecker |
 | src/tests/goalEvaluationEngine.test.tsx | ../features/practice/QuestionRenderer |
 | src/tests/goalEvaluationEngine.test.tsx | ../types/math |
+| src/tests/goalEvaluationSelectionPersistence.test.ts | ../db/dexie |
+| src/tests/goalEvaluationSelectionPersistence.test.ts | ../features/goals/goalEvaluationEngine |
+| src/tests/goalEvaluationSelectionPersistence.test.ts | ../features/goals/goalEvaluationPersistence |
+| src/tests/goalEvaluationSelectionPersistence.test.ts | ../features/goals/types |
 | src/tests/goalEvaluationSession.test.tsx | ../db/repositories |
+| src/tests/goalEvaluationSession.test.tsx | ../features/goals/goalEvaluationEngine |
 | src/tests/goalEvaluationSession.test.tsx | ../features/goals/goalEvaluationPersistence |
 | src/tests/goalEvaluationSession.test.tsx | ../features/goals/GoalEvaluationSession |
 | src/tests/goalEvaluationSession.test.tsx | ../features/goals/types |
