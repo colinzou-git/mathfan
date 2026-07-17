@@ -297,6 +297,25 @@ describe('goal snapshot v2', () => {
     expect((mockDb.dailyLessonPlans.rows[0] as never as { items: Array<{ item: { id: string } }> }).items[0].item.id).toBe('local-item');
   });
 
+  it('preserves divergent semantic lesson content and deterministically keeps in-progress local content active', async () => {
+    const local = {
+      id: 'local-plan', studentId: 'student-1', localDate: '2026-06-17', timezone: 'UTC',
+      plannerVersion: 'daily-lesson-v1', revision: 1, generatedAt: '2026-06-17T00:00:00.000Z', updatedAt: '2026-06-17T01:00:00.000Z',
+      status: 'in_progress', estimatedMinutes: 5, completedItemInstanceIds: ['local-item'], scheduledCardKeys: ['template:local'], warnings: [],
+      items: [{ item: { id: 'local-item' }, cardKey: 'template:local', segment: 'focus', rationale: 'local', schedulingEligible: true }],
+    };
+    mockDb.dailyLessonPlans.rows = [local];
+    await mergeSnapshot(baseSnapshot({ dailyLessonPlans: [{
+      ...local, id: 'remote-plan', status: 'planned', updatedAt: '2026-06-17T02:00:00.000Z', completedItemInstanceIds: [], scheduledCardKeys: [],
+      items: [{ item: { id: 'remote-item' }, cardKey: 'template:remote', segment: 'focus', rationale: 'remote', schedulingEligible: true }],
+    }] as never }));
+    const plans = mockDb.dailyLessonPlans.rows as never as Array<{ id: string; status: string; conflictOfPlanId?: string; items: Array<{ item: { id: string } }> }>;
+    expect(plans).toHaveLength(2);
+    expect(plans.find(plan => plan.id === 'local-plan')).toMatchObject({ status: 'in_progress' });
+    expect(plans.find(plan => plan.id === 'remote-plan')).toMatchObject({ status: 'replaced', conflictOfPlanId: 'local-plan' });
+    expect(plans.map(plan => plan.items[0].item.id).sort()).toEqual(['local-item', 'remote-item']);
+  });
+
   it('unions goal events by ID without replacing existing local events', async () => {
     mockDb.goalEvents.rows = [{
       id: 'event-1',

@@ -474,6 +474,41 @@ describe('usePracticeSession — adaptive selection', () => {
     });
   });
 
+  it('does not reschedule a card recorded by a persisted lesson before resume', async () => {
+    const item = makeItemFromId('MUL_3x4')!;
+    const { result } = renderHook(() => usePracticeSession(STUDENT_ID));
+    await act(async () => { await result.current.startSession({
+      mode: 'adaptive_lesson', sessionLength: 1,
+      plannedPracticeItems: [{
+        item, schedulingEligible: true,
+        selection: { origin: 'due_retrieval', rationaleCodes: ['due'], lessonPlanId: 'lesson-plan' },
+      }],
+      initialScheduledCardKeys: ['fact:mul:3x4'], lessonPlanId: 'lesson-plan',
+    }); });
+    await act(async () => { await result.current.submitAnswer('12'); });
+    expect(vi.mocked(recordPracticeAnswer).mock.calls[0][0].event).toMatchObject({
+      schedulingEligible: false, schedulingApplied: false,
+    });
+    expect(applyReview).not.toHaveBeenCalled();
+  });
+
+  it('honors planner-level scheduling ineligibility for a queued lesson item', async () => {
+    const item = makeItemFromId('MUL_3x4')!;
+    const { result } = renderHook(() => usePracticeSession(STUDENT_ID));
+    await act(async () => { await result.current.startSession({
+      mode: 'adaptive_lesson', sessionLength: 1,
+      plannedPracticeItems: [{
+        item, schedulingEligible: false,
+        selection: { origin: 'transfer', rationaleCodes: ['transfer'], lessonPlanId: 'lesson-plan' },
+      }], lessonPlanId: 'lesson-plan',
+    }); });
+    await act(async () => { await result.current.submitAnswer('12'); });
+    expect(vi.mocked(recordPracticeAnswer).mock.calls[0][0].event).toMatchObject({
+      schedulingEligible: false, schedulingApplied: false,
+    });
+    expect(applyReview).not.toHaveBeenCalled();
+  });
+
   it('commits a canonical answer once when auxiliary lesson progress fails', async () => {
     vi.mocked(markDailyLessonProgressFromEvent).mockRejectedValueOnce(new Error('plan replaced')).mockResolvedValueOnce('updated');
     const { result } = renderHook(() => usePracticeSession(STUDENT_ID));

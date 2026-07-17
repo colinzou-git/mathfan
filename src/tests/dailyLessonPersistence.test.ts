@@ -34,6 +34,14 @@ describe('learner-local persisted daily lessons', () => {
     expect(resumed.completedItemInstanceIds).toEqual([first.items[0].item.id]);
   });
 
+  it('atomically returns one active revision to concurrent callers', async () => {
+    const args = base('2026-07-17T00:30:00.000Z');
+    const plans = await Promise.all(Array.from({ length: 8 }, (_, index) =>
+      getOrCreateDailyLessonPlan({ ...args, rng: mulberry32(index + 1) })));
+    expect(new Set(plans.map(plan => plan.id))).toEqual(new Set([plans[0].id]));
+    expect((await db.dailyLessonPlans.toArray()).filter(plan => plan.status !== 'replaced')).toHaveLength(1);
+  });
+
   it('creates a new explicit revision while preserving the replaced plan', async () => {
     const args = base('2026-07-17T00:30:00.000Z');
     const first = await getOrCreateDailyLessonPlan(args);
@@ -67,15 +75,17 @@ describe('learner-local persisted daily lessons', () => {
       id: 'lesson-answer', studentId: plan.studentId, sessionId: 'session-1', itemId: plan.items[0].item.id,
       itemInstanceId, lessonPlanId: plan.id, mode: 'practice', promptShown: 'prompt', correctAnswer: 1,
       studentAnswer: 1, isCorrect: true, isRetry: false, hintUsed: false, latencyMs: 1000,
-      createdAt: '2026-07-17T00:31:00.000Z',
+      createdAt: '2026-07-17T00:31:00.000Z', cardKey: plan.items[0].cardKey, schedulingApplied: true,
     } as MathAnswerEvent;
     expect(await markDailyLessonProgressFromEvent(event)).toBe('updated');
     expect(await markDailyLessonProgressFromEvent(event)).toBe('already_updated');
+    expect((await db.dailyLessonPlans.get(plan.id))?.scheduledCardKeys).toContain(plan.items[0].cardKey);
 
-    await db.dailyLessonPlans.put({ ...plan, completedItemInstanceIds: [], status: 'planned' });
+    await db.dailyLessonPlans.put({ ...plan, completedItemInstanceIds: [], scheduledCardKeys: [], status: 'planned' });
     await db.mathAnswerEvents.put(event);
     const repaired = await reconcileDailyLessonProgress(plan.studentId, plan.id);
     expect(repaired?.completedItemInstanceIds).toContain(itemInstanceId);
+    expect(repaired?.scheduledCardKeys).toContain(plan.items[0].cardKey);
     expect((await reconcileDailyLessonProgress(plan.studentId, plan.id))?.completedItemInstanceIds).toEqual(repaired?.completedItemInstanceIds);
   });
 });

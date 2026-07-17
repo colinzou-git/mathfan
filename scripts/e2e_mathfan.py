@@ -785,6 +785,16 @@ def adaptive_lesson_and_manual_fallback(page: Page) -> None:
     expect(lesson).to_be_visible()
     resumed_plan = page.evaluate("""async () => { const db = await new Promise((resolve, reject) => { const r = indexedDB.open('mathfan'); r.onsuccess = () => resolve(r.result); r.onerror = () => reject(r.error); }); const rows = await new Promise((resolve, reject) => { const r = db.transaction('dailyLessonPlans').objectStore('dailyLessonPlans').getAll(); r.onsuccess = () => resolve(r.result); r.onerror = () => reject(r.error); }); db.close(); return rows[0].items.map(entry => entry.item.id); }""")
     assert resumed_plan == first_plan, "Today’s Lesson item order changed after reload"
+    page.evaluate("""async () => {
+        const db = await new Promise((resolve, reject) => { const r = indexedDB.open('mathfan'); r.onsuccess = () => resolve(r.result); r.onerror = () => reject(r.error); });
+        const plans = await new Promise((resolve, reject) => { const r = db.transaction('dailyLessonPlans').objectStore('dailyLessonPlans').getAll(); r.onsuccess = () => resolve(r.result); r.onerror = () => reject(r.error); });
+        const active = plans.find(plan => plan.status !== 'replaced');
+        active.scheduledCardKeys = [active.items[0].cardKey];
+        await new Promise((resolve, reject) => { const tx = db.transaction('dailyLessonPlans', 'readwrite'); tx.objectStore('dailyLessonPlans').put(active); tx.oncomplete = resolve; tx.onerror = () => reject(tx.error); }); db.close();
+    }""")
+    page.reload(wait_until="domcontentloaded")
+    lesson = page.get_by_role("region", name="Start Today’s Lesson")
+    expect(lesson).to_be_visible()
     lesson.get_by_role("button", name="Start lesson", exact=True).click()
     page.evaluate("""() => {
         window.__mathfanOriginalLessonPut = IDBObjectStore.prototype.put;
@@ -817,6 +827,8 @@ def adaptive_lesson_and_manual_fallback(page: Page) -> None:
             expect(page.get_by_text(re.compile(r"answer is saved.*lesson progress", re.I))).to_be_visible()
             canonical_count = page.evaluate("""async () => { const db = await new Promise((resolve, reject) => { const request = indexedDB.open('mathfan'); request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error); }); const events = await new Promise((resolve, reject) => { const request = db.transaction('mathAnswerEvents').objectStore('mathAnswerEvents').getAll(); request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error); }); db.close(); return events.filter(event => event.lessonPlanId && !event.relatedEvidence).length; }""")
             assert canonical_count == 1, "Canonical answer was not saved exactly once before auxiliary failure"
+            resumed_scheduling = page.evaluate("""async () => { const db = await new Promise((resolve, reject) => { const request = indexedDB.open('mathfan'); request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error); }); const events = await new Promise((resolve, reject) => { const request = db.transaction('mathAnswerEvents').objectStore('mathAnswerEvents').getAll(); request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error); }); db.close(); return events.find(event => event.lessonPlanId && !event.relatedEvidence)?.schedulingApplied; }""")
+            assert resumed_scheduling is False, "Resumed lesson rescheduled a card already persisted by the plan"
             page.evaluate("""() => { IDBObjectStore.prototype.put = window.__mathfanOriginalLessonPut; }""")
             page.get_by_role("button", name="Retry progress update", exact=True).click()
             expect(page.get_by_role("button", name="Retry progress update", exact=True)).to_have_count(0)
