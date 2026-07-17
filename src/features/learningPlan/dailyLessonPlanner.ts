@@ -13,6 +13,7 @@ import { deriveLearningUnitProgress } from '../learning/learningUnitProgress';
 import { learnerLocalDateKey } from '../time/localDate';
 import { chronologicalEvents } from '../learning/eventOrdering';
 import { DAILY_LESSON_PLANNER_VERSION } from '../learning/schedulingTelemetry';
+import { contentSpecForItem } from '../curriculum/practiceContentSpec';
 
 export type LessonSegmentKind = 'retrieval' | 'focus' | 'transfer';
 export interface PlannedLessonItem {
@@ -37,8 +38,9 @@ export function estimateItemSeconds(item: PracticeItem, events: MathAnswerEvent[
     .map(event => event.latencyMs)
     .filter(value => value > 0);
   if (history.length) return Math.max(8, Math.min(90, Math.round(history.reduce((sum, value) => sum + value, 0) / history.length / 1000)));
-  if (COMPLEX_TYPES.has(item.itemType) || item.wordProblemSpec?.steps.length === 2) return 45;
-  if (item.visualSpec || item.measurementSpec || item.fractionSpec || item.divisionSpec || item.arithmeticSpec) return 30;
+  const content = contentSpecForItem(item);
+  if (COMPLEX_TYPES.has(item.itemType) || (content?.domain === 'word_problem' && content.data.steps.length === 2)) return 45;
+  if (item.visualSpec || content) return 30;
   return 20;
 }
 

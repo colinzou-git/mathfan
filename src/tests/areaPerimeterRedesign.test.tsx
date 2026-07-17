@@ -1,5 +1,8 @@
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
+import { makeItemFromId as reconstructItem } from '../features/curriculum/makeItemFromId';
+import { projectLegacyCompatibilityFields } from '../features/curriculum/practiceContentSpec';
+import type { PracticeItem } from '../types/math';
 import {
   areaPerimeterChoiceItemIds,
   areaPerimCompareItemIds,
@@ -13,7 +16,6 @@ import {
   perimeterUnknownSideItemIds,
   rectilinearAreaItemIds,
 } from '../features/curriculum/areaItems';
-import { makeItemFromId } from '../features/curriculum/makeItemFromId';
 import { detectMistakes } from '../features/mastery/misconceptionEngine';
 import { buildFocusSequence } from '../features/mastery/skillPracticePlanner';
 import { getHint } from '../features/practice/hintEngine';
@@ -21,6 +23,11 @@ import { deriveCardKey } from '../features/scheduler/cardModel';
 import { misconceptionBridgeBoost } from '../features/adaptive/adaptiveItemSelector';
 import { VisualModel } from '../features/visuals/VisualModel';
 import { hasVisualModel } from '../features/visuals/visualModelUtils';
+
+const makeItemFromId = (id: string): PracticeItem | null => {
+  const item = reconstructItem(id);
+  return item ? projectLegacyCompatibilityFields(item) : null;
+};
 
 afterEach(cleanup);
 

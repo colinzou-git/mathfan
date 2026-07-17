@@ -1,6 +1,6 @@
 # Code Map Overview
 
-Generated: 2026-07-17 01:18:19 UTC
+Generated: 2026-07-17 01:46:37 UTC
 
 Repo root: `/home/ubuntu/mathfan`
 Output folder: `/home/ubuntu/mathfan/docs/code-map`
@@ -15,8 +15,8 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 - Version: `1.2.0`
 - Module type: `module`
 - Scanned files: **298**
-- Scanned lines: **55,482**
-- Scanned bytes: **2,382,546**
+- Scanned lines: **55,626**
+- Scanned bytes: **2,390,949**
 
 ## NPM scripts
 
@@ -74,7 +74,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 | --- | --- | --- | --- |
 | src/App.tsx | 401 | Top-level React app shell: routes/screens, global state, and feature wiring. | App, exportMigrationDiagnostics, handleQuizDone, handleSessionDone, pickOperation, retryMigration, runBootstrap, selectProfile |
 | src/features/sync/SyncWidget.tsx | 156 | Cloud sync/auth/data transfer logic. | GoogleIcon, SyncWidget, friendlyError, GoogleIcon, initials, SyncWidget, timeSince |
-| src/features/sync/snapshot.ts | 494 | Local persistence/database layer. | AppSnapshot, AppSnapshotV3, normalizeSnapshot, OrphanReport, remoteHasNewerUpdatedAt, SnapshotFormatMetadata, SnapshotNormalizationProblem, SnapshotNormalizationResult |
+| src/features/sync/snapshot.ts | 501 | Local persistence/database layer. | AppSnapshot, AppSnapshotV3, normalizeSnapshot, OrphanReport, remoteHasNewerUpdatedAt, SnapshotFormatMetadata, SnapshotNormalizationProblem, SnapshotNormalizationResult |
 | vite.config.ts | 82 | Vite build/PWA configuration. | buildInfoPlugin |
 | package.json | 53 | Project package metadata, scripts, dependencies, and dev tooling. |  |
 | src/main.tsx | 21 | React entry point that mounts the app. |  |
@@ -602,7 +602,7 @@ Purpose: Local persistence/database layer.
   10: import { makeItemFromId } from '../curriculum/makeItemFromId';
   11: import { deriveCardKey } from '../scheduler/cardModel';
   12: import { CARD_MODEL_VERSION } from '../learning/schedulingTelemetry';
-  13: import { validatePracticeItem, withLegacyContentSpec } from '../curriculum/practiceContentSpec';
+  13: import { assertValidPracticeItem, validatePracticeItem } from '../curriculum/practiceContentSpec';
   14: import { loadActiveProfileSelection, saveActiveProfileSelection } from '../profile/profileBootstrap';
   15: import {
   16:   parseAttemptLog, parseDailyLessonPlanShape, parseGoalEvaluation, parseGoalEvent, parseLearningGoal,
@@ -650,7 +650,7 @@ Purpose: Local persistence/database layer.
   58:     db.multFactStats,
   59:     db.quizSessions,
   60:     db.mathAnswerEvents,
-... (433 more lines)
+... (440 more lines)
 ```
 
 ### `vite.config.ts`

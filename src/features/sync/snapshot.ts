@@ -10,7 +10,7 @@ import { validTimeMs, remoteHasNewerUpdatedAt } from './timeUtil';
 import { makeItemFromId } from '../curriculum/makeItemFromId';
 import { deriveCardKey } from '../scheduler/cardModel';
 import { CARD_MODEL_VERSION } from '../learning/schedulingTelemetry';
-import { validatePracticeItem, withLegacyContentSpec } from '../curriculum/practiceContentSpec';
+import { assertValidPracticeItem, validatePracticeItem } from '../curriculum/practiceContentSpec';
 import { loadActiveProfileSelection, saveActiveProfileSelection } from '../profile/profileBootstrap';
 import {
   parseAttemptLog, parseDailyLessonPlanShape, parseGoalEvaluation, parseGoalEvent, parseLearningGoal,
@@ -320,7 +320,14 @@ export function normalizeSnapshot(raw: unknown): SnapshotNormalizationResult {
       problems.push({ table: 'dailyLessonPlans', recordId: String(index), code: 'invalid_items', message: 'Daily lesson items must be an array.' });
       continue;
     }
-    const items = plan.items.map(value => ({ ...value, item: withLegacyContentSpec(value.item) }));
+    const rawInvalid = plan.items.flatMap((value, itemIndex) => validatePracticeItem(value.item)
+      .map(problem => ({ ...problem, path: `items[${itemIndex}].item.${problem.path}` })));
+    if (rawInvalid.length) {
+      problems.push({ table: 'dailyLessonPlans', recordId: plan.id, code: 'invalid_practice_item',
+        message: rawInvalid.map(problem => `${problem.path}: ${problem.message}`).join('; ') });
+      continue;
+    }
+    const items = plan.items.map(value => ({ ...value, item: assertValidPracticeItem(value.item) }));
     const invalid = items.flatMap(value => validatePracticeItem(value.item));
     if (invalid.length) {
       problems.push({

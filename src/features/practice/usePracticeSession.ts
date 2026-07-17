@@ -13,7 +13,7 @@ import {
   ALL_ITEMS, ITEM_MAP,
 } from '../curriculum/multiplicationItems';
 import { makeItemFromId } from '../curriculum/makeItemFromId';
-import { assertValidPracticeItem, withLegacyContentSpec } from '../curriculum/practiceContentSpec';
+import { assertValidPracticeItem } from '../curriculum/practiceContentSpec';
 import {
   generateAdditionItems, generateSubtractionItems, generateDivisionItemsRange,
 } from '../curriculum/arithmeticItems';
@@ -162,7 +162,7 @@ export function usePracticeSession(studentId: string) {
   }>(null);
 
   const resolveItem = useCallback((id: string): PItem => {
-    return assertValidPracticeItem(withLegacyContentSpec(dynamicItemsRef.current.get(id) ?? getStaticItem(id)));
+    return assertValidPracticeItem(dynamicItemsRef.current.get(id) ?? getStaticItem(id));
   }, []);
 
   // ── startSession ──────────────────────────────────────────────────────────

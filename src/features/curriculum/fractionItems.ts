@@ -1,6 +1,7 @@
 import type { PracticeItem } from '../../types/math';
 import type { FractionValue } from '../fractions/types';
 import type { Rng } from '../../utils/rng';
+import { contentDataForDomain } from './practiceContentSpec';
 
 const SKILL_FRAC = 'SKILL_FRACTIONS';
 
@@ -199,7 +200,7 @@ export function makeFractionCompareItem(n1: number, d1: number, n2: number, d2: 
 
 export function validateFractionItem(item: PracticeItem): FractionValidationResult {
   const issues: string[] = [];
-  const spec = item.fractionSpec;
+  const spec = contentDataForDomain(item, 'fraction');
   if (!spec) return { valid: false, issues: ['missing_fraction_spec'] };
   const values: FractionValue[] = spec.kind === 'locate_number_line' || spec.kind === 'unit_fraction_model'
     ? [spec.value]

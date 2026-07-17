@@ -1,5 +1,6 @@
 import type { PracticeItem } from '../../types/math';
 import type { Rng } from '../../utils/rng';
+import { contentDataForDomain, withPracticeContentSpec } from './practiceContentSpec';
 
 export type RegroupingProfile =
   | 'none'
@@ -301,40 +302,40 @@ export function generateArithmeticInstructionItem(
   base: PracticeItem,
   mode: 'choose_regroup_step' | 'complete_expanded_form' | 'estimate_then_compute',
 ): PracticeItem {
-  if (!base.arithmeticSpec) throw new Error('Structured arithmetic item required');
-  const source = base.arithmeticSpec;
+  const source = contentDataForDomain(base, 'arithmetic');
+  if (!source) throw new Error('Structured arithmetic item required');
   const spec: ArithmeticQuestionSpec = { ...source, mode };
   const symbol = source.operation === 'addition' ? '+' : '−';
   if (mode === 'choose_regroup_step') {
     const first = source.structure.columnActions.find(column => column.action !== 'none');
     const answer = first?.place ?? 'none';
-    return {
+    return withPracticeContentSpec({
       ...base, id: `ARSTEP_${source.operation}_${source.a}_${source.b}`,
       prompt: `For ${source.a} ${symbol} ${source.b}, which place needs regrouping first?`,
-      answer, answerInput: 'choice', choices: ['ones', 'tens', 'hundreds', 'none'], arithmeticSpec: spec,
+      answer, answerInput: 'choice', choices: ['ones', 'tens', 'hundreds', 'none'],
       cardKey: arithmeticTemplateKey(spec), schemaId: `${source.operation}_${source.structure.digits}digit_${source.structure.regrouping}_${mode}`,
       tags: [...base.tags, 'choose_regroup_step'],
-    };
+    }, { domain: 'arithmetic', version: 1, data: spec });
   }
   if (mode === 'complete_expanded_form') {
     const place = source.structure.digits === 3 ? 100 : 10;
     const answer = Math.floor(source.a / place) * place;
-    return {
+    return withPracticeContentSpec({
       ...base, id: `AREXP_${source.operation}_${source.a}_${source.b}`,
       prompt: `Complete the expanded form: ${source.a} = ? + ${source.a % place}. What belongs in the blank?`,
-      answer, answerInput: 'numeric', arithmeticSpec: spec,
+      answer, answerInput: 'numeric',
       cardKey: arithmeticTemplateKey(spec), schemaId: `${source.operation}_${source.structure.digits}digit_${source.structure.regrouping}_${mode}`,
       tags: [...base.tags, 'expanded_form'],
-    };
+    }, { domain: 'arithmetic', version: 1, data: spec });
   }
   const answer = source.operation === 'addition' ? source.a + source.b : source.a - source.b;
-  return {
+  return withPracticeContentSpec({
     ...base, id: `AREST_${source.operation}_${source.a}_${source.b}`,
     prompt: `Estimate to check, then compute ${source.a} ${symbol} ${source.b}.`,
-    answer, answerInput: 'numeric', arithmeticSpec: spec,
+    answer, answerInput: 'numeric',
     cardKey: arithmeticTemplateKey(spec), schemaId: `${source.operation}_${source.structure.digits}digit_${source.structure.regrouping}_${mode}`,
     tags: [...base.tags, 'estimate_then_compute'],
-  };
+  }, { domain: 'arithmetic', version: 1, data: spec });
 }
 
 export function generateArithmeticOperands(

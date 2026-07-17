@@ -3,9 +3,12 @@ import type { PracticeContentSpec, PracticeItem } from '../types/math';
 import { makeItemFromId } from '../features/curriculum/makeItemFromId';
 import {
   contentSpecForItem,
+  inspectRawPracticeItemContent,
+  normalizePracticeItemContent,
   PRACTICE_CONTENT_SPEC_VERSION,
+  PracticeItemValidationError,
   validatePracticeItem,
-  withLegacyContentSpec,
+  withPracticeContentSpec,
 } from '../features/curriculum/practiceContentSpec';
 import { telemetryForItem } from '../features/learning/schedulingTelemetry';
 import { inferGrade3SkillId } from '../features/mastery/skillMapping';
@@ -41,11 +44,11 @@ describe('versioned practice content contract', () => {
       code: 'incompatible_item_type', path: 'itemType',
     }));
     const contradictory = {
-      ...fraction,
-      contentSpec: undefined,
-      arithmeticSpec: arithmetic.arithmeticSpec,
+      ...fraction, contentSpec: undefined,
+      fractionSpec: fraction.contentSpec!.data as never,
+      arithmeticSpec: arithmetic.contentSpec!.data as never,
     };
-    expect(contentSpecForItem(contradictory)).toBeUndefined();
+    expect(() => contentSpecForItem(contradictory)).toThrow(PracticeItemValidationError);
     expect(validatePracticeItem(contradictory)).toContainEqual(expect.objectContaining({
       code: 'multiple_primary_legacy_specs', path: 'fractionSpec,arithmeticSpec',
     }));
@@ -70,16 +73,16 @@ describe('versioned practice content contract', () => {
       expect(validatePracticeItem(serialized), id).toEqual([]);
       const reconstructed = makeItemFromId(serialized.id)!;
       expect(reconstructed.contentSpec).toEqual(original.contentSpec);
-      const projected = withLegacyContentSpec({
+      const projected = withPracticeContentSpec({
         ...reconstructed,
-        fractionSpec: makeItemFromId('FEQ_1_2_4')!.fractionSpec,
-      });
+        fractionSpec: makeItemFromId('FEQ_1_2_4')!.contentSpec!.data as never,
+      }, reconstructed.contentSpec);
       expect(validatePracticeItem(projected), id).toEqual([]);
       const primaryFields = [
         projected.fractionSpec, projected.arithmeticSpec, projected.divisionSpec,
         projected.measurementSpec, projected.wordProblemSpec, projected.reasoningSpec,
       ].filter(Boolean);
-      expect(primaryFields).toHaveLength(1);
+      expect(primaryFields).toHaveLength(0);
     }
   });
 
@@ -90,7 +93,7 @@ describe('versioned practice content contract', () => {
       fractionSpec: undefined,
       contentSpec: { ...item.contentSpec!, version: 99 } as unknown as PracticeContentSpec,
     };
-    expect(contentSpecForItem(future)).toBeUndefined();
+    expect(() => contentSpecForItem(future)).toThrow(PracticeItemValidationError);
     expect(validatePracticeItem(future)).toContainEqual(expect.objectContaining({
       code: 'unsupported_content_spec_version', path: 'contentSpec.version',
     }));
@@ -98,9 +101,19 @@ describe('versioned practice content contract', () => {
 
   it('keeps old single-spec fixtures readable through the explicit adapter', () => {
     const current = makeItemFromId('FEQ_1_2_4')!;
-    const legacy = { ...current, contentSpec: undefined };
+    const legacy = { ...current, contentSpec: undefined, fractionSpec: current.contentSpec!.data as never };
     expect(contentSpecForItem(legacy)).toEqual({
       domain: 'fraction', version: 1, data: legacy.fractionSpec,
     });
+  });
+
+  it('rejects canonical plus legacy before normalization can strip either field', () => {
+    const item = makeItemFromId('ADD_47p28')!;
+    const raw = { ...item, arithmeticSpec: item.contentSpec!.data as never };
+    expect(inspectRawPracticeItemContent(raw).problems).toContainEqual(expect.objectContaining({
+      code: 'canonical_and_legacy_primary_specs', path: 'contentSpec',
+    }));
+    expect(normalizePracticeItemContent(raw)).toMatchObject({ ok: false });
+    expect(validatePracticeItem(raw)).toEqual(inspectRawPracticeItemContent(raw).problems);
   });
 });
