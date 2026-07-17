@@ -74,12 +74,12 @@ describe('deriveFluencyBaseline', () => {
     expect(baseline!.medianMs).toBeLessThan(2000);
   });
 
-  it('excludes untimed assessment latency from personal fluency evidence', () => {
+  it('excludes untimed diagnostic latency from personal fluency evidence', () => {
     const events = [
       ...Array.from({ length: MIN_BASELINE_SAMPLES }, (_, i) => event({ latencyMs: 1000 + i })),
       ...Array.from({ length: MIN_BASELINE_SAMPLES }, () => event({
         latencyMs: 50_000,
-        mode: 'goal_evaluation',
+        mode: 'diagnostic',
         gradingContext: 'untimed_assessment',
       })),
     ];

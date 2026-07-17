@@ -210,6 +210,17 @@ describe('checkAnswer — carries the full response evidence', () => {
       ratingReason: 'untimed_assessment_incorrect',
     });
   });
+  it('keeps correct procedural answers Good in untimed assessments', () => {
+    const procedural: PracticeItem = {
+      ...mulFact,
+      id: 'WORD_MULT_23x3',
+      itemType: 'word_problem',
+      prompt: 'There are 3 groups of 23. How many altogether?',
+      answer: 69,
+    };
+    expect(checkAnswer(procedural, '69', 20_000, { gradingContext: 'untimed_assessment' }))
+      .toMatchObject({ reviewGrade: 'good', gradingContext: 'untimed_assessment' });
+  });
   it('passes hintUsed through to a non-scheduling-eligible grade', () => {
     const r = checkAnswer(mulFact, '56', 900, { hintUsed: true });
     expect(r.schedulingEligible).toBe(false);
