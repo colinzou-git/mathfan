@@ -21,7 +21,7 @@ import {
 import { deriveMasteryFromEvents } from '../multiplication/masteryEngine';
 import type { MultiplicationFactKey } from '../multiplication/types';
 import { legacyClassifyByLatency } from '../practice/answerChecker';
-import type { ReviewGrade } from '../../types/math';
+import type { PracticeItem, ReviewGrade, StudentItemState } from '../../types/math';
 import { compareEventsChronologically } from './eventOrdering';
 
 export function shouldApplyEventToScheduler(event: MathAnswerEvent, scheduledBySessionCard: Set<string>): boolean {
@@ -46,6 +46,76 @@ export function shouldApplyEventToScheduler(event: MathAnswerEvent, scheduledByS
 function gradeFromEvent(event: MathAnswerEvent): ReviewGrade {
   if (event.reviewGrade) return event.reviewGrade;
   return legacyClassifyByLatency(event.isCorrect, event.latencyMs);
+}
+
+export interface CardReplayResult {
+  state: StudentItemState;
+  appliedEventIds: string[];
+  skippedEventIds: string[];
+  ambiguousBoundaryEventIds: string[];
+  hasDirectEvidence: boolean;
+}
+
+/** Replays event deltas on top of an optional scheduler baseline. */
+export function replayCardEvents(args: {
+  studentId: string;
+  cardKey: string;
+  seedItem: PracticeItem;
+  events: readonly MathAnswerEvent[];
+  baseline?: StudentItemState;
+}): CardReplayResult {
+  const ordered = [...args.events].sort(compareEventsChronologically);
+  const baselineTime = args.baseline?.lastSeenAt ? Date.parse(args.baseline.lastSeenAt) : Number.NEGATIVE_INFINITY;
+  let state: StudentItemState = args.baseline
+    ? structuredClone({ ...args.baseline, cardKey: args.cardKey })
+    : { ...createInitialState(args.studentId, args.seedItem), cardKey: args.cardKey };
+  const scheduledBySessionCard = new Set<string>();
+  const replayedEventIds = new Set<string>();
+  const appliedEventIds: string[] = [];
+  const skippedEventIds: string[] = [];
+  const ambiguousBoundaryEventIds: string[] = [];
+  let hasDirectEvidence = Boolean(args.baseline && ((args.baseline.reps ?? 0) > 0 || args.baseline.attemptCount > 0));
+
+  for (const event of ordered) {
+    if (replayedEventIds.has(event.id)) { skippedEventIds.push(event.id); continue; }
+    replayedEventIds.add(event.id);
+    const eventTime = Date.parse(event.createdAt);
+    if (!Number.isFinite(eventTime)) { skippedEventIds.push(event.id); continue; }
+    if (eventTime === baselineTime) {
+      ambiguousBoundaryEventIds.push(event.id);
+      skippedEventIds.push(event.id);
+      continue;
+    }
+    if (eventTime < baselineTime) { skippedEventIds.push(event.id); continue; }
+
+    if (event.relatedEvidence) {
+      if (!hasDirectEvidence || !shouldApplyEventToScheduler(event, scheduledBySessionCard)) {
+        skippedEventIds.push(event.id);
+        continue;
+      }
+      state = applyRelatedEvidence(state, new Date(event.createdAt));
+      appliedEventIds.push(event.id);
+      continue;
+    }
+
+    if (shouldApplyEventToScheduler(event, scheduledBySessionCard)) {
+      state = applyReview(
+        state,
+        gradeFromEvent(event),
+        event.latencyMs,
+        String(event.studentAnswer ?? ''),
+        new Date(event.createdAt),
+        { isCorrect: event.isCorrect },
+      );
+      state = { ...state, cardKey: args.cardKey, lastItemId: event.itemId };
+      hasDirectEvidence = true;
+      appliedEventIds.push(event.id);
+    } else {
+      skippedEventIds.push(event.id);
+    }
+    state = applyMisconceptionEventEvidence(state, event);
+  }
+  return { state, appliedEventIds, skippedEventIds, ambiguousBoundaryEventIds, hasDirectEvidence };
 }
 
 /**
@@ -148,7 +218,7 @@ export async function rebuildMultFactStatsFromEvents(studentId: string): Promise
  */
 export async function rebuildItemStatesFromEvents(
   studentId: string,
-  options: { mode: 'preserve-legacy' | 'strict' } = { mode: 'preserve-legacy' },
+  options: { mode: 'preserve-legacy' | 'strict'; baselinePolicy?: 'none' | 'stored-state' } = { mode: 'preserve-legacy', baselinePolicy: 'stored-state' },
 ): Promise<void> {
   const events = await db.mathAnswerEvents
     .where('studentId').equals(studentId)
@@ -174,7 +244,10 @@ export async function rebuildItemStatesFromEvents(
   }
 
   const rebuilt = new Set<string>();
-  const scheduledBySessionCard = new Set<string>();
+  const stored = options.baselinePolicy === 'none'
+    ? []
+    : await db.itemStates.where('studentId').equals(studentId).toArray();
+  const baselineByCard = new Map(stored.map(state => [state.cardKey, state]));
   for (const [cardKey, cardEvents] of byCard) {
     // Reconstruct a representative item (any event's itemId) purely to seed
     // skillId/difficulty for createInitialState — all events in this group
@@ -182,43 +255,11 @@ export async function rebuildItemStatesFromEvents(
     const seedItem = makeItemFromId(cardEvents[0].itemId);
     if (!seedItem) continue; // can't reconstruct item metadata — skip
 
-    let state = createInitialState(studentId, seedItem);
-    state = { ...state, cardKey };
-    // Track whether the card has any DIRECT evidence. Related-evidence events
-    // (indirect FSRS nudges) are reinforce-only: they apply only after a direct
-    // attempt exists, and a card with nothing but related evidence is left
-    // untouched — matching the live write path and preserving legacy rows.
-    let sawDirect = false;
-    const replayedEventIds = new Set<string>();
-    for (const event of cardEvents) {
-      if (replayedEventIds.has(event.id)) continue;
-      replayedEventIds.add(event.id);
-      if (event.relatedEvidence) {
-        // Indirect nudge — FSRS-only, and only once the card has direct history.
-        if (!sawDirect) continue;
-        if (!shouldApplyEventToScheduler(event, scheduledBySessionCard)) continue;
-        state = applyRelatedEvidence(state, new Date(event.createdAt));
-        continue;
-      }
-
-      if (shouldApplyEventToScheduler(event, scheduledBySessionCard)) {
-        sawDirect = true;
-        state = applyReview(
-          state,
-          gradeFromEvent(event),
-          event.latencyMs,
-          String(event.studentAnswer ?? ''),
-          new Date(event.createdAt),
-          { isCorrect: event.isCorrect },
-        );
-        state = { ...state, cardKey, lastItemId: event.itemId };
-      }
-      state = applyMisconceptionEventEvidence(state, event);
-    }
+    const replay = replayCardEvents({ studentId, cardKey, seedItem, events: cardEvents, baseline: baselineByCard.get(cardKey) });
     // A card reached only via related evidence has no direct state to rebuild —
     // skip it so we never fabricate a 'new' row or clobber legacy data.
-    if (!sawDirect) continue;
-    await db.itemStates.put(state);
+    if (!replay.hasDirectEvidence) continue;
+    await db.itemStates.put(replay.state);
     rebuilt.add(cardKey);
   }
 

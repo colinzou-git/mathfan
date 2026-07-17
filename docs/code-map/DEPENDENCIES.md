@@ -456,6 +456,7 @@
 | src/features/migrations/cardStateMigration.ts | ../../utils/id |
 | src/features/migrations/cardStateMigration.ts | ../curriculum/makeItemFromId |
 | src/features/migrations/cardStateMigration.ts | ../learning/eventRebuild |
+| src/features/migrations/cardStateMigration.ts | ../learning/learningEvents |
 | src/features/migrations/cardStateMigration.ts | ../scheduler/cardModel |
 | src/features/migrations/cardStateMigration.ts | ./migrationTypes |
 | src/features/migrations/migrationTypes.ts | ../../types/math |

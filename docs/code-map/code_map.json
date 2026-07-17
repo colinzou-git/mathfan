@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-17T03:58:17.374030+00:00",
+  "generated_at": "2026-07-17T07:05:06.295823+00:00",
   "repo_root": "/home/ubuntu/mathfan",
   "package": {
     "name": "mathfan",
@@ -3919,9 +3919,9 @@
     {
       "path": "src/features/learning/eventRebuild.ts",
       "ext": ".ts",
-      "bytes": 9852,
-      "lines": 232,
-      "sha1": "49ab6bbf7f9c",
+      "bytes": 11551,
+      "lines": 273,
+      "sha1": "f49fc57b6f73",
       "imports": [
         "../../db/dexie",
         "../../types/math",
@@ -3937,6 +3937,8 @@
       ],
       "exports": [
         "applyMisconceptionEventEvidence",
+        "CardReplayResult",
+        "replayCardEvents",
         "shouldApplyEventToScheduler"
       ],
       "functions": [
@@ -3944,10 +3946,13 @@
         "gradeFromEvent",
         "rebuildItemStatesFromEvents",
         "rebuildMultFactStatsFromEvents",
+        "replayCardEvents",
         "shouldApplyEventToScheduler"
       ],
       "classes": [],
-      "interfaces": [],
+      "interfaces": [
+        "CardReplayResult"
+      ],
       "types": [],
       "components": [],
       "hooks": [],
@@ -4744,19 +4749,22 @@
     {
       "path": "src/features/migrations/cardStateMigration.ts",
       "ext": ".ts",
-      "bytes": 13332,
-      "lines": 304,
-      "sha1": "75dcf5d517d3",
+      "bytes": 16422,
+      "lines": 357,
+      "sha1": "0d86ea432ef1",
       "imports": [
         "../../db/dexie",
         "../../types/math",
         "../../utils/id",
         "../curriculum/makeItemFromId",
         "../learning/eventRebuild",
+        "../learning/learningEvents",
         "../scheduler/cardModel",
         "./migrationTypes"
       ],
       "exports": [
+        "CARD_STATE_REPAIR_MIGRATION_ID",
+        "CardStateRepairPlan",
         "migrateLegacyState",
         "MIGRATION_KIND",
         "MigrationRunResult",
@@ -4764,6 +4772,9 @@
       ],
       "functions": [
         "backupCurrentItemStates",
+        "buildCardStateRepairPlan",
+        "buildUsableRollbackStates",
+        "canonicalizeStoredStates",
         "convertedLegacyStates",
         "isCardStateMigrationComplete",
         "isValidState",
@@ -4771,16 +4782,17 @@
         "loadSchemaV7LegacyBackup",
         "mergeLegacyCollision",
         "migrateLegacyState",
-        "preflight",
         "reconcileMigratedCardState",
         "recoverInterruptedRuns",
         "repairLegacyWordProblemCardStates",
         "rollbackCardStateMigration",
         "runCardStateMigration",
-        "validate"
+        "stateKey",
+        "validateStates"
       ],
       "classes": [],
       "interfaces": [
+        "CardStateRepairPlan",
         "MigrationRunResult"
       ],
       "types": [],
@@ -4821,9 +4833,9 @@
     {
       "path": "src/features/migrations/migrationTypes.ts",
       "ext": ".ts",
-      "bytes": 1359,
-      "lines": 44,
-      "sha1": "9e06b74155ce",
+      "bytes": 1741,
+      "lines": 53,
+      "sha1": "f4893943d785",
       "imports": [
         "../../types/math"
       ],
@@ -7806,9 +7818,9 @@
     {
       "path": "src/tests/cardStateMigration.test.ts",
       "ext": ".ts",
-      "bytes": 13605,
-      "lines": 325,
-      "sha1": "1c2261edb2b9",
+      "bytes": 17171,
+      "lines": 384,
+      "sha1": "e5ac0b620efb",
       "imports": [
         "../db/dexie",
         "../features/learning/learningEvents",

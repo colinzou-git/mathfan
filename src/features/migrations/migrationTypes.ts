@@ -5,16 +5,25 @@ export interface LegacyStudentItemState extends Omit<StudentItemState, 'cardKey'
   itemId: string;
 }
 
-export type DataMigrationKind = 'hybrid-card-v1' | 'semantic-word-cards-v2';
+export type DataMigrationKind = 'hybrid-card-v1' | 'semantic-word-cards-v2' | 'canonical-card-baseline-replay-v3';
 export type DataMigrationStatus = 'started' | 'completed' | 'failed' | 'rolled_back';
 
 export interface MigrationCoverage {
   legacyInputCount: number;
+  convertedLegacyCardCount?: number;
+  baselineCardCount?: number;
+  baselineAdvancedCardCount?: number;
+  baselineReplayEventCount?: number;
+  preBaselineEventCount?: number;
+  ambiguousBoundaryEventCount?: number;
   replayedCardCount: number;
   legacyFallbackCount: number;
   collisionCount: number;
   unparseableLegacyCount: number;
   unparseableEventCount: number;
+  unparseableEventsWithLegacyFallback?: number;
+  unparseableEventsWithoutFallback?: number;
+  invalidFinalStateCount?: number;
   unexplainedLossCount: number;
 }
 
