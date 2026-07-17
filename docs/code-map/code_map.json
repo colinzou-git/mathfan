@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-16T23:54:38.242847+00:00",
+  "generated_at": "2026-07-17T00:19:33.021449+00:00",
   "repo_root": "/home/ubuntu/mathfan",
   "package": {
     "name": "mathfan",
@@ -570,9 +570,9 @@
     {
       "path": "scripts/e2e_mathfan.py",
       "ext": ".py",
-      "bytes": 59641,
-      "lines": 1020,
-      "sha1": "8ad6f949925f",
+      "bytes": 61540,
+      "lines": 1039,
+      "sha1": "6f5944aa280a",
       "imports": [
         "__future__",
         "json",
@@ -601,6 +601,7 @@
         "fraction_equivalence_visual_lesson",
         "fraction_same_numerator_lesson",
         "fractional_line_plot_lesson",
+        "goal_evaluation_double_submit",
         "legacy_downloaded_backup_restore",
         "legacy_scheduler_upgrade",
         "main",
@@ -636,6 +637,7 @@
         "fraction_equivalence_visual_lesson",
         "fraction_same_numerator_lesson",
         "fractional_line_plot_lesson",
+        "goal_evaluation_double_submit",
         "legacy_downloaded_backup_restore",
         "legacy_scheduler_upgrade",
         "main",
@@ -3413,9 +3415,9 @@
     {
       "path": "src/features/goals/goalEvaluationPersistence.ts",
       "ext": ".ts",
-      "bytes": 1967,
-      "lines": 53,
-      "sha1": "7a380dd3e2c5",
+      "bytes": 4856,
+      "lines": 100,
+      "sha1": "46b82cc40e52",
       "imports": [
         "../../db/dexie",
         "../../db/repositories",
@@ -3426,6 +3428,7 @@
         "./types"
       ],
       "exports": [
+        "CommittedGoalEvaluationAnswer",
         "GoalEvaluationAnswerWrite"
       ],
       "functions": [
@@ -3435,6 +3438,7 @@
       ],
       "classes": [],
       "interfaces": [
+        "CommittedGoalEvaluationAnswer",
         "GoalEvaluationAnswerWrite"
       ],
       "types": [],
@@ -3449,9 +3453,9 @@
     {
       "path": "src/features/goals/GoalEvaluationSession.tsx",
       "ext": ".tsx",
-      "bytes": 33649,
-      "lines": 728,
-      "sha1": "44583dc69b54",
+      "bytes": 34069,
+      "lines": 735,
+      "sha1": "ea382d8f923c",
       "imports": [
         "../../components/NumPad",
         "../../db/repositories",
@@ -4109,9 +4113,9 @@
     {
       "path": "src/features/learningPlan/dailyLessonPersistence.ts",
       "ext": ".ts",
-      "bytes": 6139,
-      "lines": 113,
-      "sha1": "9b80820024b5",
+      "bytes": 6151,
+      "lines": 114,
+      "sha1": "ef7a5e20c115",
       "imports": [
         "../../db/dexie",
         "../../types/math",
@@ -5284,9 +5288,9 @@
     {
       "path": "src/features/practice/usePracticeSession.ts",
       "ext": ".ts",
-      "bytes": 45288,
-      "lines": 899,
-      "sha1": "dc8665ef17d9",
+      "bytes": 45341,
+      "lines": 900,
+      "sha1": "4ea1cf49132e",
       "imports": [
         "../../components/opSpecs",
         "../../db/dexie",
@@ -8624,6 +8628,34 @@
       "read_error": null
     },
     {
+      "path": "src/tests/goalEvaluationConcurrency.test.ts",
+      "ext": ".ts",
+      "bytes": 4098,
+      "lines": 61,
+      "sha1": "34b3193a4af1",
+      "imports": [
+        "../db/dexie",
+        "../features/goals/goalEvaluationPersistence",
+        "../features/goals/types",
+        "../types/math",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [
+        "write"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Local persistence/database layer.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/tests/goalEvaluationEngine.test.tsx",
       "ext": ".tsx",
       "bytes": 14779,
@@ -8664,9 +8696,9 @@
     {
       "path": "src/tests/goalEvaluationSession.test.tsx",
       "ext": ".tsx",
-      "bytes": 14962,
+      "bytes": 14980,
       "lines": 399,
-      "sha1": "ddd66f3ac74c",
+      "sha1": "b07eeb117709",
       "imports": [
         "../db/repositories",
         "../features/goals/goalEvaluationPersistence",

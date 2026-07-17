@@ -173,7 +173,7 @@ beforeEach(() => {
   mockData.itemStates = [];
   mockData.signedIn = false;
   vi.clearAllMocks();
-  vi.mocked(recordGoalEvaluationAnswer).mockResolvedValue(undefined);
+  vi.mocked(recordGoalEvaluationAnswer).mockResolvedValue(undefined as never);
 });
 
 afterEach(() => {
@@ -290,7 +290,7 @@ describe('GoalEvaluationSession', () => {
   it('save failure blocks advance and retry uses the same event identity', async () => {
     vi.mocked(recordGoalEvaluationAnswer)
       .mockRejectedValueOnce(new Error('db unavailable'))
-      .mockResolvedValueOnce(undefined);
+      .mockResolvedValueOnce(undefined as never);
 
     renderEvaluation();
     await startEvaluation();
