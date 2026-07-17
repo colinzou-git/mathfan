@@ -1,6 +1,6 @@
 # Code Map Overview
 
-Generated: 2026-07-17 09:48:19 UTC
+Generated: 2026-07-17 10:19:52 UTC
 
 Repo root: `/home/ubuntu/mathfan`
 Output folder: `/home/ubuntu/mathfan/docs/code-map`
@@ -14,9 +14,9 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 - Package name: `mathfan`
 - Version: `1.2.0`
 - Module type: `module`
-- Scanned files: **303**
-- Scanned lines: **57,122**
-- Scanned bytes: **2,478,966**
+- Scanned files: **304**
+- Scanned lines: **57,452**
+- Scanned bytes: **2,492,966**
 
 ## NPM scripts
 
@@ -101,7 +101,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 | src/features/stats/TodayAchievementSection.tsx | 125 | Progress/statistics screens or calculations. | AchievementTile, TodayAchievementSection, AchievementTile, TodayAchievementSection |
 | src/features/mastery/skillPracticePlanner.ts | 905 | Grade 3 skill practice planner: maps skill IDs to SessionConfig for the mastery map. | buildDivisionFocusSequence, buildFocusSequence, buildRegroupingFocusSequence, FocusSequence, FocusSequenceContext, planFractionFocusSequence, planLearningUnitsForSkill, PlanOptions |
 | src/features/practice/usePracticeSession.ts | 900 | Local persistence/database layer. | usePracticeSession, CorrectResult, LastSessionSummary, SessionState, usePracticeSession, commit, getStaticItem, planned |
-| src/features/diagnosis/DiagnosticSession.tsx | 612 | Exports reusable code: DiagnosticSession. | DiagnosticSession, complete, DiagnosticSession, onKey |
+| src/features/goals/goalEvaluationEngine.ts | 611 | Exports reusable code: ADAPTIVE_GOAL_EVALUATION_CONFIRMATION_COUNT, ADAPTIVE_GOAL_EVALUATION_HISTORICAL_PRIOR_CAP, ADAPTIVE_GOAL_EVALUATION_QUESTION_COUNT, AdaptiveGoalEvaluationArgs, AdaptiveGoalEvaluationItem. | ADAPTIVE_GOAL_EVALUATION_CONFIRMATION_COUNT, ADAPTIVE_GOAL_EVALUATION_HISTORICAL_PRIOR_CAP, ADAPTIVE_GOAL_EVALUATION_QUESTION_COUNT, AdaptiveGoalEvaluationArgs, AdaptiveGoalEvaluationItem, AdaptiveGoalEvaluationPhase, AdaptiveGoalEvaluationResponse, AdaptiveGoalEvaluationResult |
 
 ## Repository tree, filtered
 
@@ -185,6 +185,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   │   ├── ProfileSetup.tsx
 │   │   │   └── StudentDashboard.tsx
 │   │   ├── diagnosis
+│   │   │   ├── diagnosticAnswerProposal.ts
 │   │   │   ├── diagnosticCompletion.ts
 │   │   │   ├── diagnosticPersistence.ts
 │   │   │   ├── diagnosticPlanner.ts

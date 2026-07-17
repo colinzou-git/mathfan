@@ -11,24 +11,23 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
-import type { PracticeItem, AttemptLog } from '../../types/math';
+import type { PracticeItem } from '../../types/math';
 import { buildDiagnosticPlan } from './diagnosticPlanner';
 import { QuestionRenderer } from '../practice/QuestionRenderer';
 import { NumPad } from '../../components/NumPad';
-import type { MathAnswerEvent } from '../learning/learningEvents';
-import { flushDiagnosticWriteJobs, recordDiagnosticAnswerWithRetry, type DiagnosticWriteJob } from './diagnosticPersistence';
-import { checkAnswer } from '../practice/answerChecker';
-import { applyReview, createInitialState } from '../scheduler/scheduler';
-import { deriveCardKey } from '../scheduler/cardModel';
 import {
-  applyMisconceptionConfirmation,
-  applyMisconceptionDetection,
-  detectMistakes,
-} from '../mastery/misconceptionEngine';
+  countUnsavedDiagnosticJobs,
+  DiagnosticStateConflictError,
+  flushDiagnosticWriteJobs,
+  persistDiagnosticAnswerProposal,
+  retryDiagnosticWriteJob,
+  type DiagnosticWriteJob,
+} from './diagnosticPersistence';
+import { buildDiagnosticAnswerProposal } from './diagnosticAnswerProposal';
+import { deriveCardKey } from '../scheduler/cardModel';
 import { itemStateRepo } from '../../db/repositories';
 import { generateId } from '../../utils/id';
 import { appNow } from '../time/clock';
-import { buildSchedulingTelemetry } from '../learning/schedulingTelemetry';
 
 interface Props {
   studentId: string;
@@ -62,14 +61,11 @@ export function DiagnosticSession({ studentId, onComplete, onCancel }: Props) {
   const [results, setResults] = useState<QuestionResult[]>([]);
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [unsavedAnswerCount, setUnsavedAnswerCount] = useState(0);
+  const [conflictRequiresResubmit, setConflictRequiresResubmit] = useState(false);
   const startTimeRef = useRef<number>(0);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Retryable write jobs: each is a thunk that calls recordDiagnosticAnswerWithRetry
-  // with a pre-captured payload. Running the thunk fresh on each retry lets
-  // "Try again" actually retry instead of re-awaiting a settled promise.
+  const submitInFlightRef = useRef(false);
   const pendingWritesRef = useRef<DiagnosticWriteJob[]>([]);
-  // Tracks whether the auto-flush (triggered when phase → 'done') succeeded.
-  // Used by complete() to skip duplicate writes when the user clicks "See my Math Map".
   const writesSucceededRef = useRef(false);
 
   const items = plan.items;
@@ -92,156 +88,98 @@ export function DiagnosticSession({ studentId, onComplete, onCancel }: Props) {
   // Cleanup timer on unmount
   useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
 
-  const handleSubmit = useCallback(() => {
-    if (!currentItem || showFeedback || !input.trim()) return;
-
-    const latencyMs = Math.round(performance.now() - startTimeRef.current);
-    const checked = checkAnswer(currentItem, input, latencyMs, { gradingContext: 'untimed_assessment' });
-    const { isCorrect, reviewGrade, studentAnswer } = checked;
-
-    const result: QuestionResult = {
+  const acceptSavedJob = useCallback((job: DiagnosticWriteJob) => {
+    const { event } = job.proposal;
+    setResults(prev => [...prev, {
       item: currentItem,
-      studentAnswer: String(studentAnswer),
-      isCorrect,
-      latencyMs,
-    };
-
-    const now = appNow();
-    const createdAt = now.toISOString();
-    const item = currentItem;
-    // Stable identities, generated once. The thunk below rebuilds the event/attempt
-    // objects fresh on every run, but reuses these ids so a retry is an idempotent
-    // put (no duplicate rows) even if an earlier run partially succeeded.
-    const eventId = generateId();
-    const attemptId = generateId();
-
-    // Register a retryable write job that reconstructs the payload *fresh* every time
-    // it runs. Building the payload inside the thunk (rather than awaiting a settled
-    // promise captured at submit time) means that if payload construction itself fails
-    // — e.g. the itemStateRepo.get read throws — the "Try again" path rebuilds it from
-    // scratch and can actually succeed on retry.
-    pendingWritesRef.current.push({ id: eventId, status: 'pending', run: async () => {
-      const cardKey = deriveCardKey(item);
-      let existing = await itemStateRepo.get(studentId, cardKey);
-      if (!existing) existing = createInitialState(studentId, item);
-
-      let updated = existing;
-      let schedulingApplied = false;
-      let schedulerErrorCode: MathAnswerEvent['schedulerErrorCode'];
-      try {
-        updated = applyReview(existing, reviewGrade, latencyMs, String(studentAnswer), now, { isCorrect });
-        schedulingApplied = true;
-      } catch (error) {
-        // FSRS error (e.g. clock drift) — keep existing state rather than blocking.
-        schedulerErrorCode = error instanceof RangeError ? 'clock_drift'
-          : error instanceof TypeError ? 'invalid_card'
-            : error instanceof Error ? 'fsrs_validation' : 'unknown';
-      }
-      updated = { ...updated, cardKey, lastItemId: item.id };
-
-      let detectedMisconceptions: string[] = [];
-      let confirmedMisconceptions: string[] = [];
-      const misconceptionContext = { eventId, sessionId, itemId: item.id, createdAt };
-      if (!isCorrect) {
-        const newTags = detectMistakes(item, studentAnswer);
-        if (newTags.length > 0) {
-          const merged = Array.from(new Set([...(updated.mistakePatterns ?? []), ...newTags]));
-          detectedMisconceptions = newTags;
-          updated = {
-            ...updated,
-            mistakePatterns: merged,
-            misconceptionEvidence: applyMisconceptionDetection(
-              updated.misconceptionEvidence, newTags, misconceptionContext, existing.mistakePatterns,
-            ),
-          };
-        }
-      } else {
-        const confirmation = applyMisconceptionConfirmation(
-          updated.misconceptionEvidence, item, misconceptionContext, updated.mistakePatterns,
-        );
-        confirmedMisconceptions = confirmation.confirmedCodes;
-        updated = { ...updated, misconceptionEvidence: confirmation.evidence };
-      }
-
-      const event: MathAnswerEvent = {
-        id: eventId,
-        studentId,
-        sessionId,
-        itemId: item.id,
-        cardKey,
-        schemaId: item.schemaId,
-        mode: 'diagnostic',
-        promptShown: item.prompt,
-        correctAnswer: item.answer,
-        studentAnswer,
-        isCorrect,
-        isRetry: false,
-        hintUsed: false,
-        schedulingEligible: true,
-        schedulingApplied,
-        schedulerErrorCode,
-        latencyMs,
-        reviewGrade,
-        ratingReason: checked.ratingReason,
-        responsePolicy: checked.policyKind,
-        gradingContext: checked.gradingContext,
-        fluencyBand: checked.fluencyBand,
-        detectedMisconceptions: detectedMisconceptions.length ? detectedMisconceptions : undefined,
-        confirmedMisconceptions: confirmedMisconceptions.length ? confirmedMisconceptions : undefined,
-        factStatusBefore: existing.masteryLevel,
-        factStatusAfter: updated.masteryLevel,
-        schedulingTelemetry: buildSchedulingTelemetry({
-          item, stateBefore: existing, stateAfter: schedulingApplied ? updated : undefined,
-          response: { reviewGrade, ratingReason: checked.ratingReason, responsePolicy: checked.policyKind, gradingContext: checked.gradingContext, fluencyBand: checked.fluencyBand, hintUsed: false, isRetry: false, schedulingEligible: true, schedulingApplied, schedulerErrorCode },
-          selection: { origin: 'diagnostic', rationaleCodes: ['diagnostic_coverage'] },
-          presentationIndex: 1, attemptNo: 1, now,
-        }),
-        createdAt,
-      };
-
-      const attempt: AttemptLog = {
-        id: attemptId,
-        studentId,
-        itemId: item.id,
-        skillId: item.skillId,
-        sessionId,
-        promptShown: item.prompt,
-        correctAnswer: item.answer,
-        studentAnswer,
-        isCorrect,
-        latencyMs,
-        reviewGrade,
-        createdAt,
-      };
-
-      await recordDiagnosticAnswerWithRetry({ event, updatedState: updated, attempt });
-    } });
-
-    setResults(prev => [...prev, result]);
-    setShowFeedback(isCorrect ? 'correct' : 'wrong');
+      studentAnswer: String(event.studentAnswer),
+      isCorrect: event.isCorrect,
+      latencyMs: event.latencyMs,
+    }]);
+    setUnsavedAnswerCount(countUnsavedDiagnosticJobs(pendingWritesRef.current));
+    setSaveState('idle');
+    setShowFeedback(event.isCorrect ? 'correct' : 'wrong');
     setInput('');
-
-    // Auto-advance after feedback delay. On the last question, flush pending writes
-    // before (or concurrently with) the done-screen transition so results are
-    // persisted even if the user never taps "See my Math Map".
-    timerRef.current = setTimeout(async () => {
+    timerRef.current = setTimeout(() => {
       setShowFeedback(null);
       if (index + 1 >= total) {
+        writesSucceededRef.current = countUnsavedDiagnosticJobs(pendingWritesRef.current) === 0;
         setPhase('done');
-        setSaveState('saving');
-        try {
-          await flushPendingWrites();
-          writesSucceededRef.current = true;
-          setSaveState('idle');
-        } catch (err) {
-          console.warn('[DiagnosticSession] could not save diagnostic results', err);
-          setSaveState('error');
-        }
       } else {
         setIndex(i => i + 1);
       }
     }, FEEDBACK_MS);
-  }, [currentItem, showFeedback, input, studentId, sessionId, index, total, flushPendingWrites]);
+  }, [currentItem, index, total]);
+
+  const handleSubmit = useCallback(async () => {
+    if (submitInFlightRef.current || !currentItem || showFeedback || saveState !== 'idle' || !input.trim()) return;
+    submitInFlightRef.current = true;
+    setSaveState('saving');
+    const latencyMs = Math.max(1, Math.round(performance.now() - startTimeRef.current));
+    try {
+      const existingState = await itemStateRepo.get(studentId, deriveCardKey(currentItem));
+      const proposal = buildDiagnosticAnswerProposal({
+        eventId: generateId(),
+        attemptId: generateId(),
+        answeredAt: appNow().toISOString(),
+        studentId,
+        sessionId,
+        item: currentItem,
+        rawInput: input,
+        latencyMs,
+        existingState,
+      });
+      const job: DiagnosticWriteJob = { id: proposal.event.id, proposal, status: 'saving' };
+      pendingWritesRef.current.push(job);
+      try {
+        await persistDiagnosticAnswerProposal(proposal);
+        job.status = 'saved';
+        job.lastError = undefined;
+        acceptSavedJob(job);
+      } catch (error) {
+        job.status = 'failed';
+        job.lastError = error instanceof Error ? error.message : 'Unknown save error';
+        setUnsavedAnswerCount(countUnsavedDiagnosticJobs(pendingWritesRef.current));
+        setConflictRequiresResubmit(error instanceof DiagnosticStateConflictError);
+        setSaveState('error');
+      }
+    } catch (error) {
+      console.warn('[DiagnosticSession] could not prepare diagnostic answer', error);
+      setUnsavedAnswerCount(countUnsavedDiagnosticJobs(pendingWritesRef.current));
+      setSaveState('error');
+    } finally {
+      submitInFlightRef.current = false;
+    }
+  }, [acceptSavedJob, currentItem, input, saveState, sessionId, showFeedback, studentId]);
+
+  const retryCurrentWrite = useCallback(async () => {
+    if (submitInFlightRef.current || conflictRequiresResubmit) return;
+    const job = [...pendingWritesRef.current].reverse().find(candidate => candidate.status === 'failed');
+    if (!job) {
+      setSaveState('idle');
+      return;
+    }
+    submitInFlightRef.current = true;
+    setSaveState('saving');
+    try {
+      await retryDiagnosticWriteJob(job);
+      acceptSavedJob(job);
+    } catch (error) {
+      setUnsavedAnswerCount(countUnsavedDiagnosticJobs(pendingWritesRef.current));
+      setConflictRequiresResubmit(error instanceof DiagnosticStateConflictError);
+      setSaveState('error');
+    } finally {
+      submitInFlightRef.current = false;
+    }
+  }, [acceptSavedJob, conflictRequiresResubmit]);
+
+  const prepareConflictResubmission = useCallback(() => {
+    pendingWritesRef.current = pendingWritesRef.current.filter(job => job.status !== 'failed');
+    setUnsavedAnswerCount(countUnsavedDiagnosticJobs(pendingWritesRef.current));
+    setConflictRequiresResubmit(false);
+    setSaveState('idle');
+    startTimeRef.current = performance.now();
+  }, []);
 
   // Keyboard support during active questions. Mirrors NumPad/touch behavior
   // without changing it: digits build the numeric answer, Backspace deletes,
@@ -249,7 +187,7 @@ export function DiagnosticSession({ studentId, onComplete, onCancel }: Props) {
   // submits a non-empty answer, and Escape exits. Disabled while feedback shows
   // so a stray key can't submit the next question early.
   useEffect(() => {
-    if (phase !== 'active' || showFeedback) return;
+    if (phase !== 'active' || showFeedback || saveState !== 'idle') return;
     const item = currentItem;
     if (!item) return;
 
@@ -279,7 +217,7 @@ export function DiagnosticSession({ studentId, onComplete, onCancel }: Props) {
 
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [phase, showFeedback, currentItem, input, onCancel, handleSubmit]);
+  }, [phase, showFeedback, saveState, currentItem, input, onCancel, handleSubmit]);
 
   // ── Intro screen ─────────────────────────────────────────────────────────────
 
@@ -394,6 +332,25 @@ export function DiagnosticSession({ studentId, onComplete, onCancel }: Props) {
         )}
       </div>
 
+      {saveState === 'saving' && !showFeedback && (
+        <div role="status" style={s.saveNotice}>Saving this answer...</div>
+      )}
+      {saveState === 'error' && !showFeedback && (
+        <div role="alert" style={s.saveError}>
+          <div>
+            {conflictRequiresResubmit
+              ? 'This fact changed in another session. Reload this question, then submit your answer again.'
+              : `This answer is not saved yet. ${unsavedAnswerCount} answer${unsavedAnswerCount === 1 ? '' : 's'} remain unsaved.`}
+          </div>
+          <button
+            style={s.retryBtn}
+            onClick={conflictRequiresResubmit ? prepareConflictResubmission : retryCurrentWrite}
+          >
+            {conflictRequiresResubmit ? 'Reload question' : 'Try saving again'}
+          </button>
+        </div>
+      )}
+
       {/* Input area */}
       {!showFeedback && (
         <div style={s.inputArea}>
@@ -403,6 +360,7 @@ export function DiagnosticSession({ studentId, onComplete, onCancel }: Props) {
                 <button
                   key={String(c)}
                   style={s.choiceBtn}
+                  disabled={saveState !== 'idle'}
                   onClick={() => { setInput(String(c)); }}
                 >
                   {String(c)}
@@ -421,12 +379,12 @@ export function DiagnosticSession({ studentId, onComplete, onCancel }: Props) {
             </>
           )}
           {isChoice && input && (
-            <button style={s.submitBtn} onClick={handleSubmit}>
+            <button style={s.submitBtn} disabled={saveState !== 'idle'} onClick={handleSubmit}>
               Check ✓
             </button>
           )}
           {!isChoice && input && (
-            <button style={s.submitBtn} onClick={handleSubmit}>
+            <button style={s.submitBtn} disabled={saveState !== 'idle'} onClick={handleSubmit}>
               Check ✓
             </button>
           )}
@@ -571,6 +529,31 @@ const s: Record<string, CSSProperties> = {
     flexDirection: 'column',
     alignItems: 'center',
     gap: '10px',
+  },
+  saveNotice: {
+    color: '#4338ca',
+    fontWeight: '700',
+    marginBottom: '12px',
+  },
+  saveError: {
+    width: '100%',
+    color: '#7f1d1d',
+    background: '#fef2f2',
+    border: '1px solid #fecaca',
+    borderRadius: '12px',
+    padding: '12px',
+    textAlign: 'center',
+    marginBottom: '12px',
+  },
+  retryBtn: {
+    padding: '10px 18px',
+    background: '#b91c1c',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '10px',
+    fontWeight: '700',
+    marginTop: '10px',
+    cursor: 'pointer',
   },
   inputDisplay: {
     fontSize: '42px',
