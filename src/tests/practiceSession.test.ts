@@ -38,6 +38,11 @@ vi.mock('../features/time/clock', () => ({
   appNow: vi.fn(),
 }));
 
+vi.mock('../features/learningPlan/dailyLessonPersistence', () => ({
+  markDailyLessonProgressFromEvent: vi.fn(),
+  completeDailyLessonPlan: vi.fn(),
+}));
+
 vi.mock('../utils/id', () => ({
   generateId: vi.fn(),
 }));
@@ -51,6 +56,7 @@ import { appNow } from '../features/time/clock';
 import { generateId } from '../utils/id';
 import { makeItemFromId } from '../features/curriculum/makeItemFromId';
 import { applyReview } from '../features/scheduler/scheduler';
+import { markDailyLessonProgressFromEvent } from '../features/learningPlan/dailyLessonPersistence';
 import type { SessionConfig } from '../types/math';
 import type { MathAnswerEvent } from '../features/learning/learningEvents';
 
@@ -81,6 +87,7 @@ beforeEach(() => {
   vi.mocked(sessionRepo.save).mockResolvedValue(undefined);
   vi.mocked(sessionRepo.get).mockResolvedValue(undefined);
   vi.mocked(appNow).mockReturnValue(FIXED_NOW);
+  vi.mocked(markDailyLessonProgressFromEvent).mockResolvedValue('updated');
   vi.mocked(generateId).mockImplementation(() => `id-${++idSeq}`);
 });
 
@@ -465,6 +472,25 @@ describe('usePracticeSession — adaptive selection', () => {
       before: { stabilityDays: 0 },
       rating: { reviewGrade: expect.any(String) },
     });
+  });
+
+  it('commits a canonical answer once when auxiliary lesson progress fails', async () => {
+    vi.mocked(markDailyLessonProgressFromEvent).mockRejectedValueOnce(new Error('plan replaced')).mockResolvedValueOnce('updated');
+    const { result } = renderHook(() => usePracticeSession(STUDENT_ID));
+    await act(async () => { await result.current.startSession({
+      mode: 'adaptive_lesson', sessionLength: 1, preplannedItems: [makeItemFromId('MUL_3x4')!],
+      lessonPlanId: 'lesson-plan', lessonKind: 'adaptive_daily_lesson',
+    }); });
+    await act(async () => { await result.current.submitAnswer('12'); });
+    expect(result.current.state.phase).toBe('correct');
+    expect(result.current.state.completedCount).toBe(1);
+    expect(result.current.state.saveStatus).toBe('idle');
+    expect(result.current.state.auxiliarySaveError).toMatch(/answer is saved/i);
+    expect(recordPracticeAnswer).toHaveBeenCalledOnce();
+    await act(async () => { await result.current.retryAuxiliaryWrites(); });
+    expect(markDailyLessonProgressFromEvent).toHaveBeenCalledTimes(2);
+    expect(recordPracticeAnswer).toHaveBeenCalledOnce();
+    expect(result.current.state.auxiliarySaveStatus).toBe('complete');
   });
 
   it('non-daily_review specificItemIds still produce a valid, reconstructable queue', async () => {

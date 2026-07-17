@@ -26,6 +26,7 @@ vi.mock('../features/learningPlan/dailyLessonPersistence', () => ({
     items: [{ item: { id: 'MUL_2x3', skillId: 'g3-mul-meaning', itemType: 'multiplication_fact', prompt: '2 × 3', answer: 6, tags: [], difficulty: .2 }, cardKey: 'fact:mul:2x3', segment: 'focus', rationale: 'test', schedulingEligible: true }],
   })),
   regenerateDailyLessonPlan: vi.fn(),
+  reconcileDailyLessonProgress: vi.fn(async () => undefined),
 }));
 
 const store: {

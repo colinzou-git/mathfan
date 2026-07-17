@@ -1,7 +1,8 @@
 import 'fake-indexeddb/auto';
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { db } from '../db/dexie';
-import { completeDailyLessonPlan, getOrCreateDailyLessonPlan, markDailyLessonProgress, regenerateDailyLessonPlan } from '../features/learningPlan/dailyLessonPersistence';
+import { completeDailyLessonPlan, getOrCreateDailyLessonPlan, markDailyLessonProgress, markDailyLessonProgressFromEvent, reconcileDailyLessonProgress, regenerateDailyLessonPlan } from '../features/learningPlan/dailyLessonPersistence';
+import type { MathAnswerEvent } from '../features/learning/learningEvents';
 import { learnerLocalDateKey } from '../features/time/localDate';
 import type { StudentSettings } from '../types/math';
 import { mulberry32 } from '../utils/rng';
@@ -14,7 +15,7 @@ const base = (now: string) => ({
 });
 
 beforeAll(async () => { if (!db.isOpen()) await db.open(); });
-beforeEach(async () => { await db.dailyLessonPlans.clear(); });
+beforeEach(async () => { await db.dailyLessonPlans.clear(); await db.mathAnswerEvents.clear(); });
 
 describe('learner-local persisted daily lessons', () => {
   it('uses Los Angeles local dates across UTC midnight and DST transitions', () => {
@@ -57,5 +58,24 @@ describe('learner-local persisted daily lessons', () => {
     const next = await getOrCreateDailyLessonPlan(base('2026-07-17T08:30:00.000Z'));
     expect(next.localDate).not.toBe(first.localDate);
     expect(next.id).not.toBe(first.id);
+  });
+
+  it('marks progress from a canonical event and reconciles the same event idempotently', async () => {
+    const plan = await getOrCreateDailyLessonPlan(base('2026-07-17T00:30:00.000Z'));
+    const itemInstanceId = plan.items[0].item.instanceKey ?? plan.items[0].item.id;
+    const event = {
+      id: 'lesson-answer', studentId: plan.studentId, sessionId: 'session-1', itemId: plan.items[0].item.id,
+      itemInstanceId, lessonPlanId: plan.id, mode: 'practice', promptShown: 'prompt', correctAnswer: 1,
+      studentAnswer: 1, isCorrect: true, isRetry: false, hintUsed: false, latencyMs: 1000,
+      createdAt: '2026-07-17T00:31:00.000Z',
+    } as MathAnswerEvent;
+    expect(await markDailyLessonProgressFromEvent(event)).toBe('updated');
+    expect(await markDailyLessonProgressFromEvent(event)).toBe('already_updated');
+
+    await db.dailyLessonPlans.put({ ...plan, completedItemInstanceIds: [], status: 'planned' });
+    await db.mathAnswerEvents.put(event);
+    const repaired = await reconcileDailyLessonProgress(plan.studentId, plan.id);
+    expect(repaired?.completedItemInstanceIds).toContain(itemInstanceId);
+    expect((await reconcileDailyLessonProgress(plan.studentId, plan.id))?.completedItemInstanceIds).toEqual(repaired?.completedItemInstanceIds);
   });
 });

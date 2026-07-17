@@ -39,7 +39,7 @@ import { allMeasurementItemIds, allDataItemIds } from '../../components/opSpecs'
 import { mulberry32, randomSeed } from '../../utils/rng';
 import type { PracticeItem as PItem } from '../../types/math';
 import { ADAPTIVE_SELECTOR_VERSION, buildSchedulingTelemetry, DAILY_LESSON_PLANNER_VERSION } from '../learning/schedulingTelemetry';
-import { completeDailyLessonPlan, markDailyLessonProgress } from '../learningPlan/dailyLessonPersistence';
+import { completeDailyLessonPlan, markDailyLessonProgressFromEvent } from '../learningPlan/dailyLessonPersistence';
 import { buildFluencyBaselineMap, deriveFluencyBaseline, type FluencyBaselineMap } from '../fluency/fluencyEngine';
 import type { MathAnswerEvent } from '../learning/learningEvents';
 
@@ -150,6 +150,7 @@ export function usePracticeSession(studentId: string) {
   const directEvidenceCardsRef = useRef(new Set<string>());
   const pendingRelatedEvidenceRef = useRef(new Map<string, { cardKey: string; relatedItemId: string; sourceItemId: string }>());
   const pendingRelatedWritesRef = useRef<RelatedEvidenceWrite[]>([]);
+  const pendingLessonProgressEventRef = useRef<MathAnswerEvent | null>(null);
   const fluencyEventsRef = useRef<MathAnswerEvent[]>([]);
   const fluencyBaselinesRef = useRef<FluencyBaselineMap>(new Map());
   const pendingSaveRef = useRef<null | {
@@ -173,6 +174,7 @@ export function usePracticeSession(studentId: string) {
     directEvidenceCardsRef.current.clear();
     pendingRelatedEvidenceRef.current.clear();
     pendingRelatedWritesRef.current = [];
+    pendingLessonProgressEventRef.current = null;
 
     const [allStates, fluencyEvents] = await Promise.all([
       itemStateRepo.getForStudent(studentId),
@@ -507,6 +509,7 @@ export function usePracticeSession(studentId: string) {
         studentId,
         sessionId: prev.sessionId,
         itemId: item.id,
+        itemInstanceId: item.instanceKey ?? item.id,
         cardKey,
         schemaId: item.schemaId,
         presentationIndex: currentPresentationIndexRef.current,
@@ -654,19 +657,31 @@ export function usePracticeSession(studentId: string) {
 
     try {
       await recordPracticeAnswer(payload);
-      if (result.isCorrect && configRef.current?.lessonPlanId) {
-        await markDailyLessonProgress(configRef.current.lessonPlanId, item.instanceKey ?? item.id, createdAt);
-      }
       commit();
+      if (result.isCorrect && payload.event.lessonPlanId) {
+        try { await markDailyLessonProgressFromEvent(payload.event); }
+        catch (error) {
+          console.error('[usePracticeSession] daily lesson progress write failed', error);
+          pendingLessonProgressEventRef.current = payload.event;
+          const warning = { ...stateRef.current, auxiliarySaveStatus: 'error' as const, auxiliarySaveError: 'Your answer is saved. Today’s lesson progress will retry separately.' };
+          stateRef.current = warning; setState(warning);
+        }
+      }
       return;
     } catch (err) {
       console.warn('[usePracticeSession] event write failed, retrying…', err);
       try {
         await recordPracticeAnswer(payload);
-        if (result.isCorrect && configRef.current?.lessonPlanId) {
-          await markDailyLessonProgress(configRef.current.lessonPlanId, item.instanceKey ?? item.id, createdAt);
-        }
         commit();
+        if (result.isCorrect && payload.event.lessonPlanId) {
+          try { await markDailyLessonProgressFromEvent(payload.event); }
+          catch (error) {
+            console.error('[usePracticeSession] daily lesson progress write failed', error);
+            pendingLessonProgressEventRef.current = payload.event;
+            const warning = { ...stateRef.current, auxiliarySaveStatus: 'error' as const, auxiliarySaveError: 'Your answer is saved. Today’s lesson progress will retry separately.' };
+            stateRef.current = warning; setState(warning);
+          }
+        }
         return;
       } catch (retryErr) {
         console.error('[usePracticeSession] event write failed after retry', retryErr);
@@ -687,10 +702,16 @@ export function usePracticeSession(studentId: string) {
     setState(savingState);
     try {
       await recordPracticeAnswer(pending.payload);
-      if (pending.payload.event.isCorrect && pending.payload.event.lessonPlanId) {
-        await markDailyLessonProgress(pending.payload.event.lessonPlanId, pending.payload.event.itemInstanceId ?? pending.payload.event.itemId, pending.payload.event.createdAt);
-      }
       pending.commit();
+      if (pending.payload.event.isCorrect && pending.payload.event.lessonPlanId) {
+        try { await markDailyLessonProgressFromEvent(pending.payload.event); }
+        catch (error) {
+          console.error('[usePracticeSession] daily lesson progress write failed', error);
+          pendingLessonProgressEventRef.current = pending.payload.event;
+          const warning = { ...stateRef.current, auxiliarySaveStatus: 'error' as const, auxiliarySaveError: 'Your answer is saved. Today’s lesson progress will retry separately.' };
+          stateRef.current = warning; setState(warning);
+        }
+      }
     } catch {
       if (pending.schedulingApplied) schedulingGuardRef.current.releaseScheduled(pending.cardKey);
       const errorState = { ...stateRef.current, saveStatus: 'error' as const, saveError: 'Still not saved. Check storage and try again.' };
@@ -824,12 +845,17 @@ export function usePracticeSession(studentId: string) {
 
   const retryAuxiliaryWrites = useCallback(async () => {
     const writes = pendingRelatedWritesRef.current;
+    const lessonEvent = pendingLessonProgressEventRef.current;
     const sessionId = stateRef.current.sessionId;
-    if (!writes.length || !sessionId || stateRef.current.auxiliarySaveStatus === 'saving') return;
+    if ((!writes.length && !lessonEvent) || !sessionId || stateRef.current.auxiliarySaveStatus === 'saving') return;
     const saving = { ...stateRef.current, auxiliarySaveStatus: 'saving' as const, auxiliarySaveError: null };
     stateRef.current = saving; setState(saving);
     try {
-      await recordRelatedEvidenceWrites(writes);
+      if (lessonEvent) {
+        await markDailyLessonProgressFromEvent(lessonEvent);
+        pendingLessonProgressEventRef.current = null;
+      }
+      if (writes.length) await recordRelatedEvidenceWrites(writes);
       for (const write of writes) statesRef.current.set(write.state.cardKey, write.state);
       pendingRelatedWritesRef.current = [];
       pendingRelatedEvidenceRef.current.clear();
@@ -857,6 +883,7 @@ export function usePracticeSession(studentId: string) {
     directEvidenceCardsRef.current.clear();
     pendingRelatedEvidenceRef.current.clear();
     pendingRelatedWritesRef.current = [];
+    pendingLessonProgressEventRef.current = null;
     pendingSaveRef.current = null;
     stateRef.current = INITIAL;
     setState(INITIAL);

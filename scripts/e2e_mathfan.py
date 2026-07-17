@@ -786,7 +786,14 @@ def adaptive_lesson_and_manual_fallback(page: Page) -> None:
     resumed_plan = page.evaluate("""async () => { const db = await new Promise((resolve, reject) => { const r = indexedDB.open('mathfan'); r.onsuccess = () => resolve(r.result); r.onerror = () => reject(r.error); }); const rows = await new Promise((resolve, reject) => { const r = db.transaction('dailyLessonPlans').objectStore('dailyLessonPlans').getAll(); r.onsuccess = () => resolve(r.result); r.onerror = () => reject(r.error); }); db.close(); return rows[0].items.map(entry => entry.item.id); }""")
     assert resumed_plan == first_plan, "Today’s Lesson item order changed after reload"
     lesson.get_by_role("button", name="Start lesson", exact=True).click()
-    for _ in range(30):
+    page.evaluate("""() => {
+        window.__mathfanOriginalLessonPut = IDBObjectStore.prototype.put;
+        IDBObjectStore.prototype.put = function(value, key) {
+            if (this.name === 'dailyLessonPlans') throw new DOMException('Simulated lesson progress failure', 'QuotaExceededError');
+            return window.__mathfanOriginalLessonPut.call(this, value, key);
+        };
+    }""")
+    for question_index in range(30):
         if page.get_by_role("button", name="Home", exact=True).count():
             break
         answer_input = page.get_by_label("Your answer", exact=True)
@@ -806,6 +813,15 @@ def adaptive_lesson_and_manual_fallback(page: Page) -> None:
         answer_input.fill(str(answer))
         answer_input.press("Enter")
         expect(page.get_by_text(re.compile(r"Correct!|New personal best!"))).to_be_visible()
+        if question_index == 0:
+            expect(page.get_by_text(re.compile(r"answer is saved.*lesson progress", re.I))).to_be_visible()
+            canonical_count = page.evaluate("""async () => { const db = await new Promise((resolve, reject) => { const request = indexedDB.open('mathfan'); request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error); }); const events = await new Promise((resolve, reject) => { const request = db.transaction('mathAnswerEvents').objectStore('mathAnswerEvents').getAll(); request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error); }); db.close(); return events.filter(event => event.lessonPlanId && !event.relatedEvidence).length; }""")
+            assert canonical_count == 1, "Canonical answer was not saved exactly once before auxiliary failure"
+            page.evaluate("""() => { IDBObjectStore.prototype.put = window.__mathfanOriginalLessonPut; }""")
+            page.get_by_role("button", name="Retry progress update", exact=True).click()
+            expect(page.get_by_role("button", name="Retry progress update", exact=True)).to_have_count(0)
+            repaired_count = page.evaluate("""async () => { const db = await new Promise((resolve, reject) => { const request = indexedDB.open('mathfan'); request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error); }); const events = await new Promise((resolve, reject) => { const request = db.transaction('mathAnswerEvents').objectStore('mathAnswerEvents').getAll(); request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error); }); db.close(); return events.filter(event => event.lessonPlanId && !event.relatedEvidence).length; }""")
+            assert repaired_count == 1, "Auxiliary retry duplicated the canonical answer"
         page.wait_for_timeout(1200)
     expect(page.get_by_role("button", name="Home", exact=True)).to_be_visible()
     telemetry_summary = page.evaluate("""async () => {
