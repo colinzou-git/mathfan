@@ -16,13 +16,15 @@
  */
 import { db } from '../../db/dexie';
 import { generateId } from '../../utils/id';
+import type { MathAnswerEvent } from '../learning/learningEvents';
 import { makeItemFromId } from '../curriculum/makeItemFromId';
-import { rebuildItemStatesFromEvents } from '../learning/eventRebuild';
+import { replayCardEvents } from '../learning/eventRebuild';
 import type { StudentItemState } from '../../types/math';
-import { deriveCardKey } from '../scheduler/cardModel';
+import { deriveCardKey, deriveCardKeyFromEvent } from '../scheduler/cardModel';
 import type { DataMigrationKind, DataMigrationRun, LegacyStudentItemState, MigrationBackup, MigrationCoverage } from './migrationTypes';
 
-export const MIGRATION_KIND: DataMigrationKind = 'semantic-word-cards-v2';
+export const CARD_STATE_REPAIR_MIGRATION_ID = 'canonical-card-baseline-replay-v3' as const;
+export const MIGRATION_KIND: DataMigrationKind = CARD_STATE_REPAIR_MIGRATION_ID;
 
 export interface MigrationRunResult {
   status: 'completed' | 'failed' | 'skipped';
@@ -137,28 +139,36 @@ async function recoverInterruptedRuns(): Promise<void> {
   }
 }
 
-async function preflight(): Promise<{ ok: true; eventCount: number; studentIds: string[]; unparseable: number } | { ok: false; error: string }> {
-  try {
-    const events = await db.mathAnswerEvents
-      .filter(e => e.mode === 'practice' || e.mode === 'diagnostic' || e.mode === 'goal_evaluation')
-      .toArray();
-    const studentIds = Array.from(new Set(events.map(e => e.studentId)));
-    const unparseable = events.filter(e => !makeItemFromId(e.itemId)).length;
-    return { ok: true, eventCount: events.length, studentIds, unparseable };
-  } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : String(err) };
-  }
+function stateKey(state: Pick<StudentItemState, 'studentId' | 'cardKey'>): string {
+  return `${state.studentId}::${state.cardKey}`;
 }
 
-async function backupCurrentItemStates(runId: string): Promise<void> {
-  const current: StudentItemState[] = await db.itemStates.toArray();
+function canonicalizeStoredStates(states: StudentItemState[]): StudentItemState[] {
+  const byKey = new Map<string, StudentItemState>();
+  for (const state of states) {
+    const item = state.lastItemId ? makeItemFromId(state.lastItemId) : null;
+    const canonical = item ? { ...state, cardKey: deriveCardKey(item) } : structuredClone(state);
+    const key = stateKey(canonical);
+    const prior = byKey.get(key);
+    byKey.set(key, prior ? mergeLegacyCollision(prior, canonical) : canonical);
+  }
+  return [...byKey.values()];
+}
+
+async function buildUsableRollbackStates(legacy: Awaited<ReturnType<typeof convertedLegacyStates>>): Promise<StudentItemState[]> {
+  const current = canonicalizeStoredStates(await db.itemStates.toArray());
+  if (current.length > 0) return current;
+  return legacy.states.map(state => structuredClone(state));
+}
+
+async function backupCurrentItemStates(runId: string, states: StudentItemState[]): Promise<MigrationBackup> {
   const backup: MigrationBackup = {
     id: generateId(),
     migrationRunId: runId,
     createdAt: new Date().toISOString(),
-    itemStates: current,
+    itemStates: states.map(state => structuredClone(state)),
   };
-  await db.migrationBackups.put(backup);
+  return backup;
 }
 
 /** Restores itemStates from the backup captured at the start of `runId`. Used when a later, buggy run needs undoing. */
@@ -191,20 +201,104 @@ function isValidState(state: StudentItemState): boolean {
   return true;
 }
 
-async function validate(studentIds: string[]): Promise<{ ok: true; count: number } | { ok: false; error: string }> {
+function validateStates(states: StudentItemState[]): { invalidCount: number; error?: string } {
   const seen = new Set<string>();
-  let count = 0;
-  for (const studentId of studentIds) {
-    const states = await db.itemStates.where('studentId').equals(studentId).toArray();
-    for (const state of states) {
-      if (!isValidState(state)) return { ok: false, error: `Invalid state for ${state.studentId}/${state.cardKey}` };
-      const key = `${state.studentId}::${state.cardKey}`;
-      if (seen.has(key)) return { ok: false, error: `Duplicate card row for ${key}` };
-      seen.add(key);
-      count++;
-    }
+  let invalidCount = 0;
+  for (const state of states) {
+    const key = stateKey(state);
+    if (!isValidState(state) || seen.has(key)) invalidCount++;
+    seen.add(key);
   }
-  return { ok: true, count };
+  return invalidCount ? { invalidCount, error: `${invalidCount} invalid or duplicate card state(s).` } : { invalidCount: 0 };
+}
+
+export interface CardStateRepairPlan {
+  migrationId: typeof CARD_STATE_REPAIR_MIGRATION_ID;
+  rollbackStates: StudentItemState[];
+  finalStates: StudentItemState[];
+  coverage: MigrationCoverage;
+  studentIds: string[];
+}
+
+export async function buildCardStateRepairPlan(): Promise<CardStateRepairPlan> {
+  const events = await db.mathAnswerEvents
+    .filter(event => event.mode === 'practice' || event.mode === 'diagnostic' || event.mode === 'goal_evaluation')
+    .toArray();
+  const legacy = await convertedLegacyStates();
+  const rollbackStates = await buildUsableRollbackStates(legacy);
+  const current = canonicalizeStoredStates(await db.itemStates.toArray());
+  const baselineByKey = new Map(current.map(state => [stateKey(state), state]));
+  for (const state of legacy.states) baselineByKey.set(stateKey(state), state);
+
+  const validEventsByKey = new Map<string, MathAnswerEvent[]>();
+  const unparseableEvents: MathAnswerEvent[] = [];
+  for (const event of events) {
+    const item = makeItemFromId(event.itemId);
+    if (!item) { unparseableEvents.push(event); continue; }
+    const cardKey = deriveCardKeyFromEvent(event) ?? deriveCardKey(item);
+    const key = `${event.studentId}::${cardKey}`;
+    const grouped = validEventsByKey.get(key) ?? [];
+    grouped.push(event);
+    validEventsByKey.set(key, grouped);
+  }
+
+  const allKeys = new Set([...baselineByKey.keys(), ...validEventsByKey.keys()]);
+  const finalStates: StudentItemState[] = [];
+  let replayedCardCount = 0;
+  let baselineAdvancedCardCount = 0;
+  let baselineReplayEventCount = 0;
+  let preBaselineEventCount = 0;
+  let ambiguousBoundaryEventCount = 0;
+  let legacyFallbackCount = 0;
+  for (const key of allKeys) {
+    const baseline = baselineByKey.get(key);
+    const cardEvents = validEventsByKey.get(key) ?? [];
+    const seedId = cardEvents[0]?.itemId ?? baseline?.lastItemId;
+    const seedItem = seedId ? makeItemFromId(seedId) : null;
+    if (!seedItem) {
+      if (baseline) finalStates.push(structuredClone(baseline));
+      continue;
+    }
+    const [studentId, ...cardParts] = key.split('::');
+    const cardKey = cardParts.join('::');
+    const replay = replayCardEvents({ studentId, cardKey, seedItem, events: cardEvents, baseline });
+    if (replay.hasDirectEvidence || baseline) finalStates.push(replay.state);
+    if (replay.appliedEventIds.length) {
+      replayedCardCount++;
+      baselineReplayEventCount += replay.appliedEventIds.length;
+      if (baseline) baselineAdvancedCardCount++;
+    } else if (baseline) legacyFallbackCount++;
+    const boundary = baseline?.lastSeenAt ? Date.parse(baseline.lastSeenAt) : Number.NEGATIVE_INFINITY;
+    preBaselineEventCount += cardEvents.filter(event => Date.parse(event.createdAt) < boundary).length;
+    ambiguousBoundaryEventCount += replay.ambiguousBoundaryEventIds.length;
+  }
+
+  const unparseableWithFallback = unparseableEvents.filter(event => {
+    if (event.cardKey && baselineByKey.has(`${event.studentId}::${event.cardKey}`)) return true;
+    return [...baselineByKey.values()].some(state => state.studentId === event.studentId && state.lastItemId === event.itemId);
+  });
+  const unparseableWithoutFallback = unparseableEvents.length - unparseableWithFallback.length;
+  const validation = validateStates(finalStates);
+  const coverage: MigrationCoverage = {
+    legacyInputCount: legacy.inputCount,
+    convertedLegacyCardCount: legacy.states.length,
+    baselineCardCount: baselineByKey.size,
+    baselineAdvancedCardCount,
+    baselineReplayEventCount,
+    preBaselineEventCount,
+    ambiguousBoundaryEventCount,
+    replayedCardCount,
+    legacyFallbackCount,
+    collisionCount: legacy.collisionCount,
+    unparseableLegacyCount: legacy.unparseable,
+    unparseableEventCount: unparseableEvents.length,
+    unparseableEventsWithLegacyFallback: unparseableWithFallback.length,
+    unparseableEventsWithoutFallback: unparseableWithoutFallback,
+    invalidFinalStateCount: validation.invalidCount,
+    unexplainedLossCount: legacy.unparseable + unparseableWithoutFallback + validation.invalidCount,
+  };
+  const studentIds = Array.from(new Set([...finalStates.map(state => state.studentId), ...events.map(event => event.studentId)]));
+  return { migrationId: CARD_STATE_REPAIR_MIGRATION_ID, rollbackStates, finalStates, coverage, studentIds };
 }
 
 /**
@@ -222,75 +316,34 @@ export async function runCardStateMigration(): Promise<MigrationRunResult> {
   const runId = generateId();
   const startedAt = new Date().toISOString();
 
-  const pre = await preflight();
-  if (!pre.ok) {
-    await db.dataMigrationRuns.put({
-      id: runId, kind: MIGRATION_KIND, status: 'failed', startedAt, sourceEventCount: 0, error: pre.error,
-    });
-    return { status: 'failed', runId, error: pre.error };
-  }
-
-  await db.dataMigrationRuns.put({
-    id: runId, kind: MIGRATION_KIND, status: 'started', startedAt, sourceEventCount: pre.eventCount,
-  });
-
   try {
-    await backupCurrentItemStates(runId);
-    await repairLegacyWordProblemCardStates();
-
-    const legacy = await convertedLegacyStates();
-    if (legacy.states.length) await db.itemStates.bulkPut(legacy.states);
-
-    const studentIds = Array.from(new Set([...pre.studentIds, ...legacy.states.map(state => state.studentId)]));
-    for (const studentId of pre.studentIds) {
-      await rebuildItemStatesFromEvents(studentId, { mode: 'preserve-legacy' });
+    const sourceEventCount = await db.mathAnswerEvents.count();
+    await db.dataMigrationRuns.put({ id: runId, kind: MIGRATION_KIND, status: 'started', startedAt, sourceEventCount });
+    const plan = await buildCardStateRepairPlan();
+    if (plan.coverage.unexplainedLossCount > 0) {
+      const error = `Migration would lose ${plan.coverage.unexplainedLossCount} scheduler record(s).`;
+      await db.dataMigrationRuns.update(runId, { status: 'failed', error, coverage: plan.coverage, completedAt: new Date().toISOString() });
+      return { status: 'failed', runId, error, coverage: plan.coverage };
     }
-
-    const validation = await validate(studentIds);
-    const replayedCardKeys = new Set<string>();
-    const directEvents = await db.mathAnswerEvents
-      .filter(event => !event.isRetry && !event.relatedEvidence && (event.mode === 'practice' || event.mode === 'diagnostic' || event.mode === 'goal_evaluation'))
-      .toArray();
-    for (const event of directEvents) {
-      const item = makeItemFromId(event.itemId);
-      if (item) replayedCardKeys.add(`${event.studentId}::${deriveCardKey(item)}`);
-    }
-    const legacyFallbackCount = legacy.states.filter(state => !replayedCardKeys.has(`${state.studentId}::${state.cardKey}`)).length;
-    const coverage: MigrationCoverage = {
-      legacyInputCount: legacy.inputCount,
-      replayedCardCount: replayedCardKeys.size,
-      legacyFallbackCount,
-      collisionCount: legacy.collisionCount,
-      unparseableLegacyCount: legacy.unparseable,
-      unparseableEventCount: pre.unparseable,
-      unexplainedLossCount: legacy.unparseable,
-    };
-    if (coverage.unexplainedLossCount > 0) {
-      const error = `Migration would lose ${coverage.unexplainedLossCount} legacy scheduler row(s).`;
-      await rollbackCardStateMigration(runId);
-      await db.dataMigrationRuns.update(runId, { status: 'failed', error, coverage, completedAt: new Date().toISOString() });
-      return { status: 'failed', runId, error, coverage };
-    }
-    if (!validation.ok) {
-      await rollbackCardStateMigration(runId);
-      await db.dataMigrationRuns.update(runId, { status: 'failed', error: validation.error, completedAt: new Date().toISOString() });
-      return { status: 'failed', runId, error: validation.error };
-    }
-
-    await db.dataMigrationRuns.update(runId, {
-      status: 'completed',
-      completedAt: new Date().toISOString(),
-      outputCardCount: validation.count,
-      coverage,
+    const backup = await backupCurrentItemStates(runId, plan.rollbackStates);
+    const completedAt = new Date().toISOString();
+    await db.transaction('rw', db.itemStates, db.dataMigrationRuns, db.migrationBackups, async () => {
+      await db.migrationBackups.put(backup);
+      await db.itemStates.clear();
+      await db.itemStates.bulkPut(plan.finalStates);
+      await db.dataMigrationRuns.put({
+        id: runId, kind: MIGRATION_KIND, status: 'completed', startedAt, completedAt,
+        sourceEventCount, outputCardCount: plan.finalStates.length, coverage: plan.coverage,
+      });
     });
 
     return {
       status: 'completed',
       runId,
-      affectedStudentCount: studentIds.length,
-      outputCardCount: validation.count,
-      unparseableEventCount: pre.unparseable,
-      coverage,
+      affectedStudentCount: plan.studentIds.length,
+      outputCardCount: plan.finalStates.length,
+      unparseableEventCount: plan.coverage.unparseableEventCount,
+      coverage: plan.coverage,
     };
   } catch (err) {
     const error = err instanceof Error ? err.message : String(err);

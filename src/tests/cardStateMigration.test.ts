@@ -7,6 +7,7 @@ import {
   isCardStateMigrationComplete,
   rollbackCardStateMigration,
   repairLegacyWordProblemCardStates,
+  migrateLegacyState,
   MIGRATION_KIND,
 } from '../features/migrations/cardStateMigration';
 import type { MathAnswerEvent } from '../features/learning/learningEvents';
@@ -194,7 +195,6 @@ describe('runCardStateMigration', () => {
 
     const backups = await db.migrationBackups.where('migrationRunId').equals(result.runId).toArray();
     expect(backups).toHaveLength(1);
-    // Fresh schema-v8 itemStates starts empty, so the pre-run backup is empty too.
     expect(backups[0].itemStates).toEqual([]);
   });
 
@@ -208,16 +208,75 @@ describe('runCardStateMigration', () => {
       lastSeenAt: '2025-12-20T00:00:00.000Z', nextDueAt: '2026-01-20T00:00:00.000Z',
       masteryLevel: 'strong', mistakePatterns: ['mul_add_instead'], lastItemId: 'MUL_7x8', cardKey: 'fact:mul:7x8',
     });
+    const runBackup = await db.migrationBackups.where('migrationRunId').equals(result.runId).first();
+    expect(runBackup?.itemStates).toEqual([expect.objectContaining({ cardKey: 'fact:mul:7x8', reps: 8 })]);
   });
 
-  it('keeps legacy-only cards while event replay owns event-backed cards', async () => {
+  it('keeps a legacy baseline and applies only newer event deltas', async () => {
     await putSchemaBackup([legacy(), legacy('MUL_2x3', { attemptCount: 4, reps: 3 })]);
     await db.mathAnswerEvents.put(event());
     const result = await runCardStateMigration();
     expect(result.status).toBe('completed');
     expect(await db.itemStates.count()).toBe(2);
-    expect((await db.itemStates.get(['s1', 'fact:mul:7x8']))?.attemptCount).toBe(1);
+    expect(await db.itemStates.get(['s1', 'fact:mul:7x8'])).toMatchObject({ attemptCount: 10, reps: 9 });
     expect((await db.itemStates.get(['s1', 'fact:mul:2x3']))?.attemptCount).toBe(4);
+  });
+
+  it('preserves 20 legacy reviews and applies two strictly newer events', async () => {
+    await putSchemaBackup([legacy('MUL_7x8', {
+      attemptCount: 20, correctCount: 18, reps: 20,
+      lastSeenAt: '2026-06-01T00:00:00.000Z', nextDueAt: '2026-07-01T00:00:00.000Z',
+    })]);
+    await db.mathAnswerEvents.bulkPut([
+      event({ id: 'newer-1', sessionId: 's-new-1', createdAt: '2026-06-10T00:00:00.000Z' }),
+      event({ id: 'newer-2', sessionId: 's-new-2', createdAt: '2026-06-20T00:00:00.000Z' }),
+    ]);
+    const result = await runCardStateMigration();
+    expect(result.status).toBe('completed');
+    expect(result.coverage).toMatchObject({ baselineAdvancedCardCount: 1, baselineReplayEventCount: 2 });
+    expect(await db.itemStates.get(['s1', 'fact:mul:7x8'])).toMatchObject({ attemptCount: 22, correctCount: 20, reps: 22 });
+  });
+
+  it('does not replay events older than or equal to the baseline boundary', async () => {
+    await putSchemaBackup([legacy('MUL_7x8', { attemptCount: 8, reps: 8, lastSeenAt: '2026-06-10T00:00:00.000Z' })]);
+    await db.mathAnswerEvents.bulkPut([
+      event({ id: 'older', sessionId: 'old', createdAt: '2026-06-01T00:00:00.000Z' }),
+      event({ id: 'equal', sessionId: 'equal', createdAt: '2026-06-10T00:00:00.000Z' }),
+    ]);
+    const result = await runCardStateMigration();
+    expect(result.coverage).toMatchObject({ preBaselineEventCount: 1, ambiguousBoundaryEventCount: 1, baselineReplayEventCount: 0 });
+    expect(await db.itemStates.get(['s1', 'fact:mul:7x8'])).toMatchObject({ attemptCount: 8, reps: 8 });
+  });
+
+  it('fails without mutating itemStates when an unparseable event has no fallback', async () => {
+    const current = migrateLegacyState(legacy('MUL_2x3'));
+    if ('problem' in current) throw new Error(current.problem);
+    await db.itemStates.put(current);
+    const before = structuredClone(await db.itemStates.toArray());
+    await db.mathAnswerEvents.put(event({ itemId: 'REMOVED_ITEM', id: 'lost-event' }));
+    const result = await runCardStateMigration();
+    expect(result.status).toBe('failed');
+    expect(result.coverage).toMatchObject({ unparseableEventsWithoutFallback: 1, unexplainedLossCount: 1 });
+    expect(await db.itemStates.toArray()).toEqual(before);
+  });
+
+  it('allows an unparseable event when a legacy baseline explicitly covers its card', async () => {
+    await putSchemaBackup([legacy()]);
+    await db.mathAnswerEvents.put(event({ itemId: 'REMOVED_ITEM', id: 'covered-event', cardKey: 'fact:mul:7x8' }));
+    const result = await runCardStateMigration();
+    expect(result.status).toBe('completed');
+    expect(result.coverage).toMatchObject({ unparseableEventsWithLegacyFallback: 1, unexplainedLossCount: 0 });
+    expect(await db.itemStates.get(['s1', 'fact:mul:7x8'])).toMatchObject({ reps: 8, attemptCount: 9 });
+  });
+
+  it('runs v3 once even when older migration kinds are completed', async () => {
+    await db.dataMigrationRuns.bulkPut([
+      { id: 'v1', kind: 'hybrid-card-v1', status: 'completed', startedAt: '2026-01-01T00:00:00.000Z', sourceEventCount: 0 },
+      { id: 'v2', kind: 'semantic-word-cards-v2', status: 'completed', startedAt: '2026-01-02T00:00:00.000Z', sourceEventCount: 0 },
+    ]);
+    await putSchemaBackup([legacy()]);
+    expect((await runCardStateMigration()).status).toBe('completed');
+    expect((await runCardStateMigration()).status).toBe('skipped');
   });
 
   it('merges commutative legacy collisions conservatively', async () => {
