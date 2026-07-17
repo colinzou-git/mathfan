@@ -106,6 +106,7 @@ function evaluationArgs(evaluation: GoalEvaluation, events: MathAnswerEvent[], i
     mathAnswerEvents: events,
     itemStates,
     responses: responsesFromEvaluation(evaluation),
+    currentEvaluationId: evaluation.id,
     scheduledCardKeys: evaluation.scheduledCardKeys ?? [],
   };
 }
@@ -432,6 +433,7 @@ export function GoalEvaluationSession({ studentId, onCancel, onReturnToGoals, on
             mathAnswerEvents: [...events.filter(item => item.id !== event.id), event],
             itemStates: updatedState ? [...itemStates.filter(item => item.cardKey !== updatedState.cardKey), updatedState] : itemStates,
             responses: nextResponses,
+            currentEvaluationId: evaluation.id,
           })
         : null;
       const nextEvaluation: GoalEvaluation = {

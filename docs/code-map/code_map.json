@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-17T01:46:37.538823+00:00",
+  "generated_at": "2026-07-17T02:02:24.969650+00:00",
   "repo_root": "/home/ubuntu/mathfan",
   "package": {
     "name": "mathfan",
@@ -3364,9 +3364,9 @@
     {
       "path": "src/features/goals/goalEvaluationEngine.ts",
       "ext": ".ts",
-      "bytes": 23744,
-      "lines": 605,
-      "sha1": "8b775baa0764",
+      "bytes": 24086,
+      "lines": 611,
+      "sha1": "5c8eac0f9f12",
       "imports": [
         "../../types/math",
         "../../utils/rng",
@@ -3395,6 +3395,7 @@
         "EvaluationRepresentation",
         "EvaluationSelectionHistory",
         "GoalEvaluationCandidate",
+        "isHistoricalGoalEvaluationPriorEvent",
         "itemScore",
         "planFullAdaptiveGoalEvaluation",
         "selectNextAdaptiveGoalEvaluationItem",
@@ -3409,6 +3410,7 @@
         "directFirstAttempt",
         "hashString",
         "historicalEvidence",
+        "isHistoricalGoalEvaluationPriorEvent",
         "itemLookup",
         "itemScore",
         "planFullAdaptiveGoalEvaluation",
@@ -3491,9 +3493,9 @@
     {
       "path": "src/features/goals/GoalEvaluationSession.tsx",
       "ext": ".tsx",
-      "bytes": 34069,
-      "lines": 735,
-      "sha1": "ea382d8f923c",
+      "bytes": 34157,
+      "lines": 737,
+      "sha1": "2a04aa7cf409",
       "imports": [
         "../../components/NumPad",
         "../../db/repositories",
@@ -8710,9 +8712,9 @@
     {
       "path": "src/tests/goalEvaluationEngine.test.tsx",
       "ext": ".tsx",
-      "bytes": 14779,
-      "lines": 353,
-      "sha1": "b3a2c32f706d",
+      "bytes": 17348,
+      "lines": 391,
+      "sha1": "683b5779ca4e",
       "imports": [
         "../features/curriculum/makeItemFromId",
         "../features/goals/goalEvaluationEngine",

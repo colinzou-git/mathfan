@@ -913,7 +913,8 @@ def goal_evaluation_double_submit(page: Page) -> None:
     page.get_by_role("button", name="Evaluation", exact=True).first.click()
     expect(page.get_by_role("heading", name="Adaptive Goal Evaluation", exact=True)).to_be_visible()
     page.get_by_role("button", name="Start", exact=True).click()
-    page.get_by_role("button", name="0", exact=True).click()
+    expect(page.get_by_label("Question 1 of 30", exact=True)).to_be_visible(timeout=60_000)
+    page.get_by_role("button", name=re.compile(r"^-?\d+(?:\.\d+)?$"), exact=True).first.click(timeout=60_000)
     page.get_by_role("button", name="Check", exact=True).last.dblclick()
     expect(page.get_by_role("button", name="Continue", exact=True)).to_be_visible()
     counts = page.evaluate("""async () => {

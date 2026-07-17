@@ -341,6 +341,44 @@ describe('Adaptive Goal Evaluation evidence model', () => {
     expect(forward.historicalCorrectWeight).toBeGreaterThan(forward.historicalWeight / 2);
   });
 
+  it('counts a saved active-evaluation answer exactly once through responses', () => {
+    const itemId = itemIdForSkill('g3-mul-tables-basic');
+    const saved = event({ id: 'active-answer', sessionId: 'evaluation-1', mode: 'goal_evaluation', itemId });
+    const evidence = buildAdaptiveGoalSkillEvidence(baseArgs({
+      currentEvaluationId: 'evaluation-1', mathAnswerEvents: [saved],
+      responses: [{ itemId, skillId: 'g3-mul-tables-basic', isCorrect: true }],
+    })).find(item => item.skillId === 'g3-mul-tables-basic')!;
+    expect(evidence).toMatchObject({ evaluationAttempts: 1, evaluationCorrect: 1, historicalWeight: 0 });
+    expect(evidence.alpha).toBe(3);
+  });
+
+  it('excludes only the matching active evaluation while retaining prior evaluations and concurrent practice', () => {
+    const itemId = itemIdForSkill('g3-mul-tables-basic');
+    const active = event({ id: 'active', sessionId: 'evaluation-1', mode: 'goal_evaluation', itemId, isCorrect: false });
+    const prior = event({ id: 'prior', sessionId: 'evaluation-old', mode: 'goal_evaluation', itemId });
+    const practice = event({ id: 'practice', sessionId: 'practice-now', mode: 'practice', itemId });
+    const excluded = buildAdaptiveGoalSkillEvidence(baseArgs({
+      currentEvaluationId: 'evaluation-1', mathAnswerEvents: [active, prior, practice],
+      responses: [{ itemId, skillId: 'g3-mul-tables-basic', isCorrect: false }],
+    })).find(item => item.skillId === 'g3-mul-tables-basic')!;
+    const included = buildAdaptiveGoalSkillEvidence(baseArgs({
+      mathAnswerEvents: [active, prior, practice], responses: [],
+    })).find(item => item.skillId === 'g3-mul-tables-basic')!;
+    expect(excluded).toMatchObject({ evaluationIncorrect: 1 });
+    expect(excluded.historicalWeight).toBeCloseTo(1 + 0.85);
+    expect(included.historicalWeight).toBeCloseTo(1 + 0.85 + 0.85 ** 2);
+  });
+
+  it('uses the same disjoint evidence contract in the final result', () => {
+    const itemId = itemIdForSkill('g3-mul-tables-basic');
+    const args = baseArgs({ currentEvaluationId: 'evaluation-1',
+      mathAnswerEvents: [event({ sessionId: 'evaluation-1', mode: 'goal_evaluation', itemId })],
+      responses: [{ itemId, skillId: 'g3-mul-tables-basic', isCorrect: true }] });
+    const selectionEvidence = buildAdaptiveGoalSkillEvidence(args).find(item => item.skillId === 'g3-mul-tables-basic');
+    const resultEvidence = buildAdaptiveGoalEvaluationResult(args).evidence.find(item => item.skillId === 'g3-mul-tables-basic');
+    expect(resultEvidence).toEqual(selectionEvidence);
+  });
+
   it('produces recommendation-ready strengths, skills to strengthen, ready-next skills, and top candidates', () => {
     const responses = selectedResponses(n => n % 4 !== 0);
     const result = buildAdaptiveGoalEvaluationResult(baseArgs({ responses }));

@@ -80,6 +80,7 @@ export interface AdaptiveGoalEvaluationArgs {
   mathAnswerEvents: MathAnswerEvent[];
   itemStates: StudentItemState[];
   responses: AdaptiveGoalEvaluationResponse[];
+  currentEvaluationId?: string;
   scheduledCardKeys?: string[];
   skillGraph?: readonly MasterySkillNode[];
   makeItemFromId?: (itemId: string) => PracticeItem | null;
@@ -136,6 +137,11 @@ function rngFor(args: AdaptiveGoalEvaluationArgs, salt: string): Rng {
 
 function directFirstAttempt(event: MathAnswerEvent): boolean {
   return !event.isRetry && !event.relatedEvidence;
+}
+
+export function isHistoricalGoalEvaluationPriorEvent(event: MathAnswerEvent, currentEvaluationId?: string): boolean {
+  return directFirstAttempt(event)
+    && !(currentEvaluationId && event.mode === 'goal_evaluation' && event.sessionId === currentEvaluationId);
 }
 
 function schemaKey(item: PracticeItem): string {
@@ -230,7 +236,7 @@ function historicalEvidence(
   const skillIds = new Set(catalogue.map(pool => pool.skill.id));
   const bySkill = new Map<string, MathAnswerEvent[]>();
   for (const event of args.mathAnswerEvents) {
-    if (event.studentId !== args.studentId || !directFirstAttempt(event)) continue;
+    if (event.studentId !== args.studentId || !isHistoricalGoalEvaluationPriorEvent(event, args.currentEvaluationId)) continue;
     const item = makeItem(event.itemId);
     if (!item) continue;
     const skillId = inferGrade3SkillId(item);
