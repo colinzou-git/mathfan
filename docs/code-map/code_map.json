@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-17T02:31:28.231585+00:00",
+  "generated_at": "2026-07-17T02:47:21.019475+00:00",
   "repo_root": "/home/ubuntu/mathfan",
   "package": {
     "name": "mathfan",
@@ -2891,24 +2891,29 @@
     {
       "path": "src/features/diagnosis/diagnosticPersistence.ts",
       "ext": ".ts",
-      "bytes": 383,
-      "lines": 11,
-      "sha1": "f7290f9eb29f",
+      "bytes": 997,
+      "lines": 33,
+      "sha1": "6664056b2d9c",
       "imports": [
         "../learning/recordAnswer"
       ],
-      "exports": [],
+      "exports": [
+        "DiagnosticWriteJob"
+      ],
       "functions": [
+        "flushDiagnosticWriteJobs",
         "recordDiagnosticAnswerWithRetry"
       ],
       "classes": [],
-      "interfaces": [],
+      "interfaces": [
+        "DiagnosticWriteJob"
+      ],
       "types": [],
       "components": [],
       "hooks": [],
       "css_classes": [],
       "json_keys": [],
-      "purpose": "Support module that imports project/external dependencies.",
+      "purpose": "Exports reusable code: DiagnosticWriteJob.",
       "too_large": false,
       "read_error": null
     },
@@ -2949,9 +2954,9 @@
     {
       "path": "src/features/diagnosis/DiagnosticSession.tsx",
       "ext": ".tsx",
-      "bytes": 20142,
-      "lines": 604,
-      "sha1": "6d86e26309c3",
+      "bytes": 20616,
+      "lines": 609,
+      "sha1": "2ea0c97a12fb",
       "imports": [
         "../../components/NumPad",
         "../../db/repositories",
@@ -8031,6 +8036,29 @@
       "read_error": null
     },
     {
+      "path": "src/tests/diagnosticPersistence.test.ts",
+      "ext": ".ts",
+      "bytes": 982,
+      "lines": 19,
+      "sha1": "81f2a2d52283",
+      "imports": [
+        "../features/diagnosis/diagnosticPersistence",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/tests/diagnosticPlanner.test.ts",
       "ext": ".ts",
       "bytes": 6431,
@@ -8057,9 +8085,9 @@
     {
       "path": "src/tests/diagnosticSession.test.tsx",
       "ext": ".tsx",
-      "bytes": 8140,
-      "lines": 203,
-      "sha1": "ef997ce5ff83",
+      "bytes": 8251,
+      "lines": 204,
+      "sha1": "0a57c9625883",
       "imports": [
         "../db/repositories",
         "../features/diagnosis/diagnosticPersistence",
