@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-17T02:47:21.019475+00:00",
+  "generated_at": "2026-07-17T03:26:55.643071+00:00",
   "repo_root": "/home/ubuntu/mathfan",
   "package": {
     "name": "mathfan",
@@ -2954,9 +2954,9 @@
     {
       "path": "src/features/diagnosis/DiagnosticSession.tsx",
       "ext": ".tsx",
-      "bytes": 20616,
-      "lines": 609,
-      "sha1": "2ea0c97a12fb",
+      "bytes": 20747,
+      "lines": 612,
+      "sha1": "e3e3d8cbf10e",
       "imports": [
         "../../components/NumPad",
         "../../db/repositories",
@@ -3910,9 +3910,9 @@
     {
       "path": "src/features/learning/eventRebuild.ts",
       "ext": ".ts",
-      "bytes": 8976,
-      "lines": 204,
-      "sha1": "dd91c60bb413",
+      "bytes": 9852,
+      "lines": 232,
+      "sha1": "49ab6bbf7f9c",
       "imports": [
         "../../db/dexie",
         "../../types/math",
@@ -3927,9 +3927,11 @@
         "./learningEvents"
       ],
       "exports": [
+        "applyMisconceptionEventEvidence",
         "shouldApplyEventToScheduler"
       ],
       "functions": [
+        "applyMisconceptionEventEvidence",
         "gradeFromEvent",
         "rebuildItemStatesFromEvents",
         "rebuildMultFactStatsFromEvents",
@@ -7610,9 +7612,9 @@
     {
       "path": "src/tests/answerChecker.test.ts",
       "ext": ".ts",
-      "bytes": 10084,
-      "lines": 227,
-      "sha1": "ade802e11f4b",
+      "bytes": 10550,
+      "lines": 238,
+      "sha1": "73bc3f4c5aaa",
       "imports": [
         "../features/fluency/fluencyEngine",
         "../features/practice/answerChecker",
@@ -8085,9 +8087,9 @@
     {
       "path": "src/tests/diagnosticSession.test.tsx",
       "ext": ".tsx",
-      "bytes": 8251,
-      "lines": 204,
-      "sha1": "0a57c9625883",
+      "bytes": 9302,
+      "lines": 232,
+      "sha1": "f1b4532fb044",
       "imports": [
         "../db/repositories",
         "../features/diagnosis/diagnosticPersistence",
@@ -8197,9 +8199,9 @@
     {
       "path": "src/tests/eventRebuild.test.ts",
       "ext": ".ts",
-      "bytes": 15508,
-      "lines": 367,
-      "sha1": "529e438c7520",
+      "bytes": 18106,
+      "lines": 421,
+      "sha1": "c3c3e3704656",
       "imports": [
         "../features/learning/eventRebuild",
         "../features/learning/learningEvents",
@@ -8544,9 +8546,9 @@
     {
       "path": "src/tests/fluencyEngine.test.ts",
       "ext": ".ts",
-      "bytes": 7567,
+      "bytes": 7562,
       "lines": 150,
-      "sha1": "16c876bfd505",
+      "sha1": "b50ed1edc06d",
       "imports": [
         "../features/fluency/fluencyEngine",
         "../features/learning/learningEvents",
