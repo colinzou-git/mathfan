@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-07-17T08:14:55.320031+00:00",
-  "repo_root": "/tmp/mathfan-issue41",
+  "generated_at": "2026-07-17T09:09:43.949772+00:00",
+  "repo_root": "/home/ubuntu/mathfan",
   "package": {
     "name": "mathfan",
     "version": "1.2.0",
@@ -570,9 +570,9 @@
     {
       "path": "scripts/e2e_mathfan.py",
       "ext": ".py",
-      "bytes": 63394,
-      "lines": 1052,
-      "sha1": "ec7257423470",
+      "bytes": 66335,
+      "lines": 1085,
+      "sha1": "18d76ce6cf10",
       "imports": [
         "__future__",
         "json",
@@ -1228,11 +1228,12 @@
     {
       "path": "src/db/repositories.ts",
       "ext": ".ts",
-      "bytes": 16194,
-      "lines": 368,
-      "sha1": "354de3aaa9d0",
+      "bytes": 16422,
+      "lines": 370,
+      "sha1": "7d52a8dd80f5",
       "imports": [
         "../features/fluency/fluencyEngine",
+        "../features/goals/goalEvaluationSelection",
         "../features/goals/types",
         "../features/learning/eventOrdering",
         "../features/learning/learningEvents",
@@ -3469,9 +3470,9 @@
     {
       "path": "src/features/goals/goalEvaluationPersistence.ts",
       "ext": ".ts",
-      "bytes": 4856,
-      "lines": 100,
-      "sha1": "46b82cc40e52",
+      "bytes": 8230,
+      "lines": 151,
+      "sha1": "f60c3307b4de",
       "imports": [
         "../../db/dexie",
         "../../db/repositories",
@@ -3479,21 +3480,30 @@
         "../../utils/id",
         "../../utils/rng",
         "../learning/learningEvents",
+        "../scheduler/cardModel",
+        "./goalEvaluationEngine",
+        "./goalEvaluationSelection",
         "./types"
       ],
       "exports": [
         "CommittedGoalEvaluationAnswer",
-        "GoalEvaluationAnswerWrite"
+        "GoalEvaluationAnswerWrite",
+        "GoalEvaluationSelectionConflictError",
+        "PersistNextGoalQuestionArgs"
       ],
       "functions": [
         "createGoalEvaluation",
         "loadLatestResumableGoalEvaluation",
+        "persistNextGoalEvaluationQuestion",
         "recordGoalEvaluationAnswer"
       ],
-      "classes": [],
+      "classes": [
+        "GoalEvaluationSelectionConflictError"
+      ],
       "interfaces": [
         "CommittedGoalEvaluationAnswer",
-        "GoalEvaluationAnswerWrite"
+        "GoalEvaluationAnswerWrite",
+        "PersistNextGoalQuestionArgs"
       ],
       "types": [],
       "components": [],
@@ -3505,11 +3515,45 @@
       "read_error": null
     },
     {
+      "path": "src/features/goals/goalEvaluationSelection.ts",
+      "ext": ".ts",
+      "bytes": 3932,
+      "lines": 73,
+      "sha1": "626a0601e6c8",
+      "imports": [
+        "../../types/math",
+        "../curriculum/practiceContentSpec",
+        "../scheduler/cardModel",
+        "./types"
+      ],
+      "exports": [
+        "GoalEvaluationSelectionValidationError",
+        "normalizeLocalGoalEvaluation",
+        "validatePersistedGoalEvaluationSelection"
+      ],
+      "functions": [
+        "normalizeLocalGoalEvaluation",
+        "validatePersistedGoalEvaluationSelection"
+      ],
+      "classes": [
+        "GoalEvaluationSelectionValidationError"
+      ],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Exports reusable code: GoalEvaluationSelectionValidationError, normalizeLocalGoalEvaluation, validatePersistedGoalEvaluationSelection.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/features/goals/GoalEvaluationSession.tsx",
       "ext": ".tsx",
-      "bytes": 35444,
-      "lines": 760,
-      "sha1": "2418a85b4cf9",
+      "bytes": 36906,
+      "lines": 784,
+      "sha1": "95d596419b13",
       "imports": [
         "../../components/NumPad",
         "../../db/repositories",
@@ -3837,9 +3881,9 @@
     {
       "path": "src/features/goals/types.ts",
       "ext": ".ts",
-      "bytes": 3595,
-      "lines": 138,
-      "sha1": "c227ccf24c86",
+      "bytes": 3714,
+      "lines": 142,
+      "sha1": "6f34bacd0ce4",
       "imports": [
         "../../types/math",
         "../learning/learningEvents",
@@ -3858,7 +3902,8 @@
         "GoalSource",
         "GoalTargetReason",
         "LearningGoal",
-        "LearningGoalStatus"
+        "LearningGoalStatus",
+        "PersistedGoalEvaluationSelection"
       ],
       "functions": [],
       "classes": [],
@@ -3868,7 +3913,8 @@
         "GoalEvaluationAnswer",
         "GoalEvent",
         "GoalSkillTarget",
-        "LearningGoal"
+        "LearningGoal",
+        "PersistedGoalEvaluationSelection"
       ],
       "types": [
         "GoalEvaluationStatus",
@@ -6469,11 +6515,12 @@
     {
       "path": "src/features/sync/snapshotParsers.ts",
       "ext": ".ts",
-      "bytes": 10964,
-      "lines": 131,
-      "sha1": "d533924f3aaa",
+      "bytes": 11629,
+      "lines": 143,
+      "sha1": "19f0ecf1df83",
       "imports": [
         "../../types/math",
+        "../goals/goalEvaluationSelection",
         "../goals/types",
         "../learning/learningEvents",
         "../multiplication/types",
@@ -8842,9 +8889,9 @@
     {
       "path": "src/tests/goalEvaluationConcurrency.test.ts",
       "ext": ".ts",
-      "bytes": 4098,
-      "lines": 61,
-      "sha1": "34b3193a4af1",
+      "bytes": 5792,
+      "lines": 84,
+      "sha1": "a7f533a681c2",
       "imports": [
         "../db/dexie",
         "../features/goals/goalEvaluationPersistence",
@@ -8906,13 +8953,40 @@
       "read_error": null
     },
     {
+      "path": "src/tests/goalEvaluationSelectionPersistence.test.ts",
+      "ext": ".ts",
+      "bytes": 3761,
+      "lines": 58,
+      "sha1": "7bf7ae9594af",
+      "imports": [
+        "../db/dexie",
+        "../features/goals/goalEvaluationEngine",
+        "../features/goals/goalEvaluationPersistence",
+        "../features/goals/types",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Local persistence/database layer.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/tests/goalEvaluationSession.test.tsx",
       "ext": ".tsx",
-      "bytes": 15936,
-      "lines": 418,
-      "sha1": "f131f18559cb",
+      "bytes": 18856,
+      "lines": 461,
+      "sha1": "06c95cbd288f",
       "imports": [
         "../db/repositories",
+        "../features/goals/goalEvaluationEngine",
         "../features/goals/goalEvaluationPersistence",
         "../features/goals/GoalEvaluationSession",
         "../features/goals/types",
@@ -10359,9 +10433,9 @@
     {
       "path": "src/tests/snapshotValidation.test.ts",
       "ext": ".ts",
-      "bytes": 14914,
-      "lines": 302,
-      "sha1": "d16c103081bd",
+      "bytes": 15924,
+      "lines": 313,
+      "sha1": "824eb70856d7",
       "imports": [
         "../features/curriculum/makeItemFromId",
         "../features/sync/snapshot",

@@ -33,10 +33,12 @@ import {
 } from './goalEvaluationEngine';
 import {
   createGoalEvaluation,
+  GoalEvaluationSelectionConflictError,
   loadLatestResumableGoalEvaluation,
+  persistNextGoalEvaluationQuestion,
   recordGoalEvaluationAnswer,
 } from './goalEvaluationPersistence';
-import type { GoalEvaluation } from './types';
+import type { GoalEvaluation, PersistedGoalEvaluationSelection } from './types';
 import { buildSchedulingTelemetry } from '../learning/schedulingTelemetry';
 import { remainingLearningUnitEvidence } from '../learning/learningUnitProgress';
 
@@ -265,28 +267,47 @@ export function GoalEvaluationSession({ studentId, onCancel, onReturnToGoals, on
     return buildAdaptiveGoalEvaluationResult(evaluationArgs(evaluation, events, itemStates, appNow().toISOString()));
   }, [evaluation, events, itemStates]);
 
-  const selectAndStartQuestion = useCallback((value: GoalEvaluation, answerEvents: MathAnswerEvent[], states: StudentItemState[]) => {
-    const persistedItem = value.currentItem ?? null;
-    const next = persistedItem && value.currentSelection ? {
-      ...value.currentSelection, item: persistedItem, evidence: [], topCandidates: [],
-    } : selectNextAdaptiveGoalEvaluationItem(evaluationArgs(value, answerEvents, states, appNow().toISOString()));
-    if (!next) throw new Error('No goal evaluation question is available.');
-    const persisted: GoalEvaluation = {
-      ...value,
-      currentItemId: next.item.id,
-      currentItem: next.item,
-      currentSelection: {
-        questionNumber: next.questionNumber, phase: next.phase, skillId: next.skillId, domain: next.domain,
-        rationale: next.rationale, cardKey: next.cardKey, schedulingEligible: next.schedulingEligible,
-        schedulingReason: next.schedulingReason,
-      },
+  const activatePersisted = useCallback((persisted: PersistedGoalEvaluationSelection) => {
+    const next: AdaptiveGoalEvaluationSelection = {
+      questionNumber: persisted.questionIndex + 1, phase: persisted.phase, item: persisted.item,
+      skillId: persisted.skillId, domain: persisted.domain, rationale: persisted.rationale,
+      cardKey: persisted.cardKey, schedulingEligible: persisted.schedulingEligible,
+      schedulingReason: persisted.schedulingReason, evidence: [], topCandidates: [],
     };
-    startMsRef.current = performance.now();
     setActiveSelection(next);
-    setEvaluation(persisted);
-    void goalEvaluationRepo.save(persisted).catch(console.error);
-    return next;
+    startMsRef.current = performance.now();
   }, []);
+
+  const selectAndStartQuestion = useCallback(async (value: GoalEvaluation, answerEvents: MathAnswerEvent[], states: StudentItemState[]) => {
+    setSaving(true);
+    setSaveError(null);
+    try {
+      let persisted = value;
+      if (!value.currentSelection || value.currentSelection.questionIndex !== value.answers.length) {
+        const selectedAt = appNow().toISOString();
+        const next = selectNextAdaptiveGoalEvaluationItem(evaluationArgs(value, answerEvents, states, selectedAt));
+        if (!next) throw new Error('No goal evaluation question is available.');
+        persisted = await persistNextGoalEvaluationQuestion({ evaluationId: value.id, expectedAnswerCount: value.answers.length,
+          expectedSelectionRevision: value.selectionRevision ?? 0, selectedAt, selection: next });
+      }
+      if (!persisted.currentSelection) throw new Error('Could not persist the next evaluation question.');
+      setEvaluation(persisted);
+      activatePersisted(persisted.currentSelection);
+      return persisted;
+    } catch (error) {
+      if (error instanceof GoalEvaluationSelectionConflictError) {
+        const latest = await goalEvaluationRepo.load(value.id);
+        if (latest && latest.currentSelection?.questionIndex === latest.answers.length) {
+          setEvaluation(latest);
+          activatePersisted(latest.currentSelection);
+          return latest;
+        }
+      }
+      setActiveSelection(null);
+      setSaveError(error instanceof Error ? error.message : 'Could not save the next evaluation question.');
+      throw error;
+    } finally { setSaving(false); }
+  }, [activatePersisted]);
 
   useEffect(() => {
     let alive = true;
@@ -318,7 +339,7 @@ export function GoalEvaluationSession({ studentId, onCancel, onReturnToGoals, on
     try {
       const created = await createGoalEvaluation(studentId, appNow().toISOString());
       setEvaluation(created);
-      selectAndStartQuestion(created, events, itemStates);
+      await selectAndStartQuestion(created, events, itemStates);
       setInput('');
       setFeedback(null);
       setPhase('active');
@@ -329,9 +350,9 @@ export function GoalEvaluationSession({ studentId, onCancel, onReturnToGoals, on
     }
   };
 
-  const resume = () => {
+  const resume = async () => {
     if (evaluation && evaluation.answers.length < ADAPTIVE_GOAL_EVALUATION_QUESTION_COUNT) {
-      selectAndStartQuestion(evaluation, events, itemStates);
+      try { await selectAndStartQuestion(evaluation, events, itemStates); } catch { return; }
     }
     setInput('');
     setFeedback(null);
@@ -465,12 +486,13 @@ export function GoalEvaluationSession({ studentId, onCancel, onReturnToGoals, on
         answers: nextAnswers,
         scheduledCardKeys: schedulingApplied ? [...scheduledCardKeys, cardKey] : scheduledCardKeys,
         answerEvents: [...(evaluation.answerEvents ?? []).filter(item => item.id !== event.id), event],
-        currentItemId: undefined,
-        currentItem: undefined,
         currentSelection: undefined,
         updatedAt: answeredAt,
       };
-      const committed = await recordGoalEvaluationAnswer({ event, attempt, updatedState, evaluation: nextEvaluation })
+      const persistedSelection = evaluation.currentSelection;
+      if (!persistedSelection) throw new Error('No persisted pending question.');
+      const committed = await recordGoalEvaluationAnswer({ event, attempt, updatedState, evaluation: nextEvaluation,
+        questionIndex: persistedSelection.questionIndex, selectionRevision: evaluation.selectionRevision ?? 0, selection: persistedSelection })
         ?? { evaluation: nextEvaluation, event, updatedState };
       setEvaluation(committed.evaluation);
       setEvents(current => [...current.filter(item => item.id !== committed.event.id), committed.event]);
@@ -530,9 +552,11 @@ export function GoalEvaluationSession({ studentId, onCancel, onReturnToGoals, on
     }
   };
 
-  const continueNext = () => {
+  const continueNext = async () => {
     if (saving || saveError) return;
-    if (evaluation) selectAndStartQuestion(evaluation, events, itemStates);
+    if (evaluation) {
+      try { await selectAndStartQuestion(evaluation, events, itemStates); } catch { return; }
+    }
     setFeedback(null);
     setInput('');
     setPhase('active');
@@ -578,7 +602,7 @@ export function GoalEvaluationSession({ studentId, onCancel, onReturnToGoals, on
   }
 
   if (phase === 'intro') {
-    const hasResume = Boolean(evaluation && evaluation.status === 'in_progress' && evaluation.answers.length > 0);
+    const hasResume = Boolean(evaluation && evaluation.status === 'in_progress');
     return (
       <div style={s.container}>
         <div style={s.card}>

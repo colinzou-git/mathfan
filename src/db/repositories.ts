@@ -4,6 +4,7 @@ import type { MathAnswerEvent } from '../features/learning/learningEvents';
 import { classifyLegacyFluencyEvidence } from '../features/fluency/fluencyEngine';
 import type { QuizSession, MultiplicationFactStats, MultiplicationFactKey } from '../features/multiplication/types';
 import type { GoalEvaluation, GoalEvent, LearningGoal, LearningGoalStatus } from '../features/goals/types';
+import { normalizeLocalGoalEvaluation } from '../features/goals/goalEvaluationSelection';
 import { profileCreationMatch } from '../features/profile/learnerIdentity';
 import { chronologicalEvents } from '../features/learning/eventOrdering';
 
@@ -338,10 +339,11 @@ export const goalEvaluationRepo = {
     await db.goalEvaluations.put(withUpdatedAt(evaluation, at));
   },
   async load(id: string): Promise<GoalEvaluation | undefined> {
-    return db.goalEvaluations.get(id);
+    const evaluation = await db.goalEvaluations.get(id);
+    return evaluation ? normalizeLocalGoalEvaluation(evaluation) : undefined;
   },
   async listForStudent(studentId: string): Promise<GoalEvaluation[]> {
-    return db.goalEvaluations.where('studentId').equals(studentId).toArray();
+    return (await db.goalEvaluations.where('studentId').equals(studentId).toArray()).map(normalizeLocalGoalEvaluation);
   },
   async resume(id: string, at = nowIso()): Promise<GoalEvaluation | undefined> {
     const existing = await db.goalEvaluations.get(id);

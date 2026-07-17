@@ -4,13 +4,54 @@ import { generateId } from '../../utils/id';
 import { itemStateRepo, mathAnswerEventRepo, attemptRepo, goalEvaluationRepo } from '../../db/repositories';
 import type { MathAnswerEvent } from '../learning/learningEvents';
 import { randomSeed } from '../../utils/rng';
-import type { GoalEvaluation } from './types';
+import type { AdaptiveGoalEvaluationSelection } from './goalEvaluationEngine';
+import type { GoalEvaluation, PersistedGoalEvaluationSelection } from './types';
+import { deriveCardKey } from '../scheduler/cardModel';
+import { validatePersistedGoalEvaluationSelection } from './goalEvaluationSelection';
 
 export interface GoalEvaluationAnswerWrite {
   event: MathAnswerEvent;
   attempt: AttemptLog;
   updatedState?: StudentItemState;
   evaluation: GoalEvaluation;
+  questionIndex: number;
+  selectionRevision: number;
+  selection: PersistedGoalEvaluationSelection;
+}
+
+export class GoalEvaluationSelectionConflictError extends Error {
+  constructor(message: string) { super(message); this.name = 'GoalEvaluationSelectionConflictError'; }
+}
+
+export interface PersistNextGoalQuestionArgs {
+  evaluationId: string;
+  expectedAnswerCount: number;
+  expectedSelectionRevision: number;
+  selectedAt: string;
+  selection: AdaptiveGoalEvaluationSelection;
+}
+
+export async function persistNextGoalEvaluationQuestion(args: PersistNextGoalQuestionArgs): Promise<GoalEvaluation> {
+  return db.transaction('rw', db.goalEvaluations, async () => {
+    const current = await db.goalEvaluations.get(args.evaluationId);
+    if (!current || current.status !== 'in_progress') throw new Error('Goal evaluation is not resumable.');
+    if (current.currentSelection?.questionIndex === current.answers.length) {
+      return { ...current, currentSelection: validatePersistedGoalEvaluationSelection({ evaluation: current, selection: current.currentSelection }) };
+    }
+    if (current.answers.length !== args.expectedAnswerCount) throw new GoalEvaluationSelectionConflictError('Answer count changed before question selection was committed.');
+    const revision = current.selectionRevision ?? 0;
+    if (revision !== args.expectedSelectionRevision) throw new GoalEvaluationSelectionConflictError('Pending-question revision changed.');
+    const currentSelection: PersistedGoalEvaluationSelection = {
+      version: 1, questionIndex: current.answers.length, selectedAt: args.selectedAt, item: args.selection.item,
+      skillId: args.selection.skillId, domain: args.selection.domain, phase: args.selection.phase,
+      rationale: args.selection.rationale, cardKey: args.selection.cardKey,
+      schedulingEligible: args.selection.schedulingEligible, schedulingReason: args.selection.schedulingReason,
+    };
+    const validated = validatePersistedGoalEvaluationSelection({ evaluation: current, selection: currentSelection });
+    const updated = { ...current, currentSelection: validated, selectionRevision: revision + 1, updatedAt: args.selectedAt };
+    await db.goalEvaluations.put(updated);
+    return updated;
+  });
 }
 
 export interface CommittedGoalEvaluationAnswer {
@@ -43,6 +84,7 @@ export async function createGoalEvaluation(studentId: string, now: string): Prom
     answers: [],
     answerEvents: [],
     scheduledCardKeys: [],
+    selectionRevision: 0,
   };
   await goalEvaluationRepo.save(evaluation, now);
   return evaluation;
@@ -57,6 +99,14 @@ export async function recordGoalEvaluationAnswer(payload: GoalEvaluationAnswerWr
       const equivalent = existingEvent.studentId === payload.event.studentId && existingEvent.sessionId === payload.event.sessionId && existingEvent.itemId === payload.event.itemId;
       if (!equivalent) throw new Error(`Conflicting goal-evaluation event identity: ${payload.event.id}`);
       return { evaluation: current, event: existingEvent, updatedState: await db.itemStates.get([current.studentId, existingEvent.cardKey ?? '']) };
+    }
+    const pending = current.currentSelection;
+    if (!pending) throw new GoalEvaluationSelectionConflictError('No persisted pending question.');
+    const validatedPending = validatePersistedGoalEvaluationSelection({ evaluation: current, selection: pending });
+    if (validatedPending.questionIndex !== payload.questionIndex || (current.selectionRevision ?? 0) !== payload.selectionRevision) throw new GoalEvaluationSelectionConflictError('Pending question changed.');
+    if (validatedPending.item.id !== payload.selection.item.id || validatedPending.cardKey !== payload.selection.cardKey
+      || payload.event.itemId !== validatedPending.item.id || deriveCardKey(payload.selection.item) !== validatedPending.cardKey) {
+      throw new GoalEvaluationSelectionConflictError('Answer does not match pending question.');
     }
     const cardKey = payload.event.cardKey;
     const alreadyScheduled = Boolean(cardKey && (current.scheduledCardKeys ?? []).includes(cardKey));
@@ -89,6 +139,7 @@ export async function recordGoalEvaluationAnswer(payload: GoalEvaluationAnswerWr
       itemIds: [...new Set([...current.itemIds, answer.itemId])],
       targetSkillIds: [...new Set([...current.targetSkillIds, ...payload.evaluation.targetSkillIds])],
       answers, answerEvents, scheduledCardKeys, updatedAt: answer.answeredAt,
+      currentSelection: undefined,
     };
     await mathAnswerEventRepo.save(event);
     if (schedulingApplied && payload.updatedState) await itemStateRepo.save(payload.updatedState);

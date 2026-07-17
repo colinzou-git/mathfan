@@ -4,7 +4,7 @@ import { GoalEvaluationSession } from '../features/goals/GoalEvaluationSession';
 import type { GoalEvaluation } from '../features/goals/types';
 import type { MathAnswerEvent } from '../features/learning/learningEvents';
 import type { StudentItemState } from '../types/math';
-import { recordGoalEvaluationAnswer } from '../features/goals/goalEvaluationPersistence';
+import { persistNextGoalEvaluationQuestion, recordGoalEvaluationAnswer } from '../features/goals/goalEvaluationPersistence';
 import { goalEvaluationRepo } from '../db/repositories';
 import { pushLocal } from '../features/sync/driveSync';
 
@@ -25,6 +25,7 @@ const mockData = vi.hoisted(() => {
     now: '2026-06-17T16:00:00.000Z',
     idCounter: 0,
     resumeEvaluation: null as GoalEvaluation | null,
+    persistedEvaluation: null as GoalEvaluation | null,
     events: [] as MathAnswerEvent[],
     itemStates: [] as StudentItemState[],
     signedIn: false,
@@ -61,8 +62,10 @@ vi.mock('../features/goals/goalEvaluationEngine', () => ({
 }));
 
 vi.mock('../features/goals/goalEvaluationPersistence', () => ({
+  GoalEvaluationSelectionConflictError: class GoalEvaluationSelectionConflictError extends Error {},
   loadLatestResumableGoalEvaluation: vi.fn(async () => mockData.resumeEvaluation),
-  createGoalEvaluation: vi.fn(async (studentId: string, now: string) => ({
+  createGoalEvaluation: vi.fn(async (studentId: string, now: string) => {
+    const created: GoalEvaluation = {
     id: 'eval-new',
     studentId,
     status: 'in_progress',
@@ -78,7 +81,21 @@ vi.mock('../features/goals/goalEvaluationPersistence', () => ({
     answers: [],
     answerEvents: [],
     scheduledCardKeys: [],
-  })),
+    selectionRevision: 0,
+    };
+    mockData.persistedEvaluation = created;
+    return created;
+  }),
+  persistNextGoalEvaluationQuestion: vi.fn(async (args: { evaluationId: string; selectedAt: string; selection: ReturnType<typeof import('../features/goals/goalEvaluationEngine')['selectNextAdaptiveGoalEvaluationItem']> }) => {
+    const base = mockData.persistedEvaluation ?? mockData.resumeEvaluation!;
+    const selection = args.selection!;
+    const updated = { ...base, updatedAt: args.selectedAt, selectionRevision: (base.selectionRevision ?? 0) + 1,
+      currentSelection: { version: 1 as const, questionIndex: base.answers.length, selectedAt: args.selectedAt, item: selection.item,
+        skillId: selection.skillId, domain: selection.domain, phase: selection.phase, rationale: selection.rationale,
+        cardKey: selection.cardKey, schedulingEligible: selection.schedulingEligible, schedulingReason: selection.schedulingReason } };
+    mockData.persistedEvaluation = updated;
+    return updated;
+  }),
   recordGoalEvaluationAnswer: vi.fn(async () => undefined),
 }));
 
@@ -93,6 +110,7 @@ vi.mock('../db/repositories', () => ({
   goalEvaluationRepo: {
     cancel: vi.fn(async () => undefined),
     save: vi.fn(async () => undefined),
+    load: vi.fn(async () => mockData.persistedEvaluation ?? undefined),
   },
 }));
 
@@ -170,11 +188,15 @@ async function answerCurrent(value = '17') {
 beforeEach(() => {
   mockData.idCounter = 0;
   mockData.resumeEvaluation = null;
+  mockData.persistedEvaluation = null;
   mockData.events = [];
   mockData.itemStates = [];
   mockData.signedIn = false;
   vi.clearAllMocks();
-  vi.mocked(recordGoalEvaluationAnswer).mockResolvedValue(undefined as never);
+  vi.mocked(recordGoalEvaluationAnswer).mockImplementation(async payload => {
+    mockData.persistedEvaluation = payload.evaluation;
+    return { evaluation: payload.evaluation, event: payload.event, updatedState: payload.updatedState };
+  });
 });
 
 afterEach(() => {
@@ -223,6 +245,27 @@ describe('untimed grading', () => {
 });
 
 describe('GoalEvaluationSession', () => {
+  it('does not display or time a question until pending selection persistence succeeds', async () => {
+    vi.mocked(persistNextGoalEvaluationQuestion).mockRejectedValueOnce(new Error('selection write failed'));
+    renderEvaluation();
+    fireEvent.click(await screen.findByRole('button', { name: /^start$/i }));
+    await screen.findByText(/selection write failed/i);
+    expect(screen.queryByText(/Question 1: enter 17/i)).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /resume question 1/i })).toBeInTheDocument();
+  });
+
+  it('resumes the byte-identical persisted question without replanning', async () => {
+    const item = { ...mockData.items[7], prompt: 'Persisted exact prompt', answer: 42 };
+    mockData.resumeEvaluation = evaluation({ currentQuestionIndex: 0, answers: [],
+      currentSelection: { version: 1, questionIndex: 0, selectedAt: mockData.now,
+      item, skillId: 'g3-mul-meaning', domain: 'multiplication', phase: 'screening', rationale: 'persisted rationale',
+      cardKey: item.cardKey, schedulingEligible: true, schedulingReason: 'first_card_evidence' }, selectionRevision: 4 });
+    renderEvaluation();
+    fireEvent.click(await screen.findByRole('button', { name: /resume/i }));
+    expect(await screen.findByText('Persisted exact prompt')).toBeInTheDocument();
+    expect(vi.mocked(persistNextGoalEvaluationQuestion)).not.toHaveBeenCalled();
+  });
+
   it('starts and cancels with confirmation', async () => {
     const callbacks = renderEvaluation();
     await startEvaluation();

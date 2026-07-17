@@ -1,6 +1,6 @@
 # Code Map Overview
 
-Generated: 2026-07-17 08:14:55 UTC
+Generated: 2026-07-17 09:09:43 UTC
 
 Repo root: `/home/ubuntu/mathfan`
 Output folder: `/home/ubuntu/mathfan/docs/code-map`
@@ -14,9 +14,9 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 - Package name: `mathfan`
 - Version: `1.2.0`
 - Module type: `module`
-- Scanned files: **301**
-- Scanned lines: **56,828**
-- Scanned bytes: **2,454,013**
+- Scanned files: **303**
+- Scanned lines: **57,162**
+- Scanned bytes: **2,476,119**
 
 ## NPM scripts
 
@@ -80,7 +80,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 | src/main.tsx | 21 | React entry point that mounts the app. |  |
 | src/features/sync/driveSync.ts | 177 | Cloud sync/auth/data transfer logic. | DriveFileInfo, syncFailureResult, SyncResult, SyncStatus, authFetch, downloadSnapshot, findSyncFile, getDriveFileInfo |
 | src/features/sync/canonicalEventMerge.ts | 154 | Cloud sync/auth/data transfer logic. | assertEquivalentCanonicalEvents, assertNoConflictingCanonicalEventIds, CanonicalEventConflictDetails, CanonicalEventConflictError, CanonicalEventFingerprint, canonicalEventFingerprint, canonicalEventFingerprintObject, differingCanonicalEventFields |
-| src/features/sync/snapshotParsers.ts | 131 | Cloud sync/auth/data transfer logic. | parseAttemptLog, parseDailyLessonPlanShape, parseGoalEvaluation, parseGoalEvent, parseLearningGoal, parseMathAnswerEvent, parseMultiplicationFactStat, parsePracticeSession |
+| src/features/sync/snapshotParsers.ts | 143 | Cloud sync/auth/data transfer logic. | parseAttemptLog, parseDailyLessonPlanShape, parseGoalEvaluation, parseGoalEvent, parseLearningGoal, parseMathAnswerEvent, parseMultiplicationFactStat, parsePracticeSession |
 | src/features/sync/learnerKeyMerge.ts | 128 | Cloud sync/auth/data transfer logic. | compareProfileRevision, mergeProfilesByExactId, remapStudentId, resolveCanonicalStudentIds, resolveLearnerKeyDuplicate, stableProfileFingerprint, StudentIdAliasMap, compareProfileRevision |
 | src/features/sync/useSync.ts | 99 | Cloud sync/auth/data transfer logic. | useSync, initAuth, SyncState, useSync, recordSync, useSync |
 | src/features/sync/timeUtil.ts | 13 | Cloud sync/auth/data transfer logic. | remoteHasNewerUpdatedAt, validTimeMs, remoteHasNewerUpdatedAt, validTimeMs |
@@ -101,7 +101,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 | src/features/stats/TodayAchievementSection.tsx | 125 | Progress/statistics screens or calculations. | AchievementTile, TodayAchievementSection, AchievementTile, TodayAchievementSection |
 | src/features/mastery/skillPracticePlanner.ts | 905 | Grade 3 skill practice planner: maps skill IDs to SessionConfig for the mastery map. | buildDivisionFocusSequence, buildFocusSequence, buildRegroupingFocusSequence, FocusSequence, FocusSequenceContext, planFractionFocusSequence, planLearningUnitsForSkill, PlanOptions |
 | src/features/practice/usePracticeSession.ts | 900 | Local persistence/database layer. | usePracticeSession, CorrectResult, LastSessionSummary, SessionState, usePracticeSession, commit, getStaticItem, planned |
-| src/features/goals/GoalEvaluationSession.tsx | 760 | Exports reusable code: GoalEvaluationSession. | GoalEvaluationSession, buildNewLearningCandidates, buildReviewFindings, buildUpdatedState, confirmCancel, continueNext, evaluationArgs, GoalEvaluationSession |
+| src/features/goals/GoalEvaluationSession.tsx | 784 | Exports reusable code: GoalEvaluationSession. | GoalEvaluationSession, buildNewLearningCandidates, buildReviewFindings, buildUpdatedState, confirmCancel, continueNext, evaluationArgs, GoalEvaluationSession |
 
 ## Repository tree, filtered
 
@@ -201,6 +201,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   │   ├── goalEngine.ts
 │   │   │   ├── goalEvaluationEngine.ts
 │   │   │   ├── goalEvaluationPersistence.ts
+│   │   │   ├── goalEvaluationSelection.ts
 │   │   │   ├── GoalEvaluationSession.tsx
 │   │   │   ├── goalLifecycleService.ts
 │   │   │   ├── goalPortfolioEngine.ts
@@ -360,6 +361,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   ├── goalEngine.test.ts
 │   │   ├── goalEvaluationConcurrency.test.ts
 │   │   ├── goalEvaluationEngine.test.tsx
+│   │   ├── goalEvaluationSelectionPersistence.test.ts
 │   │   ├── goalEvaluationSession.test.tsx
 │   │   ├── goalPortfolioEngine.test.ts
 │   │   ├── goalRecommendationEngine.test.ts
@@ -956,62 +958,62 @@ Purpose: Cloud sync/auth/data transfer logic.
    3: import type { MultiplicationFactStats, QuizSession } from '../multiplication/types';
    4: import type { GoalEvaluation, GoalEvent, LearningGoal } from '../goals/types';
    5: import type { SnapshotNormalizationProblem } from './snapshot';
-   6:
-   7: export type ParseResult<T> =
-   8:   | { ok: true; value: T; warnings: SnapshotNormalizationProblem[] }
-   9:   | { ok: false; problems: SnapshotNormalizationProblem[] };
-  10:
-  11: type Row = Record<string, unknown>;
-  12:
-  13: const record = (value: unknown): Row | undefined => value && typeof value === 'object' && !Array.isArray(value) ? value as Row : undefined;
-  14: const nonempty = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0;
-  15: const finiteNonnegative = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value) && value >= 0;
-  16: const validDate = (value: unknown): value is string => nonempty(value) && Number.isFinite(Date.parse(value));
-  17:
-  18: function parseRow<T>(table: string, value: unknown, index: number, validate: (row: Row, add: (code: string, message: string) => void) => void): ParseResult<T> {
-  19:   const row = record(value);
-  20:   if (!row) return { ok: false, problems: [{ table, recordId: String(index), code: 'not_object', message: 'Record must be an object.' }] };
-  21:   const problems: SnapshotNormalizationProblem[] = [];
-  22:   const recordId = nonempty(row.id) ? row.id : String(index);
-  23:   const add = (code: string, message: string) => problems.push({ table, recordId, code, message });
-  24:   validate(row, add);
-  25:   return problems.length ? { ok: false, problems } : { ok: true, value: row as T, warnings: [] };
-  26: }
-  27:
-  28: const identity = (row: Row, add: (code: string, message: string) => void) => {
-  29:   if (!nonempty(row.id)) add('missing_id', 'Record is missing a nonempty id.');
-  30:   if (!nonempty(row.studentId)) add('missing_owner', 'Record is missing a nonempty studentId.');
-  31: };
-  32: const dateField = (row: Row, key: string, add: (code: string, message: string) => void, optional = false) => {
-  33:   if (optional && row[key] === undefined) return;
-  34:   if (!validDate(row[key])) add('invalid_timestamp', `${key} must be a valid timestamp.`);
-  35: };
-  36: const stringField = (row: Row, key: string, add: (code: string, message: string) => void) => {
-  37:   if (!nonempty(row[key])) add('missing_field', `${key} must be a nonempty string.`);
-  38: };
-  39: const numberField = (row: Row, key: string, add: (code: string, message: string) => void) => {
-  40:   if (!finiteNonnegative(row[key])) add('invalid_number', `${key} must be a finite nonnegative number.`);
-  41: };
-  42: const arrayField = (row: Row, key: string, add: (code: string, message: string) => void) => {
-  43:   if (!Array.isArray(row[key])) add('invalid_array', `${key} must be an array.`);
-  44: };
-  45: const enumField = (row: Row, key: string, values: readonly string[], add: (code: string, message: string) => void) => {
-  46:   if (!nonempty(row[key]) || !values.includes(row[key])) add('invalid_enum', `${key} is not a supported value.`);
-  47: };
-  48:
-  49: export const parseStudentProfile = (value: unknown, index: number): ParseResult<StudentProfile> => parseRow('students', value, index, (row, add) => {
-  50:   if (!nonempty(row.id)) add('missing_id', 'Profile is missing a nonempty id.');
-  51:   stringField(row, 'displayName', add);
-  52:   dateField(row, 'createdAt', add, true);
-  53:   if (row.settings !== undefined && !record(row.settings)) add('invalid_settings', 'settings must be an object.');
-  54: });
-  55:
-  56: export const parseAttemptLog = (value: unknown, index: number): ParseResult<AttemptLog> => parseRow('attempts', value, index, (row, add) => {
-  57:   identity(row, add); ['itemId', 'skillId', 'sessionId', 'promptShown'].forEach(key => stringField(row, key, add));
-  58:   numberField(row, 'latencyMs', add); dateField(row, 'createdAt', add);
-  59:   enumField(row, 'reviewGrade', ['again', 'hard', 'good', 'easy'], add);
-  60:   if (typeof row.isCorrect !== 'boolean') add('invalid_boolean', 'isCorrect must be a boolean.');
-... (70 more lines)
+   6: import { GoalEvaluationSelectionValidationError, validatePersistedGoalEvaluationSelection } from '../goals/goalEvaluationSelection';
+   7:
+   8: export type ParseResult<T> =
+   9:   | { ok: true; value: T; warnings: SnapshotNormalizationProblem[] }
+  10:   | { ok: false; problems: SnapshotNormalizationProblem[] };
+  11:
+  12: type Row = Record<string, unknown>;
+  13:
+  14: const record = (value: unknown): Row | undefined => value && typeof value === 'object' && !Array.isArray(value) ? value as Row : undefined;
+  15: const nonempty = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0;
+  16: const finiteNonnegative = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value) && value >= 0;
+  17: const validDate = (value: unknown): value is string => nonempty(value) && Number.isFinite(Date.parse(value));
+  18:
+  19: function parseRow<T>(table: string, value: unknown, index: number, validate: (row: Row, add: (code: string, message: string) => void) => void): ParseResult<T> {
+  20:   const row = record(value);
+  21:   if (!row) return { ok: false, problems: [{ table, recordId: String(index), code: 'not_object', message: 'Record must be an object.' }] };
+  22:   const problems: SnapshotNormalizationProblem[] = [];
+  23:   const recordId = nonempty(row.id) ? row.id : String(index);
+  24:   const add = (code: string, message: string) => problems.push({ table, recordId, code, message });
+  25:   validate(row, add);
+  26:   return problems.length ? { ok: false, problems } : { ok: true, value: row as T, warnings: [] };
+  27: }
+  28:
+  29: const identity = (row: Row, add: (code: string, message: string) => void) => {
+  30:   if (!nonempty(row.id)) add('missing_id', 'Record is missing a nonempty id.');
+  31:   if (!nonempty(row.studentId)) add('missing_owner', 'Record is missing a nonempty studentId.');
+  32: };
+  33: const dateField = (row: Row, key: string, add: (code: string, message: string) => void, optional = false) => {
+  34:   if (optional && row[key] === undefined) return;
+  35:   if (!validDate(row[key])) add('invalid_timestamp', `${key} must be a valid timestamp.`);
+  36: };
+  37: const stringField = (row: Row, key: string, add: (code: string, message: string) => void) => {
+  38:   if (!nonempty(row[key])) add('missing_field', `${key} must be a nonempty string.`);
+  39: };
+  40: const numberField = (row: Row, key: string, add: (code: string, message: string) => void) => {
+  41:   if (!finiteNonnegative(row[key])) add('invalid_number', `${key} must be a finite nonnegative number.`);
+  42: };
+  43: const arrayField = (row: Row, key: string, add: (code: string, message: string) => void) => {
+  44:   if (!Array.isArray(row[key])) add('invalid_array', `${key} must be an array.`);
+  45: };
+  46: const enumField = (row: Row, key: string, values: readonly string[], add: (code: string, message: string) => void) => {
+  47:   if (!nonempty(row[key]) || !values.includes(row[key])) add('invalid_enum', `${key} is not a supported value.`);
+  48: };
+  49:
+  50: export const parseStudentProfile = (value: unknown, index: number): ParseResult<StudentProfile> => parseRow('students', value, index, (row, add) => {
+  51:   if (!nonempty(row.id)) add('missing_id', 'Profile is missing a nonempty id.');
+  52:   stringField(row, 'displayName', add);
+  53:   dateField(row, 'createdAt', add, true);
+  54:   if (row.settings !== undefined && !record(row.settings)) add('invalid_settings', 'settings must be an object.');
+  55: });
+  56:
+  57: export const parseAttemptLog = (value: unknown, index: number): ParseResult<AttemptLog> => parseRow('attempts', value, index, (row, add) => {
+  58:   identity(row, add); ['itemId', 'skillId', 'sessionId', 'promptShown'].forEach(key => stringField(row, key, add));
+  59:   numberField(row, 'latencyMs', add); dateField(row, 'createdAt', add);
+  60:   enumField(row, 'reviewGrade', ['again', 'hard', 'good', 'easy'], add);
+... (82 more lines)
 ```
 
 ### `src/features/sync/learnerKeyMerge.ts`

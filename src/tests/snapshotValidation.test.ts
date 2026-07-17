@@ -134,6 +134,17 @@ describe('normalizeSnapshot — strict external record boundary', () => {
     expect(result.problems).toContainEqual(expect.objectContaining({ table: 'goalEvaluations', recordId: 'evaluation-1', code: 'invalid_answer' }));
   });
 
+  it('rejects an invalid persisted pending goal question', () => {
+    const result = normalizeSnapshot(validSnapshot({
+      snapshotVersion: 2, students: [profile], learningGoals: [], goalEvents: [],
+      goalEvaluations: [{ id: 'evaluation-1', studentId: 's1', status: 'in_progress', source: 'evaluation', createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-01-01T00:00:00Z', currentQuestionIndex: 0, plannedQuestionCount: 30, itemIds: [], targetSkillIds: [], answers: [],
+        currentSelection: { version: 1, questionIndex: 0, selectedAt: '2026-01-01T00:00:00Z',
+          item: { id: 'bad', contentSpec: { version: 99 } }, skillId: 'skill', domain: 'multiplication', phase: 'screening', rationale: 'invalid item',
+          cardKey: 'wrong', schedulingEligible: true, schedulingReason: 'first_card_evidence' } }] as never,
+    }));
+    expect(result.problems).toContainEqual(expect.objectContaining({ table: 'goalEvaluations', recordId: 'evaluation-1', code: 'invalid_goal_selection_item' }));
+  });
+
   it('rejects v3 cache rows without cardKey instead of treating them as optional legacy caches', () => {
     const result = normalizeSnapshot(validSnapshot({
       snapshotVersion: 3, students: [profile], itemStates: [{ studentId: 's1', itemId: 'REMOVED_ITEM' }] as never,
