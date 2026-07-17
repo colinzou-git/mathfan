@@ -1,5 +1,63 @@
 import type { StudentProfile } from '../../types/math';
-import { remoteHasNewerUpdatedAt } from './snapshot';
+import { validTimeMs } from './timeUtil';
+
+function stableValue(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(stableValue);
+  if (!value || typeof value !== 'object') return value;
+  return Object.fromEntries(Object.entries(value as Record<string, unknown>)
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([key, child]) => [key, stableValue(child)]));
+}
+
+/** Stable metadata-only tie breaker for two revisions of the same profile row. */
+export function stableProfileFingerprint(profile: StudentProfile): string {
+  const metadata = Object.fromEntries(Object.entries(profile)
+    .filter(([key]) => !['id', 'createdAt', 'updatedAt'].includes(key)));
+  return JSON.stringify(stableValue(metadata));
+}
+
+export function compareProfileRevision(a: StudentProfile, b: StudentProfile): number {
+  const aUpdated = validTimeMs(a.updatedAt);
+  const bUpdated = validTimeMs(b.updatedAt);
+  if (aUpdated !== null || bUpdated !== null) {
+    if (aUpdated === null) return -1;
+    if (bUpdated === null) return 1;
+    if (aUpdated !== bUpdated) return aUpdated - bUpdated;
+  } else {
+    const createdDifference = (validTimeMs(a.createdAt) ?? 0) - (validTimeMs(b.createdAt) ?? 0);
+    if (createdDifference) return createdDifference;
+  }
+  return stableProfileFingerprint(a).localeCompare(stableProfileFingerprint(b));
+}
+
+function mergeSameIdProfile(older: StudentProfile, newer: StudentProfile): StudentProfile {
+  return {
+    ...older,
+    ...newer,
+    id: older.id,
+    learnerKey: newer.learnerKey ?? older.learnerKey,
+    settings: newer.settings ?? older.settings,
+    createdAt: [older.createdAt, newer.createdAt].filter(Boolean).sort()[0],
+    updatedAt: newer.updatedAt ?? older.updatedAt,
+  };
+}
+
+/** Collapses exact IDs by revision before learner-key aliasing is considered. */
+export function mergeProfilesByExactId(
+  localProfiles: StudentProfile[],
+  remoteProfiles: StudentProfile[],
+): StudentProfile[] {
+  const byId = new Map<string, StudentProfile>();
+  for (const profile of [...localProfiles, ...remoteProfiles]) {
+    const existing = byId.get(profile.id);
+    if (!existing) { byId.set(profile.id, profile); continue; }
+    const comparison = compareProfileRevision(existing, profile);
+    byId.set(profile.id, comparison <= 0
+      ? mergeSameIdProfile(existing, profile)
+      : mergeSameIdProfile(profile, existing));
+  }
+  return [...byId.values()];
+}
 
 /**
  * Resolves two profile rows that share the same `learnerKey` but different `id`s
@@ -20,7 +78,7 @@ export function resolveLearnerKeyDuplicate(
   const localEvents = eventCountByStudentId[local.id] ?? 0;
   const remoteEvents = eventCountByStudentId[remote.id] ?? 0;
   const base = remoteEvents > localEvents ? remote : local;
-  const metadataSource = remoteHasNewerUpdatedAt(remote.updatedAt ?? '', local.updatedAt) ? remote : local;
+  const metadataSource = compareProfileRevision(local, remote) < 0 ? remote : local;
 
   return {
     ...base,
@@ -55,6 +113,7 @@ export function resolveCanonicalStudentIds(
     const canonical = [...group].sort((a, b) =>
       (evidenceCounts[b.id] ?? 0) - (evidenceCounts[a.id] ?? 0)
       || Number(localIds.has(b.id)) - Number(localIds.has(a.id))
+      || compareProfileRevision(b, a)
       || a.id.localeCompare(b.id)
     )[0].id;
     for (const profile of group) aliases.set(profile.id, canonical);

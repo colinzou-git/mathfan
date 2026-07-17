@@ -1,6 +1,6 @@
 # Code Map Overview
 
-Generated: 2026-07-17 07:05:06 UTC
+Generated: 2026-07-17 07:41:26 UTC
 
 Repo root: `/home/ubuntu/mathfan`
 Output folder: `/home/ubuntu/mathfan/docs/code-map`
@@ -15,8 +15,8 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 - Version: `1.2.0`
 - Module type: `module`
 - Scanned files: **299**
-- Scanned lines: **56,199**
-- Scanned bytes: **2,420,298**
+- Scanned lines: **56,485**
+- Scanned bytes: **2,437,125**
 
 ## NPM scripts
 
@@ -74,14 +74,14 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 | --- | --- | --- | --- |
 | src/App.tsx | 401 | Top-level React app shell: routes/screens, global state, and feature wiring. | App, exportMigrationDiagnostics, handleQuizDone, handleSessionDone, pickOperation, retryMigration, runBootstrap, selectProfile |
 | src/features/sync/SyncWidget.tsx | 156 | Cloud sync/auth/data transfer logic. | GoogleIcon, SyncWidget, friendlyError, GoogleIcon, initials, SyncWidget, timeSince |
-| src/features/sync/snapshot.ts | 501 | Local persistence/database layer. | AppSnapshot, AppSnapshotV3, normalizeSnapshot, OrphanReport, remoteHasNewerUpdatedAt, SnapshotFormatMetadata, SnapshotNormalizationProblem, SnapshotNormalizationResult |
+| src/features/sync/snapshot.ts | 597 | Local persistence/database layer. | AppSnapshot, AppSnapshotV3, canonicalDailyLessonPlanId, LEARNER_OWNED_TABLES, LearnerOwnedTableName, normalizeSnapshot, OrphanReport, remoteHasNewerUpdatedAt |
 | vite.config.ts | 82 | Vite build/PWA configuration. | buildInfoPlugin |
 | package.json | 53 | Project package metadata, scripts, dependencies, and dev tooling. |  |
 | src/main.tsx | 21 | React entry point that mounts the app. |  |
 | src/features/sync/driveSync.ts | 164 | Cloud sync/auth/data transfer logic. | DriveFileInfo, SyncResult, SyncStatus, authFetch, downloadSnapshot, findSyncFile, getDriveFileInfo, newestSyncFile |
 | src/features/sync/snapshotParsers.ts | 131 | Cloud sync/auth/data transfer logic. | parseAttemptLog, parseDailyLessonPlanShape, parseGoalEvaluation, parseGoalEvent, parseLearningGoal, parseMathAnswerEvent, parseMultiplicationFactStat, parsePracticeSession |
+| src/features/sync/learnerKeyMerge.ts | 128 | Cloud sync/auth/data transfer logic. | compareProfileRevision, mergeProfilesByExactId, remapStudentId, resolveCanonicalStudentIds, resolveLearnerKeyDuplicate, stableProfileFingerprint, StudentIdAliasMap, compareProfileRevision |
 | src/features/sync/useSync.ts | 99 | Cloud sync/auth/data transfer logic. | useSync, initAuth, SyncState, useSync, recordSync, useSync |
-| src/features/sync/learnerKeyMerge.ts | 69 | Cloud sync/auth/data transfer logic. | remapStudentId, resolveCanonicalStudentIds, resolveLearnerKeyDuplicate, StudentIdAliasMap, resolveCanonicalStudentIds, resolveLearnerKeyDuplicate |
 | src/features/sync/timeUtil.ts | 13 | Cloud sync/auth/data transfer logic. | remoteHasNewerUpdatedAt, validTimeMs, remoteHasNewerUpdatedAt, validTimeMs |
 | src/features/goals/GoalsPage.tsx | 1056 | React UI component file: ConfirmDialog, EmptyState, GoalCard, GoalWizard. | ConfirmDialog, EmptyState, GoalCard, GoalWizard, ProgressBar, SummaryCard, GoalsPage, activeLearningDays |
 | src/features/settings/SettingsPage.tsx | 905 | Student/app settings UI or persistence. | Section, SyncRow, ToggleRow, SettingsPage, applyUpdate, buildId, buildLabel, checkForUpdates |
@@ -598,7 +598,7 @@ Purpose: Local persistence/database layer.
    5: import { rebuildMultFactStatsFromEvents, rebuildItemStatesFromEvents } from '../learning/eventRebuild';
    6: import { db } from '../../db/dexie';
    7: import type { GoalEvaluation, GoalEvent, LearningGoal } from '../goals/types';
-   8: import { remapStudentId, resolveCanonicalStudentIds, resolveLearnerKeyDuplicate, type StudentIdAliasMap } from './learnerKeyMerge';
+   8: import { mergeProfilesByExactId, remapStudentId, resolveCanonicalStudentIds, resolveLearnerKeyDuplicate, type StudentIdAliasMap } from './learnerKeyMerge';
    9: import { validTimeMs, remoteHasNewerUpdatedAt } from './timeUtil';
   10: import { makeItemFromId } from '../curriculum/makeItemFromId';
   11: import { deriveCardKey } from '../scheduler/cardModel';
@@ -651,7 +651,7 @@ Purpose: Local persistence/database layer.
   58:     db.multFactStats,
   59:     db.quizSessions,
   60:     db.mathAnswerEvents,
-... (440 more lines)
+... (536 more lines)
 ```
 
 ### `vite.config.ts`
@@ -944,6 +944,74 @@ Purpose: Cloud sync/auth/data transfer logic.
 ... (70 more lines)
 ```
 
+### `src/features/sync/learnerKeyMerge.ts`
+
+Purpose: Cloud sync/auth/data transfer logic.
+
+```text
+   1: import type { StudentProfile } from '../../types/math';
+   2: import { validTimeMs } from './timeUtil';
+   3:
+   4: function stableValue(value: unknown): unknown {
+   5:   if (Array.isArray(value)) return value.map(stableValue);
+   6:   if (!value || typeof value !== 'object') return value;
+   7:   return Object.fromEntries(Object.entries(value as Record<string, unknown>)
+   8:     .sort(([left], [right]) => left.localeCompare(right))
+   9:     .map(([key, child]) => [key, stableValue(child)]));
+  10: }
+  11:
+  12: /** Stable metadata-only tie breaker for two revisions of the same profile row. */
+  13: export function stableProfileFingerprint(profile: StudentProfile): string {
+  14:   const metadata = Object.fromEntries(Object.entries(profile)
+  15:     .filter(([key]) => !['id', 'createdAt', 'updatedAt'].includes(key)));
+  16:   return JSON.stringify(stableValue(metadata));
+  17: }
+  18:
+  19: export function compareProfileRevision(a: StudentProfile, b: StudentProfile): number {
+  20:   const aUpdated = validTimeMs(a.updatedAt);
+  21:   const bUpdated = validTimeMs(b.updatedAt);
+  22:   if (aUpdated !== null || bUpdated !== null) {
+  23:     if (aUpdated === null) return -1;
+  24:     if (bUpdated === null) return 1;
+  25:     if (aUpdated !== bUpdated) return aUpdated - bUpdated;
+  26:   } else {
+  27:     const createdDifference = (validTimeMs(a.createdAt) ?? 0) - (validTimeMs(b.createdAt) ?? 0);
+  28:     if (createdDifference) return createdDifference;
+  29:   }
+  30:   return stableProfileFingerprint(a).localeCompare(stableProfileFingerprint(b));
+  31: }
+  32:
+  33: function mergeSameIdProfile(older: StudentProfile, newer: StudentProfile): StudentProfile {
+  34:   return {
+  35:     ...older,
+  36:     ...newer,
+  37:     id: older.id,
+  38:     learnerKey: newer.learnerKey ?? older.learnerKey,
+  39:     settings: newer.settings ?? older.settings,
+  40:     createdAt: [older.createdAt, newer.createdAt].filter(Boolean).sort()[0],
+  41:     updatedAt: newer.updatedAt ?? older.updatedAt,
+  42:   };
+  43: }
+  44:
+  45: /** Collapses exact IDs by revision before learner-key aliasing is considered. */
+  46: export function mergeProfilesByExactId(
+  47:   localProfiles: StudentProfile[],
+  48:   remoteProfiles: StudentProfile[],
+  49: ): StudentProfile[] {
+  50:   const byId = new Map<string, StudentProfile>();
+  51:   for (const profile of [...localProfiles, ...remoteProfiles]) {
+  52:     const existing = byId.get(profile.id);
+  53:     if (!existing) { byId.set(profile.id, profile); continue; }
+  54:     const comparison = compareProfileRevision(existing, profile);
+  55:     byId.set(profile.id, comparison <= 0
+  56:       ? mergeSameIdProfile(existing, profile)
+  57:       : mergeSameIdProfile(profile, existing));
+  58:   }
+  59:   return [...byId.values()];
+  60: }
+... (67 more lines)
+```
+
 ### `src/features/sync/useSync.ts`
 
 Purpose: Cloud sync/auth/data transfer logic.
@@ -1010,74 +1078,6 @@ Purpose: Cloud sync/auth/data transfer logic.
   59:     const result = await pushLocal();
   60:     if (result.ok && result.syncedAt) recordSync(result.syncedAt);
 ... (38 more lines)
-```
-
-### `src/features/sync/learnerKeyMerge.ts`
-
-Purpose: Cloud sync/auth/data transfer logic.
-
-```text
-   1: import type { StudentProfile } from '../../types/math';
-   2: import { remoteHasNewerUpdatedAt } from './snapshot';
-   3:
-   4: /**
-   5:  * Resolves two profile rows that share the same `learnerKey` but different `id`s
-   6:  * (e.g. a local placeholder created before a Drive restore completed, and the
-   7:  * real synced record). Only called when both records share a learnerKey — never
-   8:  * applied to two legacy profiles that lack one.
-   9:  *
-  10:  * Rules (see issue #25):
-  11:  *  - prefer the record already referenced by answer data;
-  12:  *  - preserve the selected record's id;
-  13:  *  - merge only profile metadata/settings using the existing updated-data rule.
-  14:  */
-  15: export function resolveLearnerKeyDuplicate(
-  16:   local: StudentProfile,
-  17:   remote: StudentProfile,
-  18:   eventCountByStudentId: Record<string, number>
-  19: ): StudentProfile {
-  20:   const localEvents = eventCountByStudentId[local.id] ?? 0;
-  21:   const remoteEvents = eventCountByStudentId[remote.id] ?? 0;
-  22:   const base = remoteEvents > localEvents ? remote : local;
-  23:   const metadataSource = remoteHasNewerUpdatedAt(remote.updatedAt ?? '', local.updatedAt) ? remote : local;
-  24:
-  25:   return {
-  26:     ...base,
-  27:     displayName: metadataSource.displayName,
-  28:     gradeLevel: metadataSource.gradeLevel,
-  29:     timezone: metadataSource.timezone,
-  30:     settings: metadataSource.settings,
-  31:     updatedAt: metadataSource.updatedAt,
-  32:   };
-  33: }
-  34:
-  35: export type StudentIdAliasMap = Map<string, string>;
-  36:
-  37: /** Chooses one stable owner ID for every duplicated learnerKey before child rows are merged. */
-  38: export function resolveCanonicalStudentIds(
-  39:   localProfiles: StudentProfile[],
-  40:   remoteProfiles: StudentProfile[],
-  41:   evidenceCounts: Record<string, number>,
-  42: ): StudentIdAliasMap {
-  43:   const aliases: StudentIdAliasMap = new Map();
-  44:   const localIds = new Set(localProfiles.map(profile => profile.id));
-  45:   const groups = new Map<string, StudentProfile[]>();
-  46:   for (const profile of [...localProfiles, ...remoteProfiles]) {
-  47:     aliases.set(profile.id, profile.id);
-  48:     if (!profile.learnerKey) continue;
-  49:     const group = groups.get(profile.learnerKey) ?? [];
-  50:     if (!group.some(existing => existing.id === profile.id)) group.push(profile);
-  51:     groups.set(profile.learnerKey, group);
-  52:   }
-  53:   for (const group of groups.values()) {
-  54:     if (group.length < 2) continue;
-  55:     const canonical = [...group].sort((a, b) =>
-  56:       (evidenceCounts[b.id] ?? 0) - (evidenceCounts[a.id] ?? 0)
-  57:       || Number(localIds.has(b.id)) - Number(localIds.has(a.id))
-  58:       || a.id.localeCompare(b.id)
-  59:     )[0].id;
-  60:     for (const profile of group) aliases.set(profile.id, canonical);
-... (8 more lines)
 ```
 
 ### `src/features/sync/timeUtil.ts`
