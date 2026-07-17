@@ -229,6 +229,58 @@ describe('rebuildItemStatesFromEvents — misconception tags survive rebuild', (
     expect(state!.mistakePatterns).toContain('mul:addition_confusion');
   });
 
+  it('applies a misconception from an ineligible repeat without changing FSRS', async () => {
+    fakeDb.mathAnswerEvents.rows = [
+      makeEvent({ id: 'first', sessionId: 'same-session', schedulingEligible: true }),
+      makeEvent({
+        id: 'repeat-wrong', sessionId: 'same-session', schedulingEligible: false,
+        schedulingApplied: false, isCorrect: false, studentAnswer: 15, reviewGrade: 'again',
+        detectedMisconceptions: ['mul:addition_confusion'], createdAt: '2026-06-01T10:01:00.000Z',
+      }),
+    ];
+
+    await rebuildItemStatesFromEvents(STUDENT, { mode: 'strict' });
+
+    const state = fakeDb.itemStates.rows[0];
+    expect(state.reps).toBe(1);
+    expect(state.attemptCount).toBe(1);
+    expect(state.misconceptionEvidence).toEqual([expect.objectContaining({
+      code: 'mul:addition_confusion', occurrenceCount: 1, sourceItemIds: ['MUL_7x8'],
+    })]);
+  });
+
+  it('deduplicates misconception events and is independent of insertion order', async () => {
+    const first = makeEvent({ id: 'first', sessionId: 'same-session', schedulingEligible: true });
+    const repeat = makeEvent({
+      id: 'repeat-wrong', sessionId: 'same-session', schedulingEligible: false,
+      schedulingApplied: false, isCorrect: false, studentAnswer: 15, reviewGrade: 'again',
+      detectedMisconceptions: ['mul:addition_confusion'], createdAt: '2026-06-01T10:01:00.000Z',
+    });
+    fakeDb.mathAnswerEvents.rows = [repeat, first, { ...repeat }];
+    await rebuildItemStatesFromEvents(STUDENT, { mode: 'strict' });
+    const reversed = structuredClone(fakeDb.itemStates.rows[0]);
+
+    fakeDb.itemStates.rows = [];
+    fakeDb.mathAnswerEvents.rows = [first, repeat];
+    await rebuildItemStatesFromEvents(STUDENT, { mode: 'strict' });
+
+    expect(fakeDb.itemStates.rows[0]).toEqual(reversed);
+    expect(fakeDb.itemStates.rows[0].misconceptionEvidence?.[0].occurrenceCount).toBe(1);
+  });
+
+  it('ignores misconception metadata on related-evidence events', async () => {
+    fakeDb.mathAnswerEvents.rows = [
+      makeEvent({ id: 'first', schedulingEligible: true }),
+      makeEvent({
+        id: 'related', sessionId: 'later', relatedEvidence: true,
+        evidenceSourceItemId: 'AREA_RECT_8x7', schedulingEligible: false,
+        detectedMisconceptions: ['mul:addition_confusion'], createdAt: '2026-06-02T10:00:00.000Z',
+      }),
+    ];
+    await rebuildItemStatesFromEvents(STUDENT, { mode: 'strict' });
+    expect(fakeDb.itemStates.rows[0].misconceptionEvidence).toBeUndefined();
+  });
+
   it('reproduces resolved misconception evidence from canonical events', async () => {
     fakeDb.mathAnswerEvents.rows = [
       makeEvent({
@@ -249,6 +301,7 @@ describe('rebuildItemStatesFromEvents — misconception tags survive rebuild', (
         id: 'fraction-correct-2', sessionId: 'fraction-session-3', mode: 'practice',
         itemId: 'FCMP_1_4_1_2', promptShown: 'Compare 1/4 and 1/2',
         correctAnswer: '<', studentAnswer: '<', isCorrect: true, reviewGrade: 'good',
+        schedulingEligible: false, schedulingApplied: false,
         createdAt: '2026-06-03T10:00:00.000Z',
         confirmedMisconceptions: ['fraction:compare_larger_denominator_means_larger'],
       }),
@@ -263,6 +316,7 @@ describe('rebuildItemStatesFromEvents — misconception tags survive rebuild', (
       confirmingEventIds: ['fraction-correct-1', 'fraction-correct-2'],
     });
     expect(state?.mistakePatterns).toContain('fraction:compare_larger_denominator_means_larger');
+    expect(state?.reps).toBe(2);
   });
 });
 

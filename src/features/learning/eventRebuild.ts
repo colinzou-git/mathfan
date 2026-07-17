@@ -49,6 +49,58 @@ function gradeFromEvent(event: MathAnswerEvent): ReviewGrade {
 }
 
 /**
+ * Reduce misconception evidence independently from FSRS replay eligibility.
+ * The event log is canonical for this channel: explicit transition metadata
+ * records what the live path decided, while scheduler flags affect only FSRS.
+ */
+export function applyMisconceptionEventEvidence(
+  state: ReturnType<typeof createInitialState>,
+  event: MathAnswerEvent,
+): ReturnType<typeof createInitialState> {
+  if (event.relatedEvidence) return state;
+  const eventItem = makeItemFromId(event.itemId);
+  const detected = event.detectedMisconceptions
+    ?? (!event.isCorrect && eventItem ? detectMistakes(eventItem, String(event.studentAnswer ?? '')) : []);
+  const confirmed = event.confirmedMisconceptions ?? [];
+  if (detected.length === 0 && confirmed.length === 0) return state;
+  if (!event.id || !event.itemId || !event.createdAt) {
+    console.warn('[eventRebuild] misconception event lacks deterministic identity', {
+      eventId: event.id, itemId: event.itemId, createdAt: event.createdAt,
+    });
+    return state;
+  }
+
+  const context = {
+    eventId: event.id, sessionId: event.sessionId, itemId: event.itemId, createdAt: event.createdAt,
+  };
+  let next = state;
+  if (detected.length > 0) {
+    next = {
+      ...next,
+      mistakePatterns: Array.from(new Set([...(next.mistakePatterns ?? []), ...detected])),
+      misconceptionEvidence: applyMisconceptionDetection(
+        next.misconceptionEvidence, detected, context, next.mistakePatterns,
+      ),
+    };
+  }
+  if (confirmed.length > 0) {
+    if (eventItem) {
+      const confirmedCodes = new Set(confirmed);
+      const eligibleEvidence = next.misconceptionEvidence?.filter(entry => confirmedCodes.has(entry.code));
+      const confirmation = applyMisconceptionConfirmation(
+        eligibleEvidence, eventItem, context,
+      );
+      const confirmedByCode = new Map(confirmation.evidence.map(entry => [entry.code, entry]));
+      next = {
+        ...next,
+        misconceptionEvidence: next.misconceptionEvidence?.map(entry => confirmedByCode.get(entry.code) ?? entry),
+      };
+    }
+  }
+  return next;
+}
+
+/**
  * Recompute multFactStats for a student from quiz-mode mathAnswerEvents.
  * Overwrites only facts that have at least one event.
  * Only first-attempt events (isRetry=false) are fed into the mastery score.
@@ -137,7 +189,10 @@ export async function rebuildItemStatesFromEvents(
     // attempt exists, and a card with nothing but related evidence is left
     // untouched — matching the live write path and preserving legacy rows.
     let sawDirect = false;
+    const replayedEventIds = new Set<string>();
     for (const event of cardEvents) {
+      if (replayedEventIds.has(event.id)) continue;
+      replayedEventIds.add(event.id);
       if (event.relatedEvidence) {
         // Indirect nudge — FSRS-only, and only once the card has direct history.
         if (!sawDirect) continue;
@@ -146,46 +201,19 @@ export async function rebuildItemStatesFromEvents(
         continue;
       }
 
-      if (!shouldApplyEventToScheduler(event, scheduledBySessionCard)) continue;
-      sawDirect = true;
-      const eventItem = makeItemFromId(event.itemId) ?? seedItem;
-      state = applyReview(
-        state,
-        gradeFromEvent(event),
-        event.latencyMs,
-        String(event.studentAnswer ?? ''),
-        new Date(event.createdAt),
-        { isCorrect: event.isCorrect },
-      );
-      state = { ...state, cardKey, lastItemId: event.itemId };
-
-      // Live practice/diagnostic sessions merge misconception tags into itemState
-      // on first wrong attempts (see usePracticeSession/DiagnosticSession). Replay
-      // that derived-cache behaviour here so a rebuild doesn't drop mistakePatterns.
-      if (!event.isCorrect) {
-        const newTags = event.detectedMisconceptions
-          ?? detectMistakes(eventItem, String(event.studentAnswer ?? ''));
-        if (newTags.length > 0) {
-          state = {
-            ...state,
-            mistakePatterns: Array.from(new Set([...(state.mistakePatterns ?? []), ...newTags])),
-            misconceptionEvidence: applyMisconceptionDetection(
-              state.misconceptionEvidence,
-              newTags,
-              { eventId: event.id, sessionId: event.sessionId, itemId: event.itemId, createdAt: event.createdAt },
-              state.mistakePatterns,
-            ),
-          };
-        }
-      } else if (!event.hintUsed && !event.isRetry && event.schedulingEligible !== false) {
-        const confirmation = applyMisconceptionConfirmation(
-          state.misconceptionEvidence,
-          eventItem,
-          { eventId: event.id, sessionId: event.sessionId, itemId: event.itemId, createdAt: event.createdAt },
-          state.mistakePatterns,
+      if (shouldApplyEventToScheduler(event, scheduledBySessionCard)) {
+        sawDirect = true;
+        state = applyReview(
+          state,
+          gradeFromEvent(event),
+          event.latencyMs,
+          String(event.studentAnswer ?? ''),
+          new Date(event.createdAt),
+          { isCorrect: event.isCorrect },
         );
-        state = { ...state, misconceptionEvidence: confirmation.evidence };
+        state = { ...state, cardKey, lastItemId: event.itemId };
       }
+      state = applyMisconceptionEventEvidence(state, event);
     }
     // A card reached only via related evidence has no direct state to rebuild —
     // skip it so we never fabricate a 'new' row or clobber legacy data.
