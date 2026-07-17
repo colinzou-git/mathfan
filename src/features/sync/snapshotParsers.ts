@@ -80,6 +80,9 @@ export const parseMathAnswerEvent = (value: unknown, index: number): ParseResult
   identity(row, add); ['sessionId', 'itemId', 'promptShown'].forEach(key => stringField(row, key, add)); enumField(row, 'mode', ['quiz', 'practice', 'diagnostic', 'goal_evaluation'], add);
   numberField(row, 'latencyMs', add); dateField(row, 'createdAt', add);
   ['isCorrect', 'isRetry', 'hintUsed'].forEach(key => { if (typeof row[key] !== 'boolean') add('invalid_boolean', `${key} must be a boolean.`); });
+  if (row.schedulingKind !== undefined) enumField(row, 'schedulingKind', ['independent_review', 'relearning_step', 'related_evidence'], add);
+  if (row.schedulingReason !== undefined) enumField(row, 'schedulingReason', ['first_card_evidence', 'same_session_repeat', 'same_presentation_relearning', 'deferred_related_evidence', 'same_evaluation_template_repeat'], add);
+  if (row.relearningFromEventId !== undefined) stringField(row, 'relearningFromEventId', add);
 });
 
 export const parseMultiplicationFactStat = (value: unknown, index: number): ParseResult<MultiplicationFactStats> => parseRow('multFactStats', value, index, (row, add) => {

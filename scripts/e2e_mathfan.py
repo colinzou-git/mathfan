@@ -869,15 +869,38 @@ def daily_review_requested_rounds(page: Page) -> None:
     page.get_by_label("Number of rounds", exact=True).fill("3")
     expect(page.get_by_text(re.compile(r"2 × 3 =\s*6 questions"))).to_be_visible()
     page.get_by_role("button", name="Start", exact=True).click()
-    for _ in range(6):
+    recovered_card = None
+    for index in range(6):
         prompt = page.locator(".drill-q > div").first.inner_text()
         values = [int(value) for value in re.findall(r"\d+", prompt)]
-        page.get_by_label("Your answer", exact=True).fill(str(values[0] * values[1]))
+        answer = values[0] * values[1]
+        if index == 0:
+            recovered_card = f"fact:mul:{min(values[0], values[1])}x{max(values[0], values[1])}"
+            page.get_by_label("Your answer", exact=True).fill(str(answer + 1))
+            page.get_by_label("Your answer", exact=True).press("Enter")
+            expect(page.get_by_text("Incorrect — try again", exact=True)).to_be_visible()
+        page.get_by_label("Your answer", exact=True).fill(str(answer))
         page.get_by_label("Your answer", exact=True).press("Enter")
         expect(page.get_by_text(re.compile(r"Correct!|New personal best!"))).to_be_visible()
         page.wait_for_timeout(1200)
     expect(page.get_by_role("heading", name="Session Complete!", exact=True)).to_be_visible()
     expect(page.get_by_text("You solved 6 problems.", exact=True)).to_be_visible()
+    recovery = page.evaluate("""async cardKey => {
+        const db = await new Promise((resolve, reject) => { const r = indexedDB.open('mathfan'); r.onsuccess = () => resolve(r.result); r.onerror = () => reject(r.error); });
+        const events = await new Promise((resolve, reject) => { const r = db.transaction('mathAnswerEvents').objectStore('mathAnswerEvents').getAll(); r.onsuccess = () => resolve(r.result); r.onerror = () => reject(r.error); });
+        const state = await new Promise((resolve, reject) => { const r = db.transaction('itemStates').objectStore('itemStates').get([events[0].studentId, cardKey]); r.onsuccess = () => resolve(r.result); r.onerror = () => reject(r.error); });
+        db.close();
+        const recoveryEvent = events.find(event => event.cardKey === cardKey && event.schedulingKind === 'relearning_step');
+        return { state, recoveryEvent, parent: events.find(event => event.id === recoveryEvent?.relearningFromEventId) };
+    }""", recovered_card)
+    if not recovery["recoveryEvent"] or not recovery["parent"]:
+        raise AssertionError(f"Daily Review recovery chain was not persisted: {recovery}")
+    if not recovery["recoveryEvent"]["schedulingEligible"] or not recovery["recoveryEvent"]["schedulingApplied"]:
+        raise AssertionError(f"Recovery event violates scheduler eligibility: {recovery['recoveryEvent']}")
+    if recovery["state"]["nextDueAt"] <= recovery["recoveryEvent"]["createdAt"]:
+        raise AssertionError(f"Recovered card remained due: {recovery['state']}")
+    page.get_by_role("button", name="Home", exact=True).click()
+    expect(page.get_by_text("Daily Review due (0)", exact=True)).to_be_visible()
 
 
 def practice_save_failure_recovery(page: Page) -> None:

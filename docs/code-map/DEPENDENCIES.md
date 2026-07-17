@@ -4,7 +4,7 @@
 
 | Package | Import count |
 | --- | --- |
-| vitest | 92 |
+| vitest | 94 |
 | react | 35 |
 | @testing-library/react | 19 |
 | pathlib | 8 |
@@ -381,6 +381,7 @@
 | src/features/learning/schedulingTelemetry.ts | ../scheduler/cardModel |
 | src/features/learning/schedulingTelemetry.ts | ../scheduler/fsrsAdapter |
 | src/features/learning/schedulingTelemetry.ts | ../scheduler/responsePolicy |
+| src/features/learning/schedulingTelemetry.ts | ./learningEvents |
 | src/features/learningPlan/dailyLessonPersistence.ts | ../../db/dexie |
 | src/features/learningPlan/dailyLessonPersistence.ts | ../../types/math |
 | src/features/learningPlan/dailyLessonPersistence.ts | ../learning/learningEvents |
@@ -502,6 +503,8 @@
 | src/features/practice/hintEngine.ts | ../../types/math |
 | src/features/practice/hintEngine.ts | ../curriculum/practiceContentSpec |
 | src/features/practice/metrics.ts | ../../types/math |
+| src/features/practice/practiceScheduling.ts | ../../types/math |
+| src/features/practice/practiceScheduling.ts | ../learning/learningEvents |
 | src/features/practice/PracticeScreen.tsx | ../../components/NumPad |
 | src/features/practice/PracticeScreen.tsx | ../../components/SessionSummary |
 | src/features/practice/PracticeScreen.tsx | ../../components/SettingsOverlay |
@@ -547,6 +550,7 @@
 | src/features/practice/usePracticeSession.ts | ../time/clock |
 | src/features/practice/usePracticeSession.ts | ./answerChecker |
 | src/features/practice/usePracticeSession.ts | ./metrics |
+| src/features/practice/usePracticeSession.ts | ./practiceScheduling |
 | src/features/profile/learnerIdentity.ts | ../../types/math |
 | src/features/profile/profileBootstrap.ts | ../../types/math |
 | src/features/scheduler/cardModel.ts | ../../types/math |
@@ -815,8 +819,10 @@
 | src/tests/driveSyncErrors.test.ts | ../features/sync/driveSync |
 | src/tests/eventOrdering.test.ts | ../features/learning/eventOrdering |
 | src/tests/eventOrdering.test.ts | ../features/learning/learningEvents |
+| src/tests/eventRebuild.test.ts | ../features/curriculum/makeItemFromId |
 | src/tests/eventRebuild.test.ts | ../features/learning/eventRebuild |
 | src/tests/eventRebuild.test.ts | ../features/learning/learningEvents |
+| src/tests/eventRebuild.test.ts | ../features/scheduler/scheduler |
 | src/tests/eventRebuild.test.ts | ../types/math |
 | src/tests/fluencyEngine.test.ts | ../features/fluency/fluencyEngine |
 | src/tests/fluencyEngine.test.ts | ../features/learning/learningEvents |
@@ -989,6 +995,10 @@
 | src/tests/newCurriculum.test.ts | ../features/curriculum/numberTheoryItems |
 | src/tests/newCurriculum.test.ts | ../features/curriculum/roundingItems |
 | src/tests/newCurriculum.test.ts | ../features/curriculum/wordProblemItems |
+| src/tests/practiceAnswerPersistence.test.ts | ../db/dexie |
+| src/tests/practiceAnswerPersistence.test.ts | ../features/curriculum/makeItemFromId |
+| src/tests/practiceAnswerPersistence.test.ts | ../features/learning/recordAnswer |
+| src/tests/practiceAnswerPersistence.test.ts | ../features/scheduler/scheduler |
 | src/tests/practiceContentSpec.test.ts | ../features/curriculum/makeItemFromId |
 | src/tests/practiceContentSpec.test.ts | ../features/curriculum/practiceContentSpec |
 | src/tests/practiceContentSpec.test.ts | ../features/learning/schedulingTelemetry |
@@ -998,6 +1008,7 @@
 | src/tests/practiceMetrics.test.ts | ../features/practice/metrics |
 | src/tests/practiceMetrics.test.ts | ../types/math |
 | src/tests/practiceNavigation.test.ts | ../features/practice/practiceNavigation |
+| src/tests/practiceScheduling.test.ts | ../features/practice/practiceScheduling |
 | src/tests/practiceSession.test.ts | ../db/repositories |
 | src/tests/practiceSession.test.ts | ../features/curriculum/makeItemFromId |
 | src/tests/practiceSession.test.ts | ../features/learning/learningEvents |

@@ -240,6 +240,24 @@ describe('dashboard Goals entry', () => {
     }));
   });
 
+  it('remounts without a recovered card in Daily Review when its durable due time is future', async () => {
+    const state: StudentItemState = {
+      studentId: 'student-1', cardKey: 'fact:mul:7x8', lastItemId: 'MUL_7x8', skillId: 'g3-mul-tables-basic',
+      attemptCount: 6, correctCount: 4, lastCorrect: true, lastLatencyMs: 1000, medianLatencyMs: 1000,
+      ease: 2.5, stabilityDays: 2, difficulty: .6, reps: 6, lapses: 2, masteryLevel: 'learning',
+      lastSeenAt: '2026-06-17T15:00:00.000Z', nextDueAt: '2026-06-17T15:00:00.000Z', mistakePatterns: [],
+    };
+    const props = { onStartDailyReview: vi.fn(), onPickOperation: vi.fn(), onOpenStats: vi.fn(), onOpenSettings: vi.fn(), onStartQuiz: vi.fn(), onOpenAchievementDetail: vi.fn(), onOpenMasteryMap: vi.fn(), onOpenGoals: vi.fn() };
+    store.itemStates = [state];
+    const first = render(<StudentDashboard profile={profile()} {...props} />);
+    await waitFor(() => expect(screen.queryByText('Daily Review due (0)', { exact: true })).not.toBeInTheDocument());
+    first.unmount();
+
+    store.itemStates = [{ ...state, lastSeenAt: fixedNow, nextDueAt: '2026-06-19T16:00:00.000Z' }];
+    render(<StudentDashboard profile={profile()} {...props} />);
+    expect(await screen.findByText('Daily Review due (0)', { exact: true })).toBeInTheDocument();
+  });
+
   it('places Daily New for Goals between Daily Review and the Grade 3 Math Map, then opens Goals', async () => {
     vi.mocked(mathAnswerEventRepo.getAll).mockResolvedValue([]);
     vi.mocked(itemStateRepo.getForStudent).mockResolvedValue([]);

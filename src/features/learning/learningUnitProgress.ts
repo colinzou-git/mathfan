@@ -37,7 +37,7 @@ export function learningUnitEvidenceRequirements(schemaId: string, kind: Learnin
 }
 
 function direct(event: MathAnswerEvent): boolean {
-  return !event.isRetry && event.relatedEvidence !== true;
+  return !event.isRetry && event.relatedEvidence !== true && event.schedulingKind !== 'relearning_step';
 }
 
 function representationId(event: MathAnswerEvent): string | undefined {

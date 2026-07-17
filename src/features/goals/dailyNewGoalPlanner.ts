@@ -91,7 +91,7 @@ export interface SkillGroup {
 const MAX_PLANNED_TILES = 3;
 
 function directFirstAttempt(event: MathAnswerEvent): boolean {
-  return !event.isRetry && event.relatedEvidence !== true;
+  return !event.isRetry && event.relatedEvidence !== true && event.schedulingKind !== 'relearning_step';
 }
 
 function localDayStartIso(now: string, timezone: string): string {

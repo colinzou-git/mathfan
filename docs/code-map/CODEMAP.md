@@ -1,6 +1,6 @@
 # Code Map Overview
 
-Generated: 2026-07-17 10:19:52 UTC
+Generated: 2026-07-17 10:54:10 UTC
 
 Repo root: `/home/ubuntu/mathfan`
 Output folder: `/home/ubuntu/mathfan/docs/code-map`
@@ -14,9 +14,9 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 - Package name: `mathfan`
 - Version: `1.2.0`
 - Module type: `module`
-- Scanned files: **304**
-- Scanned lines: **57,452**
-- Scanned bytes: **2,492,966**
+- Scanned files: **307**
+- Scanned lines: **57,900**
+- Scanned bytes: **2,517,172**
 
 ## NPM scripts
 
@@ -79,12 +79,12 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 | package.json | 53 | Project package metadata, scripts, dependencies, and dev tooling. |  |
 | src/main.tsx | 21 | React entry point that mounts the app. |  |
 | src/features/sync/driveSync.ts | 177 | Cloud sync/auth/data transfer logic. | DriveFileInfo, syncFailureResult, SyncResult, SyncStatus, authFetch, downloadSnapshot, findSyncFile, getDriveFileInfo |
-| src/features/sync/canonicalEventMerge.ts | 154 | Cloud sync/auth/data transfer logic. | assertEquivalentCanonicalEvents, assertNoConflictingCanonicalEventIds, CanonicalEventConflictDetails, CanonicalEventConflictError, CanonicalEventFingerprint, canonicalEventFingerprint, canonicalEventFingerprintObject, differingCanonicalEventFields |
-| src/features/sync/snapshotParsers.ts | 143 | Cloud sync/auth/data transfer logic. | parseAttemptLog, parseDailyLessonPlanShape, parseGoalEvaluation, parseGoalEvent, parseLearningGoal, parseMathAnswerEvent, parseMultiplicationFactStat, parsePracticeSession |
+| src/features/sync/canonicalEventMerge.ts | 157 | Cloud sync/auth/data transfer logic. | assertEquivalentCanonicalEvents, assertNoConflictingCanonicalEventIds, CanonicalEventConflictDetails, CanonicalEventConflictError, CanonicalEventFingerprint, canonicalEventFingerprint, canonicalEventFingerprintObject, differingCanonicalEventFields |
+| src/features/sync/snapshotParsers.ts | 146 | Cloud sync/auth/data transfer logic. | parseAttemptLog, parseDailyLessonPlanShape, parseGoalEvaluation, parseGoalEvent, parseLearningGoal, parseMathAnswerEvent, parseMultiplicationFactStat, parsePracticeSession |
 | src/features/sync/learnerKeyMerge.ts | 128 | Cloud sync/auth/data transfer logic. | compareProfileRevision, mergeProfilesByExactId, remapStudentId, resolveCanonicalStudentIds, resolveLearnerKeyDuplicate, stableProfileFingerprint, StudentIdAliasMap, compareProfileRevision |
 | src/features/sync/useSync.ts | 99 | Cloud sync/auth/data transfer logic. | useSync, initAuth, SyncState, useSync, recordSync, useSync |
 | src/features/sync/timeUtil.ts | 13 | Cloud sync/auth/data transfer logic. | remoteHasNewerUpdatedAt, validTimeMs, remoteHasNewerUpdatedAt, validTimeMs |
-| src/features/goals/GoalsPage.tsx | 1056 | React UI component file: ConfirmDialog, EmptyState, GoalCard, GoalWizard. | ConfirmDialog, EmptyState, GoalCard, GoalWizard, ProgressBar, SummaryCard, GoalsPage, activeLearningDays |
+| src/features/goals/GoalsPage.tsx | 1057 | React UI component file: ConfirmDialog, EmptyState, GoalCard, GoalWizard. | ConfirmDialog, EmptyState, GoalCard, GoalWizard, ProgressBar, SummaryCard, GoalsPage, activeLearningDays |
 | src/features/settings/SettingsPage.tsx | 905 | Student/app settings UI or persistence. | Section, SyncRow, ToggleRow, SettingsPage, applyUpdate, buildId, buildLabel, checkForUpdates |
 | src/features/multiplication/MultiplicationQuizPage.tsx | 861 | Local persistence/database layer. | FactChip, SetupScreen, StatBox, SummaryScreen, MultiplicationQuizPage, FactChip, MultiplicationQuizPage, recommendedPracticeConfig |
 | src/features/dashboard/StudentDashboard.tsx | 627 | Dashboard/profile setup/student navigation feature. | Chip, PracticeOp, StudentDashboard, Chip, completeSkillSummaries, handleStartReview, openExtra, regenerateLesson |
@@ -99,8 +99,8 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 | src/features/visuals/ShapeModel.tsx | 137 | Reusable SVG visual model components (area grids, shape diagrams, fraction bars, arrays). | SVGWrap, ShapeModel, ShapeName, pts, regularPoly, rightAnglePath, ShapeModel, SVGWrap |
 | src/features/stats/QuizStatsView.tsx | 135 | Progress/statistics screens or calculations. | FactGroup, QuizStatsView, avgSecStr, FactGroup, fmt, QuizStatsView |
 | src/features/stats/TodayAchievementSection.tsx | 125 | Progress/statistics screens or calculations. | AchievementTile, TodayAchievementSection, AchievementTile, TodayAchievementSection |
+| src/features/practice/usePracticeSession.ts | 925 | Local persistence/database layer. | usePracticeSession, CorrectResult, LastSessionSummary, SessionState, usePracticeSession, commit, getStaticItem, planned |
 | src/features/mastery/skillPracticePlanner.ts | 905 | Grade 3 skill practice planner: maps skill IDs to SessionConfig for the mastery map. | buildDivisionFocusSequence, buildFocusSequence, buildRegroupingFocusSequence, FocusSequence, FocusSequenceContext, planFractionFocusSequence, planLearningUnitsForSkill, PlanOptions |
-| src/features/practice/usePracticeSession.ts | 900 | Local persistence/database layer. | usePracticeSession, CorrectResult, LastSessionSummary, SessionState, usePracticeSession, commit, getStaticItem, planned |
 | src/features/goals/goalEvaluationEngine.ts | 611 | Exports reusable code: ADAPTIVE_GOAL_EVALUATION_CONFIRMATION_COUNT, ADAPTIVE_GOAL_EVALUATION_HISTORICAL_PRIOR_CAP, ADAPTIVE_GOAL_EVALUATION_QUESTION_COUNT, AdaptiveGoalEvaluationArgs, AdaptiveGoalEvaluationItem. | ADAPTIVE_GOAL_EVALUATION_CONFIRMATION_COUNT, ADAPTIVE_GOAL_EVALUATION_HISTORICAL_PRIOR_CAP, ADAPTIVE_GOAL_EVALUATION_QUESTION_COUNT, AdaptiveGoalEvaluationArgs, AdaptiveGoalEvaluationItem, AdaptiveGoalEvaluationPhase, AdaptiveGoalEvaluationResponse, AdaptiveGoalEvaluationResult |
 
 ## Repository tree, filtered
@@ -249,6 +249,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   │   ├── hintEngine.ts
 │   │   │   ├── metrics.ts
 │   │   │   ├── practiceNavigation.ts
+│   │   │   ├── practiceScheduling.ts
 │   │   │   ├── PracticeScreen.tsx
 │   │   │   ├── QuestionRenderer.tsx
 │   │   │   └── usePracticeSession.ts
@@ -389,9 +390,11 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   ├── misconceptionEngine.test.ts
 │   │   ├── multiplicationQuiz.test.ts
 │   │   ├── newCurriculum.test.ts
+│   │   ├── practiceAnswerPersistence.test.ts
 │   │   ├── practiceContentSpec.test.ts
 │   │   ├── practiceMetrics.test.ts
 │   │   ├── practiceNavigation.test.ts
+│   │   ├── practiceScheduling.test.ts
 │   │   ├── practiceSession.test.ts
 │   │   ├── profileBootstrap.test.ts
 │   │   ├── profileSetup.test.tsx
@@ -932,21 +935,21 @@ Purpose: Cloud sync/auth/data transfer logic.
   44:   presentationIndex?: number;
   45:   schedulingEligible?: boolean;
   46:   schedulingApplied?: boolean;
-  47:   schedulingReason?: MathAnswerEvent['schedulingReason'];
-  48:   schedulerErrorCode?: MathAnswerEvent['schedulerErrorCode'];
-  49:   relatedEvidence?: boolean;
-  50:   evidenceSourceItemId?: string;
-  51:   origin?: MathAnswerEvent['origin'];
-  52:   goalId?: string;
-  53:   goalTargetId?: string;
-  54:   goalIds?: string[];
-  55:   goalTargetIds?: string[];
-  56:   goalLearningKind?: MathAnswerEvent['goalLearningKind'];
-  57:   lessonPlanId?: string;
-  58:   lessonSegment?: MathAnswerEvent['lessonSegment'];
-  59:   selectionOrigin?: MathAnswerEvent['selectionOrigin'];
-  60:   selectionRationaleCodes?: string[];
-... (93 more lines)
+  47:   schedulingKind?: MathAnswerEvent['schedulingKind'];
+  48:   schedulingReason?: MathAnswerEvent['schedulingReason'];
+  49:   relearningFromEventId?: string;
+  50:   schedulerErrorCode?: MathAnswerEvent['schedulerErrorCode'];
+  51:   relatedEvidence?: boolean;
+  52:   evidenceSourceItemId?: string;
+  53:   origin?: MathAnswerEvent['origin'];
+  54:   goalId?: string;
+  55:   goalTargetId?: string;
+  56:   goalIds?: string[];
+  57:   goalTargetIds?: string[];
+  58:   goalLearningKind?: MathAnswerEvent['goalLearningKind'];
+  59:   lessonPlanId?: string;
+  60:   lessonSegment?: MathAnswerEvent['lessonSegment'];
+... (96 more lines)
 ```
 
 ### `src/features/sync/snapshotParsers.ts`
@@ -1014,7 +1017,7 @@ Purpose: Cloud sync/auth/data transfer logic.
   58:   identity(row, add); ['itemId', 'skillId', 'sessionId', 'promptShown'].forEach(key => stringField(row, key, add));
   59:   numberField(row, 'latencyMs', add); dateField(row, 'createdAt', add);
   60:   enumField(row, 'reviewGrade', ['again', 'hard', 'good', 'easy'], add);
-... (82 more lines)
+... (85 more lines)
 ```
 
 ### `src/features/sync/learnerKeyMerge.ts`

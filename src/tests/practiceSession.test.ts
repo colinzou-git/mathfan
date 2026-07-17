@@ -180,7 +180,7 @@ describe('usePracticeSession — wrong first attempt + correct retry', () => {
     expect(vi.mocked(recordPracticeAnswer)).toHaveBeenCalledTimes(2);
   });
 
-  it('only the first-attempt event carries updatedState; retry event does not', async () => {
+  it('wrong then correct persists both the independent Again and its relearning step', async () => {
     const { result } = renderHook(() => usePracticeSession(STUDENT_ID));
 
     await act(async () => {
@@ -199,10 +199,17 @@ describe('usePracticeSession — wrong first attempt + correct retry', () => {
     const [firstPayload] = calls[0];
     const [secondPayload] = calls[1];
 
-    // First attempt: FSRS state must be persisted
     expect(firstPayload.updatedState).toBeDefined();
-    // Second attempt (retry): no FSRS update
-    expect(secondPayload.updatedState).toBeUndefined();
+    expect(firstPayload.event).toMatchObject({
+      schedulingKind: 'independent_review', schedulingReason: 'first_card_evidence',
+      schedulingEligible: true, schedulingApplied: true, reviewGrade: 'again',
+    });
+    expect(secondPayload.updatedState).toBeDefined();
+    expect(secondPayload.event).toMatchObject({
+      schedulingKind: 'relearning_step', schedulingReason: 'same_presentation_relearning',
+      schedulingEligible: true, schedulingApplied: true, reviewGrade: 'hard',
+      relearningFromEventId: firstPayload.event.id, isRetry: true, hintUsed: true,
+    });
   });
 
   it('first-attempt itemState has correctCount=0, attemptCount=1, reps=1 after wrong answer', async () => {
@@ -293,7 +300,10 @@ describe('usePracticeSession — wrong first attempt + correct retry', () => {
     expect(result.current.state.retryKey).toBe(1);
     await act(async () => { await result.current.submitAnswer('56'); });
     const corrected = vi.mocked(recordPracticeAnswer).mock.calls.at(-1)![0];
-    expect(corrected.event).toMatchObject({ isRetry: true, schedulingEligible: false });
+    expect(corrected.event).toMatchObject({
+      isRetry: true, schedulingEligible: true, schedulingApplied: true,
+      schedulingKind: 'relearning_step', relearningFromEventId: vi.mocked(recordPracticeAnswer).mock.calls[2][0].event.id,
+    });
   });
 
   it('persists Daily New for Goals attribution on the session, event, and attempt', async () => {
@@ -735,13 +745,14 @@ describe('usePracticeSession — one scheduling update per card per session', ()
     expect(calls[2][0].event.presentationIndex).toBe(3);
   });
 
-  it('a wrong retry within one presentation is still marked isRetry and does not schedule', async () => {
+  it('intermediate wrong retries do not schedule and the first correct retry schedules once', async () => {
     const { result } = renderHook(() => usePracticeSession(STUDENT_ID));
     await act(async () => {
       await result.current.startSession(SESSION_CONFIG);
     });
 
     await act(async () => { await result.current.submitAnswer('wrong'); }); // wrong first attempt
+    await act(async () => { await result.current.submitAnswer('15'); }); // wrong retry
     await act(async () => { await result.current.submitAnswer('56'); }); // correct retry
 
     const calls = vi.mocked(recordPracticeAnswer).mock.calls;
@@ -749,6 +760,73 @@ describe('usePracticeSession — one scheduling update per card per session', ()
     expect(calls[0][0].updatedState).toBeDefined();
     expect(calls[1][0].event.isRetry).toBe(true);
     expect(calls[1][0].updatedState).toBeUndefined();
+    expect(calls[1][0].event).toMatchObject({ schedulingEligible: false, schedulingApplied: false });
+    expect(calls[2][0].updatedState).toBeDefined();
+    expect(calls[2][0].event).toMatchObject({
+      schedulingKind: 'relearning_step', relearningFromEventId: calls[0][0].event.id,
+      schedulingEligible: true, schedulingApplied: true,
+    });
+  });
+
+  it('moves a due Daily Review card into the future after wrong-then-correct recovery', async () => {
+    vi.mocked(itemStateRepo.getForStudent).mockResolvedValue([{
+      studentId: STUDENT_ID, cardKey: 'fact:mul:7x8', lastItemId: 'MUL_7x8', skillId: 'SKILL_MUL_FACTS',
+      attemptCount: 4, correctCount: 3, lastCorrect: true, lastLatencyMs: 1000, medianLatencyMs: 1100,
+      ease: 2.5, stabilityDays: 5, fsrsDifficulty: 5, difficulty: .6, reps: 4, lapses: 1,
+      fsrsCardState: 2, fsrsScheduledDays: 5, fsrsLearningSteps: 0,
+      lastSeenAt: '2026-05-20T10:00:00.000Z', nextDueAt: '2026-05-25T10:00:00.000Z',
+      masteryLevel: 'developing', mistakePatterns: [],
+    }]);
+    const { result } = renderHook(() => usePracticeSession(STUDENT_ID));
+    await act(async () => { await result.current.startSession(SESSION_CONFIG); });
+    await act(async () => { await result.current.submitAnswer('63'); });
+    const afterAgain = vi.mocked(recordPracticeAnswer).mock.calls[0][0].updatedState!;
+    expect(new Date(afterAgain.nextDueAt!).getTime()).toBeLessThanOrEqual(FIXED_NOW.getTime());
+    await act(async () => { await result.current.submitAnswer('56'); });
+    const recovered = vi.mocked(recordPracticeAnswer).mock.calls[1][0].updatedState!;
+    expect(new Date(recovered.nextDueAt!).getTime()).toBeGreaterThan(FIXED_NOW.getTime());
+    expect(recovered).toMatchObject({ lastCorrect: true, lastSeenAt: FIXED_NOW.toISOString() });
+    expect(recovered.reps).toBe((afterAgain.reps ?? 0) + 1);
+    expect(recovered.lapses).toBe(afterAgain.lapses);
+  });
+
+  it('keeps a failed recovery blocked and retry-saves the exact same event and state once', async () => {
+    const { result } = renderHook(() => usePracticeSession(STUDENT_ID));
+    await act(async () => { await result.current.startSession(SESSION_CONFIG); });
+    await act(async () => { await result.current.submitAnswer('63'); });
+    const parent = vi.mocked(recordPracticeAnswer).mock.calls[0][0].event;
+    vi.mocked(recordPracticeAnswer)
+      .mockRejectedValueOnce(new Error('DB busy'))
+      .mockRejectedValueOnce(new Error('disk full'));
+    await act(async () => { await result.current.submitAnswer('56'); });
+    const recovery = vi.mocked(recordPracticeAnswer).mock.calls[1][0];
+    expect(vi.mocked(recordPracticeAnswer).mock.calls[2][0]).toBe(recovery);
+    expect(result.current.state).toMatchObject({ phase: 'active', saveStatus: 'error' });
+    expect(recovery.event).toMatchObject({ schedulingKind: 'relearning_step', relearningFromEventId: parent.id });
+
+    vi.mocked(recordPracticeAnswer).mockResolvedValueOnce(undefined);
+    await act(async () => { await result.current.retrySave(); });
+    expect(vi.mocked(recordPracticeAnswer).mock.calls[3][0]).toBe(recovery);
+    expect(result.current.state).toMatchObject({ phase: 'correct', saveStatus: 'idle', correctedCount: 1 });
+  });
+
+  it('does not schedule a later duplicate presentation after recovery', async () => {
+    const { result } = renderHook(() => usePracticeSession(STUDENT_ID));
+    await act(async () => {
+      await result.current.startSession({ ...SESSION_CONFIG, repeatPolicy: 'user_requested_rounds', rounds: 2 });
+    });
+    await act(async () => { await result.current.submitAnswer('63'); });
+    await act(async () => { await result.current.submitAnswer('56'); });
+    await act(async () => { await result.current.nextQuestion(); });
+    await act(async () => { await result.current.submitAnswer('56'); });
+    const calls = vi.mocked(recordPracticeAnswer).mock.calls;
+    expect(calls[0][0].event.schedulingKind).toBe('independent_review');
+    expect(calls[1][0].event.schedulingKind).toBe('relearning_step');
+    expect(calls[2][0].event).toMatchObject({
+      presentationIndex: 2, schedulingEligible: false, schedulingApplied: false,
+      schedulingReason: 'same_session_repeat',
+    });
+    expect(calls[2][0].updatedState).toBeUndefined();
   });
 });
 

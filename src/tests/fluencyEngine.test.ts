@@ -56,6 +56,14 @@ describe('deriveFluencyBaseline', () => {
     expect(baseline!.medianMs).toBeLessThan(2000);
   });
 
+  it('explicitly excludes scheduler-eligible relearning steps from independent fluency evidence', () => {
+    expect(classifyFluencyEvidence(event({
+      isRetry: true, hintUsed: true, schedulingEligible: true, schedulingApplied: true,
+      schedulingKind: 'relearning_step', schedulingReason: 'same_presentation_relearning',
+      relearningFromEventId: 'wrong-event',
+    }))).toMatchObject({ eligible: false, reason: 'retry' });
+  });
+
   it('excludes synthetic related-evidence events', () => {
     const events = [
       ...Array.from({ length: MIN_BASELINE_SAMPLES }, (_, i) => event({ latencyMs: 1000 + i })),

@@ -55,6 +55,8 @@ describe('canonical event semantic merge', () => {
     ['isCorrect', { isCorrect: false }],
     ['reviewGrade', { reviewGrade: 'again' as const }],
     ['schedulingApplied', { schedulingApplied: false }],
+    ['schedulingKind', { schedulingKind: 'relearning_step' as const }],
+    ['relearningFromEventId', { relearningFromEventId: 'different-parent' }],
     ['createdAt', { createdAt: '2026-01-02T00:00:00Z' }],
   ])('rejects a conflicting %s without exposing answer values', (field, overrides) => {
     let thrown: unknown;

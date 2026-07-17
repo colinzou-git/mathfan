@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-17T10:19:52.959777+00:00",
+  "generated_at": "2026-07-17T10:54:10.071381+00:00",
   "repo_root": "/home/ubuntu/mathfan",
   "package": {
     "name": "mathfan",
@@ -570,9 +570,9 @@
     {
       "path": "scripts/e2e_mathfan.py",
       "ext": ".py",
-      "bytes": 69305,
-      "lines": 1124,
-      "sha1": "77c5a2fd802a",
+      "bytes": 71398,
+      "lines": 1147,
+      "sha1": "cc9e0106498a",
       "imports": [
         "__future__",
         "json",
@@ -3151,9 +3151,9 @@
     {
       "path": "src/features/fluency/fluencyEngine.ts",
       "ext": ".ts",
-      "bytes": 6069,
-      "lines": 135,
-      "sha1": "7eb3f20f9109",
+      "bytes": 6164,
+      "lines": 136,
+      "sha1": "d498ad46fec8",
       "imports": [
         "../learning/learningEvents",
         "../scheduler/responsePolicy"
@@ -3269,9 +3269,9 @@
     {
       "path": "src/features/goals/dailyNewGoalPlanner.ts",
       "ext": ".ts",
-      "bytes": 17818,
+      "bytes": 17864,
       "lines": 407,
-      "sha1": "027acd1a0957",
+      "sha1": "a4622d59a89e",
       "imports": [
         "../../types/math",
         "../curriculum/makeItemFromId",
@@ -3344,9 +3344,9 @@
     {
       "path": "src/features/goals/goalEngine.ts",
       "ext": ".ts",
-      "bytes": 16415,
+      "bytes": 16461,
       "lines": 502,
-      "sha1": "fa9fed072dd2",
+      "sha1": "dfb4b30ef2fc",
       "imports": [
         "../../types/math",
         "../curriculum/makeItemFromId",
@@ -3430,9 +3430,9 @@
     {
       "path": "src/features/goals/goalEvaluationEngine.ts",
       "ext": ".ts",
-      "bytes": 24086,
+      "bytes": 24132,
       "lines": 611,
-      "sha1": "5c8eac0f9f12",
+      "sha1": "91202b0857a7",
       "imports": [
         "../../types/math",
         "../../utils/rng",
@@ -3767,9 +3767,9 @@
     {
       "path": "src/features/goals/goalRecommendationEngine.ts",
       "ext": ".ts",
-      "bytes": 19993,
+      "bytes": 20039,
       "lines": 505,
-      "sha1": "cf34bf16f909",
+      "sha1": "f1965b55fa80",
       "imports": [
         "../../types/math",
         "../learning/learningEvents",
@@ -3850,9 +3850,9 @@
     {
       "path": "src/features/goals/GoalsPage.tsx",
       "ext": ".tsx",
-      "bytes": 48686,
-      "lines": 1056,
-      "sha1": "47eeff9174de",
+      "bytes": 48736,
+      "lines": 1057,
+      "sha1": "167c1c7b8896",
       "imports": [
         "../../db/repositories",
         "../../types/math",
@@ -4017,9 +4017,9 @@
     {
       "path": "src/features/learning/eventRebuild.ts",
       "ext": ".ts",
-      "bytes": 11551,
-      "lines": 273,
-      "sha1": "f49fc57b6f73",
+      "bytes": 12660,
+      "lines": 296,
+      "sha1": "1b318763ac29",
       "imports": [
         "../../db/dexie",
         "../../types/math",
@@ -4045,7 +4045,8 @@
         "rebuildItemStatesFromEvents",
         "rebuildMultFactStatsFromEvents",
         "replayCardEvents",
-        "shouldApplyEventToScheduler"
+        "shouldApplyEventToScheduler",
+        "validRelearningSequence"
       ],
       "classes": [],
       "interfaces": [
@@ -4063,9 +4064,9 @@
     {
       "path": "src/features/learning/eventValidation.ts",
       "ext": ".ts",
-      "bytes": 3482,
-      "lines": 46,
-      "sha1": "401da30e3244",
+      "bytes": 3849,
+      "lines": 47,
+      "sha1": "7ad730e54ad2",
       "imports": [
         "./learningEvents"
       ],
@@ -4097,9 +4098,9 @@
     {
       "path": "src/features/learning/learningEvents.ts",
       "ext": ".ts",
-      "bytes": 5702,
-      "lines": 125,
-      "sha1": "afd1161e4694",
+      "bytes": 5995,
+      "lines": 132,
+      "sha1": "136b708d827a",
       "imports": [
         "../../db/dexie",
         "../../types/math",
@@ -4112,7 +4113,9 @@
         "MathAnswerEvent",
         "MathEventMode",
         "MathFactStatus",
-        "multiplicationStateToCanonicalStatus"
+        "multiplicationStateToCanonicalStatus",
+        "SchedulingKind",
+        "SchedulingReason"
       ],
       "functions": [
         "canonicalStatusToLegacyMasteryLevel",
@@ -4126,7 +4129,9 @@
       ],
       "types": [
         "MathEventMode",
-        "MathFactStatus"
+        "MathFactStatus",
+        "SchedulingKind",
+        "SchedulingReason"
       ],
       "components": [],
       "hooks": [],
@@ -4139,9 +4144,9 @@
     {
       "path": "src/features/learning/learningUnitProgress.ts",
       "ext": ".ts",
-      "bytes": 4925,
+      "bytes": 4971,
       "lines": 116,
-      "sha1": "a4a1e67e2979",
+      "sha1": "d6e3b8f266d0",
       "imports": [
         "../../types/math",
         "../scheduler/cardModel",
@@ -4179,9 +4184,9 @@
     {
       "path": "src/features/learning/recordAnswer.ts",
       "ext": ".ts",
-      "bytes": 3991,
-      "lines": 91,
-      "sha1": "43b90f7b63f8",
+      "bytes": 4675,
+      "lines": 112,
+      "sha1": "307dcac1e8ff",
       "imports": [
         "../../db/dexie",
         "../../db/repositories",
@@ -4196,6 +4201,7 @@
       ],
       "functions": [
         "finalizeQuizSession",
+        "practiceEventFingerprint",
         "recordPracticeAnswer",
         "recordQuizFirstAttempt",
         "recordQuizRetry",
@@ -4219,9 +4225,9 @@
     {
       "path": "src/features/learning/schedulingTelemetry.ts",
       "ext": ".ts",
-      "bytes": 7144,
-      "lines": 144,
-      "sha1": "ce50d4cabcd0",
+      "bytes": 7330,
+      "lines": 148,
+      "sha1": "16cded9a808b",
       "imports": [
         "../../types/math",
         "../curriculum/practiceContentSpec",
@@ -4229,7 +4235,8 @@
         "../practice/answerChecker",
         "../scheduler/cardModel",
         "../scheduler/fsrsAdapter",
-        "../scheduler/responsePolicy"
+        "../scheduler/responsePolicy",
+        "./learningEvents"
       ],
       "exports": [
         "ADAPTIVE_SELECTOR_VERSION",
@@ -4647,9 +4654,9 @@
     {
       "path": "src/features/mastery/skillMasteryEngine.ts",
       "ext": ".ts",
-      "bytes": 7526,
+      "bytes": 7572,
       "lines": 180,
-      "sha1": "7011bbc455c9",
+      "sha1": "31814b2655ad",
       "imports": [
         "../../types/math",
         "../learning/learningEvents",
@@ -5380,6 +5387,39 @@
       "read_error": null
     },
     {
+      "path": "src/features/practice/practiceScheduling.ts",
+      "ext": ".ts",
+      "bytes": 1686,
+      "lines": 58,
+      "sha1": "259eb9ad3f07",
+      "imports": [
+        "../../types/math",
+        "../learning/learningEvents"
+      ],
+      "exports": [
+        "decidePracticeScheduling",
+        "PendingRelearning",
+        "PracticeSchedulingDecision",
+        "SAME_PRESENTATION_RECOVERY_GRADE"
+      ],
+      "functions": [
+        "decidePracticeScheduling"
+      ],
+      "classes": [],
+      "interfaces": [
+        "PendingRelearning",
+        "PracticeSchedulingDecision"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Practice session UI and/or quiz interaction logic.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/features/practice/PracticeScreen.tsx",
       "ext": ".tsx",
       "bytes": 25675,
@@ -5462,9 +5502,9 @@
     {
       "path": "src/features/practice/usePracticeSession.ts",
       "ext": ".ts",
-      "bytes": 45473,
-      "lines": 900,
-      "sha1": "eb5fdef5591c",
+      "bytes": 46654,
+      "lines": 925,
+      "sha1": "bedf71d22b24",
       "imports": [
         "../../components/opSpecs",
         "../../db/dexie",
@@ -5496,6 +5536,7 @@
         "../time/clock",
         "./answerChecker",
         "./metrics",
+        "./practiceScheduling",
         "react"
       ],
       "exports": [
@@ -5809,9 +5850,9 @@
     {
       "path": "src/features/scheduler/sessionSchedulingGuard.ts",
       "ext": ".ts",
-      "bytes": 2128,
+      "bytes": 2148,
       "lines": 51,
-      "sha1": "3b41fad35ea7",
+      "sha1": "f08ef27ae851",
       "imports": [],
       "exports": [
         "createSessionSchedulingGuard",
@@ -6352,9 +6393,9 @@
     {
       "path": "src/features/sync/canonicalEventMerge.ts",
       "ext": ".ts",
-      "bytes": 6696,
-      "lines": 154,
-      "sha1": "034ae8376ccc",
+      "bytes": 6878,
+      "lines": 157,
+      "sha1": "1e0a8a831d61",
       "imports": [
         "../learning/learningEvents"
       ],
@@ -6567,9 +6608,9 @@
     {
       "path": "src/features/sync/snapshotParsers.ts",
       "ext": ".ts",
-      "bytes": 11629,
-      "lines": 143,
-      "sha1": "19f0ecf1df83",
+      "bytes": 12093,
+      "lines": 146,
+      "sha1": "7327b1978268",
       "imports": [
         "../../types/math",
         "../goals/goalEvaluationSelection",
@@ -7958,9 +7999,9 @@
     {
       "path": "src/tests/canonicalEventMerge.test.ts",
       "ext": ".ts",
-      "bytes": 8226,
-      "lines": 148,
-      "sha1": "5f1ccd7330df",
+      "bytes": 8376,
+      "lines": 150,
+      "sha1": "8bc1ba349e9c",
       "imports": [
         "../db/dexie",
         "../features/learning/eventRebuild",
@@ -8433,12 +8474,14 @@
     {
       "path": "src/tests/eventRebuild.test.ts",
       "ext": ".ts",
-      "bytes": 18853,
-      "lines": 434,
-      "sha1": "ebfd32c7792a",
+      "bytes": 22056,
+      "lines": 490,
+      "sha1": "67b163f8574e",
       "imports": [
+        "../features/curriculum/makeItemFromId",
         "../features/learning/eventRebuild",
         "../features/learning/learningEvents",
+        "../features/scheduler/scheduler",
         "../types/math",
         "vitest"
       ],
@@ -8780,9 +8823,9 @@
     {
       "path": "src/tests/fluencyEngine.test.ts",
       "ext": ".ts",
-      "bytes": 7562,
-      "lines": 150,
-      "sha1": "b50ed1edc06d",
+      "bytes": 8003,
+      "lines": 158,
+      "sha1": "948107bd0842",
       "imports": [
         "../features/fluency/fluencyEngine",
         "../features/learning/learningEvents",
@@ -9207,9 +9250,9 @@
     {
       "path": "src/tests/goalsPage.test.tsx",
       "ext": ".tsx",
-      "bytes": 18214,
-      "lines": 450,
-      "sha1": "5cfb9cf3f511",
+      "bytes": 19533,
+      "lines": 468,
+      "sha1": "dda944630738",
       "imports": [
         "../db/repositories",
         "../features/dashboard/StudentDashboard",
@@ -9826,6 +9869,34 @@
       "read_error": null
     },
     {
+      "path": "src/tests/practiceAnswerPersistence.test.ts",
+      "ext": ".ts",
+      "bytes": 3161,
+      "lines": 67,
+      "sha1": "67c518ec216d",
+      "imports": [
+        "../db/dexie",
+        "../features/curriculum/makeItemFromId",
+        "../features/learning/recordAnswer",
+        "../features/scheduler/scheduler",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [
+        "recoveryPayload"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Local persistence/database layer.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/tests/practiceContentSpec.test.ts",
       "ext": ".ts",
       "bytes": 5278,
@@ -9910,11 +9981,34 @@
       "read_error": null
     },
     {
+      "path": "src/tests/practiceScheduling.test.ts",
+      "ext": ".ts",
+      "bytes": 2298,
+      "lines": 49,
+      "sha1": "6d2c6bee0f66",
+      "imports": [
+        "../features/practice/practiceScheduling",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/tests/practiceSession.test.ts",
       "ext": ".ts",
-      "bytes": 38734,
-      "lines": 807,
-      "sha1": "60a75d80d99e",
+      "bytes": 43682,
+      "lines": 885,
+      "sha1": "89e9f4efa9cc",
       "imports": [
         "../db/repositories",
         "../features/curriculum/makeItemFromId",
