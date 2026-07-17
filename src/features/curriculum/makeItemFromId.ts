@@ -20,7 +20,7 @@ import { makeTimeItem, makeElapsedTimeItem, makeBarGraphItem, makeLinePlotItem, 
 import type { MeasurementSchema } from './measurementTypes';
 import { makeTwoStepWordProblem, type TwoStepSchema } from './twoStepItems';
 import { makeArithmeticPatternItem } from './patternItems';
-import { assertValidPracticeItem, withLegacyContentSpec } from './practiceContentSpec';
+import { assertValidPracticeItem } from './practiceContentSpec';
 
 /**
  * Reconstruct a PracticeItem from its deterministic itemId.
@@ -248,5 +248,5 @@ function makeLegacyItemFromId(itemId: string): PracticeItem | null {
 
 export function makeItemFromId(itemId: string): PracticeItem | null {
   const item = makeLegacyItemFromId(itemId);
-  return item ? assertValidPracticeItem(withLegacyContentSpec(item)) : null;
+  return item ? assertValidPracticeItem(item) : null;
 }

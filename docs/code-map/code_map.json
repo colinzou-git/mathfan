@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-17T01:18:19.877963+00:00",
+  "generated_at": "2026-07-17T01:46:37.538823+00:00",
   "repo_root": "/home/ubuntu/mathfan",
   "package": {
     "name": "mathfan",
@@ -2010,11 +2010,12 @@
     {
       "path": "src/features/curriculum/divisionItems.ts",
       "ext": ".ts",
-      "bytes": 13865,
-      "lines": 257,
-      "sha1": "0f5c4b0fb7c6",
+      "bytes": 13948,
+      "lines": 258,
+      "sha1": "15ce989489c8",
       "imports": [
         "../../types/math",
+        "./practiceContentSpec",
         "./regrouping"
       ],
       "exports": [
@@ -2073,13 +2074,14 @@
     {
       "path": "src/features/curriculum/fractionItems.ts",
       "ext": ".ts",
-      "bytes": 14296,
-      "lines": 342,
-      "sha1": "5949ac343db4",
+      "bytes": 14379,
+      "lines": 343,
+      "sha1": "694d1c26da97",
       "imports": [
         "../../types/math",
         "../../utils/rng",
-        "../fractions/types"
+        "../fractions/types",
+        "./practiceContentSpec"
       ],
       "exports": [
         "compareFractions",
@@ -2208,9 +2210,9 @@
     {
       "path": "src/features/curriculum/makeItemFromId.ts",
       "ext": ".ts",
-      "bytes": 12521,
+      "bytes": 12475,
       "lines": 253,
-      "sha1": "b7b3473f9a74",
+      "sha1": "35f04735726f",
       "imports": [
         "../../types/math",
         "./areaItems",
@@ -2252,14 +2254,15 @@
     {
       "path": "src/features/curriculum/measurementItems.ts",
       "ext": ".ts",
-      "bytes": 15770,
-      "lines": 310,
-      "sha1": "14d07537beb1",
+      "bytes": 15972,
+      "lines": 311,
+      "sha1": "7428aa23aea5",
       "imports": [
         "../../types/math",
         "../../utils/rng",
         "./language",
         "./measurementTypes",
+        "./practiceContentSpec",
         "./regrouping"
       ],
       "exports": [
@@ -2527,33 +2530,54 @@
     {
       "path": "src/features/curriculum/practiceContentSpec.ts",
       "ext": ".ts",
-      "bytes": 6384,
-      "lines": 143,
-      "sha1": "41676c38056a",
+      "bytes": 10870,
+      "lines": 223,
+      "sha1": "43e496fdcc62",
       "imports": [
         "../../types/math"
       ],
       "exports": [
         "assertValidPracticeItem",
+        "contentDataForDomain",
         "contentSpecForItem",
+        "inspectRawPracticeItemContent",
+        "LegacyPrimaryContentField",
+        "legacyPrimaryContentFields",
+        "normalizePracticeItemContent",
         "PRACTICE_CONTENT_SPEC_VERSION",
+        "PracticeItemNormalizationResult",
+        "PracticeItemValidationError",
         "PracticeItemValidationProblem",
+        "projectLegacyCompatibilityFields",
+        "RawPracticeContentInspection",
         "validatePracticeItem",
-        "withLegacyContentSpec"
+        "withLegacyContentSpec",
+        "withPracticeContentSpec"
       ],
       "functions": [
         "assertValidPracticeItem",
         "contentSpecForItem",
+        "inspectRawPracticeItemContent",
+        "legacyPrimaryContentFields",
         "legacySpecs",
+        "normalizePracticeItemContent",
+        "projected",
+        "projectLegacyCompatibilityFields",
+        "stripLegacyPrimaryFields",
         "validatePracticeItem",
-        "withLegacyContentSpec"
+        "withPracticeContentSpec"
       ],
-      "classes": [],
+      "classes": [
+        "PracticeItemValidationError"
+      ],
       "interfaces": [
-        "PracticeItemValidationProblem"
+        "PracticeItemValidationProblem",
+        "RawPracticeContentInspection"
       ],
       "types": [
-        "LegacySpec"
+        "LegacyPrimaryContentField",
+        "LegacySpec",
+        "PracticeItemNormalizationResult"
       ],
       "components": [],
       "hooks": [],
@@ -2566,12 +2590,13 @@
     {
       "path": "src/features/curriculum/regrouping.ts",
       "ext": ".ts",
-      "bytes": 17230,
-      "lines": 364,
-      "sha1": "26cc2f52cb12",
+      "bytes": 17484,
+      "lines": 365,
+      "sha1": "1ee2b5d1823c",
       "imports": [
         "../../types/math",
-        "../../utils/rng"
+        "../../utils/rng",
+        "./practiceContentSpec"
       ],
       "exports": [
         "analyzeArithmeticStructure",
@@ -4166,13 +4191,14 @@
     {
       "path": "src/features/learningPlan/dailyLessonPlanner.ts",
       "ext": ".ts",
-      "bytes": 9507,
-      "lines": 111,
-      "sha1": "5925c79bde84",
+      "bytes": 9576,
+      "lines": 113,
+      "sha1": "06b8b29f8bf5",
       "imports": [
         "../../types/math",
         "../adaptive/relatedItemMapping",
         "../curriculum/makeItemFromId",
+        "../curriculum/practiceContentSpec",
         "../goals/types",
         "../learning/eventOrdering",
         "../learning/learningEvents",
@@ -5112,9 +5138,9 @@
     {
       "path": "src/features/practice/hintEngine.ts",
       "ext": ".ts",
-      "bytes": 25509,
+      "bytes": 25531,
       "lines": 478,
-      "sha1": "8cc677636f94",
+      "sha1": "7f07f0d74580",
       "imports": [
         "../../types/math",
         "../curriculum/practiceContentSpec"
@@ -5306,9 +5332,9 @@
     {
       "path": "src/features/practice/usePracticeSession.ts",
       "ext": ".ts",
-      "bytes": 45519,
+      "bytes": 45473,
       "lines": 900,
-      "sha1": "aa6fbf00926d",
+      "sha1": "eb5fdef5591c",
       "imports": [
         "../../components/opSpecs",
         "../../db/dexie",
@@ -6272,9 +6298,9 @@
     {
       "path": "src/features/sync/snapshot.ts",
       "ext": ".ts",
-      "bytes": 27529,
-      "lines": 494,
-      "sha1": "f5e62b6b1bde",
+      "bytes": 27969,
+      "lines": 501,
+      "sha1": "488de537a0d9",
       "imports": [
         "../../db/dexie",
         "../../types/math",
@@ -7651,19 +7677,21 @@
     {
       "path": "src/tests/areaPerimeterRedesign.test.tsx",
       "ext": ".tsx",
-      "bytes": 6743,
-      "lines": 145,
-      "sha1": "6e67268089a7",
+      "bytes": 7073,
+      "lines": 152,
+      "sha1": "bccb3dbdb023",
       "imports": [
         "../features/adaptive/adaptiveItemSelector",
         "../features/curriculum/areaItems",
         "../features/curriculum/makeItemFromId",
+        "../features/curriculum/practiceContentSpec",
         "../features/mastery/misconceptionEngine",
         "../features/mastery/skillPracticePlanner",
         "../features/practice/hintEngine",
         "../features/scheduler/cardModel",
         "../features/visuals/VisualModel",
         "../features/visuals/visualModelUtils",
+        "../types/math",
         "@testing-library/react",
         "vitest"
       ],
@@ -8054,14 +8082,15 @@
     {
       "path": "src/tests/divisionRedesign.test.tsx",
       "ext": ".tsx",
-      "bytes": 9462,
-      "lines": 145,
-      "sha1": "5eb1037d1946",
+      "bytes": 9792,
+      "lines": 152,
+      "sha1": "1f1b4e9eed9b",
       "imports": [
         "../features/adaptive/relatedItemMapping",
         "../features/curriculum/arithmeticItems",
         "../features/curriculum/divisionItems",
         "../features/curriculum/makeItemFromId",
+        "../features/curriculum/practiceContentSpec",
         "../features/mastery/misconceptionEngine",
         "../features/mastery/skillMapping",
         "../features/mastery/skillPracticePlanner",
@@ -8069,6 +8098,7 @@
         "../features/scheduler/cardModel",
         "../features/scheduler/responsePolicy",
         "../features/visuals/VisualModel",
+        "../types/math",
         "../utils/rng",
         "@testing-library/react",
         "vitest"
@@ -9057,14 +9087,16 @@
     {
       "path": "src/tests/grade3NewSkills.test.ts",
       "ext": ".ts",
-      "bytes": 11060,
-      "lines": 281,
-      "sha1": "fb0e526befd3",
+      "bytes": 11390,
+      "lines": 288,
+      "sha1": "f015d5f95e68",
       "imports": [
         "../features/curriculum/makeItemFromId",
+        "../features/curriculum/practiceContentSpec",
         "../features/mastery/grade3MasteryMap",
         "../features/mastery/skillMapping",
         "../features/mastery/skillPracticePlanner",
+        "../types/math",
         "vitest"
       ],
       "exports": [],
@@ -9376,14 +9408,15 @@
     {
       "path": "src/tests/measurementRedesign.test.tsx",
       "ext": ".tsx",
-      "bytes": 11071,
-      "lines": 204,
-      "sha1": "37e0e7b4add1",
+      "bytes": 11469,
+      "lines": 211,
+      "sha1": "e6d356cbb8f9",
       "imports": [
         "../features/adaptive/candidatePools",
         "../features/curriculum/language",
         "../features/curriculum/makeItemFromId",
         "../features/curriculum/measurementItems",
+        "../features/curriculum/practiceContentSpec",
         "../features/curriculum/twoStepItems",
         "../features/curriculum/wordProblemItems",
         "../features/mastery/misconceptionEngine",
@@ -9391,6 +9424,7 @@
         "../features/practice/hintEngine",
         "../features/scheduler/cardModel",
         "../features/visuals/VisualModel",
+        "../types/math",
         "../utils/rng",
         "@testing-library/react",
         "vitest"
@@ -9496,9 +9530,9 @@
     {
       "path": "src/tests/practiceContentSpec.test.ts",
       "ext": ".ts",
-      "bytes": 4403,
-      "lines": 107,
-      "sha1": "4862ac368c05",
+      "bytes": 5278,
+      "lines": 120,
+      "sha1": "ab1df0c42c9b",
       "imports": [
         "../features/curriculum/makeItemFromId",
         "../features/curriculum/practiceContentSpec",
@@ -9744,12 +9778,13 @@
     {
       "path": "src/tests/regroupingRedesign.test.tsx",
       "ext": ".tsx",
-      "bytes": 13989,
-      "lines": 263,
-      "sha1": "e3a463029083",
+      "bytes": 14353,
+      "lines": 270,
+      "sha1": "79ed10620743",
       "imports": [
         "../features/curriculum/arithmeticItems",
         "../features/curriculum/makeItemFromId",
+        "../features/curriculum/practiceContentSpec",
         "../features/curriculum/regrouping",
         "../features/mastery/misconceptionEngine",
         "../features/mastery/skillMapping",
@@ -9759,6 +9794,7 @@
         "../features/scheduler/cardModel",
         "../features/scheduler/responsePolicy",
         "../features/visuals/VisualModel",
+        "../types/math",
         "../utils/rng",
         "@testing-library/react",
         "vitest"
@@ -10161,9 +10197,9 @@
     {
       "path": "src/tests/snapshotValidation.test.ts",
       "ext": ".ts",
-      "bytes": 14685,
-      "lines": 299,
-      "sha1": "cc60bd64cc46",
+      "bytes": 14914,
+      "lines": 302,
+      "sha1": "d16c103081bd",
       "imports": [
         "../features/curriculum/makeItemFromId",
         "../features/sync/snapshot",

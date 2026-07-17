@@ -7,9 +7,16 @@
 
 import { describe, it, expect } from 'vitest';
 import { planPracticeForSkill } from '../features/mastery/skillPracticePlanner';
-import { makeItemFromId } from '../features/curriculum/makeItemFromId';
+import { makeItemFromId as reconstructItem } from '../features/curriculum/makeItemFromId';
+import { projectLegacyCompatibilityFields } from '../features/curriculum/practiceContentSpec';
+import type { PracticeItem } from '../types/math';
 import { inferGrade3SkillId } from '../features/mastery/skillMapping';
 import { GRADE3_MASTERY_MAP } from '../features/mastery/grade3MasteryMap';
+
+const makeItemFromId = (id: string): PracticeItem | null => {
+  const item = reconstructItem(id);
+  return item ? projectLegacyCompatibilityFields(item) : null;
+};
 
 const NEW_SKILLS = [
   'g3-round-nearest-10-100',

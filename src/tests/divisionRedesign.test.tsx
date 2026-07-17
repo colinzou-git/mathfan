@@ -7,7 +7,9 @@ import {
   type DivisionMisconceptionCode,
 } from '../features/curriculum/divisionItems';
 import { makeDivisionItem, generateDivisionItemsRange } from '../features/curriculum/arithmeticItems';
-import { makeItemFromId } from '../features/curriculum/makeItemFromId';
+import { makeItemFromId as reconstructItem } from '../features/curriculum/makeItemFromId';
+import { projectLegacyCompatibilityFields } from '../features/curriculum/practiceContentSpec';
+import type { PracticeItem } from '../types/math';
 import { getRelatedItemIds } from '../features/adaptive/relatedItemMapping';
 import { detectMistakes } from '../features/mastery/misconceptionEngine';
 import { inferGrade3SkillId } from '../features/mastery/skillMapping';
@@ -17,6 +19,11 @@ import { deriveCardKey } from '../features/scheduler/cardModel';
 import { policyForItem } from '../features/scheduler/responsePolicy';
 import { VisualModel } from '../features/visuals/VisualModel';
 import { mulberry32 } from '../utils/rng';
+
+const makeItemFromId = (id: string): PracticeItem | null => {
+  const item = reconstructItem(id);
+  return item ? projectLegacyCompatibilityFields(item) : null;
+};
 
 afterEach(cleanup);
 

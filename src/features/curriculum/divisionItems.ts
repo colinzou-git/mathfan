@@ -1,5 +1,6 @@
 import type { PracticeItem } from '../../types/math';
 import type { ArithmeticGeneratorContext as TemplateGeneratorContext } from './regrouping';
+import { contentDataForDomain } from './practiceContentSpec';
 
 export type DivisionSchema =
   | 'fact_recall' | 'unknown_factor' | 'equal_sharing' | 'measurement_grouping'
@@ -83,7 +84,7 @@ export function divisionSkillIdForSchema(schema: DivisionSchema, divisor: number
 }
 
 export function validateDivisionItem(item: PracticeItem): string[] {
-  const spec = item.divisionSpec;
+  const spec = contentDataForDomain(item, 'division');
   if (!spec) return ['missing divisionSpec'];
   const errors: string[] = [];
   if (!Number.isInteger(spec.dividend) || !Number.isInteger(spec.divisor) || spec.divisor <= 0) errors.push('invalid operands');

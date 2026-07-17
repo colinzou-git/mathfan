@@ -155,7 +155,7 @@ describe('normalizeSnapshot — strict external record boundary', () => {
 describe('normalizeSnapshot — practice content contracts', () => {
   it('repairs a single legacy content field in a persisted daily lesson', () => {
     const item = makeItemFromId('FEQ_1_2_4')!;
-    const legacyItem = { ...item, contentSpec: undefined };
+    const legacyItem = { ...item, contentSpec: undefined, fractionSpec: item.contentSpec!.data as never };
     const result = normalizeSnapshot(validSnapshot({
       students: [{ id: 's1', displayName: 'Alex' } as never],
       dailyLessonPlans: [{
@@ -173,7 +173,9 @@ describe('normalizeSnapshot — practice content contracts', () => {
     const fraction = makeItemFromId('FEQ_1_2_4')!;
     const arithmetic = makeItemFromId('ADD_47p28')!;
     const contradictory = {
-      ...fraction, contentSpec: undefined, arithmeticSpec: arithmetic.arithmeticSpec,
+      ...fraction, contentSpec: undefined,
+      fractionSpec: fraction.contentSpec!.data as never,
+      arithmeticSpec: arithmetic.contentSpec!.data as never,
     };
     const result = normalizeSnapshot(validSnapshot({
       dailyLessonPlans: [{
@@ -185,7 +187,8 @@ describe('normalizeSnapshot — practice content contracts', () => {
     }));
     expect(result.snapshot).toBeUndefined();
     expect(result.problems).toContainEqual(expect.objectContaining({
-      table: 'dailyLessonPlans', code: 'invalid_practice_item',
+      table: 'dailyLessonPlans', recordId: 'lesson-1', code: 'invalid_practice_item',
+      message: expect.stringContaining('items[0].item.fractionSpec,arithmeticSpec'),
     }));
   });
 });

@@ -152,10 +152,12 @@
 | src/features/curriculum/describeItem.ts | ../../types/math |
 | src/features/curriculum/describeItem.ts | ./multiplicationItems |
 | src/features/curriculum/divisionItems.ts | ../../types/math |
+| src/features/curriculum/divisionItems.ts | ./practiceContentSpec |
 | src/features/curriculum/divisionItems.ts | ./regrouping |
 | src/features/curriculum/fractionItems.ts | ../../types/math |
 | src/features/curriculum/fractionItems.ts | ../../utils/rng |
 | src/features/curriculum/fractionItems.ts | ../fractions/types |
+| src/features/curriculum/fractionItems.ts | ./practiceContentSpec |
 | src/features/curriculum/geometryItems.ts | ../../types/math |
 | src/features/curriculum/makeItemFromId.ts | ../../types/math |
 | src/features/curriculum/makeItemFromId.ts | ./areaItems |
@@ -179,6 +181,7 @@
 | src/features/curriculum/measurementItems.ts | ../../utils/rng |
 | src/features/curriculum/measurementItems.ts | ./language |
 | src/features/curriculum/measurementItems.ts | ./measurementTypes |
+| src/features/curriculum/measurementItems.ts | ./practiceContentSpec |
 | src/features/curriculum/measurementItems.ts | ./regrouping |
 | src/features/curriculum/mulPropertiesItems.ts | ../../types/math |
 | src/features/curriculum/multiplicationItems.ts | ../../types/math |
@@ -188,6 +191,7 @@
 | src/features/curriculum/practiceContentSpec.ts | ../../types/math |
 | src/features/curriculum/regrouping.ts | ../../types/math |
 | src/features/curriculum/regrouping.ts | ../../utils/rng |
+| src/features/curriculum/regrouping.ts | ./practiceContentSpec |
 | src/features/curriculum/roundingItems.ts | ../../types/math |
 | src/features/curriculum/twoStepItems.ts | ../../types/math |
 | src/features/curriculum/twoStepItems.ts | ./wordProblemItems |
@@ -373,6 +377,7 @@
 | src/features/learningPlan/dailyLessonPlanner.ts | ../../types/math |
 | src/features/learningPlan/dailyLessonPlanner.ts | ../adaptive/relatedItemMapping |
 | src/features/learningPlan/dailyLessonPlanner.ts | ../curriculum/makeItemFromId |
+| src/features/learningPlan/dailyLessonPlanner.ts | ../curriculum/practiceContentSpec |
 | src/features/learningPlan/dailyLessonPlanner.ts | ../goals/types |
 | src/features/learningPlan/dailyLessonPlanner.ts | ../learning/eventOrdering |
 | src/features/learningPlan/dailyLessonPlanner.ts | ../learning/learningEvents |
@@ -701,12 +706,14 @@
 | src/tests/areaPerimeterRedesign.test.tsx | ../features/adaptive/adaptiveItemSelector |
 | src/tests/areaPerimeterRedesign.test.tsx | ../features/curriculum/areaItems |
 | src/tests/areaPerimeterRedesign.test.tsx | ../features/curriculum/makeItemFromId |
+| src/tests/areaPerimeterRedesign.test.tsx | ../features/curriculum/practiceContentSpec |
 | src/tests/areaPerimeterRedesign.test.tsx | ../features/mastery/misconceptionEngine |
 | src/tests/areaPerimeterRedesign.test.tsx | ../features/mastery/skillPracticePlanner |
 | src/tests/areaPerimeterRedesign.test.tsx | ../features/practice/hintEngine |
 | src/tests/areaPerimeterRedesign.test.tsx | ../features/scheduler/cardModel |
 | src/tests/areaPerimeterRedesign.test.tsx | ../features/visuals/VisualModel |
 | src/tests/areaPerimeterRedesign.test.tsx | ../features/visuals/visualModelUtils |
+| src/tests/areaPerimeterRedesign.test.tsx | ../types/math |
 | src/tests/arithmeticItems.test.ts | ../features/curriculum/arithmeticItems |
 | src/tests/barGraphGeometry.test.ts | ../features/visuals/barGraphGeometry |
 | src/tests/cardModel.test.ts | ../features/curriculum/makeItemFromId |
@@ -764,6 +771,7 @@
 | src/tests/divisionRedesign.test.tsx | ../features/curriculum/arithmeticItems |
 | src/tests/divisionRedesign.test.tsx | ../features/curriculum/divisionItems |
 | src/tests/divisionRedesign.test.tsx | ../features/curriculum/makeItemFromId |
+| src/tests/divisionRedesign.test.tsx | ../features/curriculum/practiceContentSpec |
 | src/tests/divisionRedesign.test.tsx | ../features/mastery/misconceptionEngine |
 | src/tests/divisionRedesign.test.tsx | ../features/mastery/skillMapping |
 | src/tests/divisionRedesign.test.tsx | ../features/mastery/skillPracticePlanner |
@@ -771,6 +779,7 @@
 | src/tests/divisionRedesign.test.tsx | ../features/scheduler/cardModel |
 | src/tests/divisionRedesign.test.tsx | ../features/scheduler/responsePolicy |
 | src/tests/divisionRedesign.test.tsx | ../features/visuals/VisualModel |
+| src/tests/divisionRedesign.test.tsx | ../types/math |
 | src/tests/divisionRedesign.test.tsx | ../utils/rng |
 | src/tests/driveSyncErrors.test.ts | ../features/sync/driveSync |
 | src/tests/eventOrdering.test.ts | ../features/learning/eventOrdering |
@@ -867,9 +876,11 @@
 | src/tests/grade3MulProperties.test.ts | ../features/curriculum/mulPropertiesItems |
 | src/tests/grade3MulProperties.test.ts | ../features/mastery/skillMapping |
 | src/tests/grade3NewSkills.test.ts | ../features/curriculum/makeItemFromId |
+| src/tests/grade3NewSkills.test.ts | ../features/curriculum/practiceContentSpec |
 | src/tests/grade3NewSkills.test.ts | ../features/mastery/grade3MasteryMap |
 | src/tests/grade3NewSkills.test.ts | ../features/mastery/skillMapping |
 | src/tests/grade3NewSkills.test.ts | ../features/mastery/skillPracticePlanner |
+| src/tests/grade3NewSkills.test.ts | ../types/math |
 | src/tests/grade3TwoStepAndPatterns.test.ts | ../features/curriculum/makeItemFromId |
 | src/tests/grade3TwoStepAndPatterns.test.ts | ../features/mastery/grade3MasteryMap |
 | src/tests/grade3TwoStepAndPatterns.test.ts | ../features/mastery/skillMapping |
@@ -917,6 +928,7 @@
 | src/tests/measurementRedesign.test.tsx | ../features/curriculum/language |
 | src/tests/measurementRedesign.test.tsx | ../features/curriculum/makeItemFromId |
 | src/tests/measurementRedesign.test.tsx | ../features/curriculum/measurementItems |
+| src/tests/measurementRedesign.test.tsx | ../features/curriculum/practiceContentSpec |
 | src/tests/measurementRedesign.test.tsx | ../features/curriculum/twoStepItems |
 | src/tests/measurementRedesign.test.tsx | ../features/curriculum/wordProblemItems |
 | src/tests/measurementRedesign.test.tsx | ../features/mastery/misconceptionEngine |
@@ -924,6 +936,7 @@
 | src/tests/measurementRedesign.test.tsx | ../features/practice/hintEngine |
 | src/tests/measurementRedesign.test.tsx | ../features/scheduler/cardModel |
 | src/tests/measurementRedesign.test.tsx | ../features/visuals/VisualModel |
+| src/tests/measurementRedesign.test.tsx | ../types/math |
 | src/tests/measurementRedesign.test.tsx | ../utils/rng |
 | src/tests/misconceptionEngine.test.ts | ../features/curriculum/fractionItems |
 | src/tests/misconceptionEngine.test.ts | ../features/curriculum/multiplicationItems |
@@ -971,6 +984,7 @@
 | src/tests/rangeSelection.test.ts | ../features/curriculum/multiplicationItems |
 | src/tests/regroupingRedesign.test.tsx | ../features/curriculum/arithmeticItems |
 | src/tests/regroupingRedesign.test.tsx | ../features/curriculum/makeItemFromId |
+| src/tests/regroupingRedesign.test.tsx | ../features/curriculum/practiceContentSpec |
 | src/tests/regroupingRedesign.test.tsx | ../features/curriculum/regrouping |
 | src/tests/regroupingRedesign.test.tsx | ../features/mastery/misconceptionEngine |
 | src/tests/regroupingRedesign.test.tsx | ../features/mastery/skillMapping |
@@ -980,6 +994,7 @@
 | src/tests/regroupingRedesign.test.tsx | ../features/scheduler/cardModel |
 | src/tests/regroupingRedesign.test.tsx | ../features/scheduler/responsePolicy |
 | src/tests/regroupingRedesign.test.tsx | ../features/visuals/VisualModel |
+| src/tests/regroupingRedesign.test.tsx | ../types/math |
 | src/tests/regroupingRedesign.test.tsx | ../utils/rng |
 | src/tests/relatedEvidence.test.ts | ../features/adaptive/relatedEvidence |
 | src/tests/relatedEvidence.test.ts | ../features/curriculum/makeItemFromId |

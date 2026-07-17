@@ -3,6 +3,7 @@ import type { ArithmeticGeneratorContext as TemplateGeneratorContext } from './r
 import type { ClockTime, MeasurementDataSpec, MeasurementSchema } from './measurementTypes';
 import { formatQuantity } from './language';
 import type { Rng } from '../../utils/rng';
+import { contentDataForDomain, withPracticeContentSpec } from './practiceContentSpec';
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -197,7 +198,7 @@ export function generateMeasurementContextValues(
 /** Returns generator invariant violations; an empty array means the item is consistent. */
 export function validateMeasurementItem(item: PracticeItem): string[] {
   const errors: string[] = [];
-  const spec = item.measurementSpec;
+  const spec = contentDataForDomain(item, 'measurement_data');
   if (!spec) return ['missing measurementSpec'];
   if (spec.kind === 'elapsed_time') {
     const duration = elapsedMinutes(spec.start, spec.end);
@@ -287,7 +288,7 @@ export function generateMeasurementItem(schema: MeasurementSchema, context: Temp
   }
   if (schema.startsWith('bar_')) {
     const scale = n(1, 5), item = makeBarGraphItem(scale, n(2, 7));
-    const spec = item.measurementSpec! as Extract<MeasurementDataSpec, { kind: 'bar_graph' }>;
+    const spec = contentDataForDomain(item, 'measurement_data')! as Extract<MeasurementDataSpec, { kind: 'bar_graph' }>;
     if (schema === 'bar_compare') { spec.question = 'compare'; spec.comparedIndices = [0, 1]; item.prompt = 'Use the bar graph. How many more books did Mia read than Leo?'; item.answer = spec.values[0] - spec.values[1]; }
     if (schema === 'bar_total') { spec.question = 'total'; spec.comparedIndices = [0, 1]; item.prompt = 'Use the bar graph. How many books did Mia and Leo read in all?'; item.answer = spec.values[0] + spec.values[1]; }
     if (schema === 'bar_missing') { spec.question = 'missing'; spec.requestedIndex = 2; item.prompt = 'The Ava bar is missing. What value should it show?'; item.answer = spec.values[2]; }
@@ -296,9 +297,9 @@ export function generateMeasurementItem(schema: MeasurementSchema, context: Temp
   if (schema.startsWith('line_plot_')) {
     const denominator = schema === 'line_plot_fractional' ? (rng() < .5 ? 2 : 4) : 1;
     const ticks = Array.from({ length: 6 }, () => n(4, 10));
-    const item = makeLinePlotItem(ticks[0], ticks[1], ticks[2], ticks[3]);
+    let item = makeLinePlotItem(ticks[0], ticks[1], ticks[2], ticks[3]);
     item.id = `MEAS_${schema}_${denominator}_${ticks.join('-')}`;
-    item.measurementSpec = { kind: 'line_plot', unit: 'inch', denominator, valuesInTicks: ticks, question: schema === 'line_plot_range' ? 'range' : 'count_at_value', targetTick: ticks[0] };
+    item = withPracticeContentSpec(item, { domain: 'measurement_data', version: 1, data: { kind: 'line_plot', unit: 'inch', denominator, valuesInTicks: ticks, question: schema === 'line_plot_range' ? 'range' : 'count_at_value', targetTick: ticks[0] } });
     item.prompt = schema === 'line_plot_range' ? 'Use the line plot. What is the difference between the longest and shortest measurements?' : `Use the line plot. How many measurements are at ${ticks[0]}/${denominator} inches?`;
     item.answer = schema === 'line_plot_range' ? (Math.max(...ticks) - Math.min(...ticks)) / denominator : ticks.filter(tick => tick === ticks[0]).length;
     item.cardKey = measurementCardKey(schema); return assertValidMeasurementItem(item);

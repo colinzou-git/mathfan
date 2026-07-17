@@ -1,7 +1,9 @@
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { makeAdditionItem, makeSubtractionItem, generateArithmeticItem } from '../features/curriculum/arithmeticItems';
-import { makeItemFromId } from '../features/curriculum/makeItemFromId';
+import { makeItemFromId as reconstructItem } from '../features/curriculum/makeItemFromId';
+import { projectLegacyCompatibilityFields } from '../features/curriculum/practiceContentSpec';
+import type { PracticeItem } from '../types/math';
 import {
   analyzeArithmeticStructure,
   buildArithmeticTrace,
@@ -13,6 +15,11 @@ import {
 import { detectMistakes } from '../features/mastery/misconceptionEngine';
 import { inferGrade3SkillId } from '../features/mastery/skillMapping';
 import { buildRegroupingFocusSequence, planPracticeForSkill } from '../features/mastery/skillPracticePlanner';
+
+const makeItemFromId = (id: string): PracticeItem | null => {
+  const item = reconstructItem(id);
+  return item ? projectLegacyCompatibilityFields(item) : null;
+};
 import { deriveGrade3SkillSummaries } from '../features/mastery/skillMasteryEngine';
 import { getHint } from '../features/practice/hintEngine';
 import { deriveCardKey } from '../features/scheduler/cardModel';
@@ -139,7 +146,7 @@ describe('place-value instruction, misconceptions, and hints', () => {
     expect(worked.map(step => step.explanation)).toContain('tens: 10 → 9; ones: 3 → 13.');
     for (const mode of ['choose_regroup_step', 'complete_expanded_form', 'estimate_then_compute'] as const) {
       const instructional = generateArithmeticInstructionItem(item, mode);
-      expect(instructional.arithmeticSpec?.mode).toBe(mode);
+      expect(projectLegacyCompatibilityFields(instructional).arithmeticSpec?.mode).toBe(mode);
       expect(instructional.cardKey).toContain(mode);
     }
   });

@@ -7,7 +7,9 @@ import {
   validateMeasurementItem,
 } from '../features/curriculum/measurementItems';
 import { articleFor, formatQuantity, pluralize } from '../features/curriculum/language';
-import { makeItemFromId } from '../features/curriculum/makeItemFromId';
+import { makeItemFromId as reconstructItem } from '../features/curriculum/makeItemFromId';
+import { projectLegacyCompatibilityFields } from '../features/curriculum/practiceContentSpec';
+import type { PracticeItem } from '../types/math';
 import { makeTwoStepWordProblem } from '../features/curriculum/twoStepItems';
 import { makeWordProblem } from '../features/curriculum/wordProblemItems';
 import { detectMistakes } from '../features/mastery/misconceptionEngine';
@@ -16,6 +18,11 @@ import { getHint } from '../features/practice/hintEngine';
 import { deriveCardKey } from '../features/scheduler/cardModel';
 import { VisualModel } from '../features/visuals/VisualModel';
 import { mulberry32 } from '../utils/rng';
+
+const makeItemFromId = (id: string): PracticeItem | null => {
+  const item = reconstructItem(id);
+  return item ? projectLegacyCompatibilityFields(item) : null;
+};
 
 afterEach(cleanup);
 
@@ -124,7 +131,7 @@ describe('authentic measurement and data instances', () => {
     const item = generateMeasurementItem(schema, { rng: mulberry32(91) });
     render(<VisualModel item={item} />);
     const name = screen.getByRole('figure').getAttribute('aria-label') ?? '';
-    const spec = item.measurementSpec!;
+    const spec = projectLegacyCompatibilityFields(item).measurementSpec!;
     if (spec.kind !== 'bar_graph') throw new Error('Expected bar graph');
     spec.categories.forEach((category, index) => expect(name).toContain(`${category}: ${spec.values[index]}`));
     if (!spec.values.includes(Number(item.answer))) expect(name).not.toContain(`: ${item.answer}.`);
@@ -134,7 +141,7 @@ describe('authentic measurement and data instances', () => {
     const item = generateMeasurementItem('line_plot_fractional', { rng: mulberry32(44) });
     render(<VisualModel item={item} />);
     expect(screen.getByRole('figure', { name: /line plot.*halves|line plot.*quarters/i })).toBeInTheDocument();
-    const spec = item.measurementSpec!;
+    const spec = projectLegacyCompatibilityFields(item).measurementSpec!;
     expect(spec.kind).toBe('line_plot');
     if (spec.kind === 'line_plot') expect(screen.getAllByText('✕')).toHaveLength(spec.valuesInTicks.length);
   });
