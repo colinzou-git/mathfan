@@ -25,16 +25,38 @@ import type { PracticeItem, ReviewGrade, StudentItemState } from '../../types/ma
 import { compareEventsChronologically } from './eventOrdering';
 
 export function shouldApplyEventToScheduler(event: MathAnswerEvent, scheduledBySessionCard: Set<string>): boolean {
-  if (event.isRetry) return false;
   if (event.schedulingApplied === false || event.schedulingTelemetry?.schedulingApplied === false) return false;
   const explicit = event.schedulingTelemetry?.schedulingEligible ?? event.schedulingEligible;
   if (explicit === false) return false;
+  const kind = event.schedulingKind ?? (event.relatedEvidence ? 'related_evidence' : 'independent_review');
+  if (kind === 'relearning_step') {
+    return event.isRetry === true && event.schedulingApplied === true && explicit === true;
+  }
+  if (event.isRetry) return false;
   const cardKey = deriveCardKeyFromEvent(event);
   if (!cardKey) return false;
   const key = `${event.sessionId}|${cardKey}`;
   if (explicit === undefined && scheduledBySessionCard.has(key)) return false;
   scheduledBySessionCard.add(key);
   return true;
+}
+
+function validRelearningSequence(
+  event: MathAnswerEvent,
+  eventsById: ReadonlyMap<string, MathAnswerEvent>,
+): boolean {
+  if (event.schedulingKind !== 'relearning_step') return true;
+  if (!event.isRetry || !event.relearningFromEventId) return false;
+  const parent = eventsById.get(event.relearningFromEventId);
+  return Boolean(parent
+    && parent.studentId === event.studentId
+    && parent.sessionId === event.sessionId
+    && deriveCardKeyFromEvent(parent) === deriveCardKeyFromEvent(event)
+    && parent.presentationIndex === event.presentationIndex
+    && parent.schedulingKind !== 'relearning_step'
+    && parent.reviewGrade === 'again'
+    && parent.schedulingApplied === true
+    && compareEventsChronologically(parent, event) < 0);
 }
 
 /**
@@ -65,6 +87,7 @@ export function replayCardEvents(args: {
   baseline?: StudentItemState;
 }): CardReplayResult {
   const ordered = [...args.events].sort(compareEventsChronologically);
+  const eventsById = new Map(ordered.map(event => [event.id, event]));
   const baselineTime = args.baseline?.lastSeenAt ? Date.parse(args.baseline.lastSeenAt) : Number.NEGATIVE_INFINITY;
   let state: StudentItemState = args.baseline
     ? structuredClone({ ...args.baseline, cardKey: args.cardKey })
@@ -98,7 +121,7 @@ export function replayCardEvents(args: {
       continue;
     }
 
-    if (shouldApplyEventToScheduler(event, scheduledBySessionCard)) {
+    if (validRelearningSequence(event, eventsById) && shouldApplyEventToScheduler(event, scheduledBySessionCard)) {
       state = applyReview(
         state,
         gradeFromEvent(event),

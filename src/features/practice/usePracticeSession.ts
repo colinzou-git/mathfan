@@ -42,6 +42,7 @@ import { ADAPTIVE_SELECTOR_VERSION, buildSchedulingTelemetry, DAILY_LESSON_PLANN
 import { completeDailyLessonPlan, markDailyLessonProgressFromEvent } from '../learningPlan/dailyLessonPersistence';
 import { buildFluencyBaselineMap, classifyLegacyFluencyEvidence, deriveFluencyBaseline, type FluencyBaselineMap } from '../fluency/fluencyEngine';
 import type { MathAnswerEvent } from '../learning/learningEvents';
+import { decidePracticeScheduling, type PendingRelearning } from './practiceScheduling';
 
 // ── Public types ──────────────────────────────────────────────────────────────
 
@@ -142,12 +143,12 @@ export function usePracticeSession(studentId: string) {
   const currentAttemptsRef = useRef<number>(0);
   // Holds dynamically generated items (arithmetic/fractions) not in the static ITEM_MAP
   const dynamicItemsRef = useRef<Map<string, PItem>>(new Map());
-  // Enforces "at most one long-term scheduling update per card per session" (issue #28) —
-  // a card may be presented more than once, but only its first scheduling-eligible
-  // presentation may update FSRS state.
+  // Enforces at most one independent review per card/session. A wrong answer may
+  // additionally receive one causally linked same-presentation relearning step.
   const schedulingGuardRef = useRef(createSessionSchedulingGuard());
   // 1-based count of how many times the *current* item's card has been presented so far.
   const currentPresentationIndexRef = useRef<number>(1);
+  const pendingRelearningRef = useRef<PendingRelearning | null>(null);
   const directEvidenceCardsRef = useRef(new Set<string>());
   const pendingRelatedEvidenceRef = useRef(new Map<string, { cardKey: string; relatedItemId: string; sourceItemId: string }>());
   const pendingRelatedWritesRef = useRef<RelatedEvidenceWrite[]>([]);
@@ -158,6 +159,7 @@ export function usePracticeSession(studentId: string) {
     payload: PracticeAnswerPayload;
     cardKey: string;
     schedulingApplied: boolean;
+    reservedIndependent: boolean;
     commit: () => void;
   }>(null);
 
@@ -172,6 +174,7 @@ export function usePracticeSession(studentId: string) {
     const now = appNow();
     sessionStartRef.current = Date.now();
     schedulingGuardRef.current = createSessionSchedulingGuard(config.initialScheduledCardKeys ?? []);
+    pendingRelearningRef.current = null;
     directEvidenceCardsRef.current.clear();
     pendingRelatedEvidenceRef.current.clear();
     pendingRelatedWritesRef.current = [];
@@ -401,6 +404,7 @@ export function usePracticeSession(studentId: string) {
     questionStartRef.current = Date.now();
     currentAttemptsRef.current = 0;
     currentPresentationIndexRef.current = schedulingGuardRef.current.presentationStarted(deriveCardKey(first));
+    pendingRelearningRef.current = null;
     const s = {
       ...INITIAL, phase: 'active' as const,
       currentItem: first,
@@ -434,20 +438,27 @@ export function usePracticeSession(studentId: string) {
     const existing = stateForItem(item, statesRef.current) ?? createInitialState(studentId, item);
     const selection = currentSelectionRef.current;
 
-    // Presentation-first-attempt (stats: first-try accuracy, misconceptions, retry
-    // classification) is distinct from scheduling-first-attempt (issue #28): a card
-    // may be presented more than once in a session (e.g. daily-review backfill), but
-    // only its first scheduling-eligible presentation may update long-term FSRS state.
-    const isFirstSchedulingAttemptInSession = currentPlannerSchedulingEligibleRef.current && schedulingGuardRef.current.canSchedule(cardKey, attemptNo);
+    const decision = decidePracticeScheduling({
+      isFirstAttemptAtPresentation,
+      isCorrect: result.isCorrect,
+      plannerSchedulingEligible: currentPlannerSchedulingEligibleRef.current,
+      guardCanScheduleIndependent: schedulingGuardRef.current.canSchedule(cardKey, attemptNo),
+      pendingRelearning: pendingRelearningRef.current,
+      cardKey,
+      presentationIndex: currentPresentationIndexRef.current,
+      normalGrade: result.reviewGrade,
+    });
+    const reservedIndependent = decision.kind === 'independent_review' && decision.eligible;
     let schedulingApplied = false;
     let schedulerErrorCode: MathAnswerEvent['schedulerErrorCode'];
-    let updated: StudentItemState;
-    if (isFirstSchedulingAttemptInSession) {
+    let updated: StudentItemState = existing;
+    if (decision.eligible && decision.grade) {
       // Reserve synchronously, before the async write below, so a rapid double-submit
       // cannot schedule the same card twice while the first write is still in flight.
-      schedulingGuardRef.current.markScheduled(cardKey);
+      if (reservedIndependent) schedulingGuardRef.current.markScheduled(cardKey);
       try {
-        updated = applyReview(existing, result.reviewGrade, latencyMs, rawInput, now, { isCorrect: result.isCorrect });
+        updated = applyReview(existing, decision.grade, latencyMs, rawInput, now, { isCorrect: result.isCorrect });
+        updated = { ...updated, cardKey, lastItemId: item.id };
         schedulingApplied = true;
       } catch (err) {
         // FSRS validation errors (e.g. negative delta_t from a future lastSeenAt due to
@@ -456,13 +467,10 @@ export function usePracticeSession(studentId: string) {
         schedulerErrorCode = err instanceof RangeError ? 'clock_drift'
           : err instanceof TypeError ? 'invalid_card'
             : err instanceof Error ? 'fsrs_validation' : 'unknown';
-        updated = existing;
-        schedulingGuardRef.current.releaseScheduled(cardKey);
+        if (reservedIndependent) schedulingGuardRef.current.releaseScheduled(cardKey);
       }
-      updated = { ...updated, cardKey, lastItemId: item.id };
-    } else {
-      updated = existing;
     }
+    const persistedGrade = decision.grade ?? result.reviewGrade;
 
     // On first wrong attempt, detect misconception patterns and merge into state.
     let detectedMisconceptions: string[] = [];
@@ -483,7 +491,7 @@ export function usePracticeSession(studentId: string) {
           ),
         };
       }
-    } else if (isFirstAttemptAtPresentation && isFirstSchedulingAttemptInSession && result.isCorrect) {
+    } else if (isFirstAttemptAtPresentation && decision.kind === 'independent_review' && result.isCorrect) {
       const confirmation = applyMisconceptionConfirmation(
         updated.misconceptionEvidence, item, misconceptionContext, updated.mistakePatterns,
       );
@@ -502,7 +510,7 @@ export function usePracticeSession(studentId: string) {
     // A same-session repeat presentation's first attempt looks like a fresh
     // attempt locally, but the card already updated FSRS state earlier this
     // session — record why scheduling was skipped instead of misreporting it.
-    const isSameSessionRepeat = isFirstAttemptAtPresentation && !isFirstSchedulingAttemptInSession;
+    const isSameSessionRepeat = isFirstAttemptAtPresentation && decision.reason === 'same_session_repeat';
     const eventRatingReason = isSameSessionRepeat ? 'same_session_repeat' : result.ratingReason;
 
     const payload: PracticeAnswerPayload = {
@@ -515,8 +523,11 @@ export function usePracticeSession(studentId: string) {
         cardKey,
         schemaId: item.schemaId,
         presentationIndex: currentPresentationIndexRef.current,
-        schedulingEligible: isFirstSchedulingAttemptInSession,
+        schedulingEligible: decision.eligible,
         schedulingApplied,
+        schedulingKind: decision.kind,
+        schedulingReason: decision.reason,
+        relearningFromEventId: decision.relearningFromEventId,
         schedulerErrorCode,
         mode: 'practice',
         promptShown: item.prompt,
@@ -526,7 +537,7 @@ export function usePracticeSession(studentId: string) {
         isRetry: !isFirstAttemptAtPresentation,
         hintUsed: !isFirstAttemptAtPresentation,  // hints are shown automatically after first wrong answer
         latencyMs,
-        reviewGrade: result.reviewGrade,
+        reviewGrade: persistedGrade,
         ratingReason: eventRatingReason,
         responsePolicy: result.policyKind,
         fluencyBand: result.fluencyBand,
@@ -549,20 +560,20 @@ export function usePracticeSession(studentId: string) {
         schedulingTelemetry: buildSchedulingTelemetry({
           item, stateBefore: existing, stateAfter: schedulingApplied ? updated : undefined,
           response: {
-            reviewGrade: result.reviewGrade, ratingReason: eventRatingReason, responsePolicy: result.policyKind,
+            reviewGrade: persistedGrade, ratingReason: eventRatingReason, responsePolicy: result.policyKind,
             fluencyBand: result.fluencyBand, hintUsed: !isFirstAttemptAtPresentation,
             fluencyBaselineSource: result.fluencyBaselineSource, fluencySampleCount: result.fluencySampleCount,
             fluencyFastCutoffMs: result.fluencyFastCutoffMs, fluencySlowCutoffMs: result.fluencySlowCutoffMs,
-            isRetry: !isFirstAttemptAtPresentation, schedulingEligible: isFirstSchedulingAttemptInSession,
+            isRetry: !isFirstAttemptAtPresentation, schedulingEligible: decision.eligible,
+            schedulingKind: decision.kind,
             schedulingApplied, schedulerErrorCode,
           },
           selection, presentationIndex: currentPresentationIndexRef.current, attemptNo, now,
+          schedulingKind: decision.kind, schedulingReason: decision.reason,
         }),
         createdAt,
       },
-      // Same-session repeats and mid-presentation retries do not change FSRS
-      // state — pass undefined to skip the itemStates write.
-      updatedState: isFirstSchedulingAttemptInSession ? updated : undefined,
+      updatedState: schedulingApplied ? updated : undefined,
       attempt: {
         id: generateId(),
         studentId,
@@ -574,7 +585,7 @@ export function usePracticeSession(studentId: string) {
         studentAnswer: result.studentAnswer,
         isCorrect: result.isCorrect,
         latencyMs,
-        reviewGrade: result.reviewGrade,
+        reviewGrade: persistedGrade,
         origin: configRef.current?.origin,
         goalId: configRef.current?.goalId,
         goalTargetId: configRef.current?.goalTargetId,
@@ -630,10 +641,21 @@ export function usePracticeSession(studentId: string) {
     nextState = { ...nextState, saveStatus: 'idle', saveError: null };
     const commit = () => {
       currentAttemptsRef.current = attemptNo;
-      if (isFirstAttemptAtPresentation) statesRef.current.set(cardKey, updated);
+      if (schedulingApplied) statesRef.current.set(cardKey, updated);
       if (schedulingApplied) {
         directEvidenceCardsRef.current.add(cardKey);
         pendingRelatedEvidenceRef.current.delete(cardKey);
+      }
+      if (schedulingApplied && decision.kind === 'independent_review' && !result.isCorrect) {
+        pendingRelearningRef.current = {
+          cardKey,
+          presentationIndex: currentPresentationIndexRef.current,
+          firstWrongEventId: eventId,
+          firstWrongAnsweredAt: createdAt,
+        };
+      }
+      if (schedulingApplied && decision.kind === 'relearning_step') {
+        pendingRelearningRef.current = null;
       }
       for (const candidate of relatedCandidates) {
         if (directEvidenceCardsRef.current.has(candidate.cardKey) || pendingRelatedEvidenceRef.current.has(candidate.cardKey)) continue;
@@ -649,7 +671,7 @@ export function usePracticeSession(studentId: string) {
       stateRef.current = nextState;
       setState(nextState);
     };
-    pendingSaveRef.current = { payload, cardKey, schedulingApplied, commit };
+    pendingSaveRef.current = { payload, cardKey, schedulingApplied, reservedIndependent, commit };
     const savingState = { ...prev, saveStatus: 'saving' as const, saveError: null };
     stateRef.current = savingState;
     setState(savingState);
@@ -684,7 +706,7 @@ export function usePracticeSession(studentId: string) {
         return;
       } catch (retryErr) {
         console.error('[usePracticeSession] event write failed after retry', retryErr);
-        if (schedulingApplied) schedulingGuardRef.current.releaseScheduled(cardKey);
+        if (reservedIndependent) schedulingGuardRef.current.releaseScheduled(cardKey);
         const errorState = { ...prev, saveStatus: 'error' as const, saveError: 'Your answer is ready, but it was not saved yet.' };
         stateRef.current = errorState;
         setState(errorState);
@@ -695,7 +717,7 @@ export function usePracticeSession(studentId: string) {
   const retrySave = useCallback(async () => {
     const pending = pendingSaveRef.current;
     if (!pending || stateRef.current.saveStatus !== 'error') return;
-    if (pending.schedulingApplied) schedulingGuardRef.current.markScheduled(pending.cardKey);
+    if (pending.reservedIndependent) schedulingGuardRef.current.markScheduled(pending.cardKey);
     const savingState = { ...stateRef.current, saveStatus: 'saving' as const, saveError: null };
     stateRef.current = savingState;
     setState(savingState);
@@ -712,7 +734,7 @@ export function usePracticeSession(studentId: string) {
         }
       }
     } catch {
-      if (pending.schedulingApplied) schedulingGuardRef.current.releaseScheduled(pending.cardKey);
+      if (pending.reservedIndependent) schedulingGuardRef.current.releaseScheduled(pending.cardKey);
       const errorState = { ...stateRef.current, saveStatus: 'error' as const, saveError: 'Still not saved. Check storage and try again.' };
       stateRef.current = errorState;
       setState(errorState);
@@ -745,7 +767,7 @@ export function usePracticeSession(studentId: string) {
             studentAnswer: null, isCorrect: true, isRetry: false, hintUsed: false, latencyMs: 0,
             reviewGrade: RELATED_EVIDENCE_GRADE, factStatusBefore: before.masteryLevel, factStatusAfter: after.masteryLevel,
             relatedEvidence: true, evidenceSourceItemId: candidate.sourceItemId, schedulingEligible: true,
-            schedulingApplied: true,
+            schedulingApplied: true, schedulingKind: 'related_evidence', schedulingReason: 'deferred_related_evidence',
             origin: configRef.current?.origin, goalId: configRef.current?.goalId, goalTargetId: configRef.current?.goalTargetId,
             goalIds: configRef.current?.goalIds, goalTargetIds: configRef.current?.goalTargetIds, goalLearningKind: configRef.current?.goalLearningKind,
             lessonPlanId: configRef.current?.lessonPlanId,
@@ -755,9 +777,10 @@ export function usePracticeSession(studentId: string) {
             selectionRationaleCodes: ['deferred_single_related_evidence'],
             schedulingTelemetry: buildSchedulingTelemetry({
               item: factItem, stateBefore: before, stateAfter: after,
-              response: { reviewGrade: RELATED_EVIDENCE_GRADE, hintUsed: false, isRetry: false, evidenceKind: 'related', schedulingEligible: true, schedulingApplied: true },
+              response: { reviewGrade: RELATED_EVIDENCE_GRADE, hintUsed: false, isRetry: false, evidenceKind: 'related', schedulingEligible: true, schedulingApplied: true, schedulingKind: 'related_evidence' },
               selection: { origin: 'related_evidence', rationaleCodes: ['deferred_single_related_evidence'] },
               presentationIndex: 1, attemptNo: 1, now,
+              schedulingKind: 'related_evidence', schedulingReason: 'deferred_related_evidence',
             }), createdAt: now.toISOString(),
           },
         });
@@ -829,6 +852,7 @@ export function usePracticeSession(studentId: string) {
       currentPlannerSchedulingEligibleRef.current = nextPlanned.schedulingEligible !== false;
       const nextItem = resolveItem(nextPlanned.itemId);
       currentPresentationIndexRef.current = schedulingGuardRef.current.presentationStarted(deriveCardKey(nextItem));
+      pendingRelearningRef.current = null;
       nextState = {
         ...prev,
         phase: 'active',
@@ -880,6 +904,7 @@ export function usePracticeSession(studentId: string) {
     queueRef.current = [];
     configRef.current = null;
     schedulingGuardRef.current.reset();
+    pendingRelearningRef.current = null;
     directEvidenceCardsRef.current.clear();
     pendingRelatedEvidenceRef.current.clear();
     pendingRelatedWritesRef.current = [];

@@ -123,7 +123,7 @@ function clampInt(value: number, min: number, max: number): number {
 }
 
 function directFirstAttempt(event: MathAnswerEvent): boolean {
-  return !event.isRetry && !event.relatedEvidence;
+  return !event.isRetry && !event.relatedEvidence && event.schedulingKind !== 'relearning_step';
 }
 
 function safeTime(iso: string): number {

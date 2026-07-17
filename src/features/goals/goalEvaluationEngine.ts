@@ -136,7 +136,7 @@ function rngFor(args: AdaptiveGoalEvaluationArgs, salt: string): Rng {
 }
 
 function directFirstAttempt(event: MathAnswerEvent): boolean {
-  return !event.isRetry && !event.relatedEvidence;
+  return !event.isRetry && !event.relatedEvidence && event.schedulingKind !== 'relearning_step';
 }
 
 export function isHistoricalGoalEvaluationPriorEvent(event: MathAnswerEvent, currentEvaluationId?: string): boolean {

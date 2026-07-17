@@ -5,6 +5,11 @@ import { db } from '../../db/dexie';
 
 export type MathEventMode = 'quiz' | 'practice' | 'diagnostic' | 'goal_evaluation';
 
+export type SchedulingKind = 'independent_review' | 'relearning_step' | 'related_evidence';
+export type SchedulingReason = 'first_card_evidence' | 'same_session_repeat'
+  | 'same_presentation_relearning' | 'deferred_related_evidence'
+  | 'same_evaluation_template_repeat';
+
 export type MathFactStatus =
   | 'new'
   | 'weak'
@@ -64,9 +69,11 @@ export interface MathAnswerEvent {
   schedulingEligible?: boolean;
   /** True only when the eligible scheduler transition was calculated and durably stored. */
   schedulingApplied?: boolean;
+  schedulingKind?: SchedulingKind;
   schedulerErrorCode?: 'clock_drift' | 'invalid_card' | 'fsrs_validation' | 'unknown';
-  /** Why goal-evaluation evidence did or did not update the canonical card. */
-  schedulingReason?: 'first_card_evidence' | 'same_evaluation_template_repeat';
+  schedulingReason?: SchedulingReason;
+  /** Direct causal parent for a same-presentation relearning step. */
+  relearningFromEventId?: string;
   /** Versioned, immutable context captured at selection/review time. */
   schedulingTelemetry?: SchedulingTelemetry;
   /**

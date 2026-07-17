@@ -13,6 +13,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { MathAnswerEvent } from '../features/learning/learningEvents';
 import type { StudentItemState } from '../types/math';
+import { applyReview, createInitialState } from '../features/scheduler/scheduler';
+import { makeItemFromId } from '../features/curriculum/makeItemFromId';
 
 // ── In-memory Dexie fake (hoisted so the vi.mock factory can reference it) ─────
 
@@ -176,6 +178,60 @@ describe('rebuildItemStatesFromEvents — diagnostic events feed FSRS', () => {
       cardKey: 'template:g3-word:equal-groups-result', reps: 2, lastItemId: 'WORD_eg_4_5',
     });
     expect(fakeDb.mathAnswerEvents.rows[0].promptShown).toBe('7 × 8 = ?');
+  });
+});
+
+describe('rebuildItemStatesFromEvents — same-presentation relearning', () => {
+  it('replays Again followed by its causally linked recovery step', async () => {
+    fakeDb.mathAnswerEvents.rows = [
+      makeEvent({
+        id: 'wrong-parent', cardKey: 'fact:mul:7x8', presentationIndex: 1,
+        studentAnswer: 63, isCorrect: false, reviewGrade: 'again',
+        schedulingEligible: true, schedulingApplied: true,
+        schedulingKind: 'independent_review', schedulingReason: 'first_card_evidence',
+      }),
+      makeEvent({
+        id: 'recovery', cardKey: 'fact:mul:7x8', presentationIndex: 1,
+        studentAnswer: 56, isCorrect: true, isRetry: true, hintUsed: true,
+        reviewGrade: 'hard', schedulingEligible: true, schedulingApplied: true,
+        schedulingKind: 'relearning_step', schedulingReason: 'same_presentation_relearning',
+        relearningFromEventId: 'wrong-parent', createdAt: '2026-06-01T10:00:01.000Z',
+      }),
+    ];
+    await rebuildItemStatesFromEvents(STUDENT, { mode: 'strict' });
+    const state = fakeDb.itemStates.rows.find(row => row.cardKey === 'fact:mul:7x8')!;
+    const item = makeItemFromId('MUL_7x8')!;
+    const afterAgain = applyReview(createInitialState(STUDENT, item), 'again', 2000, '63', new Date('2026-06-01T10:00:00.000Z'), { isCorrect: false });
+    const live = applyReview(afterAgain, 'hard', 2000, '56', new Date('2026-06-01T10:00:01.000Z'), { isCorrect: true });
+    expect(state).toMatchObject({ reps: 2, attemptCount: 2, correctCount: 1, lastCorrect: true });
+    expect(state.lastSeenAt).toBe('2026-06-01T10:00:01.000Z');
+    expect(new Date(state.nextDueAt!).getTime()).toBeGreaterThan(new Date(state.lastSeenAt!).getTime());
+    expect({ nextDueAt: state.nextDueAt, reps: state.reps, lapses: state.lapses })
+      .toEqual({ nextDueAt: live.nextDueAt, reps: live.reps, lapses: live.lapses });
+  });
+
+  it('skips recovery events with a missing or mismatched parent', async () => {
+    for (const parentId of ['missing', 'wrong-parent']) {
+      fakeDb.itemStates.rows = [];
+      fakeDb.mathAnswerEvents.rows = [
+        makeEvent({
+          id: 'wrong-parent', sessionId: parentId === 'missing' ? 'another-session' : 'sess-diag',
+          cardKey: 'fact:mul:7x8', presentationIndex: 2, studentAnswer: 63, isCorrect: false,
+          reviewGrade: 'again', schedulingEligible: true, schedulingApplied: true,
+          schedulingKind: 'independent_review',
+        }),
+        makeEvent({
+          id: 'recovery', cardKey: 'fact:mul:7x8', presentationIndex: 1, isRetry: true, hintUsed: true,
+          reviewGrade: 'hard', schedulingEligible: true, schedulingApplied: true,
+          schedulingKind: 'relearning_step', relearningFromEventId: parentId,
+          createdAt: '2026-06-01T10:00:01.000Z',
+        }),
+      ];
+      await rebuildItemStatesFromEvents(STUDENT, { mode: 'strict' });
+      const state = fakeDb.itemStates.rows.find(row => row.cardKey === 'fact:mul:7x8')!;
+      expect(state.reps).toBe(1);
+      expect(state.lastCorrect).toBe(false);
+    }
   });
 });
 

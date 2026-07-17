@@ -24,16 +24,37 @@ export interface PracticeAnswerPayload {
   relatedEvidence?: RelatedEvidenceWrite[];
 }
 
+function practiceEventFingerprint(event: MathAnswerEvent): string {
+  return JSON.stringify({
+    studentId: event.studentId,
+    sessionId: event.sessionId,
+    itemId: event.itemId,
+    cardKey: event.cardKey,
+    studentAnswer: event.studentAnswer,
+    correctAnswer: event.correctAnswer,
+    isCorrect: event.isCorrect,
+    isRetry: event.isRetry,
+    hintUsed: event.hintUsed,
+    latencyMs: event.latencyMs,
+    reviewGrade: event.reviewGrade,
+    schedulingEligible: event.schedulingEligible,
+    schedulingApplied: event.schedulingApplied,
+    schedulingKind: event.schedulingKind,
+    schedulingReason: event.schedulingReason,
+    relearningFromEventId: event.relearningFromEventId,
+    createdAt: event.createdAt,
+  });
+}
+
 /** Write a practice answer atomically: event + (if first attempt) derived itemState + attempt log. */
 export async function recordPracticeAnswer(payload: PracticeAnswerPayload): Promise<void> {
+  if (payload.event.schedulingApplied && !payload.event.schedulingEligible) {
+    throw new Error('Applied scheduler transition must be eligible.');
+  }
   await db.transaction('rw', db.mathAnswerEvents, db.itemStates, db.attempts, async () => {
     const existing = await db.mathAnswerEvents.get(payload.event.id);
     if (existing) {
-      const equivalent = existing.studentId === payload.event.studentId
-        && existing.sessionId === payload.event.sessionId
-        && existing.itemId === payload.event.itemId
-        && existing.studentAnswer === payload.event.studentAnswer
-        && existing.isCorrect === payload.event.isCorrect;
+      const equivalent = practiceEventFingerprint(existing) === practiceEventFingerprint(payload.event);
       if (!equivalent) throw new Error(`Conflicting canonical answer event identity: ${payload.event.id}`);
       return;
     }

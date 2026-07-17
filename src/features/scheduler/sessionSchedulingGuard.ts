@@ -1,13 +1,13 @@
 /**
- * Enforces the invariant from issue #28: a canonical learning card may update
- * long-term FSRS state at most once per practice session, even if the same
- * card is presented more than once (e.g. a daily-review queue repeating due
- * items to fill the requested session length).
+ * Enforces the independent-review invariant from issue #28: a canonical card
+ * may start at most one independent FSRS review per practice session. A failed
+ * presentation's causal relearning completion is tracked separately by the
+ * practice session and does not reserve the card again.
  *
  * Presentation counting and scheduling-eligibility are deliberately separate:
  * a card can be *presented* many times in a session (each contributes to
  * practice stats), but only its first scheduling-eligible presentation may
- * call applyReview(). markScheduled() is called synchronously, before the
+ * start an independent review. markScheduled() is called synchronously, before the
  * async event write, so a rapid double-submit cannot schedule the same card
  * twice while the first write is still in flight.
  */

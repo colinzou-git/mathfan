@@ -44,7 +44,9 @@ export interface CanonicalEventFingerprint {
   presentationIndex?: number;
   schedulingEligible?: boolean;
   schedulingApplied?: boolean;
+  schedulingKind?: MathAnswerEvent['schedulingKind'];
   schedulingReason?: MathAnswerEvent['schedulingReason'];
+  relearningFromEventId?: string;
   schedulerErrorCode?: MathAnswerEvent['schedulerErrorCode'];
   relatedEvidence?: boolean;
   evidenceSourceItemId?: string;
@@ -75,7 +77,8 @@ export function canonicalEventFingerprintObject(event: MathAnswerEvent): Canonic
     ratingReason: event.ratingReason, gradingContext: event.gradingContext, responsePolicy: event.responsePolicy,
     fluencyBand: event.fluencyBand, presentationIndex: event.presentationIndex,
     schedulingEligible: event.schedulingEligible, schedulingApplied: event.schedulingApplied,
-    schedulingReason: event.schedulingReason, schedulerErrorCode: event.schedulerErrorCode,
+    schedulingKind: event.schedulingKind, schedulingReason: event.schedulingReason,
+    relearningFromEventId: event.relearningFromEventId, schedulerErrorCode: event.schedulerErrorCode,
     relatedEvidence: event.relatedEvidence, evidenceSourceItemId: event.evidenceSourceItemId,
     origin: event.origin, goalId: event.goalId, goalTargetId: event.goalTargetId,
     goalIds: sortedUnique(event.goalIds), goalTargetIds: sortedUnique(event.goalTargetIds), goalLearningKind: event.goalLearningKind,

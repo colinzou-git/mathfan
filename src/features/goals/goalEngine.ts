@@ -107,7 +107,7 @@ export function localDateInTimeZone(iso: string, timezone: string): string {
 }
 
 function isDirectFirstAttempt(event: MathAnswerEvent): boolean {
-  return !event.isRetry && !event.relatedEvidence;
+  return !event.isRetry && !event.relatedEvidence && event.schedulingKind !== 'relearning_step';
 }
 
 function eventBelongsToSkill(

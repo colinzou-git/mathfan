@@ -102,7 +102,7 @@ export function deriveGrade3SkillSummaries(
   // Group first-attempt events by skillId (events are source of truth for attempts)
   const eventsBySkill = new Map<string, MathAnswerEvent[]>();
   for (const event of studentEvents) {
-    if (event.isRetry) continue;
+    if (event.isRetry || event.schedulingKind === 'relearning_step') continue;
     const skillId = itemSkillMap.get(event.itemId);
     if (!skillId) continue;
     const arr = eventsBySkill.get(skillId) ?? [];

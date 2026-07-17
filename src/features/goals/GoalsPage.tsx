@@ -145,7 +145,8 @@ function buildCompleteSummaries(studentId: string, summaries: StudentSkillSummar
 }
 
 function directFirstAttempts(events: MathAnswerEvent[], studentId: string): MathAnswerEvent[] {
-  return events.filter(event => event.studentId === studentId && !event.isRetry && !event.relatedEvidence);
+  return events.filter(event => event.studentId === studentId && !event.isRetry && !event.relatedEvidence
+    && event.schedulingKind !== 'relearning_step');
 }
 
 function goalPracticeEvents(events: MathAnswerEvent[], studentId: string): MathAnswerEvent[] {

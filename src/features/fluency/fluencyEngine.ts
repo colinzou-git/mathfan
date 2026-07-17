@@ -29,6 +29,7 @@ export const MAX_FLUENCY_SAMPLES = 50;
 /** Authoritative rule for modern, durably scheduled personal-fluency evidence. */
 export function classifyFluencyEvidence(event: MathAnswerEvent): FluencyEvidenceDecision {
   if (!event.isCorrect) return { eligible: false, reason: 'incorrect' };
+  if (event.schedulingKind === 'relearning_step') return { eligible: false, reason: 'retry' };
   if (event.isRetry) return { eligible: false, reason: 'retry' };
   if (event.hintUsed || event.schedulingTelemetry?.supportLevel === 'hint') return { eligible: false, reason: 'hinted' };
   if (event.relatedEvidence) return { eligible: false, reason: 'related' };

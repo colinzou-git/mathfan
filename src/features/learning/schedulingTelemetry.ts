@@ -5,6 +5,7 @@ import type { AnswerGradingContext, ResponsePolicyKind } from '../scheduler/resp
 import { describeLearningCard } from '../scheduler/cardModel';
 import { currentRetrievability } from '../scheduler/fsrsAdapter';
 import { contentSpecForItem } from '../curriculum/practiceContentSpec';
+import type { SchedulingKind, SchedulingReason } from './learningEvents';
 
 export const SCHEDULING_TELEMETRY_VERSION = 1 as const;
 export const CARD_MODEL_VERSION = 'semantic-word-cards-v2';
@@ -50,8 +51,9 @@ export interface SchedulingTelemetry {
   attemptNo: number;
   schedulingEligible: boolean;
   schedulingApplied?: boolean;
+  schedulingKind?: SchedulingKind;
   schedulerErrorCode?: 'clock_drift' | 'invalid_card' | 'fsrs_validation' | 'unknown';
-  schedulingReason?: 'first_card_evidence' | 'same_evaluation_template_repeat';
+  schedulingReason?: SchedulingReason;
   evidenceKind: 'direct' | 'related';
   supportLevel: 'independent' | 'hint' | 'worked_example' | 'retry';
   selection: SelectionContext;
@@ -79,6 +81,7 @@ export interface ResponseTelemetryEvidence {
   evidenceKind?: 'direct' | 'related';
   schedulingEligible: boolean;
   schedulingApplied?: boolean;
+  schedulingKind?: SchedulingKind;
   schedulerErrorCode?: SchedulingTelemetry['schedulerErrorCode'];
 }
 
@@ -118,7 +121,7 @@ export function buildSchedulingTelemetry(args: {
   item: PracticeItem; stateBefore?: StudentItemState; stateAfter?: StudentItemState;
   response: ResponseTelemetryEvidence; selection: SelectionContext;
   presentationIndex: number; attemptNo: number; now: Date; learnerKey?: string;
-  schedulingReason?: SchedulingTelemetry['schedulingReason'];
+  schedulingKind?: SchedulingKind; schedulingReason?: SchedulingReason;
 }): SchedulingTelemetry {
   const card = describeLearningCard(args.item);
   return {
@@ -127,6 +130,7 @@ export function buildSchedulingTelemetry(args: {
     presentationIndex: args.presentationIndex, attemptNo: args.attemptNo,
     schedulingEligible: args.response.schedulingEligible,
     schedulingApplied: args.response.schedulingApplied ?? args.response.schedulingEligible,
+    schedulingKind: args.schedulingKind ?? args.response.schedulingKind,
     schedulerErrorCode: args.response.schedulerErrorCode,
     schedulingReason: args.schedulingReason,
     evidenceKind: args.response.evidenceKind ?? 'direct',
