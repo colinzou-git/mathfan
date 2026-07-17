@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-17T09:09:43.949772+00:00",
+  "generated_at": "2026-07-17T09:48:19.888578+00:00",
   "repo_root": "/home/ubuntu/mathfan",
   "package": {
     "name": "mathfan",
@@ -570,9 +570,9 @@
     {
       "path": "scripts/e2e_mathfan.py",
       "ext": ".py",
-      "bytes": 66335,
-      "lines": 1085,
-      "sha1": "18d76ce6cf10",
+      "bytes": 66537,
+      "lines": 1089,
+      "sha1": "ac003c7049b2",
       "imports": [
         "__future__",
         "json",
@@ -3470,9 +3470,9 @@
     {
       "path": "src/features/goals/goalEvaluationPersistence.ts",
       "ext": ".ts",
-      "bytes": 8230,
-      "lines": 151,
-      "sha1": "f60c3307b4de",
+      "bytes": 14491,
+      "lines": 237,
+      "sha1": "be0128461980",
       "imports": [
         "../../db/dexie",
         "../../db/repositories",
@@ -3480,29 +3480,37 @@
         "../../utils/id",
         "../../utils/rng",
         "../learning/learningEvents",
+        "../learning/schedulingTelemetry",
+        "../mastery/misconceptionEngine",
+        "../practice/answerChecker",
         "../scheduler/cardModel",
+        "../scheduler/scheduler",
         "./goalEvaluationEngine",
         "./goalEvaluationSelection",
         "./types"
       ],
       "exports": [
-        "CommittedGoalEvaluationAnswer",
-        "GoalEvaluationAnswerWrite",
+        "GoalEvaluationAnswerProposal",
+        "GoalEvaluationIdempotencyConflictError",
         "GoalEvaluationSelectionConflictError",
+        "PersistedGoalEvaluationAnswerResult",
         "PersistNextGoalQuestionArgs"
       ],
       "functions": [
+        "classifySchedulerError",
         "createGoalEvaluation",
+        "goalAnswerFingerprint",
         "loadLatestResumableGoalEvaluation",
-        "persistNextGoalEvaluationQuestion",
-        "recordGoalEvaluationAnswer"
+        "persistGoalEvaluationAnswer",
+        "persistNextGoalEvaluationQuestion"
       ],
       "classes": [
+        "GoalEvaluationIdempotencyConflictError",
         "GoalEvaluationSelectionConflictError"
       ],
       "interfaces": [
-        "CommittedGoalEvaluationAnswer",
-        "GoalEvaluationAnswerWrite",
+        "GoalEvaluationAnswerProposal",
+        "PersistedGoalEvaluationAnswerResult",
         "PersistNextGoalQuestionArgs"
       ],
       "types": [],
@@ -3551,9 +3559,9 @@
     {
       "path": "src/features/goals/GoalEvaluationSession.tsx",
       "ext": ".tsx",
-      "bytes": 36906,
-      "lines": 784,
-      "sha1": "95d596419b13",
+      "bytes": 27999,
+      "lines": 583,
+      "sha1": "d3a60addde2d",
       "imports": [
         "../../components/NumPad",
         "../../db/repositories",
@@ -3561,19 +3569,13 @@
         "../../utils/id",
         "../auth/googleAuth",
         "../curriculum/makeItemFromId",
-        "../fluency/fluencyEngine",
         "../learning/learningEvents",
         "../learning/learningUnitProgress",
-        "../learning/schedulingTelemetry",
         "../mastery/grade3MasteryMap",
-        "../mastery/misconceptionEngine",
         "../mastery/skillMapping",
         "../mastery/skillPracticePlanner",
         "../practice/answerChecker",
         "../practice/QuestionRenderer",
-        "../scheduler/cardModel",
-        "../scheduler/responsePolicy",
-        "../scheduler/scheduler",
         "../sync/driveSync",
         "../time/clock",
         "./goalEvaluationEngine",
@@ -3587,7 +3589,6 @@
       "functions": [
         "buildNewLearningCandidates",
         "buildReviewFindings",
-        "buildUpdatedState",
         "confirmCancel",
         "continueNext",
         "evaluationArgs",
@@ -8889,14 +8890,16 @@
     {
       "path": "src/tests/goalEvaluationConcurrency.test.ts",
       "ext": ".ts",
-      "bytes": 5792,
-      "lines": 84,
-      "sha1": "a7f533a681c2",
+      "bytes": 9721,
+      "lines": 156,
+      "sha1": "677b12cca3f1",
       "imports": [
         "../db/dexie",
+        "../features/curriculum/makeItemFromId",
         "../features/goals/goalEvaluationPersistence",
         "../features/goals/types",
-        "../types/math",
+        "../features/learning/eventRebuild",
+        "../features/scheduler/scheduler",
         "vitest"
       ],
       "exports": [],
@@ -8981,9 +8984,9 @@
     {
       "path": "src/tests/goalEvaluationSession.test.tsx",
       "ext": ".tsx",
-      "bytes": 18856,
-      "lines": 461,
-      "sha1": "06c95cbd288f",
+      "bytes": 20218,
+      "lines": 460,
+      "sha1": "62d30e973b7e",
       "imports": [
         "../db/repositories",
         "../features/goals/goalEvaluationEngine",
