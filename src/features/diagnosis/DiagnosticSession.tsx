@@ -16,7 +16,7 @@ import { buildDiagnosticPlan } from './diagnosticPlanner';
 import { QuestionRenderer } from '../practice/QuestionRenderer';
 import { NumPad } from '../../components/NumPad';
 import type { MathAnswerEvent } from '../learning/learningEvents';
-import { recordDiagnosticAnswerWithRetry } from './diagnosticPersistence';
+import { flushDiagnosticWriteJobs, recordDiagnosticAnswerWithRetry, type DiagnosticWriteJob } from './diagnosticPersistence';
 import { checkAnswer } from '../practice/answerChecker';
 import { applyReview, createInitialState } from '../scheduler/scheduler';
 import { deriveCardKey } from '../scheduler/cardModel';
@@ -61,12 +61,13 @@ export function DiagnosticSession({ studentId, onComplete, onCancel }: Props) {
   const [showFeedback, setShowFeedback] = useState<'correct' | 'wrong' | null>(null);
   const [results, setResults] = useState<QuestionResult[]>([]);
   const [saveState, setSaveState] = useState<SaveState>('idle');
+  const [unsavedAnswerCount, setUnsavedAnswerCount] = useState(0);
   const startTimeRef = useRef<number>(0);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Retryable write jobs: each is a thunk that calls recordDiagnosticAnswerWithRetry
   // with a pre-captured payload. Running the thunk fresh on each retry lets
   // "Try again" actually retry instead of re-awaiting a settled promise.
-  const pendingWritesRef = useRef<Array<() => Promise<void>>>([]);
+  const pendingWritesRef = useRef<DiagnosticWriteJob[]>([]);
   // Tracks whether the auto-flush (triggered when phase → 'done') succeeded.
   // Used by complete() to skip duplicate writes when the user clicks "See my Math Map".
   const writesSucceededRef = useRef(false);
@@ -74,6 +75,12 @@ export function DiagnosticSession({ studentId, onComplete, onCancel }: Props) {
   const items = plan.items;
   const currentItem = items[index];
   const total = items.length;
+
+  const flushPendingWrites = useCallback(async () => {
+    const unsaved = await flushDiagnosticWriteJobs(pendingWritesRef.current);
+    setUnsavedAnswerCount(unsaved);
+    if (unsaved) throw new Error(`${unsaved} diagnostic answer${unsaved === 1 ? '' : 's'} remain unsaved.`);
+  }, []);
 
   // Start timer when a new question appears
   useEffect(() => {
@@ -113,7 +120,7 @@ export function DiagnosticSession({ studentId, onComplete, onCancel }: Props) {
     // promise captured at submit time) means that if payload construction itself fails
     // — e.g. the itemStateRepo.get read throws — the "Try again" path rebuilds it from
     // scratch and can actually succeed on retry.
-    pendingWritesRef.current.push(async () => {
+    pendingWritesRef.current.push({ id: eventId, status: 'pending', run: async () => {
       const cardKey = deriveCardKey(item);
       let existing = await itemStateRepo.get(studentId, cardKey);
       if (!existing) existing = createInitialState(studentId, item);
@@ -207,7 +214,7 @@ export function DiagnosticSession({ studentId, onComplete, onCancel }: Props) {
       };
 
       await recordDiagnosticAnswerWithRetry({ event, updatedState: updated, attempt });
-    });
+    } });
 
     setResults(prev => [...prev, result]);
     setShowFeedback(isCorrect ? 'correct' : 'wrong');
@@ -222,7 +229,7 @@ export function DiagnosticSession({ studentId, onComplete, onCancel }: Props) {
         setPhase('done');
         setSaveState('saving');
         try {
-          await Promise.all(pendingWritesRef.current.map(job => job()));
+          await flushPendingWrites();
           writesSucceededRef.current = true;
           setSaveState('idle');
         } catch (err) {
@@ -233,7 +240,7 @@ export function DiagnosticSession({ studentId, onComplete, onCancel }: Props) {
         setIndex(i => i + 1);
       }
     }, FEEDBACK_MS);
-  }, [currentItem, showFeedback, input, studentId, sessionId, index, total]);
+  }, [currentItem, showFeedback, input, studentId, sessionId, index, total, flushPendingWrites]);
 
   // Keyboard support during active questions. Mirrors NumPad/touch behavior
   // without changing it: digits build the numeric answer, Backspace deletes,
@@ -312,7 +319,7 @@ export function DiagnosticSession({ studentId, onComplete, onCancel }: Props) {
       // Retry failed writes.
       setSaveState('saving');
       try {
-        await Promise.all(pendingWritesRef.current.map(job => job()));
+        await flushPendingWrites();
         writesSucceededRef.current = true;
         await onComplete();
       } catch (err) {
@@ -332,7 +339,7 @@ export function DiagnosticSession({ studentId, onComplete, onCancel }: Props) {
             {saveState === 'saving'
               ? 'Saving your results...'
               : saveState === 'error'
-                ? 'Could not save results. Try again.'
+                ? `Could not save results. ${unsavedAnswerCount} answer${unsavedAnswerCount === 1 ? '' : 's'} remain unsaved. Try again.`
                 : 'Your Math Map will update after your results are saved.'}
           </p>
           <button style={s.startBtn} disabled={saveState === 'saving'} onClick={complete}>

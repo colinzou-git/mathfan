@@ -4,7 +4,7 @@
 
 | Package | Import count |
 | --- | --- |
-| vitest | 89 |
+| vitest | 90 |
 | react | 35 |
 | @testing-library/react | 19 |
 | pathlib | 8 |
@@ -763,6 +763,7 @@
 | src/tests/dailyReviewQueue.test.ts | ../features/scheduler/dailyReviewQueue |
 | src/tests/dailyReviewQueue.test.ts | ../types/math |
 | src/tests/describeItem.test.ts | ../features/curriculum/describeItem |
+| src/tests/diagnosticPersistence.test.ts | ../features/diagnosis/diagnosticPersistence |
 | src/tests/diagnosticPlanner.test.ts | ../features/diagnosis/diagnosticPlanner |
 | src/tests/diagnosticPlanner.test.ts | ../features/practice/answerChecker |
 | src/tests/diagnosticSession.test.tsx | ../db/repositories |

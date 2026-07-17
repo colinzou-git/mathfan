@@ -25,7 +25,8 @@ vi.mock('../features/diagnosis/diagnosticPlanner', () => ({
   }),
 }));
 
-vi.mock('../features/diagnosis/diagnosticPersistence', () => ({
+vi.mock('../features/diagnosis/diagnosticPersistence', async importOriginal => ({
+  ...(await importOriginal<typeof import('../features/diagnosis/diagnosticPersistence')>()),
   recordDiagnosticAnswerWithRetry: vi.fn(),
 }));
 
