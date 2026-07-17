@@ -85,8 +85,8 @@ function renderSettings(options: RenderOptions = {}) {
 }
 
 async function chooseFormat(format: UserDataExportFormat) {
-  fireEvent.click(screen.getByRole('button', { name: 'Export User Data' }));
-  fireEvent.click(screen.getByRole('menuitem', { name: `Export as ${format.toUpperCase()}` }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Export User Data' }));
+  fireEvent.click(await screen.findByRole('menuitem', { name: `Export as ${format.toUpperCase()}` }));
 }
 
 beforeEach(() => {
@@ -140,7 +140,7 @@ describe('Settings Export User Data', () => {
 
   it('is enabled while signed out and immediately downloads both formats in normal browsers', async () => {
     renderSettings();
-    const button = screen.getByRole('button', { name: 'Export User Data' });
+    const button = await screen.findByRole('button', { name: 'Export User Data' });
     expect(button).toBeEnabled();
     expect(screen.getByText(/does not sync with Google Drive first/i)).toBeVisible();
     expect(button).toHaveAttribute('aria-haspopup', 'menu');
