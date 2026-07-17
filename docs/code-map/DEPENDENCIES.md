@@ -104,6 +104,7 @@
 | src/db/dexie.ts | ../features/migrations/migrationTypes |
 | src/db/dexie.ts | ../features/multiplication/types |
 | src/db/dexie.ts | ../types/math |
+| src/db/repositories.ts | ../features/fluency/fluencyEngine |
 | src/db/repositories.ts | ../features/goals/types |
 | src/db/repositories.ts | ../features/learning/eventOrdering |
 | src/db/repositories.ts | ../features/learning/learningEvents |

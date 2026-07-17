@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildFluencyBaselineMap, deriveFluencyBaseline, classifyFluency, MIN_BASELINE_SAMPLES } from '../features/fluency/fluencyEngine';
+import { buildFluencyBaselineMap, deriveFluencyBaseline, classifyFluency, classifyFluencyEvidence, classifyLegacyFluencyEvidence, MAX_FLUENCY_SAMPLES, MIN_BASELINE_SAMPLES, summarizeFluencyEvidenceEligibility } from '../features/fluency/fluencyEngine';
 import type { MathAnswerEvent } from '../features/learning/learningEvents';
 import type { ResponsePolicy } from '../features/scheduler/responsePolicy';
 
@@ -9,6 +9,7 @@ function event(overrides: Partial<MathAnswerEvent> = {}): MathAnswerEvent {
     itemId: 'MUL_7x8', cardKey: 'fact:mul:7x8', mode: 'practice',
     promptShown: '7x8', correctAnswer: 56, studentAnswer: 56,
     isCorrect: true, isRetry: false, hintUsed: false, latencyMs: 1000,
+    schedulingApplied: true, responsePolicy: 'atomic_fluency',
     createdAt: '2026-01-01T00:00:00.000Z',
     ...overrides,
   };
@@ -85,6 +86,42 @@ describe('deriveFluencyBaseline', () => {
     const baseline = deriveFluencyBaseline(events, 'fact:mul:7x8');
     expect(baseline!.sampleCount).toBe(MIN_BASELINE_SAMPLES);
     expect(baseline!.medianMs).toBeLessThan(2000);
+  });
+
+  it('excludes scheduler failures and modern events with a missing applied marker', () => {
+    expect(classifyFluencyEvidence(event({ schedulingEligible: true, schedulingApplied: false })).reason)
+      .toBe('scheduler_not_applied');
+    expect(classifyFluencyEvidence(event({ schedulingApplied: undefined })).reason)
+      .toBe('scheduler_not_applied');
+  });
+
+  it('admits a legacy event only with explicit successful versioned telemetry', () => {
+    const legacy = event({ schedulingApplied: undefined, schedulingTelemetry: {
+      version: 1, cardKey: 'fact:mul:7x8', cardKind: 'atomic_fact', schemaId: 'fact', itemInstanceId: 'MUL_7x8',
+      presentationIndex: 1, attemptNo: 1, schedulingEligible: true, schedulingApplied: true,
+      evidenceKind: 'direct', supportLevel: 'independent', selection: { origin: 'manual', rationaleCodes: ['manual'] },
+      rating: { reviewGrade: 'good' }, instance: { difficulty: 0.5 },
+    } });
+    expect(classifyLegacyFluencyEvidence(legacy).eligible).toBe(true);
+  });
+
+  it('uses the deterministic latest 50 eligible samples after shuffled sync insertion', () => {
+    const events = Array.from({ length: MAX_FLUENCY_SAMPLES + 10 }, (_, index) => event({
+      id: `event-${String(index).padStart(2, '0')}`, latencyMs: 1000 + index,
+      createdAt: `2026-01-01T00:${String(index).padStart(2, '0')}:00.000Z`,
+    }));
+    const ordered = deriveFluencyBaseline(events, 'fact:mul:7x8');
+    const shuffled = deriveFluencyBaseline([...events].reverse(), 'fact:mul:7x8');
+    expect(shuffled).toEqual(ordered);
+    expect(ordered?.sampleCount).toBe(MAX_FLUENCY_SAMPLES);
+    expect(ordered?.medianMs).toBe(1034.5);
+  });
+
+  it('reports audit counts from the same classifier used by baselines', () => {
+    const summary = summarizeFluencyEvidenceEligibility([
+      event(), event({ schedulingApplied: false }), event({ gradingContext: 'untimed_assessment' }),
+    ]);
+    expect(summary).toMatchObject({ eligible: 1, scheduler_not_applied: 1, untimed_assessment: 1 });
   });
 });
 

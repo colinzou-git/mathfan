@@ -40,7 +40,7 @@ import { mulberry32, randomSeed } from '../../utils/rng';
 import type { PracticeItem as PItem } from '../../types/math';
 import { ADAPTIVE_SELECTOR_VERSION, buildSchedulingTelemetry, DAILY_LESSON_PLANNER_VERSION } from '../learning/schedulingTelemetry';
 import { completeDailyLessonPlan, markDailyLessonProgressFromEvent } from '../learningPlan/dailyLessonPersistence';
-import { buildFluencyBaselineMap, deriveFluencyBaseline, type FluencyBaselineMap } from '../fluency/fluencyEngine';
+import { buildFluencyBaselineMap, classifyLegacyFluencyEvidence, deriveFluencyBaseline, type FluencyBaselineMap } from '../fluency/fluencyEngine';
 import type { MathAnswerEvent } from '../learning/learningEvents';
 
 // ── Public types ──────────────────────────────────────────────────────────────
@@ -639,10 +639,7 @@ export function usePracticeSession(studentId: string) {
         if (directEvidenceCardsRef.current.has(candidate.cardKey) || pendingRelatedEvidenceRef.current.has(candidate.cardKey)) continue;
         pendingRelatedEvidenceRef.current.set(candidate.cardKey, candidate);
       }
-      if (payload.event.isCorrect && !payload.event.isRetry && !payload.event.relatedEvidence
-        && !payload.event.hintUsed && payload.event.schedulingEligible !== false
-        && payload.event.responsePolicy === 'atomic_fluency'
-        && Number.isFinite(payload.event.latencyMs) && payload.event.latencyMs > 0) {
+      if (classifyLegacyFluencyEvidence(payload.event).eligible) {
         fluencyEventsRef.current.push(payload.event);
         const baseline = deriveFluencyBaseline(fluencyEventsRef.current, cardKey);
         if (baseline) fluencyBaselinesRef.current.set(cardKey, baseline);

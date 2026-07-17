@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-17T00:45:28.985122+00:00",
+  "generated_at": "2026-07-17T01:18:19.877963+00:00",
   "repo_root": "/home/ubuntu/mathfan",
   "package": {
     "name": "mathfan",
@@ -570,9 +570,9 @@
     {
       "path": "scripts/e2e_mathfan.py",
       "ext": ".py",
-      "bytes": 63100,
-      "lines": 1048,
-      "sha1": "f1ac2608fa1a",
+      "bytes": 63253,
+      "lines": 1051,
+      "sha1": "23dff47f4409",
       "imports": [
         "__future__",
         "json",
@@ -1228,10 +1228,11 @@
     {
       "path": "src/db/repositories.ts",
       "ext": ".ts",
-      "bytes": 16196,
-      "lines": 373,
-      "sha1": "26dd64f26028",
+      "bytes": 16194,
+      "lines": 368,
+      "sha1": "354de3aaa9d0",
       "imports": [
+        "../features/fluency/fluencyEngine",
         "../features/goals/types",
         "../features/learning/eventOrdering",
         "../features/learning/learningEvents",
@@ -3059,9 +3060,9 @@
     {
       "path": "src/features/fluency/fluencyEngine.ts",
       "ext": ".ts",
-      "bytes": 3020,
-      "lines": 82,
-      "sha1": "446710c824a2",
+      "bytes": 6069,
+      "lines": 135,
+      "sha1": "7eb3f20f9109",
       "imports": [
         "../learning/learningEvents",
         "../scheduler/responsePolicy"
@@ -3069,31 +3070,43 @@
       "exports": [
         "buildFluencyBaselineMap",
         "classifyFluency",
+        "classifyFluencyEvidence",
+        "classifyLegacyFluencyEvidence",
         "deriveFluencyBaseline",
         "FluencyBand",
         "FluencyBaselineMap",
+        "FluencyEvidenceDecision",
+        "FluencyEvidenceReason",
+        "MAX_FLUENCY_SAMPLES",
         "MIN_BASELINE_SAMPLES",
-        "StudentFluencyBaseline"
+        "StudentFluencyBaseline",
+        "summarizeFluencyEvidenceEligibility"
       ],
       "functions": [
         "buildFluencyBaselineMap",
         "classifyFluency",
+        "classifyFluencyEvidence",
+        "classifyLegacyFluencyEvidence",
+        "compareEvents",
         "deriveFluencyBaseline",
-        "percentile"
+        "percentile",
+        "summarizeFluencyEvidenceEligibility"
       ],
       "classes": [],
       "interfaces": [
+        "FluencyEvidenceDecision",
         "StudentFluencyBaseline"
       ],
       "types": [
         "FluencyBand",
-        "FluencyBaselineMap"
+        "FluencyBaselineMap",
+        "FluencyEvidenceReason"
       ],
       "components": [],
       "hooks": [],
       "css_classes": [],
       "json_keys": [],
-      "purpose": "Exports reusable code: buildFluencyBaselineMap, classifyFluency, deriveFluencyBaseline, FluencyBand, FluencyBaselineMap.",
+      "purpose": "Exports reusable code: buildFluencyBaselineMap, classifyFluency, classifyFluencyEvidence, classifyLegacyFluencyEvidence, deriveFluencyBaseline.",
       "too_large": false,
       "read_error": null
     },
@@ -5293,9 +5306,9 @@
     {
       "path": "src/features/practice/usePracticeSession.ts",
       "ext": ".ts",
-      "bytes": 45743,
-      "lines": 903,
-      "sha1": "c6690ff5b120",
+      "bytes": 45519,
+      "lines": 900,
+      "sha1": "aa6fbf00926d",
       "imports": [
         "../../components/opSpecs",
         "../../db/dexie",
@@ -8470,9 +8483,9 @@
     {
       "path": "src/tests/fluencyEngine.test.ts",
       "ext": ".ts",
-      "bytes": 5369,
-      "lines": 113,
-      "sha1": "27e2c75510c3",
+      "bytes": 7567,
+      "lines": 150,
+      "sha1": "16c876bfd505",
       "imports": [
         "../features/fluency/fluencyEngine",
         "../features/learning/learningEvents",
@@ -8497,9 +8510,9 @@
     {
       "path": "src/tests/fluencyRepository.test.ts",
       "ext": ".ts",
-      "bytes": 2967,
-      "lines": 66,
-      "sha1": "46821eacfe15",
+      "bytes": 3163,
+      "lines": 68,
+      "sha1": "60687a5f6b28",
       "imports": [
         "../db/dexie",
         "../db/repositories",
@@ -9567,9 +9580,9 @@
     {
       "path": "src/tests/practiceSession.test.ts",
       "ext": ".ts",
-      "bytes": 38709,
+      "bytes": 38734,
       "lines": 807,
-      "sha1": "dbe0a464b989",
+      "sha1": "60a75d80d99e",
       "imports": [
         "../db/repositories",
         "../features/curriculum/makeItemFromId",
@@ -9982,9 +9995,9 @@
     {
       "path": "src/tests/settingsExportUserData.test.tsx",
       "ext": ".tsx",
-      "bytes": 15776,
+      "bytes": 15797,
       "lines": 326,
-      "sha1": "38ce5f0b92ec",
+      "sha1": "e8c655a38bc1",
       "imports": [
         "../features/export/userDataExport",
         "../features/settings/SettingsPage",
