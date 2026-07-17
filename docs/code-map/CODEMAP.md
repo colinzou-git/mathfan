@@ -1,6 +1,6 @@
 # Code Map Overview
 
-Generated: 2026-07-17 10:54:10 UTC
+Generated: 2026-07-17 17:48:54 UTC
 
 Repo root: `/home/ubuntu/mathfan`
 Output folder: `/home/ubuntu/mathfan/docs/code-map`
@@ -14,9 +14,9 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 - Package name: `mathfan`
 - Version: `1.2.0`
 - Module type: `module`
-- Scanned files: **307**
-- Scanned lines: **57,900**
-- Scanned bytes: **2,517,172**
+- Scanned files: **309**
+- Scanned lines: **58,778**
+- Scanned bytes: **2,546,063**
 
 ## NPM scripts
 
@@ -72,7 +72,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 
 | File | Lines | Likely purpose | Key symbols |
 | --- | --- | --- | --- |
-| src/App.tsx | 401 | Top-level React app shell: routes/screens, global state, and feature wiring. | App, exportMigrationDiagnostics, handleQuizDone, handleSessionDone, pickOperation, retryMigration, runBootstrap, selectProfile |
+| src/App.tsx | 404 | Top-level React app shell: routes/screens, global state, and feature wiring. | App, exportMigrationDiagnostics, handleQuizDone, handleSessionDone, pickOperation, retryMigration, runBootstrap, selectProfile |
 | src/features/sync/SyncWidget.tsx | 156 | Cloud sync/auth/data transfer logic. | GoogleIcon, SyncWidget, friendlyError, GoogleIcon, initials, SyncWidget, timeSince |
 | src/features/sync/snapshot.ts | 611 | Local persistence/database layer. | AppSnapshot, AppSnapshotV3, canonicalDailyLessonPlanId, LEARNER_OWNED_TABLES, LearnerOwnedTableName, normalizeSnapshot, OrphanReport, remoteHasNewerUpdatedAt |
 | vite.config.ts | 82 | Vite build/PWA configuration. | buildInfoPlugin |
@@ -85,10 +85,10 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 | src/features/sync/useSync.ts | 99 | Cloud sync/auth/data transfer logic. | useSync, initAuth, SyncState, useSync, recordSync, useSync |
 | src/features/sync/timeUtil.ts | 13 | Cloud sync/auth/data transfer logic. | remoteHasNewerUpdatedAt, validTimeMs, remoteHasNewerUpdatedAt, validTimeMs |
 | src/features/goals/GoalsPage.tsx | 1057 | React UI component file: ConfirmDialog, EmptyState, GoalCard, GoalWizard. | ConfirmDialog, EmptyState, GoalCard, GoalWizard, ProgressBar, SummaryCard, GoalsPage, activeLearningDays |
-| src/features/settings/SettingsPage.tsx | 905 | Student/app settings UI or persistence. | Section, SyncRow, ToggleRow, SettingsPage, applyUpdate, buildId, buildLabel, checkForUpdates |
+| src/features/settings/SettingsPage.tsx | 942 | Student/app settings UI or persistence. | Section, SyncRow, ToggleRow, SettingsPage, applyUpdate, buildId, buildLabel, checkForUpdates |
 | src/features/multiplication/MultiplicationQuizPage.tsx | 861 | Local persistence/database layer. | FactChip, SetupScreen, StatBox, SummaryScreen, MultiplicationQuizPage, FactChip, MultiplicationQuizPage, recommendedPracticeConfig |
 | src/features/dashboard/StudentDashboard.tsx | 627 | Dashboard/profile setup/student navigation feature. | Chip, PracticeOp, StudentDashboard, Chip, completeSkillSummaries, handleStartReview, openExtra, regenerateLesson |
-| src/features/practice/PracticeScreen.tsx | 580 | Local persistence/database layer. | KbChip, PracticeScreen, KbChip, onKey, PracticeScreen, run, submitChoice |
+| src/features/practice/PracticeScreen.tsx | 584 | Local persistence/database layer. | KbChip, PracticeScreen, KbChip, onKey, PracticeScreen, submitChoice |
 | src/features/stats/FactStatsTable.tsx | 407 | Local persistence/database layer. | SortBtn, SummaryStat, FactStatsTable, bucketOf, FactStatsTable, idOf, SortBtn, startPractice |
 | src/features/mastery/Grade3MasteryMapPage.tsx | 366 | Grade 3 mastery map UI: skill display, detail panels, and parent action cards. | LegendItem, Grade3MasteryMapPage, buildCompleteSummaries, computeUnmetPrereqNames, Grade3MasteryMapPage, LegendItem |
 | src/features/stats/StatsPage.tsx | 273 | Progress/statistics screens or calculations. | SchedulingDiagnostics, SummaryPill, StatsPage, buildRange, daysBetween, SchedulingDiagnostics, StatsPage, SummaryPill |
@@ -396,6 +396,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   ├── practiceNavigation.test.ts
 │   │   ├── practiceScheduling.test.ts
 │   │   ├── practiceSession.test.ts
+│   │   ├── practiceSpeechLifecycle.test.tsx
 │   │   ├── profileBootstrap.test.ts
 │   │   ├── profileSetup.test.tsx
 │   │   ├── questionGenerator.test.ts
@@ -411,6 +412,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   ├── sessionSchedulingGuard.test.ts
 │   │   ├── settingsDailyNewLimits.test.tsx
 │   │   ├── settingsExportUserData.test.tsx
+│   │   ├── settingsSoundTest.test.tsx
 │   │   ├── setup.ts
 │   │   ├── skillMapping.test.ts
 │   │   ├── skillMasteryEngine.test.ts
@@ -481,7 +483,7 @@ Purpose: Top-level React app shell: routes/screens, global state, and feature wi
   16: import { DiagnosticSession } from './features/diagnosis/DiagnosticSession';
   17: import { GoalsPage } from './features/goals/GoalsPage';
   18: import { GoalEvaluationSession } from './features/goals/GoalEvaluationSession';
-  19: import { preloadVoices } from './features/audio/speech';
+  19: import { preloadVoices, unlockSpeechFromUserGesture } from './features/audio/speech';
   20: import { useSync, initAuth } from './features/sync/useSync';
   21: import { pushLocal, pullAndMerge } from './features/sync/driveSync';
   22: import { currentState as authState, hasPersistedGrant } from './features/auth/googleAuth';
@@ -523,7 +525,7 @@ Purpose: Top-level React app shell: routes/screens, global state, and feature wi
   58:   };
   59:
   60:   const runBootstrap = async () => {
-... (340 more lines)
+... (343 more lines)
 ```
 
 ### `src/features/sync/SyncWidget.tsx`

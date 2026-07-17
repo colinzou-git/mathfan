@@ -7,7 +7,7 @@ import type {
   QuizQuestion,
 } from './types';
 import type { PracticeItem, SessionConfig, StudentSettings } from '../../types/math';
-import { speakProblem, speakFeedback, stopSpeech } from '../audio/speech';
+import { speakProblem, speakFeedback, stopSpeech, unlockSpeechFromUserGesture } from '../audio/speech';
 import { parseFactKey, createInitialFactStats } from './multiplicationFacts';
 import { MultiplicationMasteryGrid } from './MultiplicationMasteryGrid';
 import { applyAnswerToStats, SLOW_MS } from './masteryEngine';
@@ -313,12 +313,13 @@ export function MultiplicationQuizPage({ studentId, settings, onDone, onStartPra
   useEffect(() => {
     if ((phase === 'active' || phase === 'retry') && settings.audioEnabled) {
       const q = questions[currentIndex];
-      if (q) speakProblem(`${q.left} × ${q.right} = ?`);
+      if (q) void speakProblem(`${q.left} × ${q.right} = ?`, settings.speechRate ?? 0.9);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, currentIndex]);
 
   const startQuiz = useCallback(async (length: number) => {
+    if (settings.audioEnabled) unlockSpeechFromUserGesture();
     advanceSeq.current++;
     if (feedbackTimer.current) clearTimeout(feedbackTimer.current);
     setPhase('loading');
@@ -341,7 +342,7 @@ export function MultiplicationQuizPage({ studentId, settings, onDone, onStartPra
     setInput('');
     questionStartTime.current = Date.now();
     setPhase('active');
-  }, [studentId]);
+  }, [settings.audioEnabled, studentId]);
 
   const finishQuiz = useCallback(async (
     logs: QuizAnswerLog[],
@@ -396,9 +397,9 @@ export function MultiplicationQuizPage({ studentId, settings, onDone, onStartPra
     setPhase('summary');
   }, [studentId]);
 
-  // Speak the correct answer (if audio is on), hold the visual feedback for a
-  // short beat, then advance — without the next question's speech cutting off
-  // the answer audio. Guarded by advanceSeq so it no-ops if superseded.
+  // Audio is auxiliary: visual advancement follows its normal fixed delay even
+  // if the browser never acknowledges speech. Role-aware speech queueing keeps
+  // the next problem behind feedback without coupling navigation to callbacks.
   const scheduleAdvance = useCallback((
     nextIndex: number,
     logs: QuizAnswerLog[],
@@ -407,27 +408,26 @@ export function MultiplicationQuizPage({ studentId, settings, onDone, onStartPra
     answer: number,
   ) => {
     const seq = ++advanceSeq.current;
-    void (async () => {
-      if (settings.audioEnabled) await speakFeedback(true, answer);
-      if (seq !== advanceSeq.current) return;
-      await new Promise<void>(resolve => {
-        feedbackTimer.current = setTimeout(resolve, FEEDBACK_PAUSE_MS);
-      });
+    if (settings.audioEnabled) {
+      void speakFeedback(true, answer, settings.speechRate ?? 0.9);
+    }
+    feedbackTimer.current = setTimeout(() => {
       if (seq !== advanceSeq.current) return;
       if (nextIndex >= totalQuestions) {
-        finishQuiz(logs, map, totalQuestions);
+        void finishQuiz(logs, map, totalQuestions);
       } else {
         setCurrentIndex(nextIndex);
         setInput('');
         questionStartTime.current = Date.now();
         setPhase('active');
       }
-    })();
-  }, [settings.audioEnabled, finishQuiz]);
+    }, FEEDBACK_PAUSE_MS);
+  }, [settings.audioEnabled, settings.speechRate, finishQuiz]);
 
   const handleSubmit = useCallback(async () => {
     if (phase !== 'active' && phase !== 'retry') return;
     if (questions.length === 0) return;
+    if (settings.audioEnabled) unlockSpeechFromUserGesture();
     const q = questions[currentIndex];
     if (!q) return;
 
@@ -549,7 +549,7 @@ export function MultiplicationQuizPage({ studentId, settings, onDone, onStartPra
       setInput('');
       questionStartTime.current = Date.now();
     }
-  }, [phase, questions, currentIndex, input, answerLogs, statsMap, studentId, scheduleAdvance]);
+  }, [phase, questions, settings.audioEnabled, currentIndex, input, answerLogs, statsMap, studentId, scheduleAdvance]);
 
   const handleSkip = useCallback(() => {
     if (phase !== 'retry') return;

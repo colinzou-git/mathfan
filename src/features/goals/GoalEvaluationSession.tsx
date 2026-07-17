@@ -31,9 +31,11 @@ import {
 } from './goalEvaluationPersistence';
 import type { GoalEvaluation, PersistedGoalEvaluationSelection } from './types';
 import { remainingLearningUnitEvidence } from '../learning/learningUnitProgress';
+import { unlockSpeechFromUserGesture } from '../audio/speech';
 
 interface Props {
   studentId: string;
+  audioEnabled?: boolean;
   onCancel: () => void;
   onReturnToGoals: () => void;
   onSelectGoalSkills: (skillIds: string[]) => void;
@@ -174,7 +176,7 @@ function buildReviewFindings(itemStates: StudentItemState[], now: string): Revie
   return Array.from(bySkill.values()).sort((a, b) => (b.dueCount + b.weakCount) - (a.dueCount + a.weakCount)).slice(0, 6);
 }
 
-export function GoalEvaluationSession({ studentId, onCancel, onReturnToGoals, onSelectGoalSkills, onGoToDailyReview }: Props) {
+export function GoalEvaluationSession({ studentId, audioEnabled = false, onCancel, onReturnToGoals, onSelectGoalSkills, onGoToDailyReview }: Props) {
   const [phase, setPhase] = useState<Phase>('loading');
   const [evaluation, setEvaluation] = useState<GoalEvaluation | null>(null);
   const [events, setEvents] = useState<MathAnswerEvent[]>([]);
@@ -264,6 +266,7 @@ export function GoalEvaluationSession({ studentId, onCancel, onReturnToGoals, on
   }, [phase, saveError]);
 
   const startNew = async () => {
+    if (audioEnabled) unlockSpeechFromUserGesture();
     setSaving(true);
     setSaveError(null);
     try {
@@ -281,6 +284,7 @@ export function GoalEvaluationSession({ studentId, onCancel, onReturnToGoals, on
   };
 
   const resume = async () => {
+    if (audioEnabled) unlockSpeechFromUserGesture();
     if (evaluation && evaluation.answers.length < ADAPTIVE_GOAL_EVALUATION_QUESTION_COUNT) {
       try { await selectAndStartQuestion(evaluation, events, itemStates); } catch { return; }
     }
@@ -322,6 +326,7 @@ export function GoalEvaluationSession({ studentId, onCancel, onReturnToGoals, on
 
   const submit = useCallback(() => {
     if (!currentItem || !selection || saving || submitInFlightRef.current || phase !== 'active' || !input.trim()) return;
+    if (audioEnabled) unlockSpeechFromUserGesture();
     submitInFlightRef.current = true;
     const latencyMs = Math.max(1, Math.round(performance.now() - startMsRef.current));
     const checked = checkAnswer(currentItem, input, latencyMs, { gradingContext: 'untimed_assessment' });
@@ -342,7 +347,7 @@ export function GoalEvaluationSession({ studentId, onCancel, onReturnToGoals, on
     setPendingWrite(pending);
     setPhase('feedback');
     void persistPending(pending);
-  }, [currentItem, evaluation, input, persistPending, phase, saving, selection]);
+  }, [audioEnabled, currentItem, evaluation, input, persistPending, phase, saving, selection]);
 
   const retrySave = () => {
     if (pendingWrite && !saving && !submitInFlightRef.current) {
