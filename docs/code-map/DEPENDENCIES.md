@@ -4,7 +4,7 @@
 
 | Package | Import count |
 | --- | --- |
-| vitest | 88 |
+| vitest | 89 |
 | react | 35 |
 | @testing-library/react | 19 |
 | pathlib | 8 |
@@ -798,6 +798,10 @@
 | src/tests/goalEngine.test.ts | ../features/learning/learningEvents |
 | src/tests/goalEngine.test.ts | ../features/mastery/skillMasteryEngine |
 | src/tests/goalEngine.test.ts | ../types/math |
+| src/tests/goalEvaluationConcurrency.test.ts | ../db/dexie |
+| src/tests/goalEvaluationConcurrency.test.ts | ../features/goals/goalEvaluationPersistence |
+| src/tests/goalEvaluationConcurrency.test.ts | ../features/goals/types |
+| src/tests/goalEvaluationConcurrency.test.ts | ../types/math |
 | src/tests/goalEvaluationEngine.test.tsx | ../features/curriculum/makeItemFromId |
 | src/tests/goalEvaluationEngine.test.tsx | ../features/goals/goalEvaluationEngine |
 | src/tests/goalEvaluationEngine.test.tsx | ../features/learning/learningEvents |

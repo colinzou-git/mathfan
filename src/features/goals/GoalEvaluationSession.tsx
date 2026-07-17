@@ -252,6 +252,7 @@ export function GoalEvaluationSession({ studentId, onCancel, onReturnToGoals, on
   const [saving, setSaving] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const startMsRef = useRef(0);
+  const submitInFlightRef = useRef(false);
   const continueRef = useRef<HTMLButtonElement>(null);
 
   const now = appNow().toISOString();
@@ -445,14 +446,15 @@ export function GoalEvaluationSession({ studentId, onCancel, onReturnToGoals, on
         answerEvents: [...(evaluation.answerEvents ?? []).filter(item => item.id !== event.id), event],
         updatedAt: answeredAt,
       };
-      await recordGoalEvaluationAnswer({ event, attempt, updatedState, evaluation: nextEvaluation });
-      setEvaluation(nextEvaluation);
-      setEvents(current => [...current.filter(item => item.id !== event.id), event]);
-      if (updatedState) {
-        setItemStates(current => [...current.filter(item => !(item.studentId === updatedState.studentId && item.cardKey === updatedState.cardKey)), updatedState]);
+      const committed = await recordGoalEvaluationAnswer({ event, attempt, updatedState, evaluation: nextEvaluation })
+        ?? { evaluation: nextEvaluation, event, updatedState };
+      setEvaluation(committed.evaluation);
+      setEvents(current => [...current.filter(item => item.id !== committed.event.id), committed.event]);
+      if (committed.updatedState) {
+        setItemStates(current => [...current.filter(item => !(item.studentId === committed.updatedState!.studentId && item.cardKey === committed.updatedState!.cardKey)), committed.updatedState!]);
       }
       setPendingWrite(null);
-      if (complete) {
+      if (committed.evaluation.status === 'completed') {
         if (authState().signedIn) pushLocal().catch(console.warn);
         setPhase('results');
       } else {
@@ -462,12 +464,14 @@ export function GoalEvaluationSession({ studentId, onCancel, onReturnToGoals, on
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : 'Could not save your answer yet.');
     } finally {
+      submitInFlightRef.current = false;
       setSaving(false);
     }
   }, [evaluation, events, itemStates, studentId]);
 
   const submit = useCallback(() => {
-    if (!currentItem || !selection || saving || phase !== 'active' || !input.trim()) return;
+    if (!currentItem || !selection || saving || submitInFlightRef.current || phase !== 'active' || !input.trim()) return;
+    submitInFlightRef.current = true;
     const latencyMs = Math.max(1, Math.round(performance.now() - startMsRef.current));
     const checked = checkAnswer(currentItem, input, latencyMs, { gradingContext: 'untimed_assessment' });
     const pending: PendingWrite = {
@@ -496,7 +500,10 @@ export function GoalEvaluationSession({ studentId, onCancel, onReturnToGoals, on
   }, [currentItem, input, persistPending, phase, saving, selection]);
 
   const retrySave = () => {
-    if (pendingWrite && !saving) void persistPending(pendingWrite);
+    if (pendingWrite && !saving && !submitInFlightRef.current) {
+      submitInFlightRef.current = true;
+      void persistPending(pendingWrite);
+    }
   };
 
   const continueNext = () => {
