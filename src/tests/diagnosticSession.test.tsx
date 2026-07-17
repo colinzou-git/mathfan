@@ -78,6 +78,34 @@ describe('DiagnosticSession persistence', () => {
     expect(vi.mocked(recordDiagnosticAnswerWithRetry)).toHaveBeenCalledTimes(1);
   });
 
+  it('persists untimed grading evidence while retaining the measured latency', async () => {
+    vi.mocked(recordDiagnosticAnswerWithRetry).mockResolvedValue(undefined);
+    const now = vi.spyOn(performance, 'now')
+      .mockReturnValueOnce(1_000)
+      .mockReturnValueOnce(21_000);
+
+    render(<DiagnosticSession studentId="student-1" onComplete={vi.fn()} onCancel={() => {}} />);
+    await answerOnlyQuestion();
+
+    const payload = vi.mocked(recordDiagnosticAnswerWithRetry).mock.calls[0][0];
+    expect(payload.event).toMatchObject({
+      mode: 'diagnostic',
+      isCorrect: true,
+      latencyMs: 20_000,
+      reviewGrade: 'good',
+      ratingReason: 'untimed_assessment_correct',
+      responsePolicy: 'atomic_fluency',
+      gradingContext: 'untimed_assessment',
+      fluencyBand: 'not_applicable',
+    });
+    expect(payload.event.schedulingTelemetry?.rating).toMatchObject({
+      reviewGrade: 'good',
+      gradingContext: 'untimed_assessment',
+    });
+    expect(payload.attempt.latencyMs).toBe(20_000);
+    now.mockRestore();
+  });
+
   it('shows saving indicator while auto-save is in progress', async () => {
     const write = deferred<void>();
     vi.mocked(recordDiagnosticAnswerWithRetry).mockReturnValue(write.promise);

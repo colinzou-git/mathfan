@@ -96,7 +96,7 @@ export function DiagnosticSession({ studentId, onComplete, onCancel }: Props) {
     if (!currentItem || showFeedback || !input.trim()) return;
 
     const latencyMs = Math.round(performance.now() - startTimeRef.current);
-    const checked = checkAnswer(currentItem, input, latencyMs);
+    const checked = checkAnswer(currentItem, input, latencyMs, { gradingContext: 'untimed_assessment' });
     const { isCorrect, reviewGrade, studentAnswer } = checked;
 
     const result: QuestionResult = {
@@ -184,6 +184,7 @@ export function DiagnosticSession({ studentId, onComplete, onCancel }: Props) {
         reviewGrade,
         ratingReason: checked.ratingReason,
         responsePolicy: checked.policyKind,
+        gradingContext: checked.gradingContext,
         fluencyBand: checked.fluencyBand,
         detectedMisconceptions: detectedMisconceptions.length ? detectedMisconceptions : undefined,
         confirmedMisconceptions: confirmedMisconceptions.length ? confirmedMisconceptions : undefined,
@@ -191,7 +192,7 @@ export function DiagnosticSession({ studentId, onComplete, onCancel }: Props) {
         factStatusAfter: updated.masteryLevel,
         schedulingTelemetry: buildSchedulingTelemetry({
           item, stateBefore: existing, stateAfter: schedulingApplied ? updated : undefined,
-          response: { reviewGrade, ratingReason: checked.ratingReason, responsePolicy: checked.policyKind, fluencyBand: checked.fluencyBand, hintUsed: false, isRetry: false, schedulingEligible: true, schedulingApplied, schedulerErrorCode },
+          response: { reviewGrade, ratingReason: checked.ratingReason, responsePolicy: checked.policyKind, gradingContext: checked.gradingContext, fluencyBand: checked.fluencyBand, hintUsed: false, isRetry: false, schedulingEligible: true, schedulingApplied, schedulerErrorCode },
           selection: { origin: 'diagnostic', rationaleCodes: ['diagnostic_coverage'] },
           presentationIndex: 1, attemptNo: 1, now,
         }),
