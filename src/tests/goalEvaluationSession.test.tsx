@@ -92,6 +92,7 @@ vi.mock('../db/repositories', () => ({
   },
   goalEvaluationRepo: {
     cancel: vi.fn(async () => undefined),
+    save: vi.fn(async () => undefined),
   },
 }));
 
@@ -200,6 +201,24 @@ describe('untimed grading', () => {
       gradingContext: 'untimed_assessment',
       fluencyBaselineSource: 'not_applicable',
     });
+  });
+
+  it('keeps the original question timer and selection stable across input rerenders', async () => {
+    let elapsed = 0;
+    const now = vi.spyOn(performance, 'now').mockImplementation(() => elapsed);
+    renderEvaluation();
+    await startEvaluation();
+    expect(screen.getByText(/Question 1: enter 17/i)).toBeInTheDocument();
+    elapsed = 6_000;
+    fireEvent.click(await screen.findByRole('button', { name: '1' }));
+    expect(screen.getByText(/Question 1: enter 17/i)).toBeInTheDocument();
+    elapsed = 10_000;
+    fireEvent.click(await screen.findByRole('button', { name: '7' }));
+    const checks = await screen.findAllByRole('button', { name: /check/i });
+    fireEvent.click(checks.at(-1)!);
+    await waitFor(() => expect(recordGoalEvaluationAnswer).toHaveBeenCalledTimes(1));
+    expect(vi.mocked(recordGoalEvaluationAnswer).mock.calls[0][0].event.latencyMs).toBe(10_000);
+    now.mockRestore();
   });
 });
 

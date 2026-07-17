@@ -29,6 +29,7 @@ import {
   selectNextAdaptiveGoalEvaluationItem,
   type AdaptiveGoalEvaluationResponse,
   type AdaptiveGoalEvaluationResult,
+  type AdaptiveGoalEvaluationSelection,
 } from './goalEvaluationEngine';
 import {
   createGoalEvaluation,
@@ -252,20 +253,40 @@ export function GoalEvaluationSession({ studentId, onCancel, onReturnToGoals, on
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [activeSelection, setActiveSelection] = useState<AdaptiveGoalEvaluationSelection | null>(null);
   const startMsRef = useRef(0);
   const submitInFlightRef = useRef(false);
   const continueRef = useRef<HTMLButtonElement>(null);
 
-  const now = appNow().toISOString();
-  const selection = useMemo(() => {
-    if (!evaluation || phase === 'loading' || phase === 'intro' || phase === 'results') return null;
-    return selectNextAdaptiveGoalEvaluationItem(evaluationArgs(evaluation, events, itemStates, now));
-  }, [evaluation, events, itemStates, now, phase]);
+  const selection = activeSelection;
   const currentItem = selection?.item ?? null;
   const result = useMemo(() => {
     if (!evaluation || evaluation.answers.length < ADAPTIVE_GOAL_EVALUATION_QUESTION_COUNT) return null;
-    return buildAdaptiveGoalEvaluationResult(evaluationArgs(evaluation, events, itemStates, now));
-  }, [evaluation, events, itemStates, now]);
+    return buildAdaptiveGoalEvaluationResult(evaluationArgs(evaluation, events, itemStates, appNow().toISOString()));
+  }, [evaluation, events, itemStates]);
+
+  const selectAndStartQuestion = useCallback((value: GoalEvaluation, answerEvents: MathAnswerEvent[], states: StudentItemState[]) => {
+    const persistedItem = value.currentItem ?? null;
+    const next = persistedItem && value.currentSelection ? {
+      ...value.currentSelection, item: persistedItem, evidence: [], topCandidates: [],
+    } : selectNextAdaptiveGoalEvaluationItem(evaluationArgs(value, answerEvents, states, appNow().toISOString()));
+    if (!next) throw new Error('No goal evaluation question is available.');
+    const persisted: GoalEvaluation = {
+      ...value,
+      currentItemId: next.item.id,
+      currentItem: next.item,
+      currentSelection: {
+        questionNumber: next.questionNumber, phase: next.phase, skillId: next.skillId, domain: next.domain,
+        rationale: next.rationale, cardKey: next.cardKey, schedulingEligible: next.schedulingEligible,
+        schedulingReason: next.schedulingReason,
+      },
+    };
+    startMsRef.current = performance.now();
+    setActiveSelection(next);
+    setEvaluation(persisted);
+    void goalEvaluationRepo.save(persisted).catch(console.error);
+    return next;
+  }, []);
 
   useEffect(() => {
     let alive = true;
@@ -288,12 +309,6 @@ export function GoalEvaluationSession({ studentId, onCancel, onReturnToGoals, on
   }, [studentId]);
 
   useEffect(() => {
-    if (phase === 'active' && currentItem) {
-      startMsRef.current = performance.now();
-    }
-  }, [phase, currentItem]);
-
-  useEffect(() => {
     if (phase === 'feedback' && !saveError) continueRef.current?.focus();
   }, [phase, saveError]);
 
@@ -303,6 +318,7 @@ export function GoalEvaluationSession({ studentId, onCancel, onReturnToGoals, on
     try {
       const created = await createGoalEvaluation(studentId, appNow().toISOString());
       setEvaluation(created);
+      selectAndStartQuestion(created, events, itemStates);
       setInput('');
       setFeedback(null);
       setPhase('active');
@@ -314,6 +330,9 @@ export function GoalEvaluationSession({ studentId, onCancel, onReturnToGoals, on
   };
 
   const resume = () => {
+    if (evaluation && evaluation.answers.length < ADAPTIVE_GOAL_EVALUATION_QUESTION_COUNT) {
+      selectAndStartQuestion(evaluation, events, itemStates);
+    }
     setInput('');
     setFeedback(null);
     setPhase(evaluation && evaluation.answers.length >= ADAPTIVE_GOAL_EVALUATION_QUESTION_COUNT ? 'results' : 'active');
@@ -446,6 +465,9 @@ export function GoalEvaluationSession({ studentId, onCancel, onReturnToGoals, on
         answers: nextAnswers,
         scheduledCardKeys: schedulingApplied ? [...scheduledCardKeys, cardKey] : scheduledCardKeys,
         answerEvents: [...(evaluation.answerEvents ?? []).filter(item => item.id !== event.id), event],
+        currentItemId: undefined,
+        currentItem: undefined,
+        currentSelection: undefined,
         updatedAt: answeredAt,
       };
       const committed = await recordGoalEvaluationAnswer({ event, attempt, updatedState, evaluation: nextEvaluation })
@@ -510,6 +532,7 @@ export function GoalEvaluationSession({ studentId, onCancel, onReturnToGoals, on
 
   const continueNext = () => {
     if (saving || saveError) return;
+    if (evaluation) selectAndStartQuestion(evaluation, events, itemStates);
     setFeedback(null);
     setInput('');
     setPhase('active');
@@ -576,7 +599,7 @@ export function GoalEvaluationSession({ studentId, onCancel, onReturnToGoals, on
 
   if (phase === 'results' && result && evaluation) {
     const newLearning = buildNewLearningCandidates(result, events, itemStates);
-    const review = buildReviewFindings(itemStates, now);
+    const review = buildReviewFindings(itemStates, appNow().toISOString());
     return (
       <div style={s.containerWide}>
         <header style={s.header}>

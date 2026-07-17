@@ -334,6 +334,7 @@
 | src/features/goals/GoalsPage.tsx | ./types |
 | src/features/goals/types.ts | ../../types/math |
 | src/features/goals/types.ts | ../learning/learningEvents |
+| src/features/goals/types.ts | ../mastery/grade3MasteryMap |
 | src/features/goals/types.ts | ../mastery/skillMasteryEngine |
 | src/features/learning/eventOrdering.ts | ./learningEvents |
 | src/features/learning/eventRebuild.ts | ../../db/dexie |
