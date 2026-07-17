@@ -5,7 +5,7 @@ import type { MathAnswerEvent } from '../learning/learningEvents';
 import { rebuildMultFactStatsFromEvents, rebuildItemStatesFromEvents } from '../learning/eventRebuild';
 import { db } from '../../db/dexie';
 import type { GoalEvaluation, GoalEvent, LearningGoal } from '../goals/types';
-import { remapStudentId, resolveCanonicalStudentIds, resolveLearnerKeyDuplicate, type StudentIdAliasMap } from './learnerKeyMerge';
+import { mergeProfilesByExactId, remapStudentId, resolveCanonicalStudentIds, resolveLearnerKeyDuplicate, type StudentIdAliasMap } from './learnerKeyMerge';
 import { validTimeMs, remoteHasNewerUpdatedAt } from './timeUtil';
 import { makeItemFromId } from '../curriculum/makeItemFromId';
 import { deriveCardKey } from '../scheduler/cardModel';
@@ -130,6 +130,31 @@ export { validTimeMs, remoteHasNewerUpdatedAt };
 
 export interface OrphanReport { orphanCount: number; byTable: Record<string, string[]> }
 
+export class SnapshotMergeError extends Error {
+  readonly code: string;
+  readonly details: unknown;
+  constructor(code: string, details: unknown) {
+    super(code);
+    this.code = code;
+    this.details = details;
+    this.name = 'SnapshotMergeError';
+  }
+}
+
+export const LEARNER_OWNED_TABLES = {
+  itemStates: db.itemStates,
+  attempts: db.attempts,
+  sessions: db.sessions,
+  multFactStats: db.multFactStats,
+  quizSessions: db.quizSessions,
+  mathAnswerEvents: db.mathAnswerEvents,
+  learningGoals: db.learningGoals,
+  goalEvents: db.goalEvents,
+  goalEvaluations: db.goalEvaluations,
+  dailyLessonPlans: db.dailyLessonPlans,
+} as const;
+export type LearnerOwnedTableName = keyof typeof LEARNER_OWNED_TABLES;
+
 const byId = <T extends { id: string }>(rows: T[]): T[] => [...new Map(rows.map(row => [row.id, row])).values()];
 
 function mergeCardStateCollision(a: StudentItemState, b: StudentItemState): StudentItemState {
@@ -200,6 +225,67 @@ function resolveDailyLessonPlans(plans: PersistedDailyLessonPlan[]): PersistedDa
   return resolved;
 }
 
+export function canonicalDailyLessonPlanId(studentId: string, localDate: string, revision: number): string {
+  return `daily-lesson:${studentId}:${localDate}:r${revision}`;
+}
+
+function buildLessonPlanAliases(plans: PersistedDailyLessonPlan[], aliases: StudentIdAliasMap): Map<string, string> {
+  const groups = new Map<string, PersistedDailyLessonPlan[]>();
+  for (const plan of plans) {
+    const studentId = aliases.get(plan.studentId) ?? plan.studentId;
+    const key = dailyLessonSemanticKey(studentId, plan.localDate, plan.revision);
+    groups.set(key, [...(groups.get(key) ?? []), plan]);
+  }
+  const planAliases = new Map<string, string>();
+  for (const group of groups.values()) {
+    const ownerChanged = group.some(plan => (aliases.get(plan.studentId) ?? plan.studentId) !== plan.studentId);
+    if (!ownerChanged) continue;
+    const first = group[0];
+    const studentId = aliases.get(first.studentId) ?? first.studentId;
+    const canonicalId = canonicalDailyLessonPlanId(studentId, first.localDate, first.revision);
+    const contentGroups = new Map<string, PersistedDailyLessonPlan[]>();
+    for (const plan of group) {
+      const semanticItems = plan.items.map(item => ({
+        ...item,
+        selection: item.selection ? { ...item.selection, lessonPlanId: undefined } : undefined,
+      }));
+      const contentKey = hashDailyLessonContent(semanticItems);
+      contentGroups.set(contentKey, [...(contentGroups.get(contentKey) ?? []), plan]);
+    }
+    for (const [index, [contentKey, matchingPlans]] of [...contentGroups.entries()].sort(([left], [right]) => left.localeCompare(right)).entries()) {
+      const targetId = index === 0 ? canonicalId : `${canonicalId}:content:${contentKey}`;
+      for (const plan of matchingPlans) planAliases.set(plan.id, targetId);
+    }
+  }
+  return planAliases;
+}
+
+function remapLessonReference<T extends { lessonPlanId?: string }>(record: T, planAliases: ReadonlyMap<string, string>): T {
+  const lessonPlanId = record.lessonPlanId ? planAliases.get(record.lessonPlanId) : undefined;
+  return lessonPlanId && lessonPlanId !== record.lessonPlanId ? { ...record, lessonPlanId } : record;
+}
+
+function remapDailyLessonPlan(
+  plan: PersistedDailyLessonPlan,
+  studentAliases: StudentIdAliasMap,
+  planAliases: ReadonlyMap<string, string>,
+): PersistedDailyLessonPlan {
+  const remapped = remapStudentId(plan, studentAliases);
+  const id = planAliases.get(plan.id) ?? plan.id;
+  const items = remapped.items.map(item => ({
+    ...item,
+    selection: item.selection ? remapLessonReference(item.selection, planAliases) : undefined,
+  }));
+  return normalizeDailyLessonIdentity({
+    ...remapped,
+    id,
+    contentHash: hashDailyLessonContent(items),
+    replacedByPlanId: remapped.replacedByPlanId ? planAliases.get(remapped.replacedByPlanId) ?? remapped.replacedByPlanId : undefined,
+    conflictOfPlanId: remapped.conflictOfPlanId ? planAliases.get(remapped.conflictOfPlanId) ?? remapped.conflictOfPlanId : undefined,
+    items,
+  });
+}
+
 function compoundMerge<T>(rows: T[], key: (row: T) => string, merge: (a: T, b: T) => T): T[] {
   const result = new Map<string, T>();
   for (const row of rows) {
@@ -211,22 +297,29 @@ function compoundMerge<T>(rows: T[], key: (row: T) => string, merge: (a: T, b: T
 
 async function orphanReportInTransaction(): Promise<OrphanReport> {
   const studentIds = new Set((await db.students.toArray()).map(student => student.id));
-  const tables = {
-    itemStates: await db.itemStates.toArray(), attempts: await db.attempts.toArray(), sessions: await db.sessions.toArray(),
-    multFactStats: await db.multFactStats.toArray(), quizSessions: await db.quizSessions.toArray(), mathAnswerEvents: await db.mathAnswerEvents.toArray(),
-    learningGoals: await db.learningGoals.toArray(), goalEvents: await db.goalEvents.toArray(), goalEvaluations: await db.goalEvaluations.toArray(),
-    dailyLessonPlans: await db.dailyLessonPlans.toArray(),
-  };
+  const tables = Object.fromEntries(await Promise.all(Object.entries(LEARNER_OWNED_TABLES)
+    .map(async ([name, table]) => [name, await table.toArray()]))) as Record<LearnerOwnedTableName, Array<{ studentId: string }>>;
   const byTable: Record<string, string[]> = {};
   for (const [name, rows] of Object.entries(tables)) {
     const ids = rows.filter(row => !studentIds.has(row.studentId)).map(row => row.studentId);
     if (ids.length) byTable[name] = [...new Set(ids)];
   }
+  const plans = tables.dailyLessonPlans as PersistedDailyLessonPlan[];
+  const planIds = new Set(plans.map(plan => plan.id));
+  const checkLessonReferences = (name: string, rows: Array<{ lessonPlanId?: string }>) => {
+    const ids = rows.flatMap(row => row.lessonPlanId && !planIds.has(row.lessonPlanId) ? [row.lessonPlanId] : []);
+    if (ids.length) byTable[`${name}.lessonPlanId`] = [...new Set(ids)];
+  };
+  checkLessonReferences('mathAnswerEvents', tables.mathAnswerEvents as MathAnswerEvent[]);
+  checkLessonReferences('attempts', tables.attempts as AttemptLog[]);
+  checkLessonReferences('sessions', tables.sessions as PracticeSession[]);
+  checkLessonReferences('goalEvaluations.answerEvents', (tables.goalEvaluations as GoalEvaluation[]).flatMap(row => row.answerEvents ?? []));
+  checkLessonReferences('dailyLessonPlans.items.selection', plans.flatMap(plan => plan.items.map(item => item.selection ?? {})));
   return { orphanCount: Object.values(byTable).reduce((sum, ids) => sum + ids.length, 0), byTable };
 }
 
 export async function findOrphanedStudentReferences(): Promise<OrphanReport> {
-  return db.transaction('r', [db.students, db.itemStates, db.attempts, db.sessions, db.multFactStats, db.quizSessions, db.mathAnswerEvents, db.learningGoals, db.goalEvents, db.goalEvaluations, db.dailyLessonPlans], orphanReportInTransaction);
+  return db.transaction('r', [db.students, ...Object.values(LEARNER_OWNED_TABLES)], orphanReportInTransaction);
 }
 
 export type AppSnapshotV3 = AppSnapshot & { snapshotVersion: 3; metadata: SnapshotFormatMetadata };
@@ -397,32 +490,22 @@ export async function mergeNormalizedSnapshot(remote: AppSnapshotV3): Promise<vo
 
   await db.transaction(
     'rw',
-    [
-      db.students,
-      db.itemStates,
-      db.attempts,
-      db.sessions,
-      db.multFactStats,
-      db.quizSessions,
-      db.mathAnswerEvents,
-      db.learningGoals,
-      db.goalEvents,
-      db.goalEvaluations,
-      db.dailyLessonPlans,
-    ],
+    [db.students, ...Object.values(LEARNER_OWNED_TABLES)],
     async () => {
       const localProfiles = await db.students.toArray();
       const localEvents = await db.mathAnswerEvents.toArray();
+      const localDailyLessonPlans = await db.dailyLessonPlans.toArray();
       const allEvents = byId([...localEvents, ...(remote.mathAnswerEvents ?? [])]);
       const evidenceCounts: Record<string, number> = {};
       for (const event of allEvents) evidenceCounts[event.studentId] = (evidenceCounts[event.studentId] ?? 0) + 1;
-      aliases = resolveCanonicalStudentIds(localProfiles, remote.students, evidenceCounts);
+      const exactIdProfiles = mergeProfilesByExactId(localProfiles, remote.students);
+      aliases = resolveCanonicalStudentIds(localProfiles, exactIdProfiles, evidenceCounts);
 
       const profileGroups = new Map<string, StudentProfile[]>();
-      for (const profile of [...localProfiles, ...remote.students]) {
+      for (const profile of exactIdProfiles) {
         const canonicalId = aliases.get(profile.id) ?? profile.id;
         const group = profileGroups.get(canonicalId) ?? [];
-        if (!group.some(existing => existing.id === profile.id)) group.push(profile);
+        group.push(profile);
         profileGroups.set(canonicalId, group);
       }
       const profiles = [...profileGroups.entries()].map(([canonicalId, group]) => {
@@ -431,16 +514,20 @@ export async function mergeNormalizedSnapshot(remote: AppSnapshotV3): Promise<vo
         return resolved;
       });
 
-      const remap = <T extends { studentId: string }>(rows: T[]) => rows.map(row => remapStudentId(row, aliases));
+      const allDailyLessonPlans = [...localDailyLessonPlans, ...(remote.dailyLessonPlans ?? [])];
+      const lessonPlanAliases = buildLessonPlanAliases(allDailyLessonPlans, aliases);
+      const remap = <T extends { studentId: string; lessonPlanId?: string }>(rows: T[]) => rows
+        .map(row => remapLessonReference(remapStudentId(row, aliases), lessonPlanAliases));
       const remapEvaluations = (rows: GoalEvaluation[]) => remap(rows).map(evaluation => ({
         ...evaluation,
-        answerEvents: evaluation.answerEvents?.map(event => remapStudentId(event, aliases)),
+        answerEvents: evaluation.answerEvents?.map(event => remapLessonReference(remapStudentId(event, aliases), lessonPlanAliases)),
       }));
       const itemStates = compoundMerge(remap([...(await db.itemStates.toArray()), ...remote.itemStates]), row => `${row.studentId}|${row.cardKey}`, mergeCardStateCollision);
       const multFactStats = compoundMerge(remap([...(await db.multFactStats.toArray()), ...(remote.multFactStats ?? [])]), row => `${row.studentId}|${row.key}`, (a, b) => b.totalAttempts > a.totalAttempts ? b : a);
       const goals = compoundMerge(remap([...(await db.learningGoals.toArray()), ...(remote.learningGoals ?? [])]), row => row.id, (a, b) => remoteHasNewerUpdatedAt(b.updatedAt, a.updatedAt) ? b : a);
       const evaluations = compoundMerge(remapEvaluations([...(await db.goalEvaluations.toArray()), ...(remote.goalEvaluations ?? [])]), row => row.id, (a, b) => remoteHasNewerUpdatedAt(b.updatedAt, a.updatedAt) ? b : a);
-      const dailyLessonPlans = resolveDailyLessonPlans(remap([...(await db.dailyLessonPlans.toArray()), ...(remote.dailyLessonPlans ?? [])]));
+      const dailyLessonPlans = resolveDailyLessonPlans(allDailyLessonPlans
+        .map(plan => remapDailyLessonPlan(plan, aliases, lessonPlanAliases)));
       const normalizedEvents = remap(allEvents);
       const sessions = byId(remap([...(await db.sessions.toArray()), ...remote.sessions]));
       const attempts = byId(remap([...(await db.attempts.toArray()), ...remote.attempts]));
@@ -459,21 +546,30 @@ export async function mergeNormalizedSnapshot(remote: AppSnapshotV3): Promise<vo
       await db.itemStates.bulkPut(itemStates);
       await db.multFactStats.bulkPut(multFactStats);
 
+      const canonicalPlanIds = new Set(dailyLessonPlans.map(plan => plan.id));
+      for (const [obsoletePlanId, canonicalPlanId] of lessonPlanAliases) {
+        if (obsoletePlanId !== canonicalPlanId && !canonicalPlanIds.has(obsoletePlanId)) {
+          await db.dailyLessonPlans.delete(obsoletePlanId);
+        }
+      }
+
       const losingIds = [...aliases].filter(([id, canonical]) => id !== canonical).map(([id]) => id);
       for (const losingId of losingIds) {
         await Promise.all([
           db.itemStates.where('studentId').equals(losingId).delete(),
           db.multFactStats.where('studentId').equals(losingId).delete(),
           db.dailyLessonPlans.where('studentId').equals(losingId).delete(),
-          db.students.delete(losingId),
         ]);
       }
+
+      for (const losingId of losingIds) await db.students.delete(losingId);
 
       for (const profile of profiles) affectedStudentIds.add(profile.id);
       for (const event of normalizedEvents) affectedStudentIds.add(event.studentId);
       const orphanReport = await orphanReportInTransaction();
-      const losingOrphans = Object.values(orphanReport.byTable).flat().filter(id => losingIds.includes(id));
-      if (losingOrphans.length) throw new Error(`Sync ownership normalization left orphaned losing-profile records: ${JSON.stringify(orphanReport.byTable)}`);
+      if (orphanReport.orphanCount > 0) {
+        throw new SnapshotMergeError('orphaned_student_references', orphanReport);
+      }
     }
   );
 

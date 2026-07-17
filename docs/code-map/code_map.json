@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-07-17T07:05:06.295823+00:00",
-  "repo_root": "/home/ubuntu/mathfan",
+  "generated_at": "2026-07-17T07:41:26.394157+00:00",
+  "repo_root": "/tmp/mathfan-issue41",
   "package": {
     "name": "mathfan",
     "version": "1.2.0",
@@ -6297,22 +6297,30 @@
     {
       "path": "src/features/sync/learnerKeyMerge.ts",
       "ext": ".ts",
-      "bytes": 2801,
-      "lines": 69,
-      "sha1": "f3aa98d3fbe2",
+      "bytes": 5177,
+      "lines": 128,
+      "sha1": "203809a03569",
       "imports": [
         "../../types/math",
-        "./snapshot"
+        "./timeUtil"
       ],
       "exports": [
+        "compareProfileRevision",
+        "mergeProfilesByExactId",
         "remapStudentId",
         "resolveCanonicalStudentIds",
         "resolveLearnerKeyDuplicate",
+        "stableProfileFingerprint",
         "StudentIdAliasMap"
       ],
       "functions": [
+        "compareProfileRevision",
+        "mergeProfilesByExactId",
+        "mergeSameIdProfile",
         "resolveCanonicalStudentIds",
-        "resolveLearnerKeyDuplicate"
+        "resolveLearnerKeyDuplicate",
+        "stableProfileFingerprint",
+        "stableValue"
       ],
       "classes": [],
       "interfaces": [],
@@ -6330,9 +6338,9 @@
     {
       "path": "src/features/sync/snapshot.ts",
       "ext": ".ts",
-      "bytes": 27969,
-      "lines": 501,
-      "sha1": "488de537a0d9",
+      "bytes": 32612,
+      "lines": 597,
+      "sha1": "75dce2368287",
       "imports": [
         "../../db/dexie",
         "../../types/math",
@@ -6353,17 +6361,24 @@
       "exports": [
         "AppSnapshot",
         "AppSnapshotV3",
+        "canonicalDailyLessonPlanId",
+        "LEARNER_OWNED_TABLES",
+        "LearnerOwnedTableName",
         "normalizeSnapshot",
         "OrphanReport",
         "remoteHasNewerUpdatedAt",
         "SnapshotFormatMetadata",
+        "SnapshotMergeError",
         "SnapshotNormalizationProblem",
         "SnapshotNormalizationResult",
         "validateSnapshot",
         "validTimeMs"
       ],
       "functions": [
+        "buildLessonPlanAliases",
         "buildSnapshot",
+        "canonicalDailyLessonPlanId",
+        "checkLessonReferences",
         "findOrphanedStudentReferences",
         "mergeCardStateCollision",
         "mergeDailyLessonPlan",
@@ -6373,11 +6388,14 @@
         "normalizeSnapshot",
         "orphanReportInTransaction",
         "rank",
+        "remapDailyLessonPlan",
         "remapEvaluations",
         "resolveDailyLessonPlans",
         "validateSnapshot"
       ],
-      "classes": [],
+      "classes": [
+        "SnapshotMergeError"
+      ],
       "interfaces": [
         "AppSnapshot",
         "OrphanReport",
@@ -6386,7 +6404,8 @@
         "SnapshotNormalizationResult"
       ],
       "types": [
-        "AppSnapshotV3"
+        "AppSnapshotV3",
+        "LearnerOwnedTableName"
       ],
       "components": [],
       "hooks": [],
@@ -9284,9 +9303,9 @@
     {
       "path": "src/tests/learnerKeyMerge.test.ts",
       "ext": ".ts",
-      "bytes": 16790,
-      "lines": 282,
-      "sha1": "66d9ac1425fe",
+      "bytes": 26598,
+      "lines": 413,
+      "sha1": "82e6f6aa2488",
       "imports": [
         "../db/dexie",
         "../features/learning/learningEvents",

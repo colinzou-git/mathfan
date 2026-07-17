@@ -615,7 +615,7 @@
 | src/features/sync/driveSync.ts | ../auth/googleAuth |
 | src/features/sync/driveSync.ts | ./snapshot |
 | src/features/sync/learnerKeyMerge.ts | ../../types/math |
-| src/features/sync/learnerKeyMerge.ts | ./snapshot |
+| src/features/sync/learnerKeyMerge.ts | ./timeUtil |
 | src/features/sync/snapshot.ts | ../../db/dexie |
 | src/features/sync/snapshot.ts | ../../types/math |
 | src/features/sync/snapshot.ts | ../curriculum/makeItemFromId |
