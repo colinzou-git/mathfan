@@ -963,6 +963,40 @@ def goal_evaluation_double_submit(page: Page) -> None:
     assert counts["answers"] == 1 and counts["events"] == 1 and counts["scheduled"] <= 1, f"Double submit persisted duplicate evaluation evidence: {counts}"
 
 
+def diagnostic_immediate_persistence(page: Page) -> None:
+    create_profile(page, "DiagnosticTester", "e2e-diagnostic-immediate")
+    page.get_by_role("button", name=re.compile(r"Grade 3 Math Map")).click()
+    expect(page.get_by_role("heading", name="Grade 3 Math Map", exact=True)).to_be_visible()
+    page.get_by_role("button", name="Take a quick check", exact=True).click()
+    expect(page.get_by_role("heading", name="Quick Check", exact=True)).to_be_visible()
+    page.get_by_role("button", name=re.compile(r"Let's go")).click()
+
+    # Every current diagnostic item offers numeric buttons. A double click must
+    # still create one canonical answer, and it must be durable before question 2.
+    page.get_by_role("button", name=re.compile(r"^-?\d+(?:\.\d+)?$"), exact=True).first.click()
+    page.get_by_role("button", name=re.compile(r"Check")).last.dblclick()
+    expect(page.get_by_text(re.compile(r"Correct!|Nice try!"))).to_be_visible()
+    counts = page.evaluate("""async () => {
+        const db = await new Promise((resolve, reject) => { const request = indexedDB.open('mathfan'); request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error); });
+        const read = store => new Promise((resolve, reject) => { const request = db.transaction(store).objectStore(store).getAll(); request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error); });
+        const events = await read('mathAnswerEvents');
+        const attempts = await read('attempts');
+        const states = await read('itemStates');
+        db.close();
+        return { events: events.filter(event => event.mode === 'diagnostic').length, attempts: attempts.length, states: states.length };
+    }""")
+    assert counts == {"events": 1, "attempts": 1, "states": 1}, f"Diagnostic answer was not saved atomically before advance: {counts}"
+
+    page.reload(wait_until="domcontentloaded")
+    persisted = page.evaluate("""async () => {
+        const db = await new Promise((resolve, reject) => { const request = indexedDB.open('mathfan'); request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error); });
+        const events = await new Promise((resolve, reject) => { const request = db.transaction('mathAnswerEvents').objectStore('mathAnswerEvents').getAll(); request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error); });
+        db.close();
+        return events.filter(event => event.mode === 'diagnostic').length;
+    }""")
+    assert persisted == 1, f"Reload lost the completed mid-diagnostic answer: {persisted}"
+
+
 def run_scenario(
     browser: Browser,
     name: str,
@@ -1063,6 +1097,7 @@ def main() -> int:
             ("adaptive-lesson-and-manual", {"width": 390, "height": 844}, adaptive_lesson_and_manual_fallback, False),
             ("daily-review-requested-rounds", {"width": 390, "height": 844}, daily_review_requested_rounds, False),
             ("practice-save-recovery", {"width": 390, "height": 844}, practice_save_failure_recovery, False),
+            ("diagnostic-immediate-persistence", {"width": 1024, "height": 768}, diagnostic_immediate_persistence, False),
             ("goal-evaluation-double-submit", {"width": 1024, "height": 768}, goal_evaluation_double_submit, False),
             ("legacy-scheduler-upgrade", {"width": 1024, "height": 768}, legacy_scheduler_upgrade, False),
             ("distinct-same-name-learners", {"width": 1024, "height": 768}, distinct_same_name_learners, False),

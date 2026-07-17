@@ -1,66 +1,61 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { DiagnosticSession } from '../features/diagnosis/DiagnosticSession';
-import { recordDiagnosticAnswerWithRetry } from '../features/diagnosis/diagnosticPersistence';
+import {
+  DiagnosticStateConflictError,
+  persistDiagnosticAnswerProposal,
+  retryDiagnosticWriteJob,
+} from '../features/diagnosis/diagnosticPersistence';
 import { itemStateRepo } from '../db/repositories';
+import type { PracticeItem } from '../types/math';
 
-const diagnosticItem = {
-  id: 'MUL_2x4',
-  skillId: 'SKILL_MUL_FACTS',
-  itemType: 'multiplication_fact' as const,
-  prompt: '2 x 4',
-  answer: 8,
-  answerInput: 'numeric' as const,
-  tags: ['multiplication', 'table_2', 'table_4'],
-  difficulty: 0.2,
-  factA: 2,
-  factB: 4,
+const { planItems } = vi.hoisted(() => ({ planItems: [] as PracticeItem[] }));
+const firstItem: PracticeItem = {
+  id: 'MUL_2x4', skillId: 'SKILL_MUL_FACTS', itemType: 'multiplication_fact',
+  prompt: '2 x 4', answer: 8, answerInput: 'numeric', tags: ['multiplication'],
+  difficulty: 0.2, factA: 2, factB: 4,
+};
+const secondItem: PracticeItem = {
+  id: 'MUL_3x4', skillId: 'SKILL_MUL_FACTS', itemType: 'multiplication_fact',
+  prompt: '3 x 4', answer: 12, answerInput: 'numeric', tags: ['multiplication'],
+  difficulty: 0.2, factA: 3, factB: 4,
 };
 
 vi.mock('../features/diagnosis/diagnosticPlanner', () => ({
   buildDiagnosticPlan: (sessionId: string) => ({
     sessionId,
-    items: [diagnosticItem],
+    items: [...planItems],
     description: 'Quick check of times tables and division facts.',
   }),
 }));
-
 vi.mock('../features/diagnosis/diagnosticPersistence', async importOriginal => ({
   ...(await importOriginal<typeof import('../features/diagnosis/diagnosticPersistence')>()),
-  recordDiagnosticAnswerWithRetry: vi.fn(),
+  persistDiagnosticAnswerProposal: vi.fn(),
+  retryDiagnosticWriteJob: vi.fn(),
 }));
+vi.mock('../db/repositories', () => ({ itemStateRepo: { get: vi.fn() } }));
 
-vi.mock('../db/repositories', () => ({
-  itemStateRepo: {
-    get: vi.fn(),
-  },
-}));
-
-function deferred<T>() {
-  let resolve!: (value: T | PromiseLike<T>) => void;
-  let reject!: (reason?: unknown) => void;
-  const promise = new Promise<T>((res, rej) => {
-    resolve = res;
-    reject = rej;
-  });
-  return { promise, resolve, reject };
-}
-
-async function answerOnlyQuestion() {
+async function startAndSubmit(answer: string) {
   fireEvent.click(screen.getByRole('button', { name: /let's go/i }));
-  fireEvent.click(screen.getByRole('button', { name: '8' }));
+  for (const digit of answer) fireEvent.click(screen.getByRole('button', { name: digit }));
   fireEvent.click(screen.getAllByRole('button', { name: /check/i })[0]);
-  await act(async () => {
-    vi.advanceTimersByTime(1200);
-  });
-  expect(screen.getByText(/great work/i)).toBeInTheDocument();
+  await act(async () => { await Promise.resolve(); await Promise.resolve(); });
 }
 
-describe('DiagnosticSession persistence', () => {
+async function advanceFeedback() {
+  await act(async () => { vi.advanceTimersByTime(1200); });
+}
+
+describe('DiagnosticSession immediate immutable persistence', () => {
   beforeEach(() => {
     vi.useFakeTimers();
-    vi.mocked(itemStateRepo.get).mockResolvedValue(undefined);
-    vi.mocked(recordDiagnosticAnswerWithRetry).mockReset();
+    planItems.splice(0, planItems.length, firstItem);
+    vi.mocked(itemStateRepo.get).mockReset().mockResolvedValue(undefined);
+    vi.mocked(persistDiagnosticAnswerProposal).mockReset().mockResolvedValue(undefined);
+    vi.mocked(retryDiagnosticWriteJob).mockReset().mockImplementation(async job => {
+      job.status = 'saved';
+      job.lastError = undefined;
+    });
   });
 
   afterEach(() => {
@@ -68,164 +63,114 @@ describe('DiagnosticSession persistence', () => {
     cleanup();
   });
 
-  it('auto-persists writes when last question transitions to done without button click', async () => {
-    vi.mocked(recordDiagnosticAnswerWithRetry).mockResolvedValue(undefined);
+  it('persists question 1 before question 2 is displayed', async () => {
+    planItems.push(secondItem);
+    render(<DiagnosticSession studentId="student-1" onComplete={vi.fn()} onCancel={vi.fn()} />);
+    await startAndSubmit('8');
 
-    render(<DiagnosticSession studentId="student-1" onComplete={vi.fn()} onCancel={() => {}} />);
-    await answerOnlyQuestion();
-
-    // Persistence triggered automatically — no button click needed
-    expect(vi.mocked(recordDiagnosticAnswerWithRetry)).toHaveBeenCalledTimes(1);
+    expect(persistDiagnosticAnswerProposal).toHaveBeenCalledTimes(1);
+    expect(screen.getByText(/correct/i)).toBeInTheDocument();
+    expect(screen.getByText('1 / 2')).toBeInTheDocument();
+    await advanceFeedback();
+    expect(screen.getByText('2 / 2')).toBeInTheDocument();
   });
 
-  it('persists untimed grading evidence while retaining the measured latency', async () => {
-    vi.mocked(recordDiagnosticAnswerWithRetry).mockResolvedValue(undefined);
-    const now = vi.spyOn(performance, 'now')
-      .mockReturnValueOnce(1_000)
-      .mockReturnValueOnce(21_000);
-
-    render(<DiagnosticSession studentId="student-1" onComplete={vi.fn()} onCancel={() => {}} />);
-    await answerOnlyQuestion();
-
-    const payload = vi.mocked(recordDiagnosticAnswerWithRetry).mock.calls[0][0];
-    expect(payload.event).toMatchObject({
-      mode: 'diagnostic',
-      isCorrect: true,
-      latencyMs: 20_000,
-      reviewGrade: 'good',
-      ratingReason: 'untimed_assessment_correct',
-      responsePolicy: 'atomic_fluency',
-      gradingContext: 'untimed_assessment',
-      fluencyBand: 'not_applicable',
-    });
-    expect(payload.event.schedulingTelemetry?.rating).toMatchObject({
-      reviewGrade: 'good',
-      gradingContext: 'untimed_assessment',
-    });
-    expect(payload.attempt.latencyMs).toBe(20_000);
-    now.mockRestore();
+  it('retains every completed answer when unmounted mid-session', async () => {
+    planItems.push(secondItem);
+    const view = render(<DiagnosticSession studentId="student-1" onComplete={vi.fn()} onCancel={vi.fn()} />);
+    await startAndSubmit('8');
+    view.unmount();
+    expect(persistDiagnosticAnswerProposal).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(persistDiagnosticAnswerProposal).mock.calls[0][0].event.itemId).toBe(firstItem.id);
   });
 
-  it('shows saving indicator while auto-save is in progress', async () => {
-    const write = deferred<void>();
-    vi.mocked(recordDiagnosticAnswerWithRetry).mockReturnValue(write.promise);
+  it('keeps the learner on the question and reports the exact unsaved count after failure', async () => {
+    vi.mocked(persistDiagnosticAnswerProposal).mockRejectedValueOnce(new Error('disk unavailable'));
+    render(<DiagnosticSession studentId="student-1" onComplete={vi.fn()} onCancel={vi.fn()} />);
+    await startAndSubmit('8');
 
-    render(<DiagnosticSession studentId="student-1" onComplete={vi.fn()} onCancel={() => {}} />);
-    await answerOnlyQuestion();
-
-    // Auto-flush started immediately — saving indicator is visible
-    expect(screen.getByText(/saving your results/i)).toBeInTheDocument();
-
-    // Resolve the write and confirm "See my Math Map" button appears
-    await act(async () => {
-      write.resolve();
-      await write.promise;
-    });
-    expect(screen.getByRole('button', { name: /see my math map/i })).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent('1 answer remain unsaved');
+    expect(screen.getByText('1 / 1')).toBeInTheDocument();
+    expect(screen.queryByText(/great work/i)).not.toBeInTheDocument();
   });
 
-  it('does not duplicate writes when "See my Math Map" is clicked after auto-save', async () => {
-    vi.mocked(recordDiagnosticAnswerWithRetry).mockResolvedValue(undefined);
-    const onComplete = vi.fn();
+  it('retries the same immutable proposal and advances exactly once after success', async () => {
+    vi.mocked(persistDiagnosticAnswerProposal).mockRejectedValueOnce(new Error('disk unavailable'));
+    render(<DiagnosticSession studentId="student-1" onComplete={vi.fn()} onCancel={vi.fn()} />);
+    await startAndSubmit('8');
+    const original = vi.mocked(persistDiagnosticAnswerProposal).mock.calls[0][0];
 
-    render(<DiagnosticSession studentId="student-1" onComplete={onComplete} onCancel={() => {}} />);
-    await answerOnlyQuestion();
-
-    // Auto-save already completed; click the button to navigate
-    fireEvent.click(screen.getByRole('button', { name: /see my math map/i }));
+    fireEvent.click(screen.getByRole('button', { name: /try saving again/i }));
     await act(async () => { await Promise.resolve(); });
-
-    expect(onComplete).toHaveBeenCalledTimes(1);
-    // Only the auto-flush wrote; no second call on button click
-    expect(vi.mocked(recordDiagnosticAnswerWithRetry)).toHaveBeenCalledTimes(1);
+    expect(retryDiagnosticWriteJob).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(retryDiagnosticWriteJob).mock.calls[0][0].proposal).toBe(original);
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(screen.getByText(/correct/i)).toBeInTheDocument();
+    await advanceFeedback();
+    expect(screen.getByText(/great work/i)).toBeInTheDocument();
   });
 
-  it('shows error state when auto-save fails', async () => {
-    vi.mocked(recordDiagnosticAnswerWithRetry).mockRejectedValue(new Error('db unavailable'));
-    const onComplete = vi.fn();
-
-    render(<DiagnosticSession studentId="student-1" onComplete={onComplete} onCancel={() => {}} />);
-    await answerOnlyQuestion();
-
-    await act(async () => { await Promise.resolve(); });
-    expect(screen.getByText(/could not save results/i)).toBeInTheDocument();
-    expect(vi.mocked(recordDiagnosticAnswerWithRetry)).toHaveBeenCalledTimes(1);
-    expect(onComplete).not.toHaveBeenCalled();
-  });
-
-  it('retries when the first payload construction fails, not just the write', async () => {
-    // The thunk reads itemStateRepo.get before building the payload. If that read
-    // throws on the first flush, "Try again" must rebuild the payload from scratch
-    // and succeed — the old design captured a settled (rejected) promise and could
-    // never recover from a construction-time failure.
-    vi.mocked(itemStateRepo.get)
-      .mockRejectedValueOnce(new Error('itemState read failed'))
-      .mockResolvedValue(undefined);
-    vi.mocked(recordDiagnosticAnswerWithRetry).mockResolvedValue(undefined);
-    const onComplete = vi.fn();
-
-    render(<DiagnosticSession studentId="student-1" onComplete={onComplete} onCancel={() => {}} />);
-    await answerOnlyQuestion();
-
-    // Auto-flush failed during payload construction — the write was never attempted.
-    await act(async () => { await Promise.resolve(); });
-    expect(screen.getByText(/could not save results/i)).toBeInTheDocument();
-    expect(vi.mocked(recordDiagnosticAnswerWithRetry)).not.toHaveBeenCalled();
-    expect(onComplete).not.toHaveBeenCalled();
-
-    // Retry — the read now succeeds, payload is rebuilt, and the write goes through.
-    fireEvent.click(screen.getByRole('button', { name: /try again/i }));
-    await act(async () => { await Promise.resolve(); });
-    expect(vi.mocked(recordDiagnosticAnswerWithRetry)).toHaveBeenCalledTimes(1);
-    expect(onComplete).toHaveBeenCalledTimes(1);
-  });
-
-  it('accepts keyboard digit input and submits on Enter', async () => {
-    vi.mocked(recordDiagnosticAnswerWithRetry).mockResolvedValue(undefined);
-
-    render(<DiagnosticSession studentId="student-1" onComplete={vi.fn()} onCancel={() => {}} />);
+  it('uses fixed IDs and timestamps and synchronously blocks double submission', async () => {
+    const fixed = new Date('2026-07-16T08:30:00.000Z');
+    vi.setSystemTime(fixed);
+    render(<DiagnosticSession studentId="student-1" onComplete={vi.fn()} onCancel={vi.fn()} />);
     fireEvent.click(screen.getByRole('button', { name: /let's go/i }));
+    fireEvent.click(screen.getByRole('button', { name: '8' }));
+    const check = screen.getAllByRole('button', { name: /check/i })[0];
+    fireEvent.click(check);
+    fireEvent.click(check);
+    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
 
-    // Type the answer with the keyboard, including a Backspace correction.
-    fireEvent.keyDown(window, { key: '9' });
-    fireEvent.keyDown(window, { key: 'Backspace' });
+    expect(persistDiagnosticAnswerProposal).toHaveBeenCalledTimes(1);
+    const saved = vi.mocked(persistDiagnosticAnswerProposal).mock.calls[0][0];
+    expect(saved.event.id).toBeTruthy();
+    expect(saved.attempt.id).toBeTruthy();
+    expect(saved.event.createdAt).toBe(fixed.toISOString());
+    expect(saved.attempt.createdAt).toBe(fixed.toISOString());
+    expect(saved.stateAfter?.lastSeenAt).toBe(fixed.toISOString());
+  });
+
+  it('requires explicit resubmission with new IDs and the latest state after a conflict', async () => {
+    vi.mocked(persistDiagnosticAnswerProposal)
+      .mockRejectedValueOnce(new DiagnosticStateConflictError('fact:mul:2x4'))
+      .mockResolvedValueOnce(undefined);
+    vi.mocked(itemStateRepo.get)
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce({
+        studentId: 'student-1', cardKey: 'fact:mul:2x4', lastItemId: firstItem.id,
+        skillId: firstItem.skillId, attemptCount: 4, correctCount: 3, lastCorrect: true,
+        lastLatencyMs: 1000, medianLatencyMs: 1000, ease: 2.5, stabilityDays: 2,
+        difficulty: firstItem.difficulty, reps: 4, lapses: 1, masteryLevel: 'learning', mistakePatterns: [],
+      });
+    render(<DiagnosticSession studentId="student-1" onComplete={vi.fn()} onCancel={vi.fn()} />);
+    await startAndSubmit('8');
+    const stale = vi.mocked(persistDiagnosticAnswerProposal).mock.calls[0][0];
+
+    expect(screen.getByRole('alert')).toHaveTextContent(/changed in another session/i);
+    fireEvent.click(screen.getByRole('button', { name: /reload question/i }));
+    expect(persistDiagnosticAnswerProposal).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getAllByRole('button', { name: /check/i })[0]);
+    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+
+    const fresh = vi.mocked(persistDiagnosticAnswerProposal).mock.calls[1][0];
+    expect(fresh.event.id).not.toBe(stale.event.id);
+    expect(fresh.attempt.id).not.toBe(stale.attempt.id);
+    expect(fresh.expectedStateRevision.attemptCount).toBe(4);
+  });
+
+  it('supports keyboard input and Escape without changing persistence behavior', async () => {
+    const onCancel = vi.fn();
+    render(<DiagnosticSession studentId="student-1" onComplete={vi.fn()} onCancel={onCancel} />);
+    fireEvent.click(screen.getByRole('button', { name: /let's go/i }));
     fireEvent.keyDown(window, { key: '8' });
     fireEvent.keyDown(window, { key: 'Enter' });
-
-    await act(async () => { vi.advanceTimersByTime(1200); });
-
-    expect(screen.getByText(/great work/i)).toBeInTheDocument();
-    expect(vi.mocked(recordDiagnosticAnswerWithRetry)).toHaveBeenCalledTimes(1);
-  });
-
-  it('exits via Escape during an active question', () => {
-    const onCancel = vi.fn();
+    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+    expect(persistDiagnosticAnswerProposal).toHaveBeenCalledTimes(1);
+    cleanup();
 
     render(<DiagnosticSession studentId="student-1" onComplete={vi.fn()} onCancel={onCancel} />);
     fireEvent.click(screen.getByRole('button', { name: /let's go/i }));
     fireEvent.keyDown(window, { key: 'Escape' });
-
     expect(onCancel).toHaveBeenCalledTimes(1);
-  });
-
-  it('retries failed diagnostic writes when "Try again" is clicked', async () => {
-    vi.mocked(recordDiagnosticAnswerWithRetry)
-      .mockRejectedValueOnce(new Error('db unavailable'))
-      .mockResolvedValueOnce(undefined);
-    const onComplete = vi.fn();
-
-    render(<DiagnosticSession studentId="student-1" onComplete={onComplete} onCancel={() => {}} />);
-    await answerOnlyQuestion();
-
-    // Auto-flush failed — error shown
-    await act(async () => { await Promise.resolve(); });
-    expect(screen.getByText(/could not save results/i)).toBeInTheDocument();
-    expect(onComplete).not.toHaveBeenCalled();
-
-    // Retry — should succeed and call onComplete
-    fireEvent.click(screen.getByRole('button', { name: /try again/i }));
-    await act(async () => { await Promise.resolve(); });
-    expect(vi.mocked(recordDiagnosticAnswerWithRetry)).toHaveBeenCalledTimes(2);
-    expect(onComplete).toHaveBeenCalledTimes(1);
   });
 });

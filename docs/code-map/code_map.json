@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-17T09:48:19.888578+00:00",
+  "generated_at": "2026-07-17T10:19:52.959777+00:00",
   "repo_root": "/home/ubuntu/mathfan",
   "package": {
     "name": "mathfan",
@@ -570,9 +570,9 @@
     {
       "path": "scripts/e2e_mathfan.py",
       "ext": ".py",
-      "bytes": 66537,
-      "lines": 1089,
-      "sha1": "ac003c7049b2",
+      "bytes": 69305,
+      "lines": 1124,
+      "sha1": "77c5a2fd802a",
       "imports": [
         "__future__",
         "json",
@@ -593,6 +593,7 @@
         "create_profile",
         "daily_review_requested_rounds",
         "desktop_student_journey",
+        "diagnostic_immediate_persistence",
         "distinct_same_name_learners",
         "division_decomposition_lesson",
         "division_model_choice_lesson",
@@ -629,6 +630,7 @@
         "create_profile",
         "daily_review_requested_rounds",
         "desktop_student_journey",
+        "diagnostic_immediate_persistence",
         "distinct_same_name_learners",
         "division_decomposition_lesson",
         "division_model_choice_lesson",
@@ -2875,6 +2877,40 @@
       "read_error": null
     },
     {
+      "path": "src/features/diagnosis/diagnosticAnswerProposal.ts",
+      "ext": ".ts",
+      "bytes": 5552,
+      "lines": 164,
+      "sha1": "3e1f5b2488b0",
+      "imports": [
+        "../../types/math",
+        "../learning/learningEvents",
+        "../learning/schedulingTelemetry",
+        "../mastery/misconceptionEngine",
+        "../practice/answerChecker",
+        "../scheduler/cardModel",
+        "../scheduler/scheduler",
+        "./diagnosticPersistence"
+      ],
+      "exports": [
+        "buildDiagnosticAnswerProposal"
+      ],
+      "functions": [
+        "buildDiagnosticAnswerProposal",
+        "classifySchedulerError"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Exports reusable code: buildDiagnosticAnswerProposal.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/features/diagnosis/diagnosticCompletion.ts",
       "ext": ".ts",
       "bytes": 222,
@@ -2901,21 +2937,40 @@
     {
       "path": "src/features/diagnosis/diagnosticPersistence.ts",
       "ext": ".ts",
-      "bytes": 997,
-      "lines": 33,
-      "sha1": "6664056b2d9c",
+      "bytes": 4786,
+      "lines": 146,
+      "sha1": "e328d31ea7d3",
       "imports": [
-        "../learning/recordAnswer"
+        "../../db/dexie",
+        "../../types/math",
+        "../learning/learningEvents"
       ],
       "exports": [
+        "countUnsavedDiagnosticJobs",
+        "DiagnosticAnswerProposal",
+        "DiagnosticIdempotencyConflictError",
+        "DiagnosticStateConflictError",
+        "DiagnosticStateRevision",
+        "diagnosticStateRevision",
         "DiagnosticWriteJob"
       ],
       "functions": [
+        "countUnsavedDiagnosticJobs",
+        "diagnosticFingerprint",
+        "diagnosticStateRevision",
         "flushDiagnosticWriteJobs",
-        "recordDiagnosticAnswerWithRetry"
+        "persistDiagnosticAnswerProposal",
+        "retryDiagnosticWriteJob",
+        "safeMessage",
+        "sameDiagnosticStateRevision"
       ],
-      "classes": [],
+      "classes": [
+        "DiagnosticIdempotencyConflictError",
+        "DiagnosticStateConflictError"
+      ],
       "interfaces": [
+        "DiagnosticAnswerProposal",
+        "DiagnosticStateRevision",
         "DiagnosticWriteJob"
       ],
       "types": [],
@@ -2923,7 +2978,7 @@
       "hooks": [],
       "css_classes": [],
       "json_keys": [],
-      "purpose": "Exports reusable code: DiagnosticWriteJob.",
+      "purpose": "Local persistence/database layer.",
       "too_large": false,
       "read_error": null
     },
@@ -2964,22 +3019,18 @@
     {
       "path": "src/features/diagnosis/DiagnosticSession.tsx",
       "ext": ".tsx",
-      "bytes": 20747,
-      "lines": 612,
-      "sha1": "e3e3d8cbf10e",
+      "bytes": 19112,
+      "lines": 595,
+      "sha1": "7ecba673eee8",
       "imports": [
         "../../components/NumPad",
         "../../db/repositories",
         "../../types/math",
         "../../utils/id",
-        "../learning/learningEvents",
-        "../learning/schedulingTelemetry",
-        "../mastery/misconceptionEngine",
-        "../practice/answerChecker",
         "../practice/QuestionRenderer",
         "../scheduler/cardModel",
-        "../scheduler/scheduler",
         "../time/clock",
+        "./diagnosticAnswerProposal",
         "./diagnosticPersistence",
         "./diagnosticPlanner",
         "react"
@@ -8214,15 +8265,21 @@
     {
       "path": "src/tests/diagnosticPersistence.test.ts",
       "ext": ".ts",
-      "bytes": 982,
-      "lines": 19,
-      "sha1": "81f2a2d52283",
+      "bytes": 5219,
+      "lines": 109,
+      "sha1": "1e5ff5ecdd2a",
       "imports": [
+        "../db/dexie",
+        "../features/curriculum/makeItemFromId",
+        "../features/diagnosis/diagnosticAnswerProposal",
         "../features/diagnosis/diagnosticPersistence",
+        "../features/learning/eventRebuild",
         "vitest"
       ],
       "exports": [],
-      "functions": [],
+      "functions": [
+        "proposal"
+      ],
       "classes": [],
       "interfaces": [],
       "types": [],
@@ -8230,7 +8287,7 @@
       "hooks": [],
       "css_classes": [],
       "json_keys": [],
-      "purpose": "Automated tests.",
+      "purpose": "Local persistence/database layer.",
       "too_large": false,
       "read_error": null
     },
@@ -8261,19 +8318,21 @@
     {
       "path": "src/tests/diagnosticSession.test.tsx",
       "ext": ".tsx",
-      "bytes": 9302,
-      "lines": 232,
-      "sha1": "f1b4532fb044",
+      "bytes": 8591,
+      "lines": 177,
+      "sha1": "d3a21eda02c9",
       "imports": [
         "../db/repositories",
         "../features/diagnosis/diagnosticPersistence",
         "../features/diagnosis/DiagnosticSession",
+        "../types/math",
         "@testing-library/react",
         "vitest"
       ],
       "exports": [],
       "functions": [
-        "answerOnlyQuestion"
+        "advanceFeedback",
+        "startAndSubmit"
       ],
       "classes": [],
       "interfaces": [],
