@@ -4,7 +4,7 @@
 
 | Package | Import count |
 | --- | --- |
-| vitest | 90 |
+| vitest | 91 |
 | react | 35 |
 | @testing-library/react | 19 |
 | pathlib | 8 |
@@ -612,7 +612,9 @@
 | src/features/stats/TodayAchievementSection.tsx | ../time/clock |
 | src/features/stats/TodayAchievementSection.tsx | ./statsEngine |
 | src/features/stats/TodayAchievementSection.tsx | ./todayAchievement |
+| src/features/sync/canonicalEventMerge.ts | ../learning/learningEvents |
 | src/features/sync/driveSync.ts | ../auth/googleAuth |
+| src/features/sync/driveSync.ts | ./canonicalEventMerge |
 | src/features/sync/driveSync.ts | ./snapshot |
 | src/features/sync/learnerKeyMerge.ts | ../../types/math |
 | src/features/sync/learnerKeyMerge.ts | ./timeUtil |
@@ -628,6 +630,7 @@
 | src/features/sync/snapshot.ts | ../multiplication/types |
 | src/features/sync/snapshot.ts | ../profile/profileBootstrap |
 | src/features/sync/snapshot.ts | ../scheduler/cardModel |
+| src/features/sync/snapshot.ts | ./canonicalEventMerge |
 | src/features/sync/snapshot.ts | ./learnerKeyMerge |
 | src/features/sync/snapshot.ts | ./snapshotParsers |
 | src/features/sync/snapshot.ts | ./timeUtil |
@@ -718,6 +721,12 @@
 | src/tests/areaPerimeterRedesign.test.tsx | ../types/math |
 | src/tests/arithmeticItems.test.ts | ../features/curriculum/arithmeticItems |
 | src/tests/barGraphGeometry.test.ts | ../features/visuals/barGraphGeometry |
+| src/tests/canonicalEventMerge.test.ts | ../db/dexie |
+| src/tests/canonicalEventMerge.test.ts | ../features/learning/eventRebuild |
+| src/tests/canonicalEventMerge.test.ts | ../features/learning/learningEvents |
+| src/tests/canonicalEventMerge.test.ts | ../features/sync/canonicalEventMerge |
+| src/tests/canonicalEventMerge.test.ts | ../features/sync/snapshot |
+| src/tests/canonicalEventMerge.test.ts | ../types/math |
 | src/tests/cardModel.test.ts | ../features/curriculum/makeItemFromId |
 | src/tests/cardModel.test.ts | ../features/learning/learningEvents |
 | src/tests/cardModel.test.ts | ../features/scheduler/cardModel |
@@ -784,6 +793,7 @@
 | src/tests/divisionRedesign.test.tsx | ../features/visuals/VisualModel |
 | src/tests/divisionRedesign.test.tsx | ../types/math |
 | src/tests/divisionRedesign.test.tsx | ../utils/rng |
+| src/tests/driveSyncErrors.test.ts | ../features/sync/canonicalEventMerge |
 | src/tests/driveSyncErrors.test.ts | ../features/sync/driveSync |
 | src/tests/eventOrdering.test.ts | ../features/learning/eventOrdering |
 | src/tests/eventOrdering.test.ts | ../features/learning/learningEvents |

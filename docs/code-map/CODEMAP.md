@@ -1,6 +1,6 @@
 # Code Map Overview
 
-Generated: 2026-07-17 07:41:26 UTC
+Generated: 2026-07-17 08:14:55 UTC
 
 Repo root: `/home/ubuntu/mathfan`
 Output folder: `/home/ubuntu/mathfan/docs/code-map`
@@ -14,9 +14,9 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 - Package name: `mathfan`
 - Version: `1.2.0`
 - Module type: `module`
-- Scanned files: **299**
-- Scanned lines: **56,485**
-- Scanned bytes: **2,437,125**
+- Scanned files: **301**
+- Scanned lines: **56,828**
+- Scanned bytes: **2,454,013**
 
 ## NPM scripts
 
@@ -74,11 +74,12 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 | --- | --- | --- | --- |
 | src/App.tsx | 401 | Top-level React app shell: routes/screens, global state, and feature wiring. | App, exportMigrationDiagnostics, handleQuizDone, handleSessionDone, pickOperation, retryMigration, runBootstrap, selectProfile |
 | src/features/sync/SyncWidget.tsx | 156 | Cloud sync/auth/data transfer logic. | GoogleIcon, SyncWidget, friendlyError, GoogleIcon, initials, SyncWidget, timeSince |
-| src/features/sync/snapshot.ts | 597 | Local persistence/database layer. | AppSnapshot, AppSnapshotV3, canonicalDailyLessonPlanId, LEARNER_OWNED_TABLES, LearnerOwnedTableName, normalizeSnapshot, OrphanReport, remoteHasNewerUpdatedAt |
+| src/features/sync/snapshot.ts | 611 | Local persistence/database layer. | AppSnapshot, AppSnapshotV3, canonicalDailyLessonPlanId, LEARNER_OWNED_TABLES, LearnerOwnedTableName, normalizeSnapshot, OrphanReport, remoteHasNewerUpdatedAt |
 | vite.config.ts | 82 | Vite build/PWA configuration. | buildInfoPlugin |
 | package.json | 53 | Project package metadata, scripts, dependencies, and dev tooling. |  |
 | src/main.tsx | 21 | React entry point that mounts the app. |  |
-| src/features/sync/driveSync.ts | 164 | Cloud sync/auth/data transfer logic. | DriveFileInfo, SyncResult, SyncStatus, authFetch, downloadSnapshot, findSyncFile, getDriveFileInfo, newestSyncFile |
+| src/features/sync/driveSync.ts | 177 | Cloud sync/auth/data transfer logic. | DriveFileInfo, syncFailureResult, SyncResult, SyncStatus, authFetch, downloadSnapshot, findSyncFile, getDriveFileInfo |
+| src/features/sync/canonicalEventMerge.ts | 154 | Cloud sync/auth/data transfer logic. | assertEquivalentCanonicalEvents, assertNoConflictingCanonicalEventIds, CanonicalEventConflictDetails, CanonicalEventConflictError, CanonicalEventFingerprint, canonicalEventFingerprint, canonicalEventFingerprintObject, differingCanonicalEventFields |
 | src/features/sync/snapshotParsers.ts | 131 | Cloud sync/auth/data transfer logic. | parseAttemptLog, parseDailyLessonPlanShape, parseGoalEvaluation, parseGoalEvent, parseLearningGoal, parseMathAnswerEvent, parseMultiplicationFactStat, parsePracticeSession |
 | src/features/sync/learnerKeyMerge.ts | 128 | Cloud sync/auth/data transfer logic. | compareProfileRevision, mergeProfilesByExactId, remapStudentId, resolveCanonicalStudentIds, resolveLearnerKeyDuplicate, stableProfileFingerprint, StudentIdAliasMap, compareProfileRevision |
 | src/features/sync/useSync.ts | 99 | Cloud sync/auth/data transfer logic. | useSync, initAuth, SyncState, useSync, recordSync, useSync |
@@ -101,7 +102,6 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 | src/features/mastery/skillPracticePlanner.ts | 905 | Grade 3 skill practice planner: maps skill IDs to SessionConfig for the mastery map. | buildDivisionFocusSequence, buildFocusSequence, buildRegroupingFocusSequence, FocusSequence, FocusSequenceContext, planFractionFocusSequence, planLearningUnitsForSkill, PlanOptions |
 | src/features/practice/usePracticeSession.ts | 900 | Local persistence/database layer. | usePracticeSession, CorrectResult, LastSessionSummary, SessionState, usePracticeSession, commit, getStaticItem, planned |
 | src/features/goals/GoalEvaluationSession.tsx | 760 | Exports reusable code: GoalEvaluationSession. | GoalEvaluationSession, buildNewLearningCandidates, buildReviewFindings, buildUpdatedState, confirmCancel, continueNext, evaluationArgs, GoalEvaluationSession |
-| src/features/diagnosis/DiagnosticSession.tsx | 612 | Exports reusable code: DiagnosticSession. | DiagnosticSession, complete, DiagnosticSession, onKey |
 
 ## Repository tree, filtered
 
@@ -274,6 +274,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   │   ├── TodayAchievementDetail.tsx
 │   │   │   └── TodayAchievementSection.tsx
 │   │   ├── sync
+│   │   │   ├── canonicalEventMerge.ts
 │   │   │   ├── driveSync.ts
 │   │   │   ├── learnerKeyMerge.ts
 │   │   │   ├── snapshot.ts
@@ -334,6 +335,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   ├── areaPerimeterRedesign.test.tsx
 │   │   ├── arithmeticItems.test.ts
 │   │   ├── barGraphGeometry.test.ts
+│   │   ├── canonicalEventMerge.test.ts
 │   │   ├── cardModel.test.ts
 │   │   ├── cardStateMigration.test.ts
 │   │   ├── clock.test.ts
@@ -605,53 +607,53 @@ Purpose: Local persistence/database layer.
   12: import { CARD_MODEL_VERSION } from '../learning/schedulingTelemetry';
   13: import { assertValidPracticeItem, validatePracticeItem } from '../curriculum/practiceContentSpec';
   14: import { loadActiveProfileSelection, saveActiveProfileSelection } from '../profile/profileBootstrap';
-  15: import {
-  16:   parseAttemptLog, parseDailyLessonPlanShape, parseGoalEvaluation, parseGoalEvent, parseLearningGoal,
-  17:   parseMathAnswerEvent, parseMultiplicationFactStat, parsePracticeSession, parseQuizSession,
-  18:   parseSnapshotTable, parseStudentItemState, parseStudentProfile,
-  19: } from './snapshotParsers';
-  20:
-  21: export interface SnapshotFormatMetadata {
-  22:   appVersion: string;
-  23:   gitSha: string;
-  24:   buildTime: string;
-  25:   schemaVersion: 3;
-  26:   cardModelVersion: string;
-  27:   exportedAt: string;
-  28: }
-  29:
-  30: export interface AppSnapshot {
-  31:   appId: 'mathfan';
-  32:   snapshotVersion: 1 | 2 | 3;
-  33:   snapshotAt: string;
-  34:   metadata?: SnapshotFormatMetadata;
-  35:   students: StudentProfile[];
-  36:   itemStates: StudentItemState[];
-  37:   attempts: AttemptLog[];
-  38:   sessions: PracticeSession[];
-  39:   // Added in quiz feature — absent in older snapshots; treat missing as []
-  40:   multFactStats?: MultiplicationFactStats[];
-  41:   quizSessions?: QuizSession[];
-  42:   // Added with canonical event log — absent in older snapshots; treat missing as []
-  43:   mathAnswerEvents?: MathAnswerEvent[];
-  44:   learningGoals?: LearningGoal[];
-  45:   goalEvents?: GoalEvent[];
-  46:   goalEvaluations?: GoalEvaluation[];
-  47:   dailyLessonPlans?: PersistedDailyLessonPlan[];
-  48: }
-  49:
-  50: // ── Build ─────────────────────────────────────────────────────────────────────
-  51:
-  52: export async function buildSnapshot(): Promise<AppSnapshotV3> {
-  53:   const tables = [
-  54:     db.students,
-  55:     db.itemStates,
-  56:     db.attempts,
-  57:     db.sessions,
-  58:     db.multFactStats,
-  59:     db.quizSessions,
-  60:     db.mathAnswerEvents,
-... (536 more lines)
+  15: import { assertNoConflictingCanonicalEventIds, mergeCanonicalEvents } from './canonicalEventMerge';
+  16: import {
+  17:   parseAttemptLog, parseDailyLessonPlanShape, parseGoalEvaluation, parseGoalEvent, parseLearningGoal,
+  18:   parseMathAnswerEvent, parseMultiplicationFactStat, parsePracticeSession, parseQuizSession,
+  19:   parseSnapshotTable, parseStudentItemState, parseStudentProfile,
+  20: } from './snapshotParsers';
+  21:
+  22: export interface SnapshotFormatMetadata {
+  23:   appVersion: string;
+  24:   gitSha: string;
+  25:   buildTime: string;
+  26:   schemaVersion: 3;
+  27:   cardModelVersion: string;
+  28:   exportedAt: string;
+  29: }
+  30:
+  31: export interface AppSnapshot {
+  32:   appId: 'mathfan';
+  33:   snapshotVersion: 1 | 2 | 3;
+  34:   snapshotAt: string;
+  35:   metadata?: SnapshotFormatMetadata;
+  36:   students: StudentProfile[];
+  37:   itemStates: StudentItemState[];
+  38:   attempts: AttemptLog[];
+  39:   sessions: PracticeSession[];
+  40:   // Added in quiz feature — absent in older snapshots; treat missing as []
+  41:   multFactStats?: MultiplicationFactStats[];
+  42:   quizSessions?: QuizSession[];
+  43:   // Added with canonical event log — absent in older snapshots; treat missing as []
+  44:   mathAnswerEvents?: MathAnswerEvent[];
+  45:   learningGoals?: LearningGoal[];
+  46:   goalEvents?: GoalEvent[];
+  47:   goalEvaluations?: GoalEvaluation[];
+  48:   dailyLessonPlans?: PersistedDailyLessonPlan[];
+  49: }
+  50:
+  51: // ── Build ─────────────────────────────────────────────────────────────────────
+  52:
+  53: export async function buildSnapshot(): Promise<AppSnapshotV3> {
+  54:   const tables = [
+  55:     db.students,
+  56:     db.itemStates,
+  57:     db.attempts,
+  58:     db.sessions,
+  59:     db.multFactStats,
+  60:     db.quizSessions,
+... (550 more lines)
 ```
 
 ### `vite.config.ts`
@@ -816,64 +818,132 @@ Purpose: Cloud sync/auth/data transfer logic.
    1: import type { AppSnapshotV3 } from './snapshot';
    2: import { buildSnapshot, mergeNormalizedSnapshot, normalizeSnapshot } from './snapshot';
    3: import { getToken } from '../auth/googleAuth';
+   4: import { CanonicalEventConflictError } from './canonicalEventMerge';
+   5:
+   6: const FILE_NAME = 'mathfan-data.json';
+   7: const LIST_URL = `https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&fields=files(id,name,size,modifiedTime)&q=name='${FILE_NAME}'`;
+   8: const FILES_URL = 'https://www.googleapis.com/drive/v3/files';
+   9: const UPLOAD_URL = 'https://www.googleapis.com/upload/drive/v3/files';
+  10:
+  11: export type SyncStatus = 'idle' | 'syncing' | 'synced' | 'error';
+  12:
+  13: export interface SyncResult {
+  14:   ok: boolean;
+  15:   error?: string;
+  16:   code?: string;
+  17:   details?: { eventId: string; differingFields: string[] };
+  18:   syncedAt?: string;
+  19: }
+  20:
+  21: interface DriveListFile {
+  22:   id: string;
+  23:   size?: string;
+  24:   modifiedTime?: string;
+  25: }
+  26:
+  27: export function syncFailureResult(err: unknown): SyncResult {
+  28:   if (err instanceof CanonicalEventConflictError) return {
+  29:     ok: false,
+  30:     code: err.code,
+  31:     error: `Sync found incompatible copies of answer ${err.details.eventId}. Local data was not changed.`,
+  32:     details: { eventId: err.details.eventId, differingFields: err.details.differingFields },
+  33:   };
+  34:   return { ok: false, error: String(err) };
+  35: }
+  36:
+  37: function newestSyncFile(files: DriveListFile[] | undefined): DriveListFile | null {
+  38:   if (!files?.length) return null;
+  39:   return [...files].sort((a, b) => (b.modifiedTime ?? '').localeCompare(a.modifiedTime ?? ''))[0];
+  40: }
+  41:
+  42: async function authFetch(url: string, options: RequestInit = {}): Promise<Response> {
+  43:   const token = await getToken();
+  44:   if (!token) throw new Error('Not signed in');
+  45:   return fetch(url, {
+  46:     ...options,
+  47:     headers: {
+  48:       Authorization: `Bearer ${token}`,
+  49:       ...(options.headers as Record<string, string> ?? {}),
+  50:     },
+  51:   });
+  52: }
+  53:
+  54: async function findSyncFile(): Promise<string | null> {
+  55:   const res = await authFetch(LIST_URL);
+  56:   if (!res.ok) throw new Error(`Drive LIST failed: ${res.status}`);
+  57:   const data = await res.json();
+  58:   return newestSyncFile(data.files as DriveListFile[] | undefined)?.id ?? null;
+  59: }
+  60:
+... (116 more lines)
+```
+
+### `src/features/sync/canonicalEventMerge.ts`
+
+Purpose: Cloud sync/auth/data transfer logic.
+
+```text
+   1: import type { MathAnswerEvent } from '../learning/learningEvents';
+   2:
+   3: const sortedUnique = (values?: string[]): string[] | undefined => values ? [...new Set(values)].sort() : undefined;
    4:
-   5: const FILE_NAME = 'mathfan-data.json';
-   6: const LIST_URL = `https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&fields=files(id,name,size,modifiedTime)&q=name='${FILE_NAME}'`;
-   7: const FILES_URL = 'https://www.googleapis.com/drive/v3/files';
-   8: const UPLOAD_URL = 'https://www.googleapis.com/upload/drive/v3/files';
-   9:
-  10: export type SyncStatus = 'idle' | 'syncing' | 'synced' | 'error';
-  11:
-  12: export interface SyncResult {
-  13:   ok: boolean;
-  14:   error?: string;
-  15:   syncedAt?: string;
-  16: }
-  17:
-  18: interface DriveListFile {
-  19:   id: string;
-  20:   size?: string;
-  21:   modifiedTime?: string;
+   5: function stableValue(value: unknown): unknown {
+   6:   if (Array.isArray(value)) return value.map(stableValue);
+   7:   if (!value || typeof value !== 'object') return value;
+   8:   return Object.fromEntries(Object.entries(value as Record<string, unknown>)
+   9:     .sort(([left], [right]) => left.localeCompare(right))
+  10:     .map(([key, child]) => [key, stableValue(child)]));
+  11: }
+  12:
+  13: function stableSchedulingTelemetry(event: MathAnswerEvent): unknown {
+  14:   if (!event.schedulingTelemetry) return undefined;
+  15:   return stableValue({
+  16:     ...event.schedulingTelemetry,
+  17:     selection: {
+  18:       ...event.schedulingTelemetry.selection,
+  19:       rationaleCodes: sortedUnique(event.schedulingTelemetry.selection?.rationaleCodes) ?? [],
+  20:     },
+  21:   });
   22: }
   23:
-  24: function newestSyncFile(files: DriveListFile[] | undefined): DriveListFile | null {
-  25:   if (!files?.length) return null;
-  26:   return [...files].sort((a, b) => (b.modifiedTime ?? '').localeCompare(a.modifiedTime ?? ''))[0];
-  27: }
-  28:
-  29: async function authFetch(url: string, options: RequestInit = {}): Promise<Response> {
-  30:   const token = await getToken();
-  31:   if (!token) throw new Error('Not signed in');
-  32:   return fetch(url, {
-  33:     ...options,
-  34:     headers: {
-  35:       Authorization: `Bearer ${token}`,
-  36:       ...(options.headers as Record<string, string> ?? {}),
-  37:     },
-  38:   });
-  39: }
-  40:
-  41: async function findSyncFile(): Promise<string | null> {
-  42:   const res = await authFetch(LIST_URL);
-  43:   if (!res.ok) throw new Error(`Drive LIST failed: ${res.status}`);
-  44:   const data = await res.json();
-  45:   return newestSyncFile(data.files as DriveListFile[] | undefined)?.id ?? null;
-  46: }
-  47:
-  48: async function uploadSnapshot(snapshot: AppSnapshotV3, existingId?: string): Promise<void> {
-  49:   const body = JSON.stringify(snapshot);
-  50:
-  51:   if (existingId) {
-  52:     // Update existing file (media-only PATCH)
-  53:     const res = await authFetch(
-  54:       `${UPLOAD_URL}/${existingId}?uploadType=media`,
-  55:       { method: 'PATCH', body, headers: { 'Content-Type': 'application/json' } }
-  56:     );
-  57:     if (!res.ok) throw new Error(`Drive PATCH failed: ${res.status}`);
-  58:   } else {
-  59:     // Create new file in appDataFolder (multipart POST)
-  60:     const metadata = JSON.stringify({ name: FILE_NAME, parents: ['appDataFolder'] });
-... (103 more lines)
+  24: export interface CanonicalEventFingerprint {
+  25:   id: string;
+  26:   studentId: string;
+  27:   sessionId: string;
+  28:   itemId: string;
+  29:   itemInstanceId?: string;
+  30:   cardKey?: string;
+  31:   schemaId?: string;
+  32:   mode: MathAnswerEvent['mode'];
+  33:   studentAnswer: string | number | null;
+  34:   correctAnswer: string | number;
+  35:   isCorrect: boolean;
+  36:   isRetry: boolean;
+  37:   hintUsed: boolean;
+  38:   latencyMs: number;
+  39:   reviewGrade?: MathAnswerEvent['reviewGrade'];
+  40:   ratingReason?: MathAnswerEvent['ratingReason'];
+  41:   gradingContext?: MathAnswerEvent['gradingContext'];
+  42:   responsePolicy?: MathAnswerEvent['responsePolicy'];
+  43:   fluencyBand?: MathAnswerEvent['fluencyBand'];
+  44:   presentationIndex?: number;
+  45:   schedulingEligible?: boolean;
+  46:   schedulingApplied?: boolean;
+  47:   schedulingReason?: MathAnswerEvent['schedulingReason'];
+  48:   schedulerErrorCode?: MathAnswerEvent['schedulerErrorCode'];
+  49:   relatedEvidence?: boolean;
+  50:   evidenceSourceItemId?: string;
+  51:   origin?: MathAnswerEvent['origin'];
+  52:   goalId?: string;
+  53:   goalTargetId?: string;
+  54:   goalIds?: string[];
+  55:   goalTargetIds?: string[];
+  56:   goalLearningKind?: MathAnswerEvent['goalLearningKind'];
+  57:   lessonPlanId?: string;
+  58:   lessonSegment?: MathAnswerEvent['lessonSegment'];
+  59:   selectionOrigin?: MathAnswerEvent['selectionOrigin'];
+  60:   selectionRationaleCodes?: string[];
+... (93 more lines)
 ```
 
 ### `src/features/sync/snapshotParsers.ts`
@@ -1097,72 +1167,4 @@ Purpose: Cloud sync/auth/data transfer logic.
   10:   const localMs = validTimeMs(localUpdatedAt);
   11:   return localMs === null || remoteMs >= localMs;
   12: }
-```
-
-### `src/features/goals/GoalsPage.tsx`
-
-Purpose: React UI component file: ConfirmDialog, EmptyState, GoalCard, GoalWizard.
-
-```text
-   1: import { useEffect, useMemo, useRef, useState } from 'react';
-   2: import type { CSSProperties, KeyboardEvent, ReactNode } from 'react';
-   3: import type { StudentProfile, StudentItemState } from '../../types/math';
-   4: import type { MathAnswerEvent } from '../learning/learningEvents';
-   5: import type { StudentSkillSummary } from '../mastery/skillMasteryEngine';
-   6: import type { GoalRecommendation } from './goalRecommendationEngine';
-   7: import type { GoalSkillTarget, GoalTargetReason, LearningGoal } from './types';
-   8: import {
-   9:   goalEventRepo,
-  10:   itemStateRepo,
-  11:   learningGoalRepo,
-  12:   mathAnswerEventRepo,
-  13: } from '../../db/repositories';
-  14: import { generateId } from '../../utils/id';
-  15: import { makeItemFromId } from '../curriculum/makeItemFromId';
-  16: import { GRADE3_MASTERY_MAP, getGrade3Skill } from '../mastery/grade3MasteryMap';
-  17: import { deriveGrade3SkillSummaries } from '../mastery/skillMasteryEngine';
-  18: import { appNow } from '../time/clock';
-  19: import {
-  20:   applyGoalTargetEdits,
-  21:   buildGoalSkillTarget,
-  22:   calculateGoalProgress,
-  23:   captureGoalBaseline,
-  24:   localDateInTimeZone,
-  25:   suggestedTargetDefaults,
-  26:   type GoalEvidenceInput,
-  27:   type GoalProgress,
-  28:   type GoalTargetEditDraft,
-  29: } from './goalEngine';
-  30: import {
-  31:   estimateGoalWorkload,
-  32:   recommendLearningGoals,
-  33: } from './goalRecommendationEngine';
-  34: import {
-  35:   cancelGoal,
-  36:   completeGoal,
-  37:   endGoal,
-  38:   evaluateGoalLifecycleAndPersist,
-  39:   pauseGoal,
-  40:   resumeGoal,
-  41:   updateGoal,
-  42: } from './goalLifecycleService';
-  43: import { analyzeGoalPortfolio } from './goalPortfolioEngine';
-  44: import { normalizeDailyNewGoalLimits, validateDailyNewGoalLimits } from './dailyNewGoalLimits';
-  45: import { planDailyNewForGoals } from './dailyNewGoalPlanner';
-  46:
-  47: interface Props {
-  48:   profile: StudentProfile;
-  49:   lastSyncedAt?: string | null;
-  50:   initialGoalSkillIds?: string[] | null;
-  51:   onInitialGoalSkillsHandled?: () => void;
-  52:   onBack: () => void;
-  53:   onStartEvaluation: () => void;
-  54:   onUpdateProfile?: (profile: StudentProfile) => void | Promise<void>;
-  55: }
-  56:
-  57: type PageState =
-  58:   | { status: 'loading' }
-  59:   | { status: 'error'; message: string }
-  60:   | { status: 'ready'; data: GoalsData };
-... (995 more lines)
 ```

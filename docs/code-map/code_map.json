@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-17T07:41:26.394157+00:00",
+  "generated_at": "2026-07-17T08:14:55.320031+00:00",
   "repo_root": "/tmp/mathfan-issue41",
   "package": {
     "name": "mathfan",
@@ -6252,17 +6252,66 @@
       "read_error": null
     },
     {
+      "path": "src/features/sync/canonicalEventMerge.ts",
+      "ext": ".ts",
+      "bytes": 6696,
+      "lines": 154,
+      "sha1": "034ae8376ccc",
+      "imports": [
+        "../learning/learningEvents"
+      ],
+      "exports": [
+        "assertEquivalentCanonicalEvents",
+        "assertNoConflictingCanonicalEventIds",
+        "CanonicalEventConflictDetails",
+        "CanonicalEventConflictError",
+        "CanonicalEventFingerprint",
+        "canonicalEventFingerprint",
+        "canonicalEventFingerprintObject",
+        "differingCanonicalEventFields",
+        "mergeCanonicalEvents"
+      ],
+      "functions": [
+        "assertEquivalentCanonicalEvents",
+        "assertNoConflictingCanonicalEventIds",
+        "canonicalEventFingerprint",
+        "canonicalEventFingerprintObject",
+        "differingCanonicalEventFields",
+        "mergeCanonicalEvents",
+        "mergeDefined",
+        "stableSchedulingTelemetry",
+        "stableValue"
+      ],
+      "classes": [
+        "CanonicalEventConflictError"
+      ],
+      "interfaces": [
+        "CanonicalEventConflictDetails",
+        "CanonicalEventFingerprint"
+      ],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Cloud sync/auth/data transfer logic.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/features/sync/driveSync.ts",
       "ext": ".ts",
-      "bytes": 5508,
-      "lines": 164,
-      "sha1": "8a9f756acfd8",
+      "bytes": 6013,
+      "lines": 177,
+      "sha1": "09b6a32ecdac",
       "imports": [
         "../auth/googleAuth",
+        "./canonicalEventMerge",
         "./snapshot"
       ],
       "exports": [
         "DriveFileInfo",
+        "syncFailureResult",
         "SyncResult",
         "SyncStatus"
       ],
@@ -6275,6 +6324,7 @@
         "pullAndMerge",
         "pushLocal",
         "syncBothWays",
+        "syncFailureResult",
         "uploadSnapshot"
       ],
       "classes": [],
@@ -6338,9 +6388,9 @@
     {
       "path": "src/features/sync/snapshot.ts",
       "ext": ".ts",
-      "bytes": 32612,
-      "lines": 597,
-      "sha1": "75dce2368287",
+      "bytes": 33303,
+      "lines": 611,
+      "sha1": "5ece68bb2da6",
       "imports": [
         "../../db/dexie",
         "../../types/math",
@@ -6354,6 +6404,7 @@
         "../multiplication/types",
         "../profile/profileBootstrap",
         "../scheduler/cardModel",
+        "./canonicalEventMerge",
         "./learnerKeyMerge",
         "./snapshotParsers",
         "./timeUtil"
@@ -7806,6 +7857,40 @@
       "read_error": null
     },
     {
+      "path": "src/tests/canonicalEventMerge.test.ts",
+      "ext": ".ts",
+      "bytes": 8226,
+      "lines": 148,
+      "sha1": "5f1ccd7330df",
+      "imports": [
+        "../db/dexie",
+        "../features/learning/eventRebuild",
+        "../features/learning/learningEvents",
+        "../features/sync/canonicalEventMerge",
+        "../features/sync/snapshot",
+        "../types/math",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [
+        "clearAll",
+        "event",
+        "profile",
+        "snapshot",
+        "telemetry"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Local persistence/database layer.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/tests/cardModel.test.ts",
       "ext": ".ts",
       "bytes": 5995,
@@ -8193,10 +8278,11 @@
     {
       "path": "src/tests/driveSyncErrors.test.ts",
       "ext": ".ts",
-      "bytes": 1947,
-      "lines": 60,
-      "sha1": "ef3dd96a1b42",
+      "bytes": 2717,
+      "lines": 74,
+      "sha1": "11fbf9d97017",
       "imports": [
+        "../features/sync/canonicalEventMerge",
         "../features/sync/driveSync",
         "vitest"
       ],

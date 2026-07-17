@@ -36,9 +36,9 @@ python tools/generate_code_maps.py
 - `package.json` — Project package metadata, scripts, dependencies, and dev tooling.
 - `src/main.tsx` — React entry point that mounts the app.
 - `src/features/sync/driveSync.ts` — Cloud sync/auth/data transfer logic.
+- `src/features/sync/canonicalEventMerge.ts` — Cloud sync/auth/data transfer logic.
 - `src/features/sync/snapshotParsers.ts` — Cloud sync/auth/data transfer logic.
 - `src/features/sync/learnerKeyMerge.ts` — Cloud sync/auth/data transfer logic.
-- `src/features/sync/useSync.ts` — Cloud sync/auth/data transfer logic.
 
 ## Suggested first prompt to Claude Code
 

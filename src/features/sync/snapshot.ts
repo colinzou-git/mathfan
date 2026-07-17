@@ -12,6 +12,7 @@ import { deriveCardKey } from '../scheduler/cardModel';
 import { CARD_MODEL_VERSION } from '../learning/schedulingTelemetry';
 import { assertValidPracticeItem, validatePracticeItem } from '../curriculum/practiceContentSpec';
 import { loadActiveProfileSelection, saveActiveProfileSelection } from '../profile/profileBootstrap';
+import { assertNoConflictingCanonicalEventIds, mergeCanonicalEvents } from './canonicalEventMerge';
 import {
   parseAttemptLog, parseDailyLessonPlanShape, parseGoalEvaluation, parseGoalEvent, parseLearningGoal,
   parseMathAnswerEvent, parseMultiplicationFactStat, parsePracticeSession, parseQuizSession,
@@ -495,9 +496,11 @@ export async function mergeNormalizedSnapshot(remote: AppSnapshotV3): Promise<vo
       const localProfiles = await db.students.toArray();
       const localEvents = await db.mathAnswerEvents.toArray();
       const localDailyLessonPlans = await db.dailyLessonPlans.toArray();
-      const allEvents = byId([...localEvents, ...(remote.mathAnswerEvents ?? [])]);
+      const remoteEvents = remote.mathAnswerEvents ?? [];
+      assertNoConflictingCanonicalEventIds(localEvents);
+      assertNoConflictingCanonicalEventIds(remoteEvents);
       const evidenceCounts: Record<string, number> = {};
-      for (const event of allEvents) evidenceCounts[event.studentId] = (evidenceCounts[event.studentId] ?? 0) + 1;
+      for (const event of [...localEvents, ...remoteEvents]) evidenceCounts[event.studentId] = (evidenceCounts[event.studentId] ?? 0) + 1;
       const exactIdProfiles = mergeProfilesByExactId(localProfiles, remote.students);
       aliases = resolveCanonicalStudentIds(localProfiles, exactIdProfiles, evidenceCounts);
 
@@ -518,9 +521,20 @@ export async function mergeNormalizedSnapshot(remote: AppSnapshotV3): Promise<vo
       const lessonPlanAliases = buildLessonPlanAliases(allDailyLessonPlans, aliases);
       const remap = <T extends { studentId: string; lessonPlanId?: string }>(rows: T[]) => rows
         .map(row => remapLessonReference(remapStudentId(row, aliases), lessonPlanAliases));
+      const remapEvent = (event: MathAnswerEvent): MathAnswerEvent => {
+        const remapped = remapLessonReference(remapStudentId(event, aliases), lessonPlanAliases);
+        if (!remapped.schedulingTelemetry) return remapped;
+        return {
+          ...remapped,
+          schedulingTelemetry: {
+            ...remapped.schedulingTelemetry,
+            selection: remapLessonReference(remapped.schedulingTelemetry.selection, lessonPlanAliases),
+          },
+        };
+      };
       const remapEvaluations = (rows: GoalEvaluation[]) => remap(rows).map(evaluation => ({
         ...evaluation,
-        answerEvents: evaluation.answerEvents?.map(event => remapLessonReference(remapStudentId(event, aliases), lessonPlanAliases)),
+        answerEvents: evaluation.answerEvents?.map(remapEvent),
       }));
       const itemStates = compoundMerge(remap([...(await db.itemStates.toArray()), ...remote.itemStates]), row => `${row.studentId}|${row.cardKey}`, mergeCardStateCollision);
       const multFactStats = compoundMerge(remap([...(await db.multFactStats.toArray()), ...(remote.multFactStats ?? [])]), row => `${row.studentId}|${row.key}`, (a, b) => b.totalAttempts > a.totalAttempts ? b : a);
@@ -528,7 +542,7 @@ export async function mergeNormalizedSnapshot(remote: AppSnapshotV3): Promise<vo
       const evaluations = compoundMerge(remapEvaluations([...(await db.goalEvaluations.toArray()), ...(remote.goalEvaluations ?? [])]), row => row.id, (a, b) => remoteHasNewerUpdatedAt(b.updatedAt, a.updatedAt) ? b : a);
       const dailyLessonPlans = resolveDailyLessonPlans(allDailyLessonPlans
         .map(plan => remapDailyLessonPlan(plan, aliases, lessonPlanAliases)));
-      const normalizedEvents = remap(allEvents);
+      const normalizedEvents = mergeCanonicalEvents(localEvents.map(remapEvent), remoteEvents.map(remapEvent));
       const sessions = byId(remap([...(await db.sessions.toArray()), ...remote.sessions]));
       const attempts = byId(remap([...(await db.attempts.toArray()), ...remote.attempts]));
       const quizSessions = byId(remap([...(await db.quizSessions.toArray()), ...(remote.quizSessions ?? [])]));

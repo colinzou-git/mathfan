@@ -1,6 +1,7 @@
 import type { AppSnapshotV3 } from './snapshot';
 import { buildSnapshot, mergeNormalizedSnapshot, normalizeSnapshot } from './snapshot';
 import { getToken } from '../auth/googleAuth';
+import { CanonicalEventConflictError } from './canonicalEventMerge';
 
 const FILE_NAME = 'mathfan-data.json';
 const LIST_URL = `https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&fields=files(id,name,size,modifiedTime)&q=name='${FILE_NAME}'`;
@@ -12,6 +13,8 @@ export type SyncStatus = 'idle' | 'syncing' | 'synced' | 'error';
 export interface SyncResult {
   ok: boolean;
   error?: string;
+  code?: string;
+  details?: { eventId: string; differingFields: string[] };
   syncedAt?: string;
 }
 
@@ -19,6 +22,16 @@ interface DriveListFile {
   id: string;
   size?: string;
   modifiedTime?: string;
+}
+
+export function syncFailureResult(err: unknown): SyncResult {
+  if (err instanceof CanonicalEventConflictError) return {
+    ok: false,
+    code: err.code,
+    error: `Sync found incompatible copies of answer ${err.details.eventId}. Local data was not changed.`,
+    details: { eventId: err.details.eventId, differingFields: err.details.differingFields },
+  };
+  return { ok: false, error: String(err) };
 }
 
 function newestSyncFile(files: DriveListFile[] | undefined): DriveListFile | null {
@@ -106,7 +119,7 @@ export async function pullAndMerge(): Promise<SyncResult> {
     if (remote) await mergeNormalizedSnapshot(remote);
     return { ok: true, syncedAt: new Date().toISOString() };
   } catch (err) {
-    return { ok: false, error: String(err) };
+    return syncFailureResult(err);
   }
 }
 
@@ -123,7 +136,7 @@ export async function pushLocal(): Promise<SyncResult> {
     await uploadSnapshot(snapshot, existingId ?? undefined);
     return { ok: true, syncedAt: new Date().toISOString() };
   } catch (err) {
-    return { ok: false, error: String(err) };
+    return syncFailureResult(err);
   }
 }
 
@@ -133,10 +146,10 @@ export async function pushLocal(): Promise<SyncResult> {
 export async function syncBothWays(): Promise<SyncResult> {
   try {
     const pullResult = await pullAndMerge();
-    if (!pullResult.ok) throw new Error(pullResult.error);
+    if (!pullResult.ok) return pullResult;
     return await pushLocal();
   } catch (err) {
-    return { ok: false, error: String(err) };
+    return syncFailureResult(err);
   }
 }
 
