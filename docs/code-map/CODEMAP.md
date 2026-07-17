@@ -1,6 +1,6 @@
 # Code Map Overview
 
-Generated: 2026-07-17 00:45:29 UTC
+Generated: 2026-07-17 01:18:19 UTC
 
 Repo root: `/home/ubuntu/mathfan`
 Output folder: `/home/ubuntu/mathfan/docs/code-map`
@@ -15,8 +15,8 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 - Version: `1.2.0`
 - Module type: `module`
 - Scanned files: **298**
-- Scanned lines: **55,395**
-- Scanned bytes: **2,377,130**
+- Scanned lines: **55,482**
+- Scanned bytes: **2,382,546**
 
 ## NPM scripts
 
@@ -99,7 +99,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 | src/features/stats/QuizStatsView.tsx | 135 | Progress/statistics screens or calculations. | FactGroup, QuizStatsView, avgSecStr, FactGroup, fmt, QuizStatsView |
 | src/features/stats/TodayAchievementSection.tsx | 125 | Progress/statistics screens or calculations. | AchievementTile, TodayAchievementSection, AchievementTile, TodayAchievementSection |
 | src/features/mastery/skillPracticePlanner.ts | 905 | Grade 3 skill practice planner: maps skill IDs to SessionConfig for the mastery map. | buildDivisionFocusSequence, buildFocusSequence, buildRegroupingFocusSequence, FocusSequence, FocusSequenceContext, planFractionFocusSequence, planLearningUnitsForSkill, PlanOptions |
-| src/features/practice/usePracticeSession.ts | 903 | Local persistence/database layer. | usePracticeSession, CorrectResult, LastSessionSummary, SessionState, usePracticeSession, commit, getStaticItem, planned |
+| src/features/practice/usePracticeSession.ts | 900 | Local persistence/database layer. | usePracticeSession, CorrectResult, LastSessionSummary, SessionState, usePracticeSession, commit, getStaticItem, planned |
 | src/features/goals/GoalEvaluationSession.tsx | 735 | Exports reusable code: GoalEvaluationSession. | GoalEvaluationSession, buildNewLearningCandidates, buildReviewFindings, buildUpdatedState, confirmCancel, continueNext, evaluationArgs, GoalEvaluationSession |
 | src/features/curriculum/areaItems.ts | 609 | Practice item definitions and ID generators for a math curriculum topic. | apChoiceId, areaPerimCmpId, areaPerimCompareItemIds, areaPerimeterChoiceItemIds, AreaPerimeterChoiceKind, AreaPerimeterSchema, AreaPerimVariant, areaRectangleItemIds |
 

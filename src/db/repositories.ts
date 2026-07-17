@@ -1,10 +1,11 @@
 import { db } from './dexie';
 import type { StudentProfile, StudentItemState, AttemptLog, PracticeSession, GradeLevel } from '../types/math';
 import type { MathAnswerEvent } from '../features/learning/learningEvents';
+import { classifyLegacyFluencyEvidence } from '../features/fluency/fluencyEngine';
 import type { QuizSession, MultiplicationFactStats, MultiplicationFactKey } from '../features/multiplication/types';
 import type { GoalEvaluation, GoalEvent, LearningGoal, LearningGoalStatus } from '../features/goals/types';
 import { profileCreationMatch } from '../features/profile/learnerIdentity';
-import { chronologicalEvents, compareEventsChronologically } from '../features/learning/eventOrdering';
+import { chronologicalEvents } from '../features/learning/eventOrdering';
 
 export const studentRepo = {
   async getAll(): Promise<StudentProfile[]> {
@@ -152,20 +153,14 @@ export const mathAnswerEventRepo = {
       .and(e => !e.isRetry)
       .toArray();
   },
-  /** Chronological, independent correct atomic attempts suitable for personal fluency baselines. */
+  /** Chronological candidates; fluencyEngine owns the semantic evidence rule. */
+  async getFluencyEvidenceCandidatesChronological(studentId: string): Promise<MathAnswerEvent[]> {
+    return this.getAllChronological(studentId);
+  },
+  /** Backward-compatible name returning only classifier-approved durable evidence. */
   async getDirectCorrectFirstAttempts(studentId: string): Promise<MathAnswerEvent[]> {
-    const events = await db.mathAnswerEvents
-      .where('studentId').equals(studentId)
-      .and(e => !e.isRetry
-        && !e.relatedEvidence
-        && !e.hintUsed
-        && e.schedulingEligible !== false
-        && e.isCorrect
-        && e.responsePolicy === 'atomic_fluency'
-        && Number.isFinite(e.latencyMs)
-        && e.latencyMs > 0)
-      .toArray();
-    return events.sort(compareEventsChronologically);
+    return (await this.getFluencyEvidenceCandidatesChronological(studentId))
+      .filter(event => classifyLegacyFluencyEvidence(event).eligible);
   },
 };
 

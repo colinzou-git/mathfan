@@ -127,7 +127,7 @@ describe('usePracticeSession — wrong first attempt + correct retry', () => {
       id: `history-${index}`, studentId: STUDENT_ID, sessionId: `old-${index}`,
       itemId: 'MUL_7x8', cardKey: 'fact:mul:7x8', mode: 'practice', promptShown: '7 × 8',
       correctAnswer: 56, studentAnswer: 56, isCorrect: true, isRetry: false, hintUsed: false,
-      latencyMs, schedulingEligible: true, responsePolicy: 'atomic_fluency',
+      latencyMs, schedulingEligible: true, schedulingApplied: true, responsePolicy: 'atomic_fluency',
       createdAt: `2026-05-0${index + 1}T10:00:00.000Z`,
     }));
     vi.mocked(mathAnswerEventRepo.getDirectCorrectFirstAttempts).mockResolvedValue(history);

@@ -9,7 +9,7 @@ function event(id: string, overrides: Partial<MathAnswerEvent> = {}): MathAnswer
     id, studentId: 'student', sessionId: 'session', itemId: 'MUL_7x8', cardKey: 'fact:mul:7x8',
     mode: 'practice', promptShown: '7 × 8', correctAnswer: 56, studentAnswer: 56,
     isCorrect: true, isRetry: false, hintUsed: false, latencyMs: 1000,
-    schedulingEligible: true, responsePolicy: 'atomic_fluency',
+    schedulingEligible: true, schedulingApplied: true, responsePolicy: 'atomic_fluency',
     createdAt: '2026-01-01T00:00:00.000Z',
     ...overrides,
   };
@@ -29,6 +29,8 @@ describe('mathAnswerEventRepo.getDirectCorrectFirstAttempts', () => {
       event('related', { relatedEvidence: true }),
       event('hinted', { hintUsed: true }),
       event('repeat', { schedulingEligible: false }),
+      event('scheduler-failed', { schedulingApplied: false, schedulerErrorCode: 'clock_drift' }),
+      event('modern-missing-applied', { schedulingApplied: undefined }),
       event('wrong', { isCorrect: false }),
       event('zero', { latencyMs: 0 }),
       event('invalid', { latencyMs: Number.NaN }),
