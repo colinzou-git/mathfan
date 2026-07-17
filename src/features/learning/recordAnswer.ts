@@ -27,6 +27,16 @@ export interface PracticeAnswerPayload {
 /** Write a practice answer atomically: event + (if first attempt) derived itemState + attempt log. */
 export async function recordPracticeAnswer(payload: PracticeAnswerPayload): Promise<void> {
   await db.transaction('rw', db.mathAnswerEvents, db.itemStates, db.attempts, async () => {
+    const existing = await db.mathAnswerEvents.get(payload.event.id);
+    if (existing) {
+      const equivalent = existing.studentId === payload.event.studentId
+        && existing.sessionId === payload.event.sessionId
+        && existing.itemId === payload.event.itemId
+        && existing.studentAnswer === payload.event.studentAnswer
+        && existing.isCorrect === payload.event.isCorrect;
+      if (!equivalent) throw new Error(`Conflicting canonical answer event identity: ${payload.event.id}`);
+      return;
+    }
     await mathAnswerEventRepo.save(payload.event);
     if (payload.updatedState) await itemStateRepo.save(payload.updatedState);
     await attemptRepo.save(payload.attempt);

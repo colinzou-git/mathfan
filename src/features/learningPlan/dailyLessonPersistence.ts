@@ -1,5 +1,6 @@
 import { db } from '../../db/dexie';
 import type { PersistedDailyLessonPlan } from '../../types/math';
+import type { MathAnswerEvent } from '../learning/learningEvents';
 import { DAILY_LESSON_PLANNER_VERSION } from '../learning/schedulingTelemetry';
 import { learnerLocalDateKey } from '../time/localDate';
 import { planDailyLesson, type PlanDailyLessonArgs } from './dailyLessonPlanner';
@@ -63,6 +64,43 @@ export async function markDailyLessonProgress(planId: string, itemInstanceId: st
       ? plan.completedItemInstanceIds
       : [...plan.completedItemInstanceIds, itemInstanceId];
     await db.dailyLessonPlans.put({ ...plan, status: 'in_progress', completedItemInstanceIds, updatedAt: now });
+  });
+}
+
+export async function markDailyLessonProgressFromEvent(event: MathAnswerEvent): Promise<'not_applicable' | 'updated' | 'already_updated'> {
+  if (!event.lessonPlanId) return 'not_applicable';
+  const itemInstanceId = event.itemInstanceId ?? event.itemId;
+  return db.transaction('rw', db.dailyLessonPlans, async () => {
+    const plan = await db.dailyLessonPlans.get(event.lessonPlanId!);
+    if (!plan || plan.status === 'replaced') throw new Error(`Daily lesson plan is unavailable: ${event.lessonPlanId}`);
+    if (plan.completedItemInstanceIds.includes(itemInstanceId)) return 'already_updated';
+    const itemExists = plan.items.some(entry => (entry.item.instanceKey ?? entry.item.id) === itemInstanceId);
+    if (!itemExists) throw new Error(`Daily lesson item is unavailable: ${itemInstanceId}`);
+    await db.dailyLessonPlans.put({
+      ...plan, status: 'in_progress',
+      completedItemInstanceIds: [...plan.completedItemInstanceIds, itemInstanceId],
+      updatedAt: event.createdAt,
+    });
+    return 'updated';
+  });
+}
+
+/** Repairs plan progress only from durable canonical events with stable item-instance identity. */
+export async function reconcileDailyLessonProgress(studentId: string, planId: string): Promise<PersistedDailyLessonPlan | undefined> {
+  return db.transaction('rw', db.dailyLessonPlans, db.mathAnswerEvents, async () => {
+    const plan = await db.dailyLessonPlans.get(planId);
+    if (!plan || plan.studentId !== studentId || plan.status === 'replaced') return plan;
+    const events = await db.mathAnswerEvents.where('studentId').equals(studentId)
+      .and(event => event.lessonPlanId === planId && event.isCorrect && Boolean(event.itemInstanceId)).toArray();
+    const validIds = new Set(plan.items.map(entry => entry.item.instanceKey ?? entry.item.id));
+    const completed = new Set(plan.completedItemInstanceIds);
+    for (const event of events) if (event.itemInstanceId && validIds.has(event.itemInstanceId)) completed.add(event.itemInstanceId);
+    const completedItemInstanceIds = [...completed];
+    const status = completedItemInstanceIds.length >= plan.items.length ? 'completed' as const : completedItemInstanceIds.length ? 'in_progress' as const : plan.status;
+    if (completedItemInstanceIds.length === plan.completedItemInstanceIds.length && status === plan.status) return plan;
+    const updated = { ...plan, completedItemInstanceIds, status, updatedAt: events.sort((a, b) => a.createdAt.localeCompare(b.createdAt)).at(-1)?.createdAt ?? plan.updatedAt };
+    await db.dailyLessonPlans.put(updated);
+    return updated;
   });
 }
 

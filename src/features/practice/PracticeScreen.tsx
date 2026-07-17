@@ -411,6 +411,15 @@ export function PracticeScreen({
               <button style={st.nextBtn} onClick={retrySave}>Retry saving</button>
             </div>
           )}
+          {state.auxiliarySaveStatus === 'error' && state.auxiliarySaveError && (
+            <div role="alert" style={st.saveError}>
+              <p>{state.auxiliarySaveError}</p>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button style={st.nextBtn} onClick={retryAuxiliaryWrites}>Retry progress update</button>
+                <button style={st.nextBtn} onClick={dismissAuxiliaryWarning}>Dismiss</button>
+              </div>
+            </div>
+          )}
 
           {/* Progressive hint — shown automatically after each wrong attempt */}
           {hasError && !isCorrect && state.currentItem && state.retryKey > 0 && (() => {

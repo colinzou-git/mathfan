@@ -365,6 +365,7 @@
 | src/features/learning/schedulingTelemetry.ts | ../scheduler/responsePolicy |
 | src/features/learningPlan/dailyLessonPersistence.ts | ../../db/dexie |
 | src/features/learningPlan/dailyLessonPersistence.ts | ../../types/math |
+| src/features/learningPlan/dailyLessonPersistence.ts | ../learning/learningEvents |
 | src/features/learningPlan/dailyLessonPersistence.ts | ../learning/schedulingTelemetry |
 | src/features/learningPlan/dailyLessonPersistence.ts | ../time/localDate |
 | src/features/learningPlan/dailyLessonPersistence.ts | ./dailyLessonPlanner |
@@ -727,6 +728,7 @@
 | src/tests/components.test.tsx | ../features/mastery/todayPlanEngine |
 | src/tests/components.test.tsx | ../types/math |
 | src/tests/dailyLessonPersistence.test.ts | ../db/dexie |
+| src/tests/dailyLessonPersistence.test.ts | ../features/learning/learningEvents |
 | src/tests/dailyLessonPersistence.test.ts | ../features/learningPlan/dailyLessonPersistence |
 | src/tests/dailyLessonPersistence.test.ts | ../features/time/localDate |
 | src/tests/dailyLessonPersistence.test.ts | ../types/math |
@@ -943,6 +945,7 @@
 | src/tests/practiceSession.test.ts | ../features/curriculum/makeItemFromId |
 | src/tests/practiceSession.test.ts | ../features/learning/learningEvents |
 | src/tests/practiceSession.test.ts | ../features/learning/recordAnswer |
+| src/tests/practiceSession.test.ts | ../features/learningPlan/dailyLessonPersistence |
 | src/tests/practiceSession.test.ts | ../features/practice/usePracticeSession |
 | src/tests/practiceSession.test.ts | ../features/scheduler/scheduler |
 | src/tests/practiceSession.test.ts | ../features/time/clock |

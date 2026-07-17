@@ -12,7 +12,7 @@ import { GRADE3_MASTERY_MAP } from '../mastery/grade3MasteryMap';
 import { makeItemFromId } from '../curriculum/makeItemFromId';
 import { planDailyNewForGoals, type DailyNewGoalPlan, type DailyNewGoalTile } from '../goals/dailyNewGoalPlanner';
 import { mulberry32 } from '../../utils/rng';
-import { getOrCreateDailyLessonPlan } from '../learningPlan/dailyLessonPersistence';
+import { getOrCreateDailyLessonPlan, reconcileDailyLessonProgress } from '../learningPlan/dailyLessonPersistence';
 import { regenerateDailyLessonPlan } from '../learningPlan/dailyLessonPersistence';
 import type { PlanDailyLessonArgs } from '../learningPlan/dailyLessonPlanner';
 import { learnerLocalDateKey } from '../time/localDate';
@@ -181,7 +181,8 @@ export function StudentDashboard({ profile, lastSyncedAt, onStartDailyReview, on
             const seed = [...`${profile.id}:${localDate}`].reduce((sum, char) => (sum * 31 + char.charCodeAt(0)) >>> 0, 2166136261);
             const lessonArgs = { studentId: profile.id, gradeLevel: profile.gradeLevel, now: nowStr, timezone: profile.timezone, settings: profile.settings, events, itemStates: states, skillSummaries: completeSummaries, goals, rng: mulberry32(seed) };
             lessonArgsRef.current = lessonArgs;
-            const lesson = await getOrCreateDailyLessonPlan(lessonArgs);
+            const storedLesson = await getOrCreateDailyLessonPlan(lessonArgs);
+            const lesson = await reconcileDailyLessonProgress(profile.id, storedLesson.id) ?? storedLesson;
             if (!alive) return;
             setLessonPlan(lesson.items.length ? lesson : null); setLessonError(lesson.items.length ? null : 'Not enough valid content for an adaptive lesson yet.');
           } catch (lessonFailure) {

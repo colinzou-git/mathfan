@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-16T23:36:44.191724+00:00",
+  "generated_at": "2026-07-16T23:54:38.242847+00:00",
   "repo_root": "/home/ubuntu/mathfan",
   "package": {
     "name": "mathfan",
@@ -570,9 +570,9 @@
     {
       "path": "scripts/e2e_mathfan.py",
       "ext": ".py",
-      "bytes": 57152,
-      "lines": 999,
-      "sha1": "636c5617e21c",
+      "bytes": 59641,
+      "lines": 1020,
+      "sha1": "8ad6f949925f",
       "imports": [
         "__future__",
         "json",
@@ -2781,9 +2781,9 @@
     {
       "path": "src/features/dashboard/StudentDashboard.tsx",
       "ext": ".tsx",
-      "bytes": 32716,
-      "lines": 624,
-      "sha1": "c9319a350c05",
+      "bytes": 32860,
+      "lines": 625,
+      "sha1": "37a811ed33bf",
       "imports": [
         "../../db/repositories",
         "../../types/math",
@@ -4015,9 +4015,9 @@
     {
       "path": "src/features/learning/recordAnswer.ts",
       "ext": ".ts",
-      "bytes": 3466,
-      "lines": 81,
-      "sha1": "0216b340dca4",
+      "bytes": 3991,
+      "lines": 91,
+      "sha1": "43b90f7b63f8",
       "imports": [
         "../../db/dexie",
         "../../db/repositories",
@@ -4109,12 +4109,13 @@
     {
       "path": "src/features/learningPlan/dailyLessonPersistence.ts",
       "ext": ".ts",
-      "bytes": 3502,
-      "lines": 76,
-      "sha1": "fd8a82790128",
+      "bytes": 6139,
+      "lines": 113,
+      "sha1": "9b80820024b5",
       "imports": [
         "../../db/dexie",
         "../../types/math",
+        "../learning/learningEvents",
         "../learning/schedulingTelemetry",
         "../time/localDate",
         "./dailyLessonPlanner"
@@ -4124,7 +4125,9 @@
         "completeDailyLessonPlan",
         "getOrCreateDailyLessonPlan",
         "markDailyLessonProgress",
+        "markDailyLessonProgressFromEvent",
         "materialize",
+        "reconcileDailyLessonProgress",
         "regenerateDailyLessonPlan"
       ],
       "classes": [],
@@ -5201,9 +5204,9 @@
     {
       "path": "src/features/practice/PracticeScreen.tsx",
       "ext": ".tsx",
-      "bytes": 25185,
-      "lines": 571,
-      "sha1": "169df2372759",
+      "bytes": 25675,
+      "lines": 580,
+      "sha1": "53b7dec28c9d",
       "imports": [
         "../../components/NumPad",
         "../../components/SessionSummary",
@@ -5281,9 +5284,9 @@
     {
       "path": "src/features/practice/usePracticeSession.ts",
       "ext": ".ts",
-      "bytes": 43729,
-      "lines": 873,
-      "sha1": "e7dc4d0b2f97",
+      "bytes": 45288,
+      "lines": 899,
+      "sha1": "dc8665ef17d9",
       "imports": [
         "../../components/opSpecs",
         "../../db/dexie",
@@ -7820,11 +7823,12 @@
     {
       "path": "src/tests/dailyLessonPersistence.test.ts",
       "ext": ".ts",
-      "bytes": 3603,
-      "lines": 62,
-      "sha1": "0e42e21b9267",
+      "bytes": 5051,
+      "lines": 82,
+      "sha1": "ed3504680b8c",
       "imports": [
         "../db/dexie",
+        "../features/learning/learningEvents",
         "../features/learningPlan/dailyLessonPersistence",
         "../features/time/localDate",
         "../types/math",
@@ -8823,9 +8827,9 @@
     {
       "path": "src/tests/goalsPage.test.tsx",
       "ext": ".tsx",
-      "bytes": 18145,
-      "lines": 449,
-      "sha1": "ac3f97a16895",
+      "bytes": 18207,
+      "lines": 450,
+      "sha1": "3c47920b25af",
       "imports": [
         "../db/repositories",
         "../features/dashboard/StudentDashboard",
@@ -9522,14 +9526,15 @@
     {
       "path": "src/tests/practiceSession.test.ts",
       "ext": ".ts",
-      "bytes": 35469,
-      "lines": 746,
-      "sha1": "66043ded18e4",
+      "bytes": 37005,
+      "lines": 772,
+      "sha1": "19aff3c4ac52",
       "imports": [
         "../db/repositories",
         "../features/curriculum/makeItemFromId",
         "../features/learning/learningEvents",
         "../features/learning/recordAnswer",
+        "../features/learningPlan/dailyLessonPersistence",
         "../features/practice/usePracticeSession",
         "../features/scheduler/scheduler",
         "../features/time/clock",
