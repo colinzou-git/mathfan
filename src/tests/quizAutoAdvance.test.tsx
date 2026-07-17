@@ -4,9 +4,10 @@ import type { StudentSettings } from '../types/math';
 
 // Speech is mocked so the test controls exactly when the answer audio "finishes".
 vi.mock('../features/audio/speech', () => ({
-  speakProblem: vi.fn(() => Promise.resolve()),
-  speakFeedback: vi.fn(() => Promise.resolve()),
+  speakProblem: vi.fn(() => Promise.resolve({ status: 'ended' as const })),
+  speakFeedback: vi.fn(() => Promise.resolve({ status: 'ended' as const })),
   stopSpeech: vi.fn(),
+  unlockSpeechFromUserGesture: vi.fn(),
 }));
 
 vi.mock('../db/dexie', () => ({
@@ -28,14 +29,18 @@ vi.mock('../features/multiplication/quizQuestionSelector', () => ({
 }));
 
 import { MultiplicationQuizPage } from '../features/multiplication/MultiplicationQuizPage';
-import { speakFeedback } from '../features/audio/speech';
+import { speakFeedback, speakProblem, unlockSpeechFromUserGesture } from '../features/audio/speech';
 
 const mockSpeakFeedback = vi.mocked(speakFeedback);
-const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
-const settings = { audioEnabled: true } as StudentSettings;
+const mockSpeakProblem = vi.mocked(speakProblem);
+const mockUnlockSpeech = vi.mocked(unlockSpeechFromUserGesture);
+const settings = { audioEnabled: true, speechRate: 1.1 } as StudentSettings;
 
 afterEach(cleanup);
-beforeEach(() => { vi.clearAllMocks(); mockSpeakFeedback.mockImplementation(() => Promise.resolve()); });
+beforeEach(() => {
+  vi.clearAllMocks();
+  mockSpeakFeedback.mockResolvedValue({ status: 'ended' });
+});
 
 async function startAndAnswerFirst() {
   render(<MultiplicationQuizPage studentId="s1" settings={settings} onDone={() => {}} />);
@@ -48,24 +53,18 @@ async function startAndAnswerFirst() {
 }
 
 describe('MultiplicationQuizPage auto-advance', () => {
-  it('does not advance to the next question until the feedback speech promise resolves', async () => {
-    // Speech never resolves during this window → advance must stay blocked.
-    let resolveSpeech!: () => void;
-    mockSpeakFeedback.mockImplementation(() => new Promise<void>(r => { resolveSpeech = () => r(); }));
+  it('advances visually when feedback speech never starts', async () => {
+    mockSpeakFeedback.mockImplementation(() => new Promise(() => {}));
 
     await startAndAnswerFirst();
 
-    expect(mockSpeakFeedback).toHaveBeenCalledWith(true, 42);
-
-    // Wait well past the post-speech visual pause; the pause timer cannot even
-    // start until speech resolves, so we must still be on question 1.
-    await sleep(700);
-    expect(screen.getByText('Question 1 of 2')).toBeInTheDocument();
-    expect(screen.queryByText('Question 2 of 2')).not.toBeInTheDocument();
-
-    // Now let the answer audio finish → advance proceeds after the visual pause.
-    resolveSpeech();
-    await waitFor(() => expect(screen.getByText('Question 2 of 2')).toBeInTheDocument());
+    expect(mockSpeakFeedback).toHaveBeenCalledWith(true, 42, 1.1);
+    expect(mockSpeakProblem).toHaveBeenCalledWith('6 × 7 = ?', 1.1);
+    expect(mockUnlockSpeech).toHaveBeenCalledTimes(2); // Start and answer submission
+    await waitFor(
+      () => expect(screen.getByText('Question 2 of 2')).toBeInTheDocument(),
+      { timeout: 1_500 },
+    );
   });
 
   it('advances after the answer speech finishes when audio resolves immediately', async () => {

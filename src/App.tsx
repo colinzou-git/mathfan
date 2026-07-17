@@ -16,7 +16,7 @@ import { Grade3MasteryMapPage } from './features/mastery/Grade3MasteryMapPage';
 import { DiagnosticSession } from './features/diagnosis/DiagnosticSession';
 import { GoalsPage } from './features/goals/GoalsPage';
 import { GoalEvaluationSession } from './features/goals/GoalEvaluationSession';
-import { preloadVoices } from './features/audio/speech';
+import { preloadVoices, unlockSpeechFromUserGesture } from './features/audio/speech';
 import { useSync, initAuth } from './features/sync/useSync';
 import { pushLocal, pullAndMerge } from './features/sync/driveSync';
 import { currentState as authState, hasPersistedGrant } from './features/auth/googleAuth';
@@ -178,6 +178,7 @@ export default function App() {
   };
 
   const startPractice = (cfg: SessionConfig) => {
+    if (profile?.settings.audioEnabled) unlockSpeechFromUserGesture();
     setPracticeReturn(screen);
     setSessionConfig(cfg);
     setScreen('practice');
@@ -326,6 +327,7 @@ export default function App() {
     return (
       <DiagnosticSession
         studentId={profile.id}
+        audioEnabled={profile.settings.audioEnabled}
         onComplete={async () => {
           try {
             await syncDiagnosticCompletionIfSignedIn(authState().signedIn);
@@ -354,6 +356,7 @@ export default function App() {
     return (
       <GoalEvaluationSession
         studentId={profile.id}
+        audioEnabled={profile.settings.audioEnabled}
         onCancel={() => setScreen('goals')}
         onReturnToGoals={() => setScreen('goals')}
         onSelectGoalSkills={skillIds => {

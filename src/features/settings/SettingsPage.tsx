@@ -19,6 +19,7 @@ import {
   type UserDataExportFormat,
 } from '../export/userDataExport';
 import { mergeNormalizedSnapshot, normalizeSnapshot, type SnapshotNormalizationProblem } from '../sync/snapshot';
+import { speak, unlockSpeechFromUserGesture, type SpeechStatus } from '../audio/speech';
 
 interface Props {
   profile: StudentProfile;
@@ -104,6 +105,7 @@ export function SettingsPage({ profile, onUpdateProfile, onBack, onSwitchStudent
   const [importState, setImportState] = useState<ImportUiState>({ status: 'idle' });
   const [profileWritePending, setProfileWritePending] = useState(false);
   const [profileWriteError, setProfileWriteError] = useState<string | null>(null);
+  const [soundTestStatus, setSoundTestStatus] = useState<'idle' | 'playing' | SpeechStatus>('idle');
   const exportControlRef = useRef<HTMLDivElement>(null);
   const importFileRef = useRef<HTMLInputElement>(null);
   const latestProfileRef = useRef(profile);
@@ -146,6 +148,25 @@ export function SettingsPage({ profile, onUpdateProfile, onBack, onSwitchStudent
   const toggleDebugSpeed = (on: boolean) => {
     if (on) enableDebugSpeed(); else disableDebugSpeed();
     setDebugSpeed(on);
+  };
+
+  const testSound = async () => {
+    // Keep both calls in the click task so mobile/PWA engines receive a durable
+    // user-activation signal before the audible request is enqueued.
+    unlockSpeechFromUserGesture();
+    setSoundTestStatus('playing');
+    const result = await speak('MathFan sound is on.', settings.speechRate ?? 0.9);
+    setSoundTestStatus(result.status);
+  };
+
+  const soundTestLabel: Record<'idle' | 'playing' | SpeechStatus, string> = {
+    idle: '',
+    playing: 'Playing…',
+    ended: 'Sound played',
+    not_started: 'Speech could not start',
+    error: 'Speech failed',
+    unavailable: 'Speech is unavailable in this browser',
+    cancelled: 'Cancelled',
   };
 
   // AI tutor config (localStorage-backed, never synced)
@@ -586,6 +607,22 @@ export function SettingsPage({ profile, onUpdateProfile, onBack, onSwitchStudent
           checked={settings.audioEnabled}
           onChange={v => save({ audioEnabled: v })}
         />
+        <div style={s.row}>
+          <div>
+            <p style={s.rowLabel}>Test Sound</p>
+            <p role="status" style={s.rowDesc}>
+              {soundTestLabel[soundTestStatus] || 'Check that this browser can play MathFan speech'}
+            </p>
+          </div>
+          <button
+            type="button"
+            style={s.adjBtn}
+            disabled={soundTestStatus === 'playing'}
+            onClick={() => void testSound()}
+          >
+            {soundTestStatus === 'playing' ? 'Playing…' : 'Play'}
+          </button>
+        </div>
         <ToggleRow
           label="Auto-advance"
           desc="Skip 'press Enter to continue' after correct answers"

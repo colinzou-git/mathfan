@@ -169,6 +169,170 @@ def distinct_same_name_learners(page: Page) -> None:
     expect(page.get_by_role("heading", name="Hi, SameName!", exact=True)).to_be_visible()
 
 
+def speech_unlock_and_nonblocking_advance(page: Page) -> None:
+    """Reproduce the Android/PWA primer race against the real built app."""
+    page.add_init_script(
+        """(() => {
+            const realSetTimeout = window.setTimeout.bind(window);
+            // Hold only the primer fallback open so the first problem must queue
+            // behind a native `pending` primer until this scenario settles it.
+            window.setTimeout = (callback, delay, ...args) =>
+                realSetTimeout(callback, delay === 400 ? 5000 : delay, ...args);
+
+            const state = {
+                utterances: [],
+                cancelCount: 0,
+                resumeCount: 0,
+                pending: false,
+                speaking: false,
+                paused: false,
+                visibility: 'visible',
+            };
+            class MockUtterance {
+                constructor(text) {
+                    this.text = text;
+                    this.rate = 1;
+                    this.pitch = 1;
+                    this.volume = 1;
+                    this.lang = '';
+                    this.voice = null;
+                    this.onstart = null;
+                    this.onend = null;
+                    this.onerror = null;
+                    this.started = false;
+                }
+            }
+            const synth = {
+                get pending() { return state.pending; },
+                get speaking() { return state.speaking; },
+                get paused() { return state.paused; },
+                speak(utterance) {
+                    state.utterances.push(utterance);
+                    state.pending = true;
+                },
+                cancel() {
+                    state.cancelCount += 1;
+                    state.pending = false;
+                    state.speaking = false;
+                },
+                resume() { state.resumeCount += 1; state.paused = false; },
+                getVoices() { return []; },
+                addEventListener() {},
+            };
+            Object.defineProperty(window, 'SpeechSynthesisUtterance', { configurable: true, value: MockUtterance });
+            Object.defineProperty(window, 'speechSynthesis', { configurable: true, value: synth });
+            Object.defineProperty(document, 'visibilityState', {
+                configurable: true,
+                get: () => state.visibility,
+            });
+            window.__speechHarness = {
+                state,
+                resetLog() {
+                    state.utterances.length = 0;
+                    state.cancelCount = 0;
+                    state.resumeCount = 0;
+                    state.pending = false;
+                    state.speaking = false;
+                },
+                backgroundAndResume() {
+                    state.visibility = 'hidden';
+                    document.dispatchEvent(new Event('visibilitychange'));
+                    state.visibility = 'visible';
+                    document.dispatchEvent(new Event('visibilitychange'));
+                    this.resetLog();
+                },
+                fireStart(index) {
+                    const utterance = state.utterances[index];
+                    utterance.started = true;
+                    state.pending = false;
+                    state.speaking = true;
+                    utterance.onstart?.();
+                },
+                fireEnd(index) {
+                    const utterance = state.utterances[index];
+                    state.pending = false;
+                    state.speaking = false;
+                    utterance.onend?.();
+                },
+                snapshot() {
+                    return {
+                        texts: state.utterances.map(value => value.text),
+                        started: state.utterances.map(value => value.started),
+                        cancelCount: state.cancelCount,
+                        pending: state.pending,
+                    };
+                },
+            };
+        })()"""
+    )
+
+    create_profile(page, "SpeechTester", "issue-92-speech")
+    page.get_by_role("button", name=re.compile(r"Multiply")).click()
+    expect(page.get_by_role("heading", name="Multiplication", exact=True)).to_be_visible()
+    page.get_by_label("First number smallest", exact=True).fill("1")
+    page.get_by_label("First number largest", exact=True).fill("1")
+    page.get_by_label("Second number smallest", exact=True).fill("1")
+    page.get_by_label("Second number largest", exact=True).fill("1")
+    page.get_by_label("Number of questions", exact=True).fill("3")
+
+    # Reset the module to not_attempted and re-arm its next-gesture fallback,
+    # matching a background/foreground PWA transition immediately before Start.
+    page.evaluate("window.__speechHarness.backgroundAndResume()")
+    page.get_by_role("button", name=re.compile(r"Start — 3 questions")).click()
+    expect(page.get_by_label("Your answer", exact=True)).to_be_visible()
+
+    initial = page.evaluate("window.__speechHarness.snapshot()")
+    assert initial["texts"] == ["."], f"First problem did not queue behind primer: {initial!r}"
+    assert initial["pending"] is True, f"Primer did not expose native pending state: {initial!r}"
+    assert initial["cancelCount"] == 0, f"Primer/native pending triggered cancellation: {initial!r}"
+
+    page.evaluate("window.__speechHarness.fireStart(0); window.__speechHarness.fireEnd(0)")
+    page.wait_for_function("window.__speechHarness.state.utterances.length === 2")
+    first_problem = page.evaluate("window.__speechHarness.snapshot()")
+    assert first_problem["cancelCount"] == 0, f"Primer was cancelled: {first_problem!r}"
+    assert "times" in first_problem["texts"][1], f"Audible problem was not enqueued: {first_problem!r}"
+    page.evaluate("window.__speechHarness.fireStart(1)")
+    assert page.evaluate("window.__speechHarness.snapshot().started[1]") is True
+
+    # First answer: never acknowledge feedback. The visual session must still
+    # advance, and the 800 ms start watchdog must release the queued problem.
+    answer = page.get_by_label("Your answer", exact=True)
+    answer.fill("1")
+    answer.press("Enter")
+    expect(page.get_by_text(re.compile(r"Correct!|New personal best!"))).to_be_visible()
+    page.wait_for_function(
+        "window.__speechHarness.state.utterances.length >= 4",
+        timeout=1500,
+    )
+    expect(page.get_by_text(re.compile(r"Correct!|New personal best!"))).not_to_be_visible(timeout=1500)
+    ignored = page.evaluate("window.__speechHarness.snapshot()")
+    assert ignored["texts"][2] == "1", f"Correct feedback was not requested: {ignored!r}"
+    assert "times" in ignored["texts"][3], f"Ignored feedback did not release next problem: {ignored!r}"
+
+    # Second answer: acknowledge feedback but do not end it. The third visual
+    # question appears on time, while its problem audio remains queued until end.
+    page.evaluate("window.__speechHarness.fireStart(3)")
+    answer = page.get_by_label("Your answer", exact=True)
+    answer.fill("1")
+    answer.press("Enter")
+    page.wait_for_function("window.__speechHarness.state.utterances.length >= 5")
+    page.evaluate("window.__speechHarness.fireStart(4)")
+    before_visual_advance = page.evaluate("window.__speechHarness.snapshot()")
+    page.wait_for_timeout(750)
+    expect(page.get_by_text(re.compile(r"Correct!|New personal best!"))).not_to_be_visible()
+    while_feedback_active = page.evaluate("window.__speechHarness.snapshot()")
+    assert len(while_feedback_active["texts"]) == 5, (
+        f"Next problem interrupted active feedback: {while_feedback_active!r}"
+    )
+    assert while_feedback_active["cancelCount"] == before_visual_advance["cancelCount"], (
+        f"Visual transition cancelled feedback: {while_feedback_active!r}"
+    )
+    page.evaluate("window.__speechHarness.fireEnd(4)")
+    page.wait_for_function("window.__speechHarness.state.utterances.length === 6")
+    sequenced = page.evaluate("window.__speechHarness.snapshot()")
+    assert "times" in sequenced["texts"][5], f"Queued third problem did not start after feedback: {sequenced!r}"
+
+
 def set_practice_preferences_and_verify_persistence(page: Page) -> None:
     page.get_by_test_id("open-settings").click()
     expect(page.get_by_role("heading", name="Settings", exact=True)).to_be_visible()
@@ -1122,6 +1286,7 @@ def main() -> int:
             ("practice-save-recovery", {"width": 390, "height": 844}, practice_save_failure_recovery, False),
             ("diagnostic-immediate-persistence", {"width": 1024, "height": 768}, diagnostic_immediate_persistence, False),
             ("goal-evaluation-double-submit", {"width": 1024, "height": 768}, goal_evaluation_double_submit, False),
+            ("speech-unlock-nonblocking-advance", {"width": 390, "height": 844}, speech_unlock_and_nonblocking_advance, False),
             ("legacy-scheduler-upgrade", {"width": 1024, "height": 768}, legacy_scheduler_upgrade, False),
             ("distinct-same-name-learners", {"width": 1024, "height": 768}, distinct_same_name_learners, False),
         ]

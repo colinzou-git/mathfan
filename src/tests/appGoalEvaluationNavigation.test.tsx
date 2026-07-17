@@ -66,6 +66,7 @@ vi.mock('../features/theme/themes', () => ({
 vi.mock('../features/audio/speech', () => ({
   preloadVoices: vi.fn(),
   stopSpeech: vi.fn(),
+  unlockSpeechFromUserGesture: vi.fn(),
 }));
 
 vi.mock('../features/migrations/cardStateMigration', () => ({ runCardStateMigration: runMigrationMock }));

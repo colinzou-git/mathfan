@@ -28,9 +28,11 @@ import { deriveCardKey } from '../scheduler/cardModel';
 import { itemStateRepo } from '../../db/repositories';
 import { generateId } from '../../utils/id';
 import { appNow } from '../time/clock';
+import { unlockSpeechFromUserGesture } from '../audio/speech';
 
 interface Props {
   studentId: string;
+  audioEnabled?: boolean;
   /** Called when all diagnostic questions are answered. */
   onComplete: () => void | Promise<void>;
   /** Called if the student wants to exit early. */
@@ -49,7 +51,7 @@ type SaveState = 'idle' | 'saving' | 'error';
 
 const FEEDBACK_MS = 1200;
 
-export function DiagnosticSession({ studentId, onComplete, onCancel }: Props) {
+export function DiagnosticSession({ studentId, audioEnabled = false, onComplete, onCancel }: Props) {
   // sessionId and plan are stable for the lifetime of the component.
   // Stored in state (not ref) so they are safe to read during render.
   const [sessionId] = useState(() => generateId());
@@ -113,6 +115,7 @@ export function DiagnosticSession({ studentId, onComplete, onCancel }: Props) {
 
   const handleSubmit = useCallback(async () => {
     if (submitInFlightRef.current || !currentItem || showFeedback || saveState !== 'idle' || !input.trim()) return;
+    if (audioEnabled) unlockSpeechFromUserGesture();
     submitInFlightRef.current = true;
     setSaveState('saving');
     const latencyMs = Math.max(1, Math.round(performance.now() - startTimeRef.current));
@@ -150,7 +153,7 @@ export function DiagnosticSession({ studentId, onComplete, onCancel }: Props) {
     } finally {
       submitInFlightRef.current = false;
     }
-  }, [acceptSavedJob, currentItem, input, saveState, sessionId, showFeedback, studentId]);
+  }, [acceptSavedJob, audioEnabled, currentItem, input, saveState, sessionId, showFeedback, studentId]);
 
   const retryCurrentWrite = useCallback(async () => {
     if (submitInFlightRef.current || conflictRequiresResubmit) return;
@@ -233,7 +236,10 @@ export function DiagnosticSession({ studentId, onComplete, onCancel }: Props) {
           <p style={s.body}>
             {total} questions · No timer · Take your time!
           </p>
-          <button style={s.startBtn} onClick={() => setPhase('active')}>
+          <button style={s.startBtn} onClick={() => {
+            if (audioEnabled) unlockSpeechFromUserGesture();
+            setPhase('active');
+          }}>
             Let's go!
           </button>
           <button style={s.cancelBtn} onClick={onCancel}>

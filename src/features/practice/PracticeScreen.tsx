@@ -7,15 +7,14 @@ import { NumPad } from '../../components/NumPad';
 import { SessionSummary } from '../../components/SessionSummary';
 import { SettingsOverlay } from '../../components/SettingsOverlay';
 import { TutorChat } from '../ai/TutorChat';
-import { speakProblem, speakFeedback, stopSpeech } from '../audio/speech';
+import { speakProblem, speakFeedback, stopSpeech, unlockSpeechFromUserGesture } from '../audio/speech';
 import { VisualModel } from '../visuals/VisualModel';
 import { MathPrompt } from '../visuals/MathPrompt';
 import { hasVisualModel } from '../visuals/visualModelUtils';
 import { getHint } from './hintEngine';
 import { deriveCardKey } from '../scheduler/cardModel';
 
-const AUTO_ADVANCE_MS = 700;     // visual-only pause when audio is off
-const POST_SPEECH_PAUSE_MS = 200; // short pause after answer speech finishes
+const AUTO_ADVANCE_MS = 700;
 
 interface Props {
   studentId: string;
@@ -46,6 +45,11 @@ export function PracticeScreen({
   // user types the last digit and immediately presses Enter in the same frame.
   const inputLatestRef = useRef<string>('');
   useLayoutEffect(() => { inputLatestRef.current = input; });
+
+  const submitWithSpeechRecovery = useCallback((answer: string) => {
+    if (settings.audioEnabled) unlockSpeechFromUserGesture();
+    submitAnswer(answer);
+  }, [settings.audioEnabled, submitAnswer]);
 
   // ── Start ─────────────────────────────────────────────────────────────────
 
@@ -79,31 +83,28 @@ export function PracticeScreen({
   useEffect(() => {
     if (state.phase === 'active') {
       focusInput();
-      if (settings.audioEnabled && state.currentItem) speakProblem(state.currentItem.prompt);
+      if (settings.audioEnabled && state.currentItem) {
+        void speakProblem(state.currentItem.prompt, settings.speechRate ?? 0.9);
+      }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.phase, state.currentItem?.id, state.retryKey]);
 
-  // Correct phase → focus for Enter-to-advance; optionally auto-advance.
-  // Auto-advance waits for the correct-answer speech to finish (variable duration
-  // across browsers/voices) before a short visual pause, so the next question's
-  // speech never cuts off the answer audio. A `cancelled` flag guards against the
-  // async flow advancing after unmount, phase change, or manual advance.
+  // Correct phase → start auxiliary feedback and visual auto-advance independently.
+  // The speech controller sequences the next problem behind active feedback; a
+  // browser speech callback is never allowed to gate the learner's next question.
   useEffect(() => {
     if (state.phase === 'correct') {
       focusInput();
       let cancelled = false;
-      const run = async () => {
-        const spoken = settings.audioEnabled && !!state.currentItem;
-        if (spoken) {
-          await speakFeedback(true, state.currentItem!.answer);
-        }
-        if (cancelled || !settings.autoAdvance) return;
-        const pauseMs = spoken ? POST_SPEECH_PAUSE_MS : AUTO_ADVANCE_MS;
-        await new Promise<void>(resolve => { autoTimer.current = setTimeout(resolve, pauseMs); });
-        if (!cancelled) nextQuestion();
-      };
-      run();
+      if (settings.audioEnabled && state.currentItem) {
+        void speakFeedback(true, state.currentItem.answer, settings.speechRate ?? 0.9);
+      }
+      if (settings.autoAdvance) {
+        autoTimer.current = setTimeout(() => {
+          if (!cancelled) void nextQuestion();
+        }, AUTO_ADVANCE_MS);
+      }
       return () => {
         cancelled = true;
         if (autoTimer.current) clearTimeout(autoTimer.current);
@@ -180,7 +181,7 @@ export function PracticeScreen({
             const idx = Number(e.key) - 1;
             if (idx < opts.length) {
               e.preventDefault();
-              submitAnswer(opts[idx]);
+              submitWithSpeechRecovery(opts[idx]);
             }
             return;
           }
@@ -188,7 +189,7 @@ export function PracticeScreen({
           if (e.key === '<' || e.key === '=' || e.key === '>') {
             if (opts.includes(e.key)) {
               e.preventDefault();
-              submitAnswer(e.key);
+              submitWithSpeechRecovery(e.key);
             }
             return;
           }
@@ -196,7 +197,7 @@ export function PracticeScreen({
           const matches = opts.filter(o => o[0].toLowerCase() === e.key.toLowerCase());
           if (matches.length === 1) {
             e.preventDefault();
-            submitAnswer(matches[0]);
+            submitWithSpeechRecovery(matches[0]);
           }
           return;
         }
@@ -204,7 +205,7 @@ export function PracticeScreen({
           e.preventDefault();
           // Read from ref (not closure) so rapid typing doesn't submit a stale partial value.
           const val = inputLatestRef.current;
-          if (val.trim()) submitAnswer(val);
+          if (val.trim()) submitWithSpeechRecovery(val);
         }
       }
     };
@@ -269,7 +270,7 @@ export function PracticeScreen({
 
   const submitChoice = (choice: string) => {
     if (isCorrect || state.saveStatus !== 'idle') return;
-    submitAnswer(choice);
+    submitWithSpeechRecovery(choice);
   };
 
   return (
@@ -363,7 +364,10 @@ export function PracticeScreen({
       >
         {settings.audioEnabled && state.currentItem && (
           <button style={st.audioBtn} tabIndex={-1}
-            onClick={() => speakProblem(state.currentItem!.prompt)}
+            onClick={() => {
+              unlockSpeechFromUserGesture();
+              void speakProblem(state.currentItem!.prompt, settings.speechRate ?? 0.9);
+            }}
             title="Repeat">🔊
           </button>
         )}
@@ -486,7 +490,7 @@ export function PracticeScreen({
               onChange={setInput}
               allowDecimal={allowDecimal}
               onSubmit={() => {
-                if (input.trim()) submitAnswer(input);
+                if (input.trim()) submitWithSpeechRecovery(input);
               }}
               />
             </div>

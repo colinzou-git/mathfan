@@ -4,9 +4,9 @@
 
 | Package | Import count |
 | --- | --- |
-| vitest | 94 |
+| vitest | 96 |
 | react | 35 |
-| @testing-library/react | 19 |
+| @testing-library/react | 21 |
 | pathlib | 8 |
 | __future__ | 7 |
 | sys | 7 |
@@ -236,6 +236,7 @@
 | src/features/diagnosis/DiagnosticSession.tsx | ../../db/repositories |
 | src/features/diagnosis/DiagnosticSession.tsx | ../../types/math |
 | src/features/diagnosis/DiagnosticSession.tsx | ../../utils/id |
+| src/features/diagnosis/DiagnosticSession.tsx | ../audio/speech |
 | src/features/diagnosis/DiagnosticSession.tsx | ../practice/QuestionRenderer |
 | src/features/diagnosis/DiagnosticSession.tsx | ../scheduler/cardModel |
 | src/features/diagnosis/DiagnosticSession.tsx | ../time/clock |
@@ -301,6 +302,7 @@
 | src/features/goals/GoalEvaluationSession.tsx | ../../db/repositories |
 | src/features/goals/GoalEvaluationSession.tsx | ../../types/math |
 | src/features/goals/GoalEvaluationSession.tsx | ../../utils/id |
+| src/features/goals/GoalEvaluationSession.tsx | ../audio/speech |
 | src/features/goals/GoalEvaluationSession.tsx | ../auth/googleAuth |
 | src/features/goals/GoalEvaluationSession.tsx | ../curriculum/makeItemFromId |
 | src/features/goals/GoalEvaluationSession.tsx | ../learning/learningEvents |
@@ -571,6 +573,7 @@
 | src/features/settings/SettingsPage.tsx | ../../types/math |
 | src/features/settings/SettingsPage.tsx | ../ai/aiConfig |
 | src/features/settings/SettingsPage.tsx | ../ai/gemini |
+| src/features/settings/SettingsPage.tsx | ../audio/speech |
 | src/features/settings/SettingsPage.tsx | ../auth/googleAuth |
 | src/features/settings/SettingsPage.tsx | ../export/userDataExport |
 | src/features/settings/SettingsPage.tsx | ../goals/dailyNewGoalLimits |
@@ -1019,6 +1022,8 @@
 | src/tests/practiceSession.test.ts | ../features/time/clock |
 | src/tests/practiceSession.test.ts | ../types/math |
 | src/tests/practiceSession.test.ts | ../utils/id |
+| src/tests/practiceSpeechLifecycle.test.tsx | ../features/practice/PracticeScreen |
+| src/tests/practiceSpeechLifecycle.test.tsx | ../types/math |
 | src/tests/profileBootstrap.test.ts | ../features/profile/profileBootstrap |
 | src/tests/profileBootstrap.test.ts | ../types/math |
 | src/tests/profileSetup.test.tsx | ../features/dashboard/ProfileSetup |
@@ -1074,6 +1079,8 @@
 | src/tests/settingsExportUserData.test.tsx | ../features/settings/SettingsPage |
 | src/tests/settingsExportUserData.test.tsx | ../features/sync/driveSync |
 | src/tests/settingsExportUserData.test.tsx | ../types/math |
+| src/tests/settingsSoundTest.test.tsx | ../features/settings/SettingsPage |
+| src/tests/settingsSoundTest.test.tsx | ../types/math |
 | src/tests/skillMapping.test.ts | ../features/curriculum/fractionItems |
 | src/tests/skillMapping.test.ts | ../features/curriculum/multiplicationItems |
 | src/tests/skillMapping.test.ts | ../features/curriculum/wordProblemItems |
