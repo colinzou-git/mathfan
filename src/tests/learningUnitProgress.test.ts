@@ -45,6 +45,14 @@ describe('learning-unit progress', () => {
     expect(remainingLearningUnitEvidence(unit)).toBe(2);
   });
 
+  it('counts one-step word variants as distinct evidence for one schema card', () => {
+    const items = ['WORD_eg_2_3', 'WORD_eg_4_5', 'WORD_eg_6_7'].map(item);
+    const events = items.map((current, index) => event(current, `word-${index}`, `session-${index}`));
+    const progress = deriveLearningUnitProgress({ items, events, states: [state(items[2], { attemptCount: 3 })] });
+    expect(progress).toHaveLength(1);
+    expect([...progress.values()][0]).toMatchObject({ distinctInstanceCount: 3, directInstanceCount: 3 });
+  });
+
   it('requires fraction instance and representation diversity before maintenance', () => {
     const items = ['FCMP_1_4_3_4', 'FCMP_1_3_2_3', 'FCMP_2_5_4_5'].map(item);
     const oneRepresentation = items.map((current, index) => event(current, `e${index}`, `session-${index}`, 'fraction_bar'));

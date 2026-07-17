@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { generateWordProblemItems } from '../features/curriculum/wordProblemItems';
+import { generateWordProblemItems, makeWordProblem } from '../features/curriculum/wordProblemItems';
 import { generateRoundingItems, makeRoundingItem, roundToNearest } from '../features/curriculum/roundingItems';
 import { generateNumberTheoryItems, isPrime, makePrimeItem, makeFactorItem } from '../features/curriculum/numberTheoryItems';
 import { generateDecimalItems, makeDecimalAddItem, makeDecimalSubItem, fmtDecimal } from '../features/curriculum/decimalItems';
@@ -31,6 +31,21 @@ describe('word problems', () => {
   it('describeItem renders a compact label', () => {
     expect(describeItem('WORD_eg_6_8')).toMatchObject({ group: 'word' });
     expect(describeItem('WORD_eg_6_8').prompt).toContain('6 × 8');
+  });
+
+  it('uses one semantic card per schema and distinct cards across schemas', () => {
+    expect(makeWordProblem('eg', 2, 3).cardKey).toBe(makeWordProblem('eg', 8, 9).cardKey);
+    expect(new Set((['eg', 'ar', 'cmp', 'dv'] as const).map(schema => makeWordProblem(schema, 4, 6).cardKey)).size).toBe(4);
+  });
+
+  it('generates a stable sequence with an injected RNG and never divides into zero groups', () => {
+    const sequence = [0.99, 0, 0.5, 0, 0.4, 0.7, 0.25, 0.8, 0.9];
+    const generate = () => {
+      let index = 0;
+      return generateWordProblemItems(3, 3, 0, 10, () => sequence[index++ % sequence.length]).map(item => item.id);
+    };
+    expect(generate()).toEqual(generate());
+    expect(generate().filter(id => id.startsWith('WORD_dv_')).every(id => !id.startsWith('WORD_dv_0_'))).toBe(true);
   });
 });
 

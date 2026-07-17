@@ -8,7 +8,7 @@
  *   - .answer is correct for deterministic items
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { makeItemFromId } from '../features/curriculum/makeItemFromId';
 
 // ── arithmetic ─────────────────────────────────────────────────────────────────
@@ -171,6 +171,17 @@ describe('makeItemFromId — word problem', () => {
     expect(item!.id).toBe('WORD_eg_6_8');
     expect(item!.itemType).toBe('word_problem');
     expect(item!.answer).toBe(48);
+  });
+
+  it('reconstructs every schema deterministically without consulting Math.random', () => {
+    for (const id of ['WORD_eg_4_6', 'WORD_ar_4_6', 'WORD_cmp_4_6', 'WORD_dv_4_6']) {
+      const random = vi.spyOn(Math, 'random').mockReturnValueOnce(0).mockReturnValueOnce(0.999);
+      const first = makeItemFromId(id);
+      const second = makeItemFromId(id);
+      expect(second).toEqual(first);
+      expect(first?.contentSpec).toMatchObject({ domain: 'word_problem', version: 1 });
+      random.mockRestore();
+    }
   });
 });
 

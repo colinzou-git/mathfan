@@ -248,7 +248,10 @@ function learningItemsForPool(
     const unit = progress.get(cardKey);
     if (!unit || unit.status === 'maintenance') continue;
     priorEvidenceCount += unit.directInstanceCount;
-    const fresh = ids.filter(id => !attempted.has(id));
+    // A semantic template can contain many numeric instances. Sort before
+    // applying the evidence cap so selection is stable and advances to the
+    // first untouched instance instead of depending on generator pool order.
+    const fresh = orderItems(ids.filter(id => !attempted.has(id)));
     if (unit.kind === 'atomic_fact') {
       if (unit.status === 'new' && fresh[0]) eligible.push(fresh[0]);
       continue;

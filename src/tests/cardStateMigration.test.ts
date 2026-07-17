@@ -6,6 +6,7 @@ import {
   runCardStateMigration,
   isCardStateMigrationComplete,
   rollbackCardStateMigration,
+  repairLegacyWordProblemCardStates,
   MIGRATION_KIND,
 } from '../features/migrations/cardStateMigration';
 import type { MathAnswerEvent } from '../features/learning/learningEvents';
@@ -54,6 +55,20 @@ function legacy(itemId = 'MUL_7x8', overrides: Partial<LegacyStudentItemState> =
 async function putSchemaBackup(rows: LegacyStudentItemState[]) {
   await db.migrationBackups.put({ id: 'schema-v7-pre-cardkey-backup', migrationRunId: 'schema-v7-auto-backup', createdAt: '2026-01-01T00:00:00.000Z', itemStates: rows });
 }
+
+it('repairs exact-instance word cards conservatively into one schema card', async () => {
+  const first = legacy('WORD_eg_2_3', { reps: 3, attemptCount: 3 });
+  const second = legacy('WORD_eg_4_5', { reps: 5, attemptCount: 5 });
+  await db.itemStates.bulkPut([
+    { ...first, cardKey: 'template:WORD_eg_2_3', lastItemId: 'WORD_eg_2_3' },
+    { ...second, cardKey: 'template:WORD_eg_4_5', lastItemId: 'WORD_eg_4_5' },
+  ]);
+
+  expect(await repairLegacyWordProblemCardStates()).toBe(2);
+  const states = await db.itemStates.toArray();
+  expect(states).toHaveLength(1);
+  expect(states[0]).toMatchObject({ cardKey: 'template:g3-word:equal-groups-result', reps: 5, attemptCount: 5 });
+});
 
 async function createRealV6Database(rows: LegacyStudentItemState[]) {
   db.close();

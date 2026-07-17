@@ -5,7 +5,7 @@ export interface LegacyStudentItemState extends Omit<StudentItemState, 'cardKey'
   itemId: string;
 }
 
-export type DataMigrationKind = 'hybrid-card-v1';
+export type DataMigrationKind = 'hybrid-card-v1' | 'semantic-word-cards-v2';
 export type DataMigrationStatus = 'started' | 'completed' | 'failed' | 'rolled_back';
 
 export interface MigrationCoverage {

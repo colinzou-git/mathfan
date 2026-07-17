@@ -164,6 +164,19 @@ describe('rebuildItemStatesFromEvents — diagnostic events feed FSRS', () => {
     // Quiz event ignored; only the diagnostic event was applied.
     expect(state!.reps).toBe(1);
   });
+
+  it('merges historical exact-instance word events into their schema card', async () => {
+    fakeDb.mathAnswerEvents.rows = [
+      makeEvent({ id: 'word-1', itemId: 'WORD_eg_2_3', cardKey: 'template:WORD_eg_2_3', sessionId: 'one' }),
+      makeEvent({ id: 'word-2', itemId: 'WORD_eg_4_5', cardKey: 'template:WORD_eg_4_5', sessionId: 'two', createdAt: '2026-06-02T10:00:00.000Z' }),
+    ];
+    await rebuildItemStatesFromEvents(STUDENT, { mode: 'strict' });
+    expect(fakeDb.itemStates.rows).toHaveLength(1);
+    expect(fakeDb.itemStates.rows[0]).toMatchObject({
+      cardKey: 'template:g3-word:equal-groups-result', reps: 2, lastItemId: 'WORD_eg_4_5',
+    });
+    expect(fakeDb.mathAnswerEvents.rows[0].promptShown).toBe('7 × 8 = ?');
+  });
 });
 
 describe('rebuildItemStatesFromEvents — scheduling eligibility', () => {
