@@ -1,22 +1,39 @@
 import { db } from '../../db/dexie';
-import type { AttemptLog, StudentItemState } from '../../types/math';
+import type { AttemptLog, PracticeItem, StudentItemState } from '../../types/math';
 import { generateId } from '../../utils/id';
-import { itemStateRepo, mathAnswerEventRepo, attemptRepo, goalEvaluationRepo } from '../../db/repositories';
+import { goalEvaluationRepo } from '../../db/repositories';
 import type { MathAnswerEvent } from '../learning/learningEvents';
 import { randomSeed } from '../../utils/rng';
 import type { AdaptiveGoalEvaluationSelection } from './goalEvaluationEngine';
 import type { GoalEvaluation, PersistedGoalEvaluationSelection } from './types';
 import { deriveCardKey } from '../scheduler/cardModel';
 import { validatePersistedGoalEvaluationSelection } from './goalEvaluationSelection';
+import type { CheckResult } from '../practice/answerChecker';
+import { applyReview, createInitialState } from '../scheduler/scheduler';
+import { applyMisconceptionConfirmation, applyMisconceptionDetection, detectMistakes } from '../mastery/misconceptionEngine';
+import { buildSchedulingTelemetry } from '../learning/schedulingTelemetry';
 
-export interface GoalEvaluationAnswerWrite {
-  event: MathAnswerEvent;
-  attempt: AttemptLog;
-  updatedState?: StudentItemState;
-  evaluation: GoalEvaluation;
+export interface GoalEvaluationAnswerProposal {
+  evaluationId: string;
+  eventId: string;
+  attemptId: string;
+  studentId: string;
+  answeredAt: string;
   questionIndex: number;
   selectionRevision: number;
+  item: PracticeItem;
+  rawAnswer: string;
+  latencyMs: number;
+  checked: CheckResult;
   selection: PersistedGoalEvaluationSelection;
+}
+
+export interface PersistedGoalEvaluationAnswerResult {
+  evaluation: GoalEvaluation;
+  event: MathAnswerEvent;
+  attempt: AttemptLog;
+  stateAfter?: StudentItemState;
+  schedulingApplied: boolean;
 }
 
 export class GoalEvaluationSelectionConflictError extends Error {
@@ -54,10 +71,11 @@ export async function persistNextGoalEvaluationQuestion(args: PersistNextGoalQue
   });
 }
 
-export interface CommittedGoalEvaluationAnswer {
-  evaluation: GoalEvaluation;
-  event: MathAnswerEvent;
-  updatedState?: StudentItemState;
+export class GoalEvaluationIdempotencyConflictError extends Error {
+  constructor(eventId: string) {
+    super(`Conflicting goal-evaluation event identity: ${eventId}`);
+    this.name = 'GoalEvaluationIdempotencyConflictError';
+  }
 }
 
 export async function loadLatestResumableGoalEvaluation(studentId: string): Promise<GoalEvaluation | null> {
@@ -90,61 +108,129 @@ export async function createGoalEvaluation(studentId: string, now: string): Prom
   return evaluation;
 }
 
-export async function recordGoalEvaluationAnswer(payload: GoalEvaluationAnswerWrite): Promise<CommittedGoalEvaluationAnswer> {
+function goalAnswerFingerprint(value: {
+  studentId: string; sessionId: string; itemId: string; cardKey?: string;
+  studentAnswer: string | number | null; correctAnswer: string | number; isCorrect: boolean;
+  latencyMs: number; reviewGrade?: string; gradingContext?: string; schedulingEligible?: boolean; createdAt: string;
+}): string {
+  return JSON.stringify({ studentId: value.studentId, sessionId: value.sessionId, itemId: value.itemId,
+    cardKey: value.cardKey, studentAnswer: value.studentAnswer, correctAnswer: value.correctAnswer,
+    isCorrect: value.isCorrect, latencyMs: value.latencyMs, reviewGrade: value.reviewGrade,
+    gradingContext: value.gradingContext, schedulingEligible: value.schedulingEligible, createdAt: value.createdAt });
+}
+
+function classifySchedulerError(error: unknown): MathAnswerEvent['schedulerErrorCode'] {
+  return error instanceof RangeError ? 'clock_drift'
+    : error instanceof TypeError ? 'invalid_card'
+      : error instanceof Error ? 'fsrs_validation' : 'unknown';
+}
+
+export async function persistGoalEvaluationAnswer(proposal: GoalEvaluationAnswerProposal): Promise<PersistedGoalEvaluationAnswerResult> {
   return db.transaction('rw', db.mathAnswerEvents, db.itemStates, db.attempts, db.goalEvaluations, async () => {
-    const current = await db.goalEvaluations.get(payload.evaluation.id);
-    if (!current) throw new Error('Goal evaluation not found.');
-    const existingEvent = await db.mathAnswerEvents.get(payload.event.id);
+    const current = await db.goalEvaluations.get(proposal.evaluationId);
+    if (!current || current.studentId !== proposal.studentId) throw new Error('Goal evaluation not found.');
+    const cardKey = deriveCardKey(proposal.item);
+    const existingEvent = await db.mathAnswerEvents.get(proposal.eventId);
     if (existingEvent) {
-      const equivalent = existingEvent.studentId === payload.event.studentId && existingEvent.sessionId === payload.event.sessionId && existingEvent.itemId === payload.event.itemId;
-      if (!equivalent) throw new Error(`Conflicting goal-evaluation event identity: ${payload.event.id}`);
-      return { evaluation: current, event: existingEvent, updatedState: await db.itemStates.get([current.studentId, existingEvent.cardKey ?? '']) };
+      const expected = { studentId: proposal.studentId, sessionId: proposal.evaluationId, itemId: proposal.item.id, cardKey,
+        studentAnswer: proposal.checked.studentAnswer, correctAnswer: proposal.checked.correctAnswer,
+        isCorrect: proposal.checked.isCorrect, latencyMs: proposal.latencyMs, reviewGrade: proposal.checked.reviewGrade,
+        gradingContext: proposal.checked.gradingContext, schedulingEligible: proposal.selection.schedulingEligible,
+        createdAt: proposal.answeredAt };
+      if (goalAnswerFingerprint(existingEvent) !== goalAnswerFingerprint(expected)) throw new GoalEvaluationIdempotencyConflictError(proposal.eventId);
+      const attempt = await db.attempts.get(proposal.attemptId);
+      if (!attempt) throw new GoalEvaluationIdempotencyConflictError(proposal.eventId);
+      return { evaluation: current, event: existingEvent, attempt,
+        stateAfter: existingEvent.schedulingApplied ? await db.itemStates.get([proposal.studentId, cardKey]) : undefined,
+        schedulingApplied: existingEvent.schedulingApplied === true };
     }
+    if (current.status !== 'in_progress') throw new Error('Goal evaluation is not in progress.');
     const pending = current.currentSelection;
     if (!pending) throw new GoalEvaluationSelectionConflictError('No persisted pending question.');
     const validatedPending = validatePersistedGoalEvaluationSelection({ evaluation: current, selection: pending });
-    if (validatedPending.questionIndex !== payload.questionIndex || (current.selectionRevision ?? 0) !== payload.selectionRevision) throw new GoalEvaluationSelectionConflictError('Pending question changed.');
-    if (validatedPending.item.id !== payload.selection.item.id || validatedPending.cardKey !== payload.selection.cardKey
-      || payload.event.itemId !== validatedPending.item.id || deriveCardKey(payload.selection.item) !== validatedPending.cardKey) {
+    if (validatedPending.questionIndex !== proposal.questionIndex || (current.selectionRevision ?? 0) !== proposal.selectionRevision) throw new GoalEvaluationSelectionConflictError('Pending question changed.');
+    if (validatedPending.item.id !== proposal.item.id || validatedPending.cardKey !== proposal.selection.cardKey
+      || cardKey !== validatedPending.cardKey) {
       throw new GoalEvaluationSelectionConflictError('Answer does not match pending question.');
     }
-    const cardKey = payload.event.cardKey;
-    const alreadyScheduled = Boolean(cardKey && (current.scheduledCardKeys ?? []).includes(cardKey));
-    const schedulingApplied = payload.event.schedulingApplied === true && !alreadyScheduled;
-    const event: MathAnswerEvent = schedulingApplied ? payload.event : {
-      ...payload.event,
-      schedulingEligible: false,
-      schedulingApplied: false,
-      schedulingReason: 'same_evaluation_template_repeat',
-      factStatusAfter: payload.event.factStatusBefore,
-      schedulingTelemetry: payload.event.schedulingTelemetry ? {
-        ...payload.event.schedulingTelemetry,
-        schedulingEligible: false,
-        schedulingApplied: false,
-        schedulingReason: 'same_evaluation_template_repeat',
-        after: undefined,
-      } : undefined,
+    const schedulerNow = new Date(proposal.answeredAt);
+    if (!Number.isFinite(schedulerNow.getTime())) throw new Error('Invalid immutable answer timestamp.');
+    const alreadyScheduled = (current.scheduledCardKeys ?? []).includes(cardKey);
+    const schedulingEligible = validatedPending.schedulingEligible && !alreadyScheduled;
+    const schedulingReason = schedulingEligible ? 'first_card_evidence' : 'same_evaluation_template_repeat';
+    const before = await db.itemStates.get([proposal.studentId, cardKey]) ?? createInitialState(proposal.studentId, proposal.item);
+    let after = before;
+    let schedulingApplied = false;
+    let schedulerErrorCode: MathAnswerEvent['schedulerErrorCode'];
+    let detected: string[] = [];
+    let confirmed: string[] = [];
+    if (schedulingEligible) {
+      try {
+        after = applyReview(before, proposal.checked.reviewGrade, proposal.latencyMs, proposal.rawAnswer, schedulerNow, { isCorrect: proposal.checked.isCorrect });
+        after = { ...after, cardKey, lastItemId: proposal.item.id };
+        const context = { eventId: proposal.eventId, sessionId: current.id, itemId: proposal.item.id, createdAt: proposal.answeredAt };
+        if (!proposal.checked.isCorrect) {
+          detected = detectMistakes(proposal.item, proposal.checked.studentAnswer);
+          after = { ...after, mistakePatterns: [...new Set([...(after.mistakePatterns ?? []), ...detected])],
+            misconceptionEvidence: applyMisconceptionDetection(after.misconceptionEvidence, detected, context, before.mistakePatterns) };
+        } else {
+          const confirmation = applyMisconceptionConfirmation(after.misconceptionEvidence, proposal.item, context, after.mistakePatterns);
+          confirmed = confirmation.confirmedCodes;
+          if (confirmation.evidence.length || after.misconceptionEvidence) after = { ...after, misconceptionEvidence: confirmation.evidence };
+        }
+        schedulingApplied = true;
+      } catch (error) {
+        after = before;
+        schedulerErrorCode = classifySchedulerError(error);
+      }
+    }
+    const event: MathAnswerEvent = {
+      id: proposal.eventId, studentId: proposal.studentId, sessionId: current.id, itemId: proposal.item.id,
+      cardKey, schemaId: proposal.item.schemaId, mode: 'goal_evaluation', promptShown: proposal.item.prompt,
+      correctAnswer: proposal.checked.correctAnswer, studentAnswer: proposal.checked.studentAnswer,
+      isCorrect: proposal.checked.isCorrect, isRetry: false, hintUsed: false, latencyMs: proposal.latencyMs,
+      ratingReason: proposal.checked.ratingReason, responsePolicy: proposal.checked.policyKind,
+      gradingContext: proposal.checked.gradingContext, fluencyBand: proposal.checked.fluencyBand,
+      detectedMisconceptions: detected.length ? detected : undefined, confirmedMisconceptions: confirmed.length ? confirmed : undefined,
+      reviewGrade: proposal.checked.reviewGrade, factStatusBefore: before.masteryLevel,
+      factStatusAfter: schedulingApplied ? after.masteryLevel : before.masteryLevel,
+      schedulingEligible, schedulingApplied, schedulerErrorCode, schedulingReason,
+      schedulingTelemetry: buildSchedulingTelemetry({ item: proposal.item, stateBefore: before,
+        stateAfter: schedulingApplied ? after : undefined,
+        response: { reviewGrade: proposal.checked.reviewGrade, ratingReason: proposal.checked.ratingReason,
+          responsePolicy: proposal.checked.policyKind, gradingContext: proposal.checked.gradingContext,
+          fluencyBand: proposal.checked.fluencyBand, fluencyBaselineSource: proposal.checked.fluencyBaselineSource,
+          fluencySampleCount: proposal.checked.fluencySampleCount, fluencyFastCutoffMs: proposal.checked.fluencyFastCutoffMs,
+          fluencySlowCutoffMs: proposal.checked.fluencySlowCutoffMs, hintUsed: false, isRetry: false,
+          schedulingEligible, schedulingApplied, schedulerErrorCode },
+        selection: { origin: 'goal', rationaleCodes: ['active_goal', 'diagnostic_coverage', schedulingReason] },
+        presentationIndex: current.answers.length + 1, attemptNo: 1, now: schedulerNow, schedulingReason }),
+      createdAt: proposal.answeredAt,
     };
-    const answer = payload.evaluation.answers.find(value => value.eventId === payload.event.id);
-    if (!answer) throw new Error('Goal evaluation answer proposal is incomplete.');
-    const answers = current.answers.some(value => value.eventId === answer.eventId) ? current.answers : [...current.answers, answer];
+    const attempt: AttemptLog = { id: proposal.attemptId, studentId: proposal.studentId, itemId: proposal.item.id,
+      skillId: validatedPending.skillId, sessionId: current.id, promptShown: proposal.item.prompt,
+      correctAnswer: proposal.checked.correctAnswer, studentAnswer: proposal.checked.studentAnswer,
+      isCorrect: proposal.checked.isCorrect, latencyMs: proposal.latencyMs, reviewGrade: proposal.checked.reviewGrade,
+      createdAt: proposal.answeredAt };
+    const answer = { eventId: proposal.eventId, attemptId: proposal.attemptId, itemId: proposal.item.id,
+      skillId: validatedPending.skillId, answeredAt: proposal.answeredAt, isCorrect: proposal.checked.isCorrect,
+      studentAnswer: proposal.checked.studentAnswer, latencyMs: proposal.latencyMs, reviewGrade: proposal.checked.reviewGrade };
+    const answers = [...current.answers, answer];
     const answerEvents = [...(current.answerEvents ?? []).filter(value => value.id !== event.id), event];
-    const scheduledCardKeys = schedulingApplied && cardKey ? [...new Set([...(current.scheduledCardKeys ?? []), cardKey])] : current.scheduledCardKeys ?? [];
+    const scheduledCardKeys = schedulingApplied ? [...new Set([...(current.scheduledCardKeys ?? []), cardKey])] : current.scheduledCardKeys ?? [];
     const complete = answers.length >= current.plannedQuestionCount;
     const evaluation: GoalEvaluation = {
       ...current,
-      status: complete ? 'completed' : 'in_progress',
-      completedAt: complete ? answer.answeredAt : current.completedAt,
+      status: complete ? 'completed' : 'in_progress', completedAt: complete ? proposal.answeredAt : current.completedAt,
       currentQuestionIndex: answers.length,
       itemIds: [...new Set([...current.itemIds, answer.itemId])],
-      targetSkillIds: [...new Set([...current.targetSkillIds, ...payload.evaluation.targetSkillIds])],
-      answers, answerEvents, scheduledCardKeys, updatedAt: answer.answeredAt,
-      currentSelection: undefined,
+      targetSkillIds: [...new Set([...current.targetSkillIds, validatedPending.skillId])],
+      answers, answerEvents, scheduledCardKeys, updatedAt: proposal.answeredAt, currentSelection: undefined,
     };
-    await mathAnswerEventRepo.save(event);
-    if (schedulingApplied && payload.updatedState) await itemStateRepo.save(payload.updatedState);
-    await attemptRepo.save(payload.attempt);
-    await goalEvaluationRepo.save(evaluation, evaluation.updatedAt);
-    return { evaluation, event, updatedState: schedulingApplied ? payload.updatedState : undefined };
+    await db.mathAnswerEvents.put(event);
+    await db.attempts.put(attempt);
+    if (schedulingApplied) await db.itemStates.put(after);
+    await db.goalEvaluations.put(evaluation);
+    return { evaluation, event, attempt, stateAfter: schedulingApplied ? after : undefined, schedulingApplied };
   });
 }

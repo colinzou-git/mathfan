@@ -1,24 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { NumPad } from '../../components/NumPad';
-import type { AttemptLog, PracticeItem, ReviewGrade, StudentItemState } from '../../types/math';
+import type { StudentItemState } from '../../types/math';
 import { generateId } from '../../utils/id';
 import { makeItemFromId } from '../curriculum/makeItemFromId';
 import type { MathAnswerEvent } from '../learning/learningEvents';
 import { GRADE3_MASTERY_MAP, getGrade3Skill } from '../mastery/grade3MasteryMap';
 import { inferGrade3SkillId } from '../mastery/skillMapping';
 import { planLearningUnitsForSkill } from '../mastery/skillPracticePlanner';
-import { checkAnswer, type RatingReason } from '../practice/answerChecker';
-import type { AnswerGradingContext, ResponsePolicyKind } from '../scheduler/responsePolicy';
-import type { FluencyBand } from '../fluency/fluencyEngine';
+import { checkAnswer, type CheckResult } from '../practice/answerChecker';
 import { QuestionRenderer } from '../practice/QuestionRenderer';
-import { applyReview, createInitialState } from '../scheduler/scheduler';
-import { deriveCardKey } from '../scheduler/cardModel';
-import {
-  applyMisconceptionConfirmation,
-  applyMisconceptionDetection,
-  detectMistakes,
-} from '../mastery/misconceptionEngine';
 import { itemStateRepo, goalEvaluationRepo, mathAnswerEventRepo } from '../../db/repositories';
 import { appNow } from '../time/clock';
 import { currentState as authState } from '../auth/googleAuth';
@@ -36,10 +27,9 @@ import {
   GoalEvaluationSelectionConflictError,
   loadLatestResumableGoalEvaluation,
   persistNextGoalEvaluationQuestion,
-  recordGoalEvaluationAnswer,
+  persistGoalEvaluationAnswer,
 } from './goalEvaluationPersistence';
 import type { GoalEvaluation, PersistedGoalEvaluationSelection } from './types';
-import { buildSchedulingTelemetry } from '../learning/schedulingTelemetry';
 import { remainingLearningUnitEvidence } from '../learning/learningUnitProgress';
 
 interface Props {
@@ -57,19 +47,11 @@ interface PendingWrite {
   eventId: string;
   attemptId: string;
   answeredAt: string;
+  rawAnswer: string;
   latencyMs: number;
-  studentAnswer: string | number;
-  isCorrect: boolean;
-  reviewGrade: ReviewGrade;
-  ratingReason: RatingReason;
-  responsePolicy: ResponsePolicyKind;
-  gradingContext: AnswerGradingContext;
-  fluencyBand: FluencyBand;
-  item: PracticeItem;
-  skillId: string;
-  cardKey: string;
-  schedulingEligible: boolean;
-  schedulingReason: 'first_card_evidence' | 'same_evaluation_template_repeat';
+  selectionRevision: number;
+  checked: CheckResult;
+  selection: PersistedGoalEvaluationSelection;
 }
 
 interface NewLearningCandidate {
@@ -192,58 +174,6 @@ function buildReviewFindings(itemStates: StudentItemState[], now: string): Revie
   return Array.from(bySkill.values()).sort((a, b) => (b.dueCount + b.weakCount) - (a.dueCount + a.weakCount)).slice(0, 6);
 }
 
-function buildUpdatedState(
-  studentId: string,
-  sessionId: string,
-  item: PracticeItem,
-  existing: StudentItemState | undefined,
-  pending: PendingWrite,
-  now: Date,
-): {
-  state: StudentItemState;
-  detected: string[];
-  confirmed: string[];
-  schedulingApplied: boolean;
-  schedulerErrorCode?: MathAnswerEvent['schedulerErrorCode'];
-} {
-  const before = existing ?? createInitialState(studentId, item);
-  let updated = before;
-  let schedulingApplied = false;
-  let schedulerErrorCode: MathAnswerEvent['schedulerErrorCode'];
-  try {
-    updated = applyReview(before, pending.reviewGrade ?? 'again', pending.latencyMs, String(pending.studentAnswer), now, {
-      isCorrect: pending.isCorrect,
-    });
-    schedulingApplied = true;
-  } catch (error) {
-    schedulerErrorCode = error instanceof RangeError ? 'clock_drift'
-      : error instanceof TypeError ? 'invalid_card'
-        : error instanceof Error ? 'fsrs_validation' : 'unknown';
-  }
-  updated = { ...updated, cardKey: deriveCardKey(item), lastItemId: item.id };
-  const context = { eventId: pending.eventId, sessionId, itemId: item.id, createdAt: pending.answeredAt };
-  let detected: string[] = [];
-  let confirmed: string[] = [];
-  if (!pending.isCorrect) {
-    detected = detectMistakes(item, pending.studentAnswer);
-    const merged = Array.from(new Set([...(updated.mistakePatterns ?? []), ...detected]));
-    updated = {
-      ...updated,
-      mistakePatterns: merged,
-      misconceptionEvidence: applyMisconceptionDetection(
-        updated.misconceptionEvidence, detected, context, before.mistakePatterns,
-      ),
-    };
-  } else {
-    const confirmation = applyMisconceptionConfirmation(
-      updated.misconceptionEvidence, item, context, updated.mistakePatterns,
-    );
-    confirmed = confirmation.confirmedCodes;
-    updated = { ...updated, misconceptionEvidence: confirmation.evidence };
-  }
-  return { state: updated, detected, confirmed, schedulingApplied, schedulerErrorCode };
-}
-
 export function GoalEvaluationSession({ studentId, onCancel, onReturnToGoals, onSelectGoalSkills, onGoToDailyReview }: Props) {
   const [phase, setPhase] = useState<Phase>('loading');
   const [evaluation, setEvaluation] = useState<GoalEvaluation | null>(null);
@@ -364,140 +294,15 @@ export function GoalEvaluationSession({ studentId, onCancel, onReturnToGoals, on
     setSaving(true);
     setSaveError(null);
     try {
-      const nowDate = appNow();
-      const answeredAt = pending.answeredAt;
-      const cardKey = deriveCardKey(pending.item);
-      const scheduledCardKeys = evaluation.scheduledCardKeys ?? [];
-      // Recompute from persisted evaluation state; selector metadata is advisory and may be stale after resume/retry.
-      const schedulingEligible = !scheduledCardKeys.includes(cardKey);
-      const schedulingReason = schedulingEligible ? 'first_card_evidence' : 'same_evaluation_template_repeat';
-      const existing = await itemStateRepo.get(studentId, cardKey);
-      const misconceptionUpdate = schedulingEligible
-        ? buildUpdatedState(studentId, evaluation.id, pending.item, existing, pending, nowDate)
-        : undefined;
-      const updatedState = misconceptionUpdate?.state;
-      const schedulingApplied = misconceptionUpdate?.schedulingApplied ?? false;
-      const stateAfter = updatedState ?? existing ?? createInitialState(studentId, pending.item);
-      const event: MathAnswerEvent = {
-        id: pending.eventId,
-        studentId,
-        sessionId: evaluation.id,
-        itemId: pending.item.id,
-        cardKey,
-        schemaId: pending.item.schemaId,
-        mode: 'goal_evaluation',
-        promptShown: pending.item.prompt,
-        correctAnswer: pending.item.answer,
-        studentAnswer: pending.studentAnswer,
-        isCorrect: pending.isCorrect,
-        isRetry: false,
-        hintUsed: false,
-        latencyMs: pending.latencyMs,
-        ratingReason: pending.ratingReason,
-        responsePolicy: pending.responsePolicy,
-        gradingContext: pending.gradingContext,
-        fluencyBand: pending.fluencyBand,
-        detectedMisconceptions: misconceptionUpdate?.detected.length ? misconceptionUpdate.detected : undefined,
-        confirmedMisconceptions: misconceptionUpdate?.confirmed.length ? misconceptionUpdate.confirmed : undefined,
-        reviewGrade: pending.reviewGrade,
-        factStatusBefore: existing?.masteryLevel ?? 'new',
-        factStatusAfter: stateAfter.masteryLevel,
-        schedulingEligible,
-        schedulingApplied,
-        schedulerErrorCode: misconceptionUpdate?.schedulerErrorCode,
-        schedulingReason,
-        schedulingTelemetry: buildSchedulingTelemetry({
-          item: pending.item,
-          stateBefore: existing ?? createInitialState(studentId, pending.item),
-          stateAfter: schedulingApplied ? stateAfter : undefined,
-          response: {
-            reviewGrade: pending.reviewGrade,
-            ratingReason: pending.ratingReason,
-            responsePolicy: pending.responsePolicy,
-            gradingContext: pending.gradingContext,
-            fluencyBand: pending.fluencyBand,
-            fluencyBaselineSource: 'not_applicable',
-            fluencySampleCount: 0,
-            hintUsed: false,
-            isRetry: false,
-            schedulingEligible,
-            schedulingApplied,
-            schedulerErrorCode: misconceptionUpdate?.schedulerErrorCode,
-          },
-          selection: { origin: 'goal', rationaleCodes: ['active_goal', 'diagnostic_coverage', schedulingReason] },
-          presentationIndex: 1, attemptNo: 1, now: nowDate,
-          schedulingReason,
-        }),
-        createdAt: answeredAt,
-      };
-      const attempt: AttemptLog = {
-        id: pending.attemptId,
-        studentId,
-        itemId: pending.item.id,
-        skillId: pending.item.skillId,
-        sessionId: evaluation.id,
-        promptShown: pending.item.prompt,
-        correctAnswer: pending.item.answer,
-        studentAnswer: pending.studentAnswer,
-        isCorrect: pending.isCorrect,
-        latencyMs: pending.latencyMs,
-        reviewGrade: pending.reviewGrade,
-        createdAt: answeredAt,
-      };
-      const nextAnswers = evaluation.answers.some(answer => answer.eventId === pending.eventId)
-        ? evaluation.answers
-        : [...evaluation.answers, {
-            eventId: pending.eventId,
-            attemptId: pending.attemptId,
-            itemId: pending.item.id,
-            skillId: pending.skillId,
-            answeredAt,
-            isCorrect: pending.isCorrect,
-            studentAnswer: pending.studentAnswer,
-            latencyMs: pending.latencyMs,
-            reviewGrade: pending.reviewGrade,
-          }];
-      const nextResponses: AdaptiveGoalEvaluationResponse[] = nextAnswers.map(answer => ({
-        itemId: answer.itemId,
-        skillId: answer.skillId,
-        isCorrect: answer.isCorrect,
-        latencyMs: answer.latencyMs,
-        answeredAt: answer.answeredAt,
-      }));
-      const complete = nextAnswers.length >= ADAPTIVE_GOAL_EVALUATION_QUESTION_COUNT;
-      const completedResult = complete
-        ? buildAdaptiveGoalEvaluationResult({
-            studentId,
-            seed: evaluation.seed ?? 1,
-            now: nowDate.toISOString(),
-            mathAnswerEvents: [...events.filter(item => item.id !== event.id), event],
-            itemStates: updatedState ? [...itemStates.filter(item => item.cardKey !== updatedState.cardKey), updatedState] : itemStates,
-            responses: nextResponses,
-            currentEvaluationId: evaluation.id,
-          })
-        : null;
-      const nextEvaluation: GoalEvaluation = {
-        ...evaluation,
-        status: complete ? 'completed' : 'in_progress',
-        completedAt: complete ? answeredAt : evaluation.completedAt,
-        currentQuestionIndex: nextAnswers.length,
-        itemIds: Array.from(new Set([...evaluation.itemIds, pending.item.id])),
-        targetSkillIds: completedResult?.topGoalCandidates.map(candidate => candidate.skillId) ?? evaluation.targetSkillIds,
-        answers: nextAnswers,
-        scheduledCardKeys: schedulingApplied ? [...scheduledCardKeys, cardKey] : scheduledCardKeys,
-        answerEvents: [...(evaluation.answerEvents ?? []).filter(item => item.id !== event.id), event],
-        currentSelection: undefined,
-        updatedAt: answeredAt,
-      };
-      const persistedSelection = evaluation.currentSelection;
-      if (!persistedSelection) throw new Error('No persisted pending question.');
-      const committed = await recordGoalEvaluationAnswer({ event, attempt, updatedState, evaluation: nextEvaluation,
-        questionIndex: persistedSelection.questionIndex, selectionRevision: evaluation.selectionRevision ?? 0, selection: persistedSelection })
-        ?? { evaluation: nextEvaluation, event, updatedState };
+      const committed = await persistGoalEvaluationAnswer({ evaluationId: evaluation.id,
+        eventId: pending.eventId, attemptId: pending.attemptId, studentId, answeredAt: pending.answeredAt,
+        questionIndex: pending.selection.questionIndex, selectionRevision: pending.selectionRevision,
+        item: pending.selection.item, rawAnswer: pending.rawAnswer, latencyMs: pending.latencyMs,
+        checked: pending.checked, selection: pending.selection });
       setEvaluation(committed.evaluation);
       setEvents(current => [...current.filter(item => item.id !== committed.event.id), committed.event]);
-      if (committed.updatedState) {
-        setItemStates(current => [...current.filter(item => !(item.studentId === committed.updatedState!.studentId && item.cardKey === committed.updatedState!.cardKey)), committed.updatedState!]);
+      if (committed.stateAfter) {
+        setItemStates(current => [...current.filter(item => !(item.studentId === committed.stateAfter!.studentId && item.cardKey === committed.stateAfter!.cardKey)), committed.stateAfter!]);
       }
       setPendingWrite(null);
       if (committed.evaluation.status === 'completed') {
@@ -513,37 +318,31 @@ export function GoalEvaluationSession({ studentId, onCancel, onReturnToGoals, on
       submitInFlightRef.current = false;
       setSaving(false);
     }
-  }, [evaluation, events, itemStates, studentId]);
+  }, [evaluation, studentId]);
 
   const submit = useCallback(() => {
     if (!currentItem || !selection || saving || submitInFlightRef.current || phase !== 'active' || !input.trim()) return;
     submitInFlightRef.current = true;
     const latencyMs = Math.max(1, Math.round(performance.now() - startMsRef.current));
     const checked = checkAnswer(currentItem, input, latencyMs, { gradingContext: 'untimed_assessment' });
+    const persistedSelection = evaluation?.currentSelection;
+    if (!persistedSelection) { submitInFlightRef.current = false; return; }
     const pending: PendingWrite = {
       eventId: generateId(),
       attemptId: generateId(),
       answeredAt: appNow().toISOString(),
+      rawAnswer: input,
       latencyMs,
-      studentAnswer: checked.studentAnswer,
-      isCorrect: checked.isCorrect,
-      reviewGrade: checked.reviewGrade,
-      ratingReason: checked.ratingReason,
-      responsePolicy: checked.policyKind,
-      gradingContext: checked.gradingContext,
-      fluencyBand: checked.fluencyBand,
-      item: currentItem,
-      skillId: selection.skillId,
-      cardKey: selection.cardKey,
-      schedulingEligible: selection.schedulingEligible,
-      schedulingReason: selection.schedulingReason,
+      selectionRevision: evaluation.selectionRevision ?? 0,
+      checked,
+      selection: persistedSelection,
     };
     setInput('');
     setFeedback(checked.isCorrect ? 'correct' : 'wrong');
     setPendingWrite(pending);
     setPhase('feedback');
     void persistPending(pending);
-  }, [currentItem, input, persistPending, phase, saving, selection]);
+  }, [currentItem, evaluation, input, persistPending, phase, saving, selection]);
 
   const retrySave = () => {
     if (pendingWrite && !saving && !submitInFlightRef.current) {

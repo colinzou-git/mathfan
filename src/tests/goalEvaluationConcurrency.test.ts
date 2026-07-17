@@ -1,9 +1,11 @@
 import 'fake-indexeddb/auto';
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { db } from '../db/dexie';
-import { GoalEvaluationSelectionConflictError, recordGoalEvaluationAnswer, type GoalEvaluationAnswerWrite } from '../features/goals/goalEvaluationPersistence';
+import { GoalEvaluationIdempotencyConflictError, GoalEvaluationSelectionConflictError, persistGoalEvaluationAnswer, type GoalEvaluationAnswerProposal } from '../features/goals/goalEvaluationPersistence';
 import type { GoalEvaluation, PersistedGoalEvaluationSelection } from '../features/goals/types';
-import type { StudentItemState } from '../types/math';
+import { applyReview, createInitialState } from '../features/scheduler/scheduler';
+import { rebuildItemStatesFromEvents } from '../features/learning/eventRebuild';
+import { makeItemFromId } from '../features/curriculum/makeItemFromId';
 
 const studentId = 'concurrent-student';
 const evaluationId = 'evaluation-concurrent';
@@ -23,23 +25,17 @@ const baseEvaluation = (): GoalEvaluation => ({
   currentSelection: pendingSelection(0, 'TEMPLATE_A1'),
 });
 
-const stateAfter = (itemId: string): StudentItemState => ({
-  studentId, cardKey, lastItemId: itemId, skillId: 'skill', attemptCount: 1, correctCount: 1,
-  lastCorrect: true, lastLatencyMs: 1000, medianLatencyMs: 1000, ease: 2.5, stabilityDays: 1,
-  difficulty: .2, reps: 1, lapses: 0, masteryLevel: 'learning', mistakePatterns: [],
-});
-
-function write(suffix: string, itemId: string, questionIndex = Number(suffix) - 1): GoalEvaluationAnswerWrite {
+function write(suffix: string, itemId: string, questionIndex = Number(suffix) - 1): GoalEvaluationAnswerProposal {
   const eventId = `event-${suffix}`;
   const answeredAt = `2026-07-01T00:00:0${suffix}.000Z`;
-  const answer = { eventId, attemptId: `attempt-${suffix}`, itemId, skillId: 'skill', answeredAt, isCorrect: true, studentAnswer: 1, latencyMs: 1000, reviewGrade: 'good' as const };
   return {
-    event: { id: eventId, studentId, sessionId: evaluationId, itemId, cardKey, mode: 'goal_evaluation', promptShown: 'prompt', correctAnswer: 1, studentAnswer: 1, isCorrect: true, isRetry: false, hintUsed: false, latencyMs: 1000, reviewGrade: 'good', factStatusBefore: 'new', factStatusAfter: 'learning', schedulingEligible: true, schedulingApplied: true, schedulingReason: 'first_card_evidence', createdAt: answeredAt },
-    attempt: { id: `attempt-${suffix}`, studentId, itemId, skillId: 'skill', sessionId: evaluationId, promptShown: 'prompt', correctAnswer: 1, studentAnswer: 1, isCorrect: true, latencyMs: 1000, reviewGrade: 'good', createdAt: answeredAt },
-    updatedState: stateAfter(itemId),
-    evaluation: { ...baseEvaluation(), answers: [answer], answerEvents: [], itemIds: [itemId], scheduledCardKeys: [cardKey], currentQuestionIndex: 1, updatedAt: answeredAt },
-    questionIndex,
-    selectionRevision: questionIndex + 1,
+    evaluationId, eventId, attemptId: `attempt-${suffix}`, studentId, answeredAt, questionIndex,
+    selectionRevision: questionIndex + 1, item: pendingSelection(questionIndex, itemId).item,
+    rawAnswer: '1', latencyMs: 1000,
+    checked: { isCorrect: true, reviewGrade: 'good', ratingReason: 'untimed_assessment_correct',
+      fluencyBand: 'not_applicable', policyKind: 'atomic_fluency', gradingContext: 'untimed_assessment',
+      schedulingEligible: true, fluencyBaselineSource: 'not_applicable', fluencySampleCount: 0,
+      latencyMs: 1000, correctAnswer: 1, studentAnswer: 1 },
     selection: pendingSelection(questionIndex, itemId),
   };
 }
@@ -49,10 +45,10 @@ beforeEach(async () => { await Promise.all([db.goalEvaluations.clear(), db.mathA
 
 describe('goal evaluation transactional scheduling guard', () => {
   it('preserves later shared-card answers while applying scheduling once', async () => {
-    await recordGoalEvaluationAnswer(write('1', 'TEMPLATE_A1'));
+    await persistGoalEvaluationAnswer(write('1', 'TEMPLATE_A1'));
     const afterFirst = await db.goalEvaluations.get(evaluationId);
     await db.goalEvaluations.put({ ...afterFirst!, currentSelection: pendingSelection(1, 'TEMPLATE_A2'), selectionRevision: 2 });
-    await recordGoalEvaluationAnswer(write('2', 'TEMPLATE_A2'));
+    await persistGoalEvaluationAnswer(write('2', 'TEMPLATE_A2'));
     const evaluation = await db.goalEvaluations.get(evaluationId);
     const events = await db.mathAnswerEvents.where('sessionId').equals(evaluationId).toArray();
     expect(evaluation?.answers).toHaveLength(2);
@@ -65,19 +61,95 @@ describe('goal evaluation transactional scheduling guard', () => {
     expect(evaluation?.selectionRevision).toBe(2);
   });
 
+  it('schedules later questions on a different card independently', async () => {
+    await persistGoalEvaluationAnswer(write('1', 'TEMPLATE_A1'));
+    const afterFirst = await db.goalEvaluations.get(evaluationId);
+    const item = makeItemFromId('MUL_6x9')!;
+    const secondSelection = { ...pendingSelection(1, item.id), item, cardKey: 'fact:mul:6x9',
+      schedulingEligible: true as const, schedulingReason: 'first_card_evidence' as const };
+    await db.goalEvaluations.put({ ...afterFirst!, currentSelection: secondSelection, selectionRevision: 2 });
+    const base = write('2', item.id);
+    await persistGoalEvaluationAnswer({ ...base, item, rawAnswer: '54', selection: secondSelection,
+      checked: { ...base.checked, correctAnswer: 54, studentAnswer: 54 } });
+    expect((await db.goalEvaluations.get(evaluationId))?.scheduledCardKeys).toEqual([cardKey, 'fact:mul:6x9']);
+    expect(await db.itemStates.count()).toBe(2);
+  });
+
   it('rejects a stale selection revision without clearing the pending question', async () => {
     const proposal = { ...write('1', 'TEMPLATE_A1'), selectionRevision: 0 };
-    await expect(recordGoalEvaluationAnswer(proposal)).rejects.toBeInstanceOf(GoalEvaluationSelectionConflictError);
+    await expect(persistGoalEvaluationAnswer(proposal)).rejects.toBeInstanceOf(GoalEvaluationSelectionConflictError);
     expect((await db.goalEvaluations.get(evaluationId))?.currentSelection).toEqual(pendingSelection(0, 'TEMPLATE_A1'));
     expect(await db.mathAnswerEvents.where('sessionId').equals(evaluationId).count()).toBe(0);
   });
 
   it('treats a duplicate event proposal as idempotent', async () => {
     const proposal = write('1', 'TEMPLATE_A1');
-    await recordGoalEvaluationAnswer(proposal);
-    await recordGoalEvaluationAnswer(proposal);
+    await persistGoalEvaluationAnswer(proposal);
+    await persistGoalEvaluationAnswer(proposal);
     expect((await db.goalEvaluations.get(evaluationId))?.answers).toHaveLength(1);
     expect(await db.mathAnswerEvents.where('sessionId').equals(evaluationId).count()).toBe(1);
     expect(await db.attempts.where('sessionId').equals(evaluationId).count()).toBe(1);
+  });
+
+  it('rejects the same event ID with different answer, correctness, latency, grade, or timestamp', async () => {
+    const proposal = write('1', 'TEMPLATE_A1');
+    await persistGoalEvaluationAnswer(proposal);
+    const conflicts = [
+      { ...proposal, checked: { ...proposal.checked, studentAnswer: 0 } },
+      { ...proposal, checked: { ...proposal.checked, isCorrect: false } },
+      { ...proposal, latencyMs: 2000, checked: { ...proposal.checked, latencyMs: 2000 } },
+      { ...proposal, checked: { ...proposal.checked, reviewGrade: 'hard' as const } },
+      { ...proposal, answeredAt: '2026-07-01T00:00:09.000Z' },
+    ];
+    for (const conflict of conflicts) {
+      await expect(persistGoalEvaluationAnswer(conflict)).rejects.toBeInstanceOf(GoalEvaluationIdempotencyConflictError);
+    }
+  });
+
+  it('reads a newer card state inside the transaction and uses the immutable answer timestamp', async () => {
+    const proposal = write('1', 'TEMPLATE_A1');
+    const initial = createInitialState(studentId, proposal.item);
+    const newer = { ...applyReview(initial, 'good', 900, '1', new Date('2026-06-30T00:00:00.000Z'), { isCorrect: true }), cardKey };
+    await db.itemStates.put(newer);
+    const committed = await persistGoalEvaluationAnswer(proposal);
+    expect(committed.stateAfter?.reps).toBe((newer.reps ?? 0) + 1);
+    expect(committed.stateAfter?.lastSeenAt).toBe(proposal.answeredAt);
+    await persistGoalEvaluationAnswer(proposal);
+    expect((await db.itemStates.get([studentId, cardKey]))?.lastSeenAt).toBe(proposal.answeredAt);
+  });
+
+  it('records scheduler failure without reserving the card', async () => {
+    const proposal = write('1', 'TEMPLATE_A1');
+    proposal.checked = { ...proposal.checked, reviewGrade: 'invalid' as never };
+    const committed = await persistGoalEvaluationAnswer(proposal);
+    expect(committed.schedulingApplied).toBe(false);
+    expect(committed.event).toMatchObject({ schedulingEligible: true, schedulingApplied: false });
+    expect(committed.evaluation.scheduledCardKeys).toEqual([]);
+    expect(await db.itemStates.get([studentId, cardKey])).toBeUndefined();
+  });
+
+  it('rolls back every record when a transaction write fails', async () => {
+    const proposal = { ...write('1', 'TEMPLATE_A1'), attemptId: undefined as never };
+    await expect(persistGoalEvaluationAnswer(proposal)).rejects.toThrow();
+    expect(await db.mathAnswerEvents.count()).toBe(0);
+    expect(await db.attempts.count()).toBe(0);
+    expect(await db.itemStates.count()).toBe(0);
+    expect((await db.goalEvaluations.get(evaluationId))?.answers).toEqual([]);
+    expect((await db.goalEvaluations.get(evaluationId))?.scheduledCardKeys).toEqual([]);
+  });
+
+  it('rebuilds the same live state from the transaction-produced event', async () => {
+    const knownCardKey = 'fact:mul:7x8';
+    const knownItem = makeItemFromId('MUL_7x8')!;
+    const knownSelection = { ...pendingSelection(0, 'MUL_7x8'), item: knownItem, cardKey: knownCardKey };
+    await db.goalEvaluations.put({ ...baseEvaluation(), currentSelection: knownSelection });
+    const base = write('1', 'MUL_7x8');
+    const proposal = { ...base, item: knownItem, rawAnswer: '56', selection: knownSelection,
+      checked: { ...base.checked, correctAnswer: 56, studentAnswer: 56 } };
+    const committed = await persistGoalEvaluationAnswer(proposal);
+    const live = committed.stateAfter;
+    await db.itemStates.delete([studentId, knownCardKey]);
+    await rebuildItemStatesFromEvents(studentId, { mode: 'strict', baselinePolicy: 'none' });
+    expect(await db.itemStates.get([studentId, knownCardKey])).toEqual(live);
   });
 });

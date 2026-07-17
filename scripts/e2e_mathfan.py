@@ -947,7 +947,11 @@ def goal_evaluation_double_submit(page: Page) -> None:
     }""")
     assert resumed_selection == original_selection, "Reload changed the persisted pending goal-evaluation question"
     assert question.text_content() == original_prompt, "Reload rendered a different pending goal-evaluation prompt"
-    page.get_by_role("button", name=re.compile(r"^-?\d+(?:\.\d+)?$"), exact=True).first.click(timeout=60_000)
+    resumed_item = resumed_selection["item"]
+    if resumed_item.get("choices"):
+        page.get_by_role("button", name=str(resumed_item["choices"][0]), exact=True).click(timeout=60_000)
+    else:
+        page.get_by_role("button", name=re.compile(r"^-?\d+(?:\.\d+)?$"), exact=True).first.click(timeout=60_000)
     page.get_by_role("button", name="Check", exact=True).last.dblclick()
     expect(page.get_by_role("button", name="Continue", exact=True)).to_be_visible()
     counts = page.evaluate("""async () => {

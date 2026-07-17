@@ -4,7 +4,7 @@ import { GoalEvaluationSession } from '../features/goals/GoalEvaluationSession';
 import type { GoalEvaluation } from '../features/goals/types';
 import type { MathAnswerEvent } from '../features/learning/learningEvents';
 import type { StudentItemState } from '../types/math';
-import { persistNextGoalEvaluationQuestion, recordGoalEvaluationAnswer } from '../features/goals/goalEvaluationPersistence';
+import { persistGoalEvaluationAnswer, persistNextGoalEvaluationQuestion } from '../features/goals/goalEvaluationPersistence';
 import { goalEvaluationRepo } from '../db/repositories';
 import { pushLocal } from '../features/sync/driveSync';
 
@@ -96,7 +96,7 @@ vi.mock('../features/goals/goalEvaluationPersistence', () => ({
     mockData.persistedEvaluation = updated;
     return updated;
   }),
-  recordGoalEvaluationAnswer: vi.fn(async () => undefined),
+  persistGoalEvaluationAnswer: vi.fn(async () => undefined),
 }));
 
 vi.mock('../db/repositories', () => ({
@@ -193,9 +193,28 @@ beforeEach(() => {
   mockData.itemStates = [];
   mockData.signedIn = false;
   vi.clearAllMocks();
-  vi.mocked(recordGoalEvaluationAnswer).mockImplementation(async payload => {
-    mockData.persistedEvaluation = payload.evaluation;
-    return { evaluation: payload.evaluation, event: payload.event, updatedState: payload.updatedState };
+  vi.mocked(persistGoalEvaluationAnswer).mockImplementation(async proposal => {
+    const base = mockData.persistedEvaluation!;
+    const schedulingApplied = !(base.scheduledCardKeys ?? []).includes(proposal.selection.cardKey);
+    const event: MathAnswerEvent = { id: proposal.eventId, studentId: proposal.studentId, sessionId: proposal.evaluationId,
+      itemId: proposal.item.id, cardKey: proposal.selection.cardKey, mode: 'goal_evaluation', promptShown: proposal.item.prompt,
+      correctAnswer: proposal.checked.correctAnswer, studentAnswer: proposal.checked.studentAnswer,
+      isCorrect: proposal.checked.isCorrect, isRetry: false, hintUsed: false, latencyMs: proposal.latencyMs,
+      reviewGrade: proposal.checked.reviewGrade, ratingReason: proposal.checked.ratingReason,
+      responsePolicy: proposal.checked.policyKind, gradingContext: proposal.checked.gradingContext,
+      fluencyBand: proposal.checked.fluencyBand, schedulingEligible: schedulingApplied, schedulingApplied,
+      schedulingReason: schedulingApplied ? 'first_card_evidence' : 'same_evaluation_template_repeat', createdAt: proposal.answeredAt };
+    const answer = { eventId: proposal.eventId, attemptId: proposal.attemptId, itemId: proposal.item.id,
+      skillId: proposal.selection.skillId, answeredAt: proposal.answeredAt, isCorrect: proposal.checked.isCorrect,
+      studentAnswer: proposal.checked.studentAnswer, latencyMs: proposal.latencyMs, reviewGrade: proposal.checked.reviewGrade };
+    const next: GoalEvaluation = { ...base, answers: [...base.answers, answer], answerEvents: [...(base.answerEvents ?? []), event],
+      itemIds: [...base.itemIds, proposal.item.id], currentQuestionIndex: base.answers.length + 1,
+      scheduledCardKeys: schedulingApplied ? [...(base.scheduledCardKeys ?? []), proposal.selection.cardKey] : base.scheduledCardKeys,
+      currentSelection: undefined, status: base.answers.length + 1 >= 30 ? 'completed' : 'in_progress', updatedAt: proposal.answeredAt };
+    mockData.persistedEvaluation = next;
+    return { evaluation: next, event, attempt: { id: proposal.attemptId } as never,
+      stateAfter: schedulingApplied ? { studentId: proposal.studentId, cardKey: proposal.selection.cardKey, attemptCount: 1 } as StudentItemState : undefined,
+      schedulingApplied };
   });
 });
 
@@ -208,16 +227,11 @@ describe('untimed grading', () => {
     renderEvaluation();
     await startEvaluation();
     await answerCurrent();
-    await waitFor(() => expect(recordGoalEvaluationAnswer).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(persistGoalEvaluationAnswer).toHaveBeenCalledTimes(1));
 
-    const write = vi.mocked(recordGoalEvaluationAnswer).mock.calls[0][0];
-    expect(write.event.latencyMs).toBeGreaterThan(0);
-    expect(write.event).toMatchObject({
-      reviewGrade: 'good',
-      ratingReason: 'untimed_assessment_correct',
-      gradingContext: 'untimed_assessment',
-    });
-    expect(write.event.schedulingTelemetry?.rating).toMatchObject({
+    const write = vi.mocked(persistGoalEvaluationAnswer).mock.calls[0][0];
+    expect(write.latencyMs).toBeGreaterThan(0);
+    expect(write.checked).toMatchObject({
       reviewGrade: 'good',
       ratingReason: 'untimed_assessment_correct',
       gradingContext: 'untimed_assessment',
@@ -238,8 +252,8 @@ describe('untimed grading', () => {
     fireEvent.click(await screen.findByRole('button', { name: '7' }));
     const checks = await screen.findAllByRole('button', { name: /check/i });
     fireEvent.click(checks.at(-1)!);
-    await waitFor(() => expect(recordGoalEvaluationAnswer).toHaveBeenCalledTimes(1));
-    expect(vi.mocked(recordGoalEvaluationAnswer).mock.calls[0][0].event.latencyMs).toBe(10_000);
+    await waitFor(() => expect(persistGoalEvaluationAnswer).toHaveBeenCalledTimes(1));
+    expect(vi.mocked(persistGoalEvaluationAnswer).mock.calls[0][0].latencyMs).toBe(10_000);
     now.mockRestore();
   });
 });
@@ -282,45 +296,32 @@ describe('GoalEvaluationSession', () => {
     await startEvaluation();
     await answerCurrent();
 
-    await waitFor(() => expect(recordGoalEvaluationAnswer).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(persistGoalEvaluationAnswer).toHaveBeenCalledTimes(1));
     expect(screen.queryByRole('button', { name: /check/i })).not.toBeInTheDocument();
 
-    const [{ event, attempt, updatedState, evaluation: saved }] = vi.mocked(recordGoalEvaluationAnswer).mock.calls[0];
-    expect(event.mode).toBe('goal_evaluation');
-    expect(event.isRetry).toBe(false);
-    expect(event.hintUsed).toBe(false);
-    expect(event.relatedEvidence).toBeUndefined();
-    expect(event.schedulingEligible).toBe(true);
-    expect(event.schedulingReason).toBe('first_card_evidence');
-    expect(attempt.id).toBeDefined();
-    expect(updatedState?.attemptCount).toBe(1);
-    expect(saved.answers).toHaveLength(1);
-    expect(saved.scheduledCardKeys).toEqual(['template:shared-evaluation-card']);
+    const [proposal] = vi.mocked(persistGoalEvaluationAnswer).mock.calls[0];
+    expect(proposal.eventId).toBeDefined();
+    expect(proposal.attemptId).toBeDefined();
+    expect(proposal.selection.schedulingEligible).toBe(true);
+    expect(proposal).not.toHaveProperty('stateAfter');
+    expect(proposal).not.toHaveProperty('evaluation');
   });
 
   it('records repeated template evidence without applying a second scheduler update', async () => {
     renderEvaluation();
     await startEvaluation();
     await answerCurrent();
-    await waitFor(() => expect(recordGoalEvaluationAnswer).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(persistGoalEvaluationAnswer).toHaveBeenCalledTimes(1));
     fireEvent.click(await screen.findByRole('button', { name: /continue/i }));
     await answerCurrent();
-    await waitFor(() => expect(recordGoalEvaluationAnswer).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(persistGoalEvaluationAnswer).toHaveBeenCalledTimes(2));
 
-    const first = vi.mocked(recordGoalEvaluationAnswer).mock.calls[0][0];
-    const second = vi.mocked(recordGoalEvaluationAnswer).mock.calls[1][0];
-    expect(first.updatedState).toBeDefined();
-    expect(second.updatedState).toBeUndefined();
-    expect(second.event).toMatchObject({
-      schedulingEligible: false,
-      schedulingReason: 'same_evaluation_template_repeat',
-    });
-    expect(second.event.schedulingTelemetry).toMatchObject({
-      schedulingEligible: false,
-      schedulingReason: 'same_evaluation_template_repeat',
-    });
-    expect(second.evaluation.answers).toHaveLength(2);
-    expect(second.evaluation.scheduledCardKeys).toEqual(['template:shared-evaluation-card']);
+    const first = vi.mocked(persistGoalEvaluationAnswer).mock.calls[0][0];
+    const second = vi.mocked(persistGoalEvaluationAnswer).mock.calls[1][0];
+    expect(first.selection.schedulingEligible).toBe(true);
+    expect(second.selection).toMatchObject({ schedulingEligible: false, schedulingReason: 'same_evaluation_template_repeat' });
+    expect(mockData.persistedEvaluation?.answers).toHaveLength(2);
+    expect(mockData.persistedEvaluation?.scheduledCardKeys).toEqual(['template:shared-evaluation-card']);
   });
 
   it('does not show hints, retries, or the correct answer after a wrong answer', async () => {
@@ -343,16 +344,14 @@ describe('GoalEvaluationSession', () => {
     await startEvaluation();
     await answerCurrent();
 
-    await waitFor(() => expect(recordGoalEvaluationAnswer).toHaveBeenCalledTimes(1));
-    const [{ event }] = vi.mocked(recordGoalEvaluationAnswer).mock.calls[0];
-    expect(event.isCorrect).toBe(true);
-    expect(event.reviewGrade).not.toBe('again');
+    await waitFor(() => expect(persistGoalEvaluationAnswer).toHaveBeenCalledTimes(1));
+    const [proposal] = vi.mocked(persistGoalEvaluationAnswer).mock.calls[0];
+    expect(proposal.checked.isCorrect).toBe(true);
+    expect(proposal.checked.reviewGrade).not.toBe('again');
   });
 
   it('save failure blocks advance and retry uses the same event identity', async () => {
-    vi.mocked(recordGoalEvaluationAnswer)
-      .mockRejectedValueOnce(new Error('db unavailable'))
-      .mockResolvedValueOnce(undefined as never);
+    vi.mocked(persistGoalEvaluationAnswer).mockRejectedValueOnce(new Error('db unavailable'));
 
     renderEvaluation();
     await startEvaluation();
@@ -360,11 +359,11 @@ describe('GoalEvaluationSession', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent(/db unavailable/i);
     expect(screen.getByText(/Question 1: enter 17/i)).toBeInTheDocument();
-    const firstEventId = vi.mocked(recordGoalEvaluationAnswer).mock.calls[0][0].event.id;
+    const firstEventId = vi.mocked(persistGoalEvaluationAnswer).mock.calls[0][0].eventId;
 
     fireEvent.click(screen.getByRole('button', { name: /retry save/i }));
-    await waitFor(() => expect(recordGoalEvaluationAnswer).toHaveBeenCalledTimes(2));
-    expect(vi.mocked(recordGoalEvaluationAnswer).mock.calls[1][0].event.id).toBe(firstEventId);
+    await waitFor(() => expect(persistGoalEvaluationAnswer).toHaveBeenCalledTimes(2));
+    expect(vi.mocked(persistGoalEvaluationAnswer).mock.calls[1][0].eventId).toBe(firstEventId);
   });
 
   it('resumes at the correct next question and does not offer resume for completed evaluations', async () => {
@@ -421,7 +420,7 @@ describe('GoalEvaluationSession', () => {
 
     for (let i = 0; i < 30; i++) {
       await answerCurrent();
-      await waitFor(() => expect(recordGoalEvaluationAnswer).toHaveBeenCalledTimes(i + 1));
+      await waitFor(() => expect(persistGoalEvaluationAnswer).toHaveBeenCalledTimes(i + 1));
       if (i < 29) {
         fireEvent.click(await screen.findByRole('button', { name: /continue/i }));
         await waitFor(() => expect(screen.getAllByRole('button', { name: /check/i }).length).toBeGreaterThan(0));
@@ -447,7 +446,7 @@ describe('GoalEvaluationSession', () => {
 
     for (let i = 0; i < 30; i++) {
       await answerCurrent();
-      await waitFor(() => expect(recordGoalEvaluationAnswer).toHaveBeenCalledTimes(i + 1));
+      await waitFor(() => expect(persistGoalEvaluationAnswer).toHaveBeenCalledTimes(i + 1));
       if (i < 29) {
         fireEvent.click(await screen.findByRole('button', { name: /continue/i }));
         await waitFor(() => expect(screen.getAllByRole('button', { name: /check/i }).length).toBeGreaterThan(0));
