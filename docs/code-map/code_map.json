@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-17T03:26:55.643071+00:00",
+  "generated_at": "2026-07-17T03:58:17.374030+00:00",
   "repo_root": "/home/ubuntu/mathfan",
   "package": {
     "name": "mathfan",
@@ -2730,15 +2730,19 @@
     {
       "path": "src/features/curriculum/wordProblemItems.ts",
       "ext": ".ts",
-      "bytes": 4647,
-      "lines": 103,
-      "sha1": "bbf6c11769af",
+      "bytes": 6790,
+      "lines": 141,
+      "sha1": "c18bf4892ba6",
       "imports": [
         "../../types/math"
       ],
       "exports": [
         "generateWordProblemItems",
         "makeWordProblem",
+        "OneStepWordProblemDescriptor",
+        "oneStepWordProblemDescriptor",
+        "OneStepWordProblemSchema",
+        "Rng",
         "Schema",
         "UnknownPosition",
         "wordId",
@@ -2748,15 +2752,20 @@
       "functions": [
         "factorMax",
         "generateWordProblemItems",
+        "hashString",
         "makeWordProblem",
+        "oneStepWordProblemDescriptor",
         "randInt",
         "wordId"
       ],
       "classes": [],
       "interfaces": [
+        "OneStepWordProblemDescriptor",
         "WordProblemSpec"
       ],
       "types": [
+        "OneStepWordProblemSchema",
+        "Rng",
         "Schema",
         "UnknownPosition",
         "WordProblemOperation"
@@ -3208,9 +3217,9 @@
     {
       "path": "src/features/goals/dailyNewGoalPlanner.ts",
       "ext": ".ts",
-      "bytes": 17577,
-      "lines": 404,
-      "sha1": "04b82aef12e3",
+      "bytes": 17818,
+      "lines": 407,
+      "sha1": "027acd1a0957",
       "imports": [
         "../../types/math",
         "../curriculum/makeItemFromId",
@@ -4107,9 +4116,9 @@
     {
       "path": "src/features/learning/schedulingTelemetry.ts",
       "ext": ".ts",
-      "bytes": 7139,
+      "bytes": 7144,
       "lines": 144,
-      "sha1": "318e7a36bafb",
+      "sha1": "ce50d4cabcd0",
       "imports": [
         "../../types/math",
         "../curriculum/practiceContentSpec",
@@ -4735,9 +4744,9 @@
     {
       "path": "src/features/migrations/cardStateMigration.ts",
       "ext": ".ts",
-      "bytes": 12401,
-      "lines": 283,
-      "sha1": "c727b25c79be",
+      "bytes": 13332,
+      "lines": 304,
+      "sha1": "75dcf5d517d3",
       "imports": [
         "../../db/dexie",
         "../../types/math",
@@ -4765,6 +4774,7 @@
         "preflight",
         "reconcileMigratedCardState",
         "recoverInterruptedRuns",
+        "repairLegacyWordProblemCardStates",
         "rollbackCardStateMigration",
         "runCardStateMigration",
         "validate"
@@ -4811,9 +4821,9 @@
     {
       "path": "src/features/migrations/migrationTypes.ts",
       "ext": ".ts",
-      "bytes": 1332,
+      "bytes": 1359,
       "lines": 44,
-      "sha1": "c88d69662012",
+      "sha1": "9e06b74155ce",
       "imports": [
         "../../types/math"
       ],
@@ -5481,9 +5491,9 @@
     {
       "path": "src/features/scheduler/cardModel.ts",
       "ext": ".ts",
-      "bytes": 6097,
-      "lines": 135,
-      "sha1": "6f395120022b",
+      "bytes": 6722,
+      "lines": 147,
+      "sha1": "d5f3d2c7bcf8",
       "imports": [
         "../../types/math",
         "../curriculum/regrouping",
@@ -7796,9 +7806,9 @@
     {
       "path": "src/tests/cardStateMigration.test.ts",
       "ext": ".ts",
-      "bytes": 12881,
-      "lines": 310,
-      "sha1": "6e72f0b1b0e9",
+      "bytes": 13605,
+      "lines": 325,
+      "sha1": "1c2261edb2b9",
       "imports": [
         "../db/dexie",
         "../features/learning/learningEvents",
@@ -8199,9 +8209,9 @@
     {
       "path": "src/tests/eventRebuild.test.ts",
       "ext": ".ts",
-      "bytes": 18106,
-      "lines": 421,
-      "sha1": "c3c3e3704656",
+      "bytes": 18853,
+      "lines": 434,
+      "sha1": "ebfd32c7792a",
       "imports": [
         "../features/learning/eventRebuild",
         "../features/learning/learningEvents",
@@ -8487,9 +8497,9 @@
     {
       "path": "src/tests/fixtures/snapshots/v3-valid-current.json",
       "ext": ".json",
-      "bytes": 804,
+      "bytes": 809,
       "lines": 2,
-      "sha1": "3ea3ccbe64e2",
+      "sha1": "8bbe0fbd7f57",
       "imports": [],
       "exports": [],
       "functions": [],
@@ -8908,9 +8918,9 @@
     {
       "path": "src/tests/goalSnapshot.test.ts",
       "ext": ".ts",
-      "bytes": 16523,
+      "bytes": 16528,
       "lines": 449,
-      "sha1": "fea240a40a9f",
+      "sha1": "0b7215869a83",
       "imports": [
         "../features/goals/types",
         "../features/learning/learningEvents",
@@ -9322,9 +9332,9 @@
     {
       "path": "src/tests/learningUnitProgress.test.ts",
       "ext": ".ts",
-      "bytes": 4731,
-      "lines": 81,
-      "sha1": "13a31b7dbc89",
+      "bytes": 5264,
+      "lines": 89,
+      "sha1": "9452a1d4ef36",
       "imports": [
         "../features/curriculum/makeItemFromId",
         "../features/learning/learningEvents",
@@ -9393,9 +9403,9 @@
     {
       "path": "src/tests/makeItemFromId.test.ts",
       "ext": ".ts",
-      "bytes": 14875,
-      "lines": 401,
-      "sha1": "31b23fde0597",
+      "bytes": 15400,
+      "lines": 412,
+      "sha1": "0cc97adf88f3",
       "imports": [
         "../features/curriculum/makeItemFromId",
         "vitest"
@@ -9441,9 +9451,9 @@
     {
       "path": "src/tests/measurementRedesign.test.tsx",
       "ext": ".tsx",
-      "bytes": 11469,
-      "lines": 211,
-      "sha1": "e6d356cbb8f9",
+      "bytes": 11554,
+      "lines": 213,
+      "sha1": "5411a900d291",
       "imports": [
         "../features/adaptive/candidatePools",
         "../features/curriculum/language",
@@ -9536,9 +9546,9 @@
     {
       "path": "src/tests/newCurriculum.test.ts",
       "ext": ".ts",
-      "bytes": 4551,
-      "lines": 126,
-      "sha1": "72d9c3a234de",
+      "bytes": 5382,
+      "lines": 141,
+      "sha1": "99fafd87c416",
       "imports": [
         "../features/curriculum/decimalItems",
         "../features/curriculum/describeItem",
@@ -9548,7 +9558,9 @@
         "vitest"
       ],
       "exports": [],
-      "functions": [],
+      "functions": [
+        "generate"
+      ],
       "classes": [],
       "interfaces": [],
       "types": [],
@@ -10402,9 +10414,9 @@
     {
       "path": "src/tests/userDataExport.test.ts",
       "ext": ".ts",
-      "bytes": 13099,
+      "bytes": 13104,
       "lines": 268,
-      "sha1": "27a587b2ba53",
+      "sha1": "589a87cb9edb",
       "imports": [
         "../features/export/userDataExport",
         "../features/sync/snapshot",

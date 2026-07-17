@@ -78,7 +78,7 @@ describe('user data export serialization', () => {
       buildTime: '2026-01-01T00:00:00.000Z', snapshotVersion: 2,
     });
     expect(metadata.tableCounts.students).toBe(2);
-    expect(metadata.modelVersions).toMatchObject({ cardModel: 'canonical-card-v1', fsrsConfig: expect.any(String) });
+    expect(metadata.modelVersions).toMatchObject({ cardModel: 'semantic-word-cards-v2', fsrsConfig: expect.any(String) });
     expect(serializePrettyJson(payload)).toMatch(/\n$/);
   });
 

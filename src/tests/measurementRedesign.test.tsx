@@ -187,7 +187,9 @@ describe('measurement feedback, language, and balanced stories', () => {
     expect(articleFor('array')).toBe('an');
     expect(formatQuantity(1, 'liter')).toBe('1 liter');
     expect(makeMeasurementWordProblem('addl', 1, 2).prompt).toContain('1 liter');
-    expect(makeWordProblem('eg', 3, 4).wordProblemSpec?.steps[0]).toEqual({ operation: 'multiply', a: 3, b: 4, result: 12 });
+    const oneStep = makeWordProblem('eg', 3, 4).contentSpec;
+    expect(oneStep?.domain === 'word_problem' ? oneStep.data.steps[0] : undefined)
+      .toEqual({ operation: 'multiply', a: 3, b: 4, result: 12 });
     const twoStep = makeTwoStepWordProblem('muls', 4, 5, 8);
     expect(twoStep.wordProblemSpec?.steps.map(step => step.result)).toEqual([20, 12]);
     expect(deriveCardKey(twoStep)).toBe('template:g3-word-problem:two-step-muls');

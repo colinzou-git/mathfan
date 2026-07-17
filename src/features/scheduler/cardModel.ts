@@ -41,6 +41,12 @@ function divisionCardKey(dividend: number, divisor: number): string {
 }
 
 const AREA_PERIM_TEMPLATE_PREFIX = 'template:g3-area-perimeter:';
+const WORD_PROBLEM_CARD_KEYS: Record<string, string> = {
+  eg: 'template:g3-word:equal-groups-result',
+  ar: 'template:g3-word:array-result',
+  cmp: 'template:g3-word:multiplicative-compare-result',
+  dv: 'template:g3-word:equal-sharing-group-size',
+};
 
 /**
  * Derives a canonical card key from a concrete item id.
@@ -56,6 +62,9 @@ export function deriveCardKeyFromItemId(itemId: string): string {
   }
   if ((m = itemId.match(/^DIV_(\d+)d(\d+)$/))) {
     return divisionCardKey(+m[1], +m[2]);
+  }
+  if ((m = itemId.match(/^WORD_(eg|ar|cmp|dv)_\d+_\d+$/))) {
+    return WORD_PROBLEM_CARD_KEYS[m[1]];
   }
   if (/^AREA_SQ_\d+x\d+$/.test(itemId)) return `${AREA_PERIM_TEMPLATE_PREFIX}area_count_squares`;
   if (/^AREA_RECT_\d+x\d+$/.test(itemId)) return `${AREA_PERIM_TEMPLATE_PREFIX}area_rows_columns`;
@@ -97,6 +106,9 @@ export function deriveCardKey(item: PracticeItem): string {
 
 /** Same as `deriveCardKey`, but for a stored answer event. Returns null only when the event has no usable item id. */
 export function deriveCardKeyFromEvent(event: MathAnswerEvent): string | null {
+  // Repair historical one-step word events whose stored cardKey was the old
+  // exact-instance fallback. The item ID is stable and now defines its schema card.
+  if (/^WORD_(eg|ar|cmp|dv)_\d+_\d+$/.test(event.itemId)) return deriveCardKeyFromItemId(event.itemId);
   if (event.cardKey) return event.cardKey;
   if (!event.itemId) return null;
   return deriveCardKeyFromItemId(event.itemId);

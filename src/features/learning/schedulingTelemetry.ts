@@ -7,7 +7,7 @@ import { currentRetrievability } from '../scheduler/fsrsAdapter';
 import { contentSpecForItem } from '../curriculum/practiceContentSpec';
 
 export const SCHEDULING_TELEMETRY_VERSION = 1 as const;
-export const CARD_MODEL_VERSION = 'canonical-card-v1';
+export const CARD_MODEL_VERSION = 'semantic-word-cards-v2';
 export const RESPONSE_POLICY_VERSION = 'task-aware-v1';
 export const ADAPTIVE_SELECTOR_VERSION = 'adaptive-selector-v2-selection-taxonomy';
 export const DAILY_LESSON_PLANNER_VERSION = 'daily-lesson-v1';

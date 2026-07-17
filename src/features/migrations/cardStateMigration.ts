@@ -22,7 +22,7 @@ import type { StudentItemState } from '../../types/math';
 import { deriveCardKey } from '../scheduler/cardModel';
 import type { DataMigrationKind, DataMigrationRun, LegacyStudentItemState, MigrationBackup, MigrationCoverage } from './migrationTypes';
 
-export const MIGRATION_KIND: DataMigrationKind = 'hybrid-card-v1';
+export const MIGRATION_KIND: DataMigrationKind = 'semantic-word-cards-v2';
 
 export interface MigrationRunResult {
   status: 'completed' | 'failed' | 'skipped';
@@ -79,6 +79,26 @@ function mergeLegacyCollision(a: StudentItemState, b: StudentItemState): Student
     masteryLevel: masteryRank[a.masteryLevel] >= masteryRank[b.masteryLevel] ? a.masteryLevel : b.masteryLevel,
     mistakePatterns: Array.from(new Set([...(a.mistakePatterns ?? []), ...(b.mistakePatterns ?? [])])),
   };
+}
+
+/** Re-key exact-instance one-step word cards before event replay. */
+export async function repairLegacyWordProblemCardStates(): Promise<number> {
+  const legacyRows = await db.itemStates
+    .filter(state => /^template:WORD_(eg|ar|cmp|dv)_\d+_\d+$/.test(state.cardKey))
+    .toArray();
+  let repaired = 0;
+  for (const legacy of legacyRows) {
+    const itemId = legacy.cardKey.slice('template:'.length);
+    const item = makeItemFromId(itemId);
+    if (!item) continue;
+    const cardKey = deriveCardKey(item);
+    const existing = await db.itemStates.get([legacy.studentId, cardKey]);
+    const migrated = { ...legacy, cardKey, lastItemId: legacy.lastItemId ?? itemId };
+    await db.itemStates.put(existing ? mergeLegacyCollision(existing, migrated) : migrated);
+    await db.itemStates.delete([legacy.studentId, legacy.cardKey]);
+    repaired++;
+  }
+  return repaired;
 }
 
 async function convertedLegacyStates(): Promise<{ states: StudentItemState[]; inputCount: number; collisionCount: number; unparseable: number }> {
@@ -216,6 +236,7 @@ export async function runCardStateMigration(): Promise<MigrationRunResult> {
 
   try {
     await backupCurrentItemStates(runId);
+    await repairLegacyWordProblemCardStates();
 
     const legacy = await convertedLegacyStates();
     if (legacy.states.length) await db.itemStates.bulkPut(legacy.states);
