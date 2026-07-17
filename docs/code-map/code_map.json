@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-17T02:02:24.969650+00:00",
+  "generated_at": "2026-07-17T02:31:28.231585+00:00",
   "repo_root": "/home/ubuntu/mathfan",
   "package": {
     "name": "mathfan",
@@ -570,9 +570,9 @@
     {
       "path": "scripts/e2e_mathfan.py",
       "ext": ".py",
-      "bytes": 63253,
-      "lines": 1051,
-      "sha1": "23dff47f4409",
+      "bytes": 63394,
+      "lines": 1052,
+      "sha1": "ec7257423470",
       "imports": [
         "__future__",
         "json",
@@ -3493,9 +3493,9 @@
     {
       "path": "src/features/goals/GoalEvaluationSession.tsx",
       "ext": ".tsx",
-      "bytes": 34157,
-      "lines": 737,
-      "sha1": "2a04aa7cf409",
+      "bytes": 35444,
+      "lines": 760,
+      "sha1": "2418a85b4cf9",
       "imports": [
         "../../components/NumPad",
         "../../db/repositories",
@@ -3823,12 +3823,13 @@
     {
       "path": "src/features/goals/types.ts",
       "ext": ".ts",
-      "bytes": 3096,
-      "lines": 125,
-      "sha1": "5b64358d5ea4",
+      "bytes": 3595,
+      "lines": 138,
+      "sha1": "c227ccf24c86",
       "imports": [
         "../../types/math",
         "../learning/learningEvents",
+        "../mastery/grade3MasteryMap",
         "../mastery/skillMasteryEngine"
       ],
       "exports": [
@@ -8750,9 +8751,9 @@
     {
       "path": "src/tests/goalEvaluationSession.test.tsx",
       "ext": ".tsx",
-      "bytes": 14980,
-      "lines": 399,
-      "sha1": "b07eeb117709",
+      "bytes": 15936,
+      "lines": 418,
+      "sha1": "f131f18559cb",
       "imports": [
         "../db/repositories",
         "../features/goals/goalEvaluationPersistence",

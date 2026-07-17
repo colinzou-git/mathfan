@@ -1,6 +1,6 @@
 import type { SkillSummaryStatus } from '../mastery/skillMasteryEngine';
 import type { MathAnswerEvent } from '../learning/learningEvents';
-import type { DailyNewGoalQuestionLimits, ReviewGrade } from '../../types/math';
+import type { DailyNewGoalQuestionLimits, PracticeItem, ReviewGrade } from '../../types/math';
 
 export type LearningGoalStatus = 'active' | 'paused' | 'completed' | 'ended' | 'cancelled';
 export type GoalSource = 'recommended' | 'evaluation' | 'manual';
@@ -119,6 +119,19 @@ export interface GoalEvaluation {
   answers: GoalEvaluationAnswer[];
   /** Canonical cards already allowed to update FSRS during this evaluation. */
   scheduledCardKeys?: string[];
+  /** Immutable pending question snapshot for exact reload/resume. */
+  currentItemId?: string;
+  currentItem?: PracticeItem;
+  currentSelection?: {
+    questionNumber: number;
+    phase: 'screening' | 'adaptive_probe' | 'confirmation';
+    skillId: string;
+    domain: import('../mastery/grade3MasteryMap').Grade3Domain;
+    rationale: string;
+    cardKey: string;
+    schedulingEligible: boolean;
+    schedulingReason: 'first_card_evidence' | 'same_evaluation_template_repeat';
+  };
   resultGoalId?: string;
   answerEvents?: MathAnswerEvent[];
 }
