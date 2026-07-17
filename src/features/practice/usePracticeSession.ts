@@ -132,6 +132,7 @@ export function usePracticeSession(studentId: string) {
   const currentSelectionRef = useRef<SelectionContext>({
     origin: 'manual', rationaleCodes: ['manual_user_choice'],
   });
+  const currentPlannerSchedulingEligibleRef = useRef(true);
   const statesRef = useRef<Map<string, StudentItemState>>(new Map());
   const configRef = useRef<SessionConfig | null>(null);
   const sessionStartRef = useRef<number>(0);
@@ -170,7 +171,7 @@ export function usePracticeSession(studentId: string) {
     configRef.current = config;
     const now = appNow();
     sessionStartRef.current = Date.now();
-    schedulingGuardRef.current.reset();
+    schedulingGuardRef.current = createSessionSchedulingGuard(config.initialScheduledCardKeys ?? []);
     directEvidenceCardsRef.current.clear();
     pendingRelatedEvidenceRef.current.clear();
     pendingRelatedWritesRef.current = [];
@@ -249,7 +250,7 @@ export function usePracticeSession(studentId: string) {
     if (plannedPracticeItems?.length) {
       registerDynamic(plannedPracticeItems.map(value => value.item));
       queue = plannedPracticeItems.slice(0, sessionLength).map(value => ({
-        itemId: value.item.id, selection: value.selection,
+        itemId: value.item.id, selection: value.selection, schedulingEligible: value.schedulingEligible,
       }));
     } else if (preplannedItems?.length) {
       queue = planned(registerDynamic(preplannedItems).slice(0, sessionLength), itemId => {
@@ -395,6 +396,7 @@ export function usePracticeSession(studentId: string) {
 
     const firstPlanned = queueRef.current.shift()!;
     currentSelectionRef.current = firstPlanned.selection;
+    currentPlannerSchedulingEligibleRef.current = firstPlanned.schedulingEligible !== false;
     const first = resolveItem(firstPlanned.itemId);
     questionStartRef.current = Date.now();
     currentAttemptsRef.current = 0;
@@ -436,7 +438,7 @@ export function usePracticeSession(studentId: string) {
     // classification) is distinct from scheduling-first-attempt (issue #28): a card
     // may be presented more than once in a session (e.g. daily-review backfill), but
     // only its first scheduling-eligible presentation may update long-term FSRS state.
-    const isFirstSchedulingAttemptInSession = schedulingGuardRef.current.canSchedule(cardKey, attemptNo);
+    const isFirstSchedulingAttemptInSession = currentPlannerSchedulingEligibleRef.current && schedulingGuardRef.current.canSchedule(cardKey, attemptNo);
     let schedulingApplied = false;
     let schedulerErrorCode: MathAnswerEvent['schedulerErrorCode'];
     let updated: StudentItemState;
@@ -827,6 +829,7 @@ export function usePracticeSession(studentId: string) {
       questionStartRef.current = Date.now();
       currentAttemptsRef.current = 0;
       currentSelectionRef.current = nextPlanned.selection;
+      currentPlannerSchedulingEligibleRef.current = nextPlanned.schedulingEligible !== false;
       const nextItem = resolveItem(nextPlanned.itemId);
       currentPresentationIndexRef.current = schedulingGuardRef.current.presentationStarted(deriveCardKey(nextItem));
       nextState = {

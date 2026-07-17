@@ -1,4 +1,5 @@
 import type { StudentProfile, StudentItemState, AttemptLog, PracticeSession, PersistedDailyLessonPlan } from '../../types/math';
+import { dailyLessonSemanticKey, hashDailyLessonContent } from '../learningPlan/dailyLessonPersistence';
 import type { MultiplicationFactStats, QuizSession } from '../multiplication/types';
 import type { MathAnswerEvent } from '../learning/learningEvents';
 import { rebuildMultFactStatsFromEvents, rebuildItemStatesFromEvents } from '../learning/eventRebuild';
@@ -161,7 +162,42 @@ function mergeDailyLessonPlan(a: PersistedDailyLessonPlan, b: PersistedDailyLess
   return {
     ...preferred,
     completedItemInstanceIds: Array.from(new Set([...a.completedItemInstanceIds, ...b.completedItemInstanceIds])),
+    scheduledCardKeys: Array.from(new Set([...(a.scheduledCardKeys ?? []), ...(b.scheduledCardKeys ?? [])])),
   };
+}
+
+function normalizeDailyLessonIdentity(plan: PersistedDailyLessonPlan): PersistedDailyLessonPlan {
+  return {
+    ...plan,
+    semanticKey: dailyLessonSemanticKey(plan.studentId, plan.localDate, plan.revision),
+    contentHash: plan.contentHash ?? hashDailyLessonContent(plan.items),
+  };
+}
+
+function resolveDailyLessonPlans(plans: PersistedDailyLessonPlan[]): PersistedDailyLessonPlan[] {
+  const byId = compoundMerge(plans.map(normalizeDailyLessonIdentity), row => row.id, mergeDailyLessonPlan);
+  const groups = new Map<string, PersistedDailyLessonPlan[]>();
+  for (const plan of byId) groups.set(plan.semanticKey!, [...(groups.get(plan.semanticKey!) ?? []), plan]);
+  const resolved: PersistedDailyLessonPlan[] = [];
+  for (const group of groups.values()) {
+    const sameContent = compoundMerge(group, row => row.contentHash!, mergeDailyLessonPlan);
+    if (sameContent.length === 1) { resolved.push(sameContent[0]); continue; }
+    const ranked = [...sameContent].sort((a, b) => {
+      const rank = (status: PersistedDailyLessonPlan['status']) => status === 'completed' ? 3 : status === 'in_progress' ? 2 : status === 'planned' ? 1 : 0;
+      return rank(b.status) - rank(a.status)
+        || b.completedItemInstanceIds.length - a.completedItemInstanceIds.length
+        || b.updatedAt.localeCompare(a.updatedAt)
+        || a.id.localeCompare(b.id);
+    });
+    const winner = ranked[0];
+    resolved.push(winner, ...ranked.slice(1).map(plan => ({
+      ...plan,
+      status: 'replaced' as const,
+      conflictOfPlanId: winner.id,
+      replacedByPlanId: winner.id,
+    })));
+  }
+  return resolved;
 }
 
 function compoundMerge<T>(rows: T[], key: (row: T) => string, merge: (a: T, b: T) => T): T[] {
@@ -293,7 +329,7 @@ export function normalizeSnapshot(raw: unknown): SnapshotNormalizationResult {
       });
       continue;
     }
-    normalizedDailyLessonPlans.push({ ...plan, items });
+    normalizedDailyLessonPlans.push(normalizeDailyLessonIdentity({ ...plan, items }));
   }
   if (problems.length) return { problems, warnings };
   const remappedChildren = Object.fromEntries(Object.entries(childRows).map(([table, rows]) => [
@@ -397,7 +433,7 @@ export async function mergeNormalizedSnapshot(remote: AppSnapshotV3): Promise<vo
       const multFactStats = compoundMerge(remap([...(await db.multFactStats.toArray()), ...(remote.multFactStats ?? [])]), row => `${row.studentId}|${row.key}`, (a, b) => b.totalAttempts > a.totalAttempts ? b : a);
       const goals = compoundMerge(remap([...(await db.learningGoals.toArray()), ...(remote.learningGoals ?? [])]), row => row.id, (a, b) => remoteHasNewerUpdatedAt(b.updatedAt, a.updatedAt) ? b : a);
       const evaluations = compoundMerge(remapEvaluations([...(await db.goalEvaluations.toArray()), ...(remote.goalEvaluations ?? [])]), row => row.id, (a, b) => remoteHasNewerUpdatedAt(b.updatedAt, a.updatedAt) ? b : a);
-      const dailyLessonPlans = compoundMerge(remap([...(await db.dailyLessonPlans.toArray()), ...(remote.dailyLessonPlans ?? [])]), row => row.id, mergeDailyLessonPlan);
+      const dailyLessonPlans = resolveDailyLessonPlans(remap([...(await db.dailyLessonPlans.toArray()), ...(remote.dailyLessonPlans ?? [])]));
       const normalizedEvents = remap(allEvents);
       const sessions = byId(remap([...(await db.sessions.toArray()), ...remote.sessions]));
       const attempts = byId(remap([...(await db.attempts.toArray()), ...remote.attempts]));

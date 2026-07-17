@@ -23,8 +23,8 @@ export interface SessionSchedulingGuard {
   reset(): void;
 }
 
-export function createSessionSchedulingGuard(): SessionSchedulingGuard {
-  const scheduledCards = new Set<string>();
+export function createSessionSchedulingGuard(initialScheduledCardKeys: Iterable<string> = []): SessionSchedulingGuard {
+  const scheduledCards = new Set<string>(initialScheduledCardKeys);
   const presentationCounts = new Map<string, number>();
 
   return {

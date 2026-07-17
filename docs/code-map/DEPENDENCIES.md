@@ -616,6 +616,7 @@
 | src/features/sync/snapshot.ts | ../learning/eventRebuild |
 | src/features/sync/snapshot.ts | ../learning/learningEvents |
 | src/features/sync/snapshot.ts | ../learning/schedulingTelemetry |
+| src/features/sync/snapshot.ts | ../learningPlan/dailyLessonPersistence |
 | src/features/sync/snapshot.ts | ../multiplication/types |
 | src/features/sync/snapshot.ts | ../profile/profileBootstrap |
 | src/features/sync/snapshot.ts | ../scheduler/cardModel |

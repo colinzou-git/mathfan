@@ -26,11 +26,13 @@ export interface SelectionContext {
 export interface PlannedSessionItem {
   itemId: string;
   selection: SelectionContext;
+  schedulingEligible?: boolean;
 }
 
 export interface PlannedPracticeItem {
   item: PracticeItem;
   selection: SelectionContext;
+  schedulingEligible?: boolean;
 }
 
 export type ItemType =
@@ -354,6 +356,11 @@ export interface PersistedDailyLessonPlan {
   estimatedMinutes: number;
   items: PersistedPlannedLessonItem[];
   completedItemInstanceIds: string[];
+  scheduledCardKeys?: string[];
+  semanticKey?: string;
+  contentHash?: string;
+  replacedByPlanId?: string;
+  conflictOfPlanId?: string;
   warnings: Array<{ code: string; message: string }>;
 }
 
@@ -405,6 +412,8 @@ export interface SessionConfig {
   preplannedItems?: PracticeItem[];
   /** Concrete generated instances with immutable planner selection metadata. */
   plannedPracticeItems?: PlannedPracticeItem[];
+  /** Canonical cards already scheduled by a resumed persisted lesson. */
+  initialScheduledCardKeys?: string[];
   sessionLength: SessionLength;
   /**
    * First operand range. Meaning depends on mode:

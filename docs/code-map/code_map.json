@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-17T00:19:33.021449+00:00",
+  "generated_at": "2026-07-17T00:45:28.985122+00:00",
   "repo_root": "/home/ubuntu/mathfan",
   "package": {
     "name": "mathfan",
@@ -570,9 +570,9 @@
     {
       "path": "scripts/e2e_mathfan.py",
       "ext": ".py",
-      "bytes": 61540,
-      "lines": 1039,
-      "sha1": "6f5944aa280a",
+      "bytes": 63100,
+      "lines": 1048,
+      "sha1": "f1ac2608fa1a",
       "imports": [
         "__future__",
         "json",
@@ -2783,9 +2783,9 @@
     {
       "path": "src/features/dashboard/StudentDashboard.tsx",
       "ext": ".tsx",
-      "bytes": 32860,
-      "lines": 625,
-      "sha1": "37a811ed33bf",
+      "bytes": 32982,
+      "lines": 627,
+      "sha1": "6c830ddd80dd",
       "imports": [
         "../../db/repositories",
         "../../types/math",
@@ -4113,9 +4113,9 @@
     {
       "path": "src/features/learningPlan/dailyLessonPersistence.ts",
       "ext": ".ts",
-      "bytes": 6151,
-      "lines": 114,
-      "sha1": "ef7a5e20c115",
+      "bytes": 7948,
+      "lines": 140,
+      "sha1": "ea956a2c74f1",
       "imports": [
         "../../db/dexie",
         "../../types/math",
@@ -4124,10 +4124,15 @@
         "../time/localDate",
         "./dailyLessonPlanner"
       ],
-      "exports": [],
+      "exports": [
+        "dailyLessonSemanticKey",
+        "hashDailyLessonContent"
+      ],
       "functions": [
         "completeDailyLessonPlan",
+        "dailyLessonSemanticKey",
         "getOrCreateDailyLessonPlan",
+        "hashDailyLessonContent",
         "markDailyLessonProgress",
         "markDailyLessonProgressFromEvent",
         "materialize",
@@ -5288,9 +5293,9 @@
     {
       "path": "src/features/practice/usePracticeSession.ts",
       "ext": ".ts",
-      "bytes": 45341,
-      "lines": 900,
-      "sha1": "4ea1cf49132e",
+      "bytes": 45743,
+      "lines": 903,
+      "sha1": "c6690ff5b120",
       "imports": [
         "../../components/opSpecs",
         "../../db/dexie",
@@ -5635,9 +5640,9 @@
     {
       "path": "src/features/scheduler/sessionSchedulingGuard.ts",
       "ext": ".ts",
-      "bytes": 2057,
+      "bytes": 2128,
       "lines": 51,
-      "sha1": "2c8001053b44",
+      "sha1": "3b41fad35ea7",
       "imports": [],
       "exports": [
         "createSessionSchedulingGuard",
@@ -6254,9 +6259,9 @@
     {
       "path": "src/features/sync/snapshot.ts",
       "ext": ".ts",
-      "bytes": 25701,
-      "lines": 458,
-      "sha1": "09b1f37a9a90",
+      "bytes": 27529,
+      "lines": 494,
+      "sha1": "f5e62b6b1bde",
       "imports": [
         "../../db/dexie",
         "../../types/math",
@@ -6266,6 +6271,7 @@
         "../learning/eventRebuild",
         "../learning/learningEvents",
         "../learning/schedulingTelemetry",
+        "../learningPlan/dailyLessonPersistence",
         "../multiplication/types",
         "../profile/profileBootstrap",
         "../scheduler/cardModel",
@@ -6292,9 +6298,12 @@
         "mergeDailyLessonPlan",
         "mergeNormalizedSnapshot",
         "mergeSnapshot",
+        "normalizeDailyLessonIdentity",
         "normalizeSnapshot",
         "orphanReportInTransaction",
+        "rank",
         "remapEvaluations",
+        "resolveDailyLessonPlans",
         "validateSnapshot"
       ],
       "classes": [],
@@ -7827,9 +7836,9 @@
     {
       "path": "src/tests/dailyLessonPersistence.test.ts",
       "ext": ".ts",
-      "bytes": 5051,
-      "lines": 82,
-      "sha1": "ed3504680b8c",
+      "bytes": 5796,
+      "lines": 92,
+      "sha1": "da235c3ae35e",
       "imports": [
         "../db/dexie",
         "../features/learning/learningEvents",
@@ -8823,9 +8832,9 @@
     {
       "path": "src/tests/goalSnapshot.test.ts",
       "ext": ".ts",
-      "bytes": 14915,
-      "lines": 430,
-      "sha1": "d540bd0cd4e2",
+      "bytes": 16523,
+      "lines": 449,
+      "sha1": "fea240a40a9f",
       "imports": [
         "../features/goals/types",
         "../features/learning/learningEvents",
@@ -8859,9 +8868,9 @@
     {
       "path": "src/tests/goalsPage.test.tsx",
       "ext": ".tsx",
-      "bytes": 18207,
+      "bytes": 18214,
       "lines": 450,
-      "sha1": "3c47920b25af",
+      "sha1": "5cfb9cf3f511",
       "imports": [
         "../db/repositories",
         "../features/dashboard/StudentDashboard",
@@ -9558,9 +9567,9 @@
     {
       "path": "src/tests/practiceSession.test.ts",
       "ext": ".ts",
-      "bytes": 37005,
-      "lines": 772,
-      "sha1": "19aff3c4ac52",
+      "bytes": 38709,
+      "lines": 807,
+      "sha1": "dbe0a464b989",
       "imports": [
         "../db/repositories",
         "../features/curriculum/makeItemFromId",
@@ -10395,9 +10404,9 @@
     {
       "path": "src/types/math.ts",
       "ext": ".ts",
-      "bytes": 16213,
-      "lines": 472,
-      "sha1": "c66f476d8675",
+      "bytes": 16528,
+      "lines": 481,
+      "sha1": "f13ba734abfb",
       "imports": [
         "../features/curriculum/divisionItems",
         "../features/curriculum/measurementTypes",

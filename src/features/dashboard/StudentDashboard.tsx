@@ -236,6 +236,7 @@ export function StudentDashboard({ profile, lastSyncedAt, onStartDailyReview, on
       sessionLength: remainingItems.length,
       plannedPracticeItems: remainingItems.map(value => ({
         item: value.item,
+        schedulingEligible: value.schedulingEligible,
         selection: value.selection ?? {
           origin: value.segment === 'retrieval' ? 'due_retrieval' : value.segment === 'focus' ? 'focus_skill' : 'transfer',
           plannerVersion: 'daily-lesson-v1',
@@ -244,6 +245,7 @@ export function StudentDashboard({ profile, lastSyncedAt, onStartDailyReview, on
           lessonSegment: value.segment,
         },
       })),
+      initialScheduledCardKeys: lessonPlan.scheduledCardKeys ?? [],
       lessonPlanId: lessonPlan.id, lessonKind: 'adaptive_daily_lesson', focusSkillId: lessonPlan.focusSkillId,
       lessonSegments: (['retrieval', 'focus', 'transfer'] as const).map(kind => ({ kind, itemInstanceIds: remainingItems.filter(value => value.segment === kind).map(value => value.item.id) })),
       lessonRationales: Object.fromEntries(remainingItems.map(value => [value.item.id, value.rationale])),
