@@ -3,6 +3,7 @@ import { makeItemFromId } from '../curriculum/makeItemFromId';
 import { deriveCardKey } from './cardModel';
 import { shuffled, type Rng } from '../../utils/rng';
 import { ADAPTIVE_SELECTOR_VERSION } from '../learning/schedulingTelemetry';
+import { resolveCanonicalReviewCards, type CanonicalReviewCard } from './dailyReviewCandidates';
 
 export interface DailyReviewQueueArgs {
   /** Concrete due item ids requested for this review (e.g. from the dashboard's grouped due list). */
@@ -21,12 +22,9 @@ function isDueNow(state: StudentItemState, nowStr: string): boolean {
 }
 
 /**
- * Builds a daily-review queue that includes every requested due card at most
- * once (issue #28) instead of repeating due items to fill sessionLength.
- * When the requested set is smaller than sessionLength, backfills with other
- * distinct eligible cards from the student's own history — overdue cards
- * first, then weak/developing ones — and returns a shorter queue rather than
- * repeating a card.
+ * Builds a daily-review queue from the same canonical card view used to repair
+ * and count the derived item-state cache. Obsolete aliases cannot inflate the
+ * queue or resurrect a card whose authoritative canonical row is future-due.
  */
 const selection = (origin: SelectionContext['origin'], rationaleCode: string): SelectionContext => ({
   origin,
@@ -37,6 +35,8 @@ const selection = (origin: SelectionContext['origin'], rationaleCode: string): S
 export function buildDailyReviewQueue(args: DailyReviewQueueArgs): PlannedSessionItem[] {
   const { requestedItemIds, states, sessionLength, now, rng } = args;
   const nowStr = now.toISOString();
+  const canonical = resolveCanonicalReviewCards([...states.values()]);
+  const canonicalByKey = new Map(canonical.cards.map(card => [card.cardKey, card]));
 
   const usedCardKeys = new Set<string>();
   const requestedDeduped: string[] = [];
@@ -45,6 +45,12 @@ export function buildDailyReviewQueue(args: DailyReviewQueueArgs): PlannedSessio
     if (!item) continue;
     const cardKey = deriveCardKey(item);
     if (usedCardKeys.has(cardKey)) continue;
+
+    // A dashboard request may contain an obsolete alias. When a current
+    // authoritative state exists and is no longer due, do not resurrect it.
+    const authoritative = canonicalByKey.get(cardKey);
+    if (authoritative && !isDueNow(authoritative.state, nowStr)) continue;
+
     usedCardKeys.add(cardKey);
     requestedDeduped.push(id);
   }
@@ -61,36 +67,34 @@ export function buildDailyReviewQueue(args: DailyReviewQueueArgs): PlannedSessio
   }
 
   const needed = sessionLength - order.length;
-  const overdue: StudentItemState[] = [];
-  const weak: StudentItemState[] = [];
-  for (const state of states.values()) {
-    if (usedCardKeys.has(state.cardKey)) continue;
-    if (isDueNow(state, nowStr)) overdue.push(state);
-    else if (state.masteryLevel === 'learning' || state.masteryLevel === 'developing') weak.push(state);
+  const overdue: CanonicalReviewCard[] = [];
+  const weak: CanonicalReviewCard[] = [];
+  for (const card of canonical.cards) {
+    if (usedCardKeys.has(card.cardKey)) continue;
+    if (isDueNow(card.state, nowStr)) overdue.push(card);
+    else if (card.state.masteryLevel === 'learning' || card.state.masteryLevel === 'developing') weak.push(card);
   }
-  overdue.sort((a, b) => (a.nextDueAt ?? '').localeCompare(b.nextDueAt ?? ''));
+  overdue.sort((a, b) => (a.state.nextDueAt ?? '').localeCompare(b.state.nextDueAt ?? ''));
   weak.sort((a, b) => {
-    const accA = a.attemptCount > 0 ? a.correctCount / a.attemptCount : 0;
-    const accB = b.attemptCount > 0 ? b.correctCount / b.attemptCount : 0;
+    const accA = a.state.attemptCount > 0 ? a.state.correctCount / a.state.attemptCount : 0;
+    const accB = b.state.attemptCount > 0 ? b.state.correctCount / b.state.attemptCount : 0;
     return accA - accB;
   });
 
   const backfill: PlannedSessionItem[] = [];
-  for (const state of overdue) {
+  for (const card of overdue) {
     if (backfill.length >= needed) break;
-    if (usedCardKeys.has(state.cardKey)) continue;
-    const itemId = state.lastItemId;
-    if (!itemId || !makeItemFromId(itemId)) continue;
-    usedCardKeys.add(state.cardKey);
-    backfill.push({ itemId, selection: selection('due_retrieval', 'daily_review_backfill_overdue') });
+    if (usedCardKeys.has(card.cardKey)) continue;
+    if (!makeItemFromId(card.itemId)) continue;
+    usedCardKeys.add(card.cardKey);
+    backfill.push({ itemId: card.itemId, selection: selection('due_retrieval', 'daily_review_backfill_overdue') });
   }
-  for (const state of weak) {
+  for (const card of weak) {
     if (backfill.length >= needed) break;
-    if (usedCardKeys.has(state.cardKey)) continue;
-    const itemId = state.lastItemId;
-    if (!itemId || !makeItemFromId(itemId)) continue;
-    usedCardKeys.add(state.cardKey);
-    backfill.push({ itemId, selection: selection('weak_skill', 'daily_review_backfill_weak') });
+    if (usedCardKeys.has(card.cardKey)) continue;
+    if (!makeItemFromId(card.itemId)) continue;
+    usedCardKeys.add(card.cardKey);
+    backfill.push({ itemId: card.itemId, selection: selection('weak_skill', 'daily_review_backfill_weak') });
   }
 
   // No distinct eligible cards remain — a shorter queue is correct, not a repeat.
