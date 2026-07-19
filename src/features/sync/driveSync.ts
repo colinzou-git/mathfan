@@ -2,6 +2,7 @@ import type { AppSnapshotV3 } from './snapshot';
 import { buildSnapshot, mergeNormalizedSnapshot, normalizeSnapshot } from './snapshot';
 import { getToken } from '../auth/googleAuth';
 import { CanonicalEventConflictError } from './canonicalEventMerge';
+import { repairCanonicalItemStateCache } from '../scheduler/dailyReviewCandidates';
 
 const FILE_NAME = 'mathfan-data.json';
 const LIST_URL = `https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&fields=files(id,name,size,modifiedTime)&q=name='${FILE_NAME}'`;
@@ -116,7 +117,12 @@ async function downloadSnapshot(): Promise<AppSnapshotV3 | null> {
 export async function pullAndMerge(): Promise<SyncResult> {
   try {
     const remote = await downloadSnapshot();
-    if (remote) await mergeNormalizedSnapshot(remote);
+    if (remote) {
+      await mergeNormalizedSnapshot(remote);
+      // Older devices can upload item-state aliases from a previous card
+      // taxonomy. Normalize the derived cache before any dashboard refresh.
+      await repairCanonicalItemStateCache();
+    }
     return { ok: true, syncedAt: new Date().toISOString() };
   } catch (err) {
     return syncFailureResult(err);
