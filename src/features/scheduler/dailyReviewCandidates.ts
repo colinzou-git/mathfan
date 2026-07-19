@@ -111,7 +111,7 @@ function mergeRows(cardKey: string, rows: ResolvedStateRow[]): CanonicalReviewCa
 
 /**
  * Resolves the derived item-state cache through the current learning-card model.
- * The result contains exactly one row per reconstructable canonical card.
+ * The result contains exactly one row per learner and reconstructable canonical card.
  */
 export function resolveCanonicalReviewCards(states: StudentItemState[]): CanonicalReviewResolution {
   const grouped = new Map<string, ResolvedStateRow[]>();
@@ -134,14 +134,18 @@ export function resolveCanonicalReviewCards(states: StudentItemState[]): Canonic
       canonicalCardKey,
       alreadyCanonical: state.cardKey === canonicalCardKey,
     };
-    const rows = grouped.get(canonicalCardKey) ?? [];
+    const learnerCardKey = `${state.studentId}\u0000${canonicalCardKey}`;
+    const rows = grouped.get(learnerCardKey) ?? [];
     rows.push(row);
-    grouped.set(canonicalCardKey, rows);
+    grouped.set(learnerCardKey, rows);
   }
 
-  const cards = [...grouped.entries()]
-    .map(([cardKey, rows]) => mergeRows(cardKey, rows))
-    .sort((a, b) => a.cardKey.localeCompare(b.cardKey));
+  const cards = [...grouped.values()]
+    .map(rows => mergeRows(rows[0].canonicalCardKey, rows))
+    .sort((a, b) => {
+      const studentDelta = a.state.studentId.localeCompare(b.state.studentId);
+      return studentDelta || a.cardKey.localeCompare(b.cardKey);
+    });
 
   return {
     cards,
