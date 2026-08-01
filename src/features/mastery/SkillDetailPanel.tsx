@@ -20,6 +20,7 @@ const DOMAIN_LABELS: Record<Grade3Domain, string> = {
   area_perimeter: 'Area & Perimeter',
   geometry: 'Geometry',
   measurement_data: 'Measurement & Data',
+  summer_bridge: 'Summer Bridge',
 };
 
 export function SkillDetailPanel({ skill, summary, unmetPrereqNames, onClose, onPracticeSkill, onReviewDue }: Props) {
@@ -43,6 +44,14 @@ export function SkillDetailPanel({ skill, summary, unmetPrereqNames, onClose, on
 
         {/* Description */}
         <p style={s.description}>{skill.description}</p>
+
+        {skill.track === 'summer_bridge' && (
+          <div style={s.summerNote} role="note">
+            <strong>Grade 3 Summer Bridge</strong>
+            {' '}— preparation for Grade 4, not required Grade 3 core mastery.
+            {skill.optionalExtension ? ' This activity is an optional challenge.' : ''}
+          </div>
+        )}
 
         {/* Stats */}
         {summary && (
@@ -179,6 +188,16 @@ const s: Record<string, CSSProperties> = {
     color: '#6b7280',
     lineHeight: 1.5,
     margin: '0 0 16px',
+  },
+  summerNote: {
+    background: '#ecfeff',
+    border: '1px solid #a5f3fc',
+    borderRadius: '10px',
+    color: '#155e75',
+    fontSize: '12px',
+    lineHeight: 1.45,
+    marginBottom: '14px',
+    padding: '10px 12px',
   },
   statsRow: {
     display: 'flex',

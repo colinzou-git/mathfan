@@ -55,6 +55,12 @@ function prerequisitesSatisfied(skillId: string, summaries: Map<string, StudentS
   });
 }
 
+function trackPriority(skillId: string): number {
+  const node = GRADE3_MASTERY_MAP.find(candidate => candidate.id === skillId);
+  if (node?.optionalExtension) return 2;
+  return node?.track === 'summer_bridge' ? 1 : 0;
+}
+
 // Titles of the prerequisites not yet strong/mastered, for advisory copy.
 function unmetPrereqNames(skillId: string, summaries: Map<string, StudentSkillSummary>): string[] {
   const node = GRADE3_MASTERY_MAP.find(n => n.id === skillId);
@@ -80,6 +86,9 @@ function pickFocusSkill(
       const pa = STATUS_PRIORITY[a.status] ?? 5;
       const pb = STATUS_PRIORITY[b.status] ?? 5;
       if (pa !== pb) return pa - pb;
+      const ta = trackPriority(a.skillId);
+      const tb = trackPriority(b.skillId);
+      if (ta !== tb) return ta - tb;
       const ra = prerequisitesSatisfied(a.skillId, summaryMap) ? 0 : 1;
       const rb = prerequisitesSatisfied(b.skillId, summaryMap) ? 0 : 1;
       if (ra !== rb) return ra - rb;

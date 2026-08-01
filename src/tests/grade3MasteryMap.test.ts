@@ -10,9 +10,9 @@ import type { Grade3Domain, MasterySkillNode } from '../features/mastery/grade3M
 // ── Map shape ──────────────────────────────────────────────────────────────────
 
 describe('GRADE3_MASTERY_MAP', () => {
-  it('has between 19 and 40 skills', () => {
+  it('has between 19 and 50 skills', () => {
     expect(GRADE3_MASTERY_MAP.length).toBeGreaterThanOrEqual(19);
-    expect(GRADE3_MASTERY_MAP.length).toBeLessThanOrEqual(40);
+    expect(GRADE3_MASTERY_MAP.length).toBeLessThanOrEqual(50);
   });
 
   it('every skill has a non-empty id, title, description', () => {
@@ -102,7 +102,7 @@ describe('getGrade3SkillsByDomain', () => {
   });
 
   it('all domains together account for all skills', () => {
-    const domains: Grade3Domain[] = ['multiplication', 'division', 'fractions', 'area_perimeter', 'geometry', 'addition_subtraction', 'measurement_data'];
+    const domains: Grade3Domain[] = ['multiplication', 'division', 'fractions', 'area_perimeter', 'geometry', 'addition_subtraction', 'measurement_data', 'summer_bridge'];
     const total = domains.reduce((sum, d) => sum + getGrade3SkillsByDomain(d).length, 0);
     expect(total).toBe(GRADE3_MASTERY_MAP.length);
   });

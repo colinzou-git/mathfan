@@ -80,6 +80,7 @@ export function normalizeMathForSpeech(text: string): string {
   return text
     .replace(/(\d+|\?|▢)\s*\/\s*(\d+|\?|▢)/g, (_m, num, den) => ` ${fractionToWords(num, den)} `)
     .replace(/×/g, ' times ')
+    .replace(/≈/g, ' is about ')
     .replace(/÷/g, ' divided by ')
     .replace(/−/g, ' minus ')
     .replace(/▢/g, ' blank ')

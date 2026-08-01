@@ -39,6 +39,7 @@ import { LinePlotModel } from './LinePlotModel';
 import { ElapsedTimeLineModel } from './ElapsedTimeLineModel';
 import { TapeDiagramModel } from './TapeDiagramModel';
 import { contentSpecForItem } from '../curriculum/practiceContentSpec';
+import { EstimationNumberLine } from './EstimationNumberLine';
 
 interface Props {
   item: PracticeItem;
@@ -57,6 +58,11 @@ function parseEqualGroupsFromId(itemId: string): { groups: number; perGroup: num
 export function VisualModel({ item, color, revealAnswer = false }: Props) {
   const { itemType, factA, factB, id, prompt, visualSpec } = item;
   const contentSpec = contentSpecForItem(item);
+
+  if (contentSpec?.domain === 'multiplication_estimation'
+    && contentSpec.data.representation === 'number_line') {
+    return <EstimationNumberLine spec={contentSpec.data} revealAnswer={revealAnswer} />;
+  }
 
   if (contentSpec?.domain === 'arithmetic') {
     return <PlaceValueRegroupModel spec={contentSpec.data} revealAnswer={revealAnswer} color={color} />;

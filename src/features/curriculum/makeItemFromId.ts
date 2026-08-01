@@ -20,6 +20,7 @@ import { makeTimeItem, makeElapsedTimeItem, makeBarGraphItem, makeLinePlotItem, 
 import type { MeasurementSchema } from './measurementTypes';
 import { makeTwoStepWordProblem, type TwoStepSchema } from './twoStepItems';
 import { makeArithmeticPatternItem } from './patternItems';
+import { makeMultiplicationEstimationItemFromId } from './multiplicationEstimationItems';
 import { assertValidPracticeItem } from './practiceContentSpec';
 
 /**
@@ -34,6 +35,8 @@ function makeLegacyItemFromId(itemId: string): PracticeItem | null {
   if (geoItem) return geoItem;
 
   let m: RegExpMatchArray | null;
+
+  if (itemId.startsWith('MEST1_')) return makeMultiplicationEstimationItemFromId(itemId);
 
   m = itemId.match(/^MEAS_(bar_(?:read_value|compare|total|missing))_(\d+)_(\d+(?:-\d+)*)$/);
   if (m) {
