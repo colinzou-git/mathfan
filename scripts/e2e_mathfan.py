@@ -635,11 +635,18 @@ def summer_multiplication_estimation_lesson(page: Page) -> None:
         "figure",
         name=re.compile(rf"Number line.*{two_digit} lies between {lower_ten} and {upper_ten}", re.I),
     )
-    expect(number_line).to_be_visible()
-    expect(number_line).not_to_contain_text(f"{lower_ten} × {one_digit}")
+    # Bounds practice deliberately alternates representations: odd two-digit
+    # factors use a number line, while even factors stay symbolic. Verify the
+    # generated representation instead of assuming every valid item is visual.
+    if two_digit % 2:
+        expect(number_line).to_be_visible()
+        expect(number_line).not_to_contain_text(f"{lower_ten} × {one_digit}")
+    else:
+        expect(number_line).to_have_count(0)
     page.get_by_role("button", name=answer, exact=True).click()
     expect(page.get_by_text(re.compile(r"Correct!|New personal best!"))).to_be_visible()
-    expect(number_line).to_contain_text(f"{lower_ten} × {one_digit} = {lower_ten * one_digit}")
+    if two_digit % 2:
+        expect(number_line).to_contain_text(f"{lower_ten} × {one_digit} = {lower_ten * one_digit}")
     expect(page.get_by_text(re.compile(r"the product is between", re.I))).to_be_visible()
     assert_no_horizontal_overflow(page, "summer multiplication estimation")
 
