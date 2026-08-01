@@ -267,6 +267,7 @@ export function PracticeScreen({
   const progress = state.totalPlanned
     ? Math.round((state.completedCount / state.totalPlanned) * 100) : 0;
   const isVisualItem = state.currentItem != null && hasVisualModel(state.currentItem);
+  const isEstimationItem = state.currentItem?.itemType === 'multiplication_estimation';
 
   const submitChoice = (choice: string) => {
     if (isCorrect || state.saveStatus !== 'idle') return;
@@ -374,13 +375,13 @@ export function PracticeScreen({
 
         {/* Question zone */}
         <div className="drill-q">
-          <div style={{ ...st.prompt, fontSize: isVisualItem ? '24px' : '52px', letterSpacing: isVisualItem ? 'normal' : '-1px' }}>
+          <div style={{ ...st.prompt, fontSize: isVisualItem || isEstimationItem ? '24px' : '52px', letterSpacing: isVisualItem || isEstimationItem ? 'normal' : '-1px' }}>
             <MathPrompt text={state.currentItem?.prompt ?? ''} />
           </div>
 
           {isVisualItem && state.currentItem && (
             <div style={{ margin: '10px 0 6px', display: 'flex', justifyContent: 'center' }}>
-              <VisualModel item={state.currentItem} />
+              <VisualModel item={state.currentItem} revealAnswer={isCorrect && isEstimationItem} />
             </div>
           )}
 
@@ -446,10 +447,15 @@ export function PracticeScreen({
           })()}
 
           {isCorrect && (
-            <p style={st.correctText}>
-              {state.correctResult?.isNewPersonalBest ? '⚡ New personal best!' : '✓ Correct!'}
-              {!settings.autoAdvance && <span style={st.subText}> · Enter to continue</span>}
-            </p>
+            <>
+              <p style={st.correctText}>
+                {state.correctResult?.isNewPersonalBest ? '⚡ New personal best!' : '✓ Correct!'}
+                {!settings.autoAdvance && <span style={st.subText}> · Enter to continue</span>}
+              </p>
+              {isEstimationItem && state.currentItem?.explanation && (
+                <p style={st.estimationExplanation}><MathPrompt text={state.currentItem.explanation} /></p>
+              )}
+            </>
           )}
 
           {!hasError && !isCorrect && input === '' && (
@@ -473,7 +479,13 @@ export function PracticeScreen({
                 return (
                   <button
                     key={label}
-                    style={{ ...st.choiceBtn, fontSize: isSymbol ? '32px' : '18px', maxWidth: isSymbol ? '90px' : 'none' }}
+                    style={{
+                      ...st.choiceBtn,
+                      fontSize: isSymbol ? '32px' : isEstimationItem ? '15px' : '18px',
+                      maxWidth: isSymbol ? '90px' : 'none',
+                      flexBasis: isEstimationItem ? '42%' : undefined,
+                      padding: isEstimationItem ? '14px 8px' : '20px 0',
+                    }}
                     onClick={() => submitChoice(label)}
                   >
                     {label}
@@ -551,7 +563,7 @@ const st: Record<string, CSSProperties> = {
     MozAppearance: 'textfield' as never,
   },
   choiceDisplay: { fontSize: '44px', fontWeight: 'bold', color: '#4f46e5', minHeight: '52px', fontVariantNumeric: 'tabular-nums' },
-  choiceRow: { display: 'flex', gap: '12px', justifyContent: 'center', marginTop: '16px' },
+  choiceRow: { display: 'flex', gap: '12px', justifyContent: 'center', marginTop: '16px', flexWrap: 'wrap' },
   choiceBtn: {
     flex: 1, maxWidth: '90px', padding: '20px 0', fontSize: '32px', fontWeight: 'bold',
     background: '#fff', border: '2px solid var(--primary)', borderRadius: '14px',
@@ -568,6 +580,7 @@ const st: Record<string, CSSProperties> = {
   hintHintText: { fontSize: '14px', color: '#78350f', margin: 0, lineHeight: 1.5 },
   explainBtn: { marginTop: '8px', padding: '6px 14px', background: '#f59e0b', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '600', cursor: 'pointer' },
   explanationText: { marginTop: '8px', fontSize: '13px', color: '#78350f', lineHeight: 1.5, borderTop: '1px solid #fde68a', paddingTop: '8px' },
+  estimationExplanation: { color: '#155e75', background: '#ecfeff', borderRadius: '10px', fontSize: '14px', lineHeight: 1.5, margin: '10px 0 0', padding: '10px 12px' },
   nextBtn: { display: 'block', width: '100%', marginTop: '16px', padding: '14px', background: '#4f46e5', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '17px', fontWeight: 'bold', cursor: 'pointer' },
   kbRow: { display: 'flex', justifyContent: 'center', gap: '16px', marginTop: '14px', flexWrap: 'wrap' },
   kbTag: { fontSize: '11px', background: 'rgba(255,255,255,0.25)', borderRadius: '4px', padding: '1px 4px', fontFamily: 'monospace' },

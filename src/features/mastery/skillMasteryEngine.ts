@@ -62,6 +62,33 @@ function classifyStatus(
   return 'strong';
 }
 
+function classifySummerEstimationStatus(args: {
+  events: MathAnswerEvent[];
+  dueItemCount: number;
+  representationCount: number;
+  allowsSingleRepresentation: boolean;
+  hasUnresolvedMisconception: boolean;
+}): SkillSummaryStatus {
+  const { events, dueItemCount, representationCount, allowsSingleRepresentation, hasUnresolvedMisconception } = args;
+  if (events.length === 0) return 'new';
+  if (dueItemCount > 0) return 'review_due';
+  const accuracy = events.filter(event => event.isCorrect).length / events.length;
+  if (accuracy < ACCURACY_NEEDS_PRACTICE) return 'needs_practice';
+
+  const recent = [...events].sort((a, b) => a.createdAt.localeCompare(b.createdAt)).slice(-5);
+  const lastThree = recent.slice(-3);
+  const recentFourOfFive = recent.length >= 5 && recent.filter(event => event.isCorrect).length >= 4;
+  const lastThreeCorrect = lastThree.length === 3 && lastThree.every(event => event.isCorrect);
+  const eventDays = new Set(events.map(event => event.createdAt.slice(0, 10)));
+  const delayedAcrossDays = eventDays.size >= 2;
+  const multipleSessions = new Set(events.map(event => event.sessionId)).size >= 2;
+  const transferEvidence = allowsSingleRepresentation || representationCount >= 2;
+
+  if (recentFourOfFive && lastThreeCorrect && delayedAcrossDays && multipleSessions
+    && transferEvidence && !hasUnresolvedMisconception) return 'mastered';
+  return 'strong';
+}
+
 export function deriveGrade3SkillSummaries(
   args: DeriveGrade3SkillSummariesArgs,
 ): StudentSkillSummary[] {
@@ -154,20 +181,30 @@ export function deriveGrade3SkillSummaries(
     const eventDays = new Set(events.map(event => event.createdAt.slice(0, 10)));
     const hasDelayedEvidence = eventDays.size >= 2 || states.some(state => (state.reps ?? 0) >= 2);
     const hasMultipleSessions = new Set(events.map(event => event.sessionId)).size >= 2;
-    const unresolvedFractionMisconception = hasUnresolvedMisconceptionForSkill(misconceptionEvidence, skillId);
+    const hasUnresolvedMisconception = hasUnresolvedMisconceptionForSkill(misconceptionEvidence, skillId);
+    const isSummerEstimation = skillId.startsWith('g3s-mul-est-');
+    const status = isSummerEstimation
+      ? classifySummerEstimationStatus({
+          events,
+          dueItemCount,
+          representationCount,
+          allowsSingleRepresentation: skillId === 'g3s-mul-est-purpose' || skillId === 'g3s-mul-est-context-2x1',
+          hasUnresolvedMisconception,
+        })
+      : classifyStatus(
+          attemptCount,
+          accuracy,
+          dueItemCount,
+          skillItemIds.size,
+          (!needsDiversity && !isStructuredProcedure) || representationCount >= 2,
+          (!needsDelayedEvidence || hasDelayedEvidence) && (!isStructuredProcedure || hasMultipleSessions),
+          hasUnresolvedMisconception,
+        );
 
     return {
       skillId,
       studentId,
-      status: classifyStatus(
-        attemptCount,
-        accuracy,
-        dueItemCount,
-        skillItemIds.size,
-        (!needsDiversity && !isStructuredProcedure) || representationCount >= 2,
-        (!needsDelayedEvidence || hasDelayedEvidence) && (!isStructuredProcedure || hasMultipleSessions),
-        unresolvedFractionMisconception,
-      ),
+      status,
       attemptCount,
       correctCount,
       accuracy,

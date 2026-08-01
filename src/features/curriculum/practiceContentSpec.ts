@@ -153,6 +153,7 @@ export function projectLegacyCompatibilityFields(item: PracticeItem): PracticeIt
       case 'measurement_data': return { ...shared, contentSpec: spec, measurementSpec: spec.data };
       case 'word_problem': return { ...shared, contentSpec: spec, wordProblemSpec: spec.data };
       case 'area_perimeter': return { ...shared, contentSpec: spec, reasoningSpec: spec.data };
+      case 'multiplication_estimation': return { ...shared, contentSpec: spec };
     }
   })();
   Object.defineProperty(projected, LEGACY_COMPATIBILITY_PROJECTION, { value: true, enumerable: false });
@@ -169,6 +170,7 @@ const DOMAIN_ITEM_TYPES: Record<PracticeContentSpec['domain'], ReadonlySet<ItemT
   measurement_data: new Set(['time_to_minute', 'elapsed_time', 'measurement_word', 'bar_graph_read', 'line_plot_read']),
   word_problem: new Set(['word_problem']),
   area_perimeter: new Set(['perimeter_unknown_side']),
+  multiplication_estimation: new Set(['multiplication_estimation']),
 };
 
 export function validatePracticeItem(item: PracticeItem): PracticeItemValidationProblem[] {
@@ -201,6 +203,22 @@ export function validatePracticeItem(item: PracticeItem): PracticeItemValidation
   if (spec?.domain === 'division' && spec.data.schema !== 'word_problem_choose_model'
     && typeof item.answer === 'number' && item.answer !== spec.data.quotient) {
     problems.push({ code: 'answer_operand_mismatch', path: 'answer', message: 'Answer does not match the division quotient.' });
+  }
+  if (spec?.domain === 'multiplication_estimation') {
+    const data = spec.data;
+    if (!Number.isInteger(data.twoDigit) || data.twoDigit < 10 || data.twoDigit > 99
+      || !Number.isInteger(data.oneDigit) || data.oneDigit < 2 || data.oneDigit > 9) {
+      problems.push({ code: 'invalid_estimation_factors', path: 'contentSpec.data', message: 'Estimation factors must be 10–99 and 2–9.' });
+    }
+    if (data.exactProduct !== data.twoDigit * data.oneDigit
+      || data.lowerProduct !== data.lowerTen * data.oneDigit
+      || data.upperProduct !== data.upperTen * data.oneDigit
+      || data.nearestEstimate !== data.nearestTen * data.oneDigit) {
+      problems.push({ code: 'estimation_product_mismatch', path: 'contentSpec.data', message: 'Estimation products do not match their factors.' });
+    }
+    if (data.schema === 'bounds' && data.lowerTen === data.upperTen) {
+      problems.push({ code: 'invalid_strict_estimation_bounds', path: 'contentSpec.data.schema', message: 'Strict bounds cannot use an already-friendly multiple of ten.' });
+    }
   }
   if (item.schemaId === '') {
     problems.push({ code: 'empty_schema_id', path: 'schemaId', message: 'schemaId must be omitted or non-empty.' });

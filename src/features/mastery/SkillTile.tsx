@@ -47,7 +47,11 @@ export function SkillTile({ skill, summary, unmetPrereqs, onClick }: Props) {
       <div style={s.row}>
         <span style={{ fontSize: '18px' }}>{cfg.icon}</span>
         <div style={s.textBlock}>
-          <div style={{ ...s.title, color: cfg.color }}>{skill.title}</div>
+          <div style={{ ...s.title, color: cfg.color }}>
+            {skill.title}
+            {skill.track === 'summer_bridge' && <span style={s.summerBadge}>Summer Bridge</span>}
+            {skill.optionalExtension && <span style={s.extensionBadge}>Optional</span>}
+          </div>
           <div style={{ ...s.stats, color: hasUnmetPrereqs && !(summary && summary.attemptCount > 0) ? '#92400e' : undefined }}>
             {subtitle}
           </div>
@@ -110,5 +114,25 @@ const s: Record<string, CSSProperties> = {
     whiteSpace: 'nowrap',
     background: '#fef3c7',
     color: '#92400e',
+  },
+  summerBadge: {
+    display: 'inline-block',
+    marginLeft: '6px',
+    padding: '2px 6px',
+    borderRadius: '10px',
+    background: '#cffafe',
+    color: '#0e7490',
+    fontSize: '9px',
+    verticalAlign: 'middle',
+  },
+  extensionBadge: {
+    display: 'inline-block',
+    marginLeft: '4px',
+    padding: '2px 6px',
+    borderRadius: '10px',
+    background: '#f3e8ff',
+    color: '#7e22ce',
+    fontSize: '9px',
+    verticalAlign: 'middle',
   },
 };

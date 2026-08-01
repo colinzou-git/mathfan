@@ -613,6 +613,37 @@ def open_mastery_skill(page: Page, skill_name: str) -> None:
     assert_no_horizontal_overflow(page, skill_name)
 
 
+def summer_multiplication_estimation_lesson(page: Page) -> None:
+    """The summer bridge is discoverable, advisory, visual, and answerable."""
+    create_profile(page, "EstimationTester", "e2e-summer-multiplication-estimation")
+    set_one_question_sessions(page)
+    page.get_by_role("button", name=re.compile(r"Grade 3 Math Map")).click()
+    expect(page.get_by_role("heading", name=re.compile(r"Summer Bridge$"))).to_be_visible()
+    skill_tile = page.get_by_role("button", name=re.compile(r"^Trap the Product:"))
+    expect(skill_tile.get_by_text("Summer Bridge", exact=True)).to_be_visible()
+    skill_tile.click()
+    summer_note = page.get_by_role("note").filter(has_text="Grade 3 Summer Bridge")
+    expect(summer_note).to_contain_text("preparation for Grade 4")
+    page.get_by_role("button", name=re.compile(r"Practice this skill")).click()
+
+    prompt = page.locator(".drill-q > div").first.inner_text()
+    two_digit, one_digit = [int(value) for value in re.findall(r"\d+", prompt)][:2]
+    lower_ten = two_digit // 10 * 10
+    upper_ten = lower_ten + 10
+    answer = f"{lower_ten * one_digit} to {upper_ten * one_digit}"
+    number_line = page.get_by_role(
+        "figure",
+        name=re.compile(rf"Number line.*{two_digit} lies between {lower_ten} and {upper_ten}", re.I),
+    )
+    expect(number_line).to_be_visible()
+    expect(number_line).not_to_contain_text(f"{lower_ten} × {one_digit}")
+    page.get_by_role("button", name=answer, exact=True).click()
+    expect(page.get_by_text(re.compile(r"Correct!|New personal best!"))).to_be_visible()
+    expect(number_line).to_contain_text(f"{lower_ten} × {one_digit} = {lower_ten * one_digit}")
+    expect(page.get_by_text(re.compile(r"the product is between", re.I))).to_be_visible()
+    assert_no_horizontal_overflow(page, "summer multiplication estimation")
+
+
 def area_perimeter_missing_side_lesson(page: Page) -> None:
     create_profile(page, "PerimeterTester", "e2e-perimeter-missing")
     set_one_question_sessions(page)
@@ -1251,7 +1282,11 @@ def run_scenario(
 def main() -> int:
     failures: list[str] = []
     with sync_playwright() as playwright:
-        browser = playwright.chromium.launch(headless=True)
+        chromium_executable = os.environ.get("E2E_CHROMIUM_EXECUTABLE")
+        browser = playwright.chromium.launch(
+            headless=True,
+            executable_path=chromium_executable or None,
+        )
         scenarios = [
             ("desktop-student-journey", {"width": 1440, "height": 1000}, desktop_student_journey, False),
             (
@@ -1268,6 +1303,7 @@ def main() -> int:
             ),
             ("standalone-pwa-share", {"width": 1024, "height": 768}, standalone_pwa_share_flow, True),
             ("legacy-downloaded-backup-restore", {"width": 1024, "height": 768}, legacy_downloaded_backup_restore, False),
+            ("summer-multiplication-estimation", {"width": 390, "height": 844}, summer_multiplication_estimation_lesson, False),
             ("missing-side-lesson", {"width": 390, "height": 844}, area_perimeter_missing_side_lesson, False),
             ("area-perimeter-comparison", {"width": 1024, "height": 768}, area_perimeter_comparison_lesson, False),
             ("related-evidence-failure-recovery", {"width": 1024, "height": 768}, related_evidence_failure_recovery, False),

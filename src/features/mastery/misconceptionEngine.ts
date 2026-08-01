@@ -21,7 +21,9 @@ export function detectMistakes(
   item: PracticeItem,
   studentAnswer: string | number,
 ): string[] {
-  if (contentSpecForItem(item)?.domain === 'measurement_data') return detectMeasurement(item, studentAnswer);
+  const contentSpec = contentSpecForItem(item);
+  if (contentSpec?.domain === 'measurement_data') return detectMeasurement(item, studentAnswer);
+  if (contentSpec?.domain === 'multiplication_estimation') return detectMultiplicationEstimation(item, studentAnswer);
   switch (item.itemType) {
     case 'multiplication_fact':
     case 'unknown_factor':
@@ -117,6 +119,7 @@ export function itemTargetsMisconception(item: PracticeItem, code: string): bool
   if (family === 'fraction') return item.itemType.startsWith('fraction_');
   if (family === 'arithmetic') return item.itemType === 'addition_fact' || item.itemType === 'subtraction_fact';
   if (family === 'measurement') return contentSpecForItem(item)?.domain === 'measurement_data';
+  if (family === 'est') return contentSpecForItem(item)?.domain === 'multiplication_estimation';
   if (family === 'mul') return item.itemType === 'multiplication_fact' || item.itemType === 'unknown_factor';
   if (family === 'div') return item.itemType === 'division_fact';
   return false;
@@ -152,9 +155,39 @@ export function hasUnresolvedMisconceptionForSkill(
   evidence: MisconceptionEvidence[],
   skillId: string,
 ): boolean {
-  if (!skillId.startsWith('g3-frac-')) return false;
-  return evidence.some(entry => entry.status !== 'resolved'
-    && (entry.code.startsWith('fraction:') || entry.code.startsWith('frac_')));
+  if (skillId.startsWith('g3-frac-')) {
+    return evidence.some(entry => entry.status !== 'resolved'
+      && (entry.code.startsWith('fraction:') || entry.code.startsWith('frac_')));
+  }
+  if (skillId.startsWith('g3s-mul-est-')) {
+    return evidence.some(entry => entry.status !== 'resolved' && entry.code.startsWith('est:'));
+  }
+  return false;
+}
+
+function detectMultiplicationEstimation(item: PracticeItem, raw: string | number): string[] {
+  const content = contentSpecForItem(item);
+  if (content?.domain !== 'multiplication_estimation') return [];
+  const spec = content.data;
+  const response = String(raw).trim().toLowerCase();
+  const numeric = Number(raw);
+  const codes: string[] = [];
+
+  if (Number.isFinite(numeric)) {
+    if (numeric === spec.exactProduct && numeric !== Number(item.answer)) codes.push('est:exact_instead');
+    if (numeric * 10 === spec.nearestEstimate) codes.push('est:scale_x10_low');
+    if (numeric === spec.nearestEstimate * 10) codes.push('est:scale_x10_high');
+    if ((numeric === spec.lowerProduct || numeric === spec.upperProduct) && numeric !== Number(item.answer)) {
+      codes.push('est:wrong_nearby_ten');
+    }
+  }
+  if (spec.schema === 'direction' && ['low', 'high', 'exact'].includes(response)) codes.push('est:direction_reversed');
+  if (spec.schema === 'bounds') codes.push('est:bound_or_scale');
+  if (spec.schema === 'purpose') codes.push('est:purpose_confusion');
+  if (spec.schema === 'context') codes.push('est:context_method');
+  if (spec.schema === 'strategy_compare') codes.push('est:strategy_compare');
+  if (spec.schema === 'reasonableness' && (spec.variant === 'x10low' || spec.variant === 'x10high')) codes.push('est:scale_reasonableness');
+  return [...new Set(codes)];
 }
 
 function detectMeasurement(item: PracticeItem, raw: string | number): string[] {

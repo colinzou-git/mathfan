@@ -5,7 +5,8 @@ export type Grade3Domain =
   | 'area_perimeter'
   | 'geometry'
   | 'addition_subtraction'
-  | 'measurement_data';
+  | 'measurement_data'
+  | 'summer_bridge';
 
 export type SkillStatus = 'locked' | 'available' | 'in_progress' | 'mastered';
 
@@ -16,6 +17,8 @@ export interface MasterySkillNode {
   description: string;
   prerequisites: string[];
   californiaStandardIds: string[];
+  track?: 'core' | 'summer_bridge';
+  optionalExtension?: boolean;
 }
 
 export const GRADE3_MASTERY_MAP: readonly MasterySkillNode[] = [
@@ -280,6 +283,55 @@ export const GRADE3_MASTERY_MAP: readonly MasterySkillNode[] = [
     description: 'Identify and extend arithmetic patterns in number sequences and multiplication tables.',
     prerequisites: ['g3-mul-tables-basic'],
     californiaStandardIds: ['3.OA.D.9'],
+  },
+  // ── Grade 3 Summer Bridge: multiplication estimation ──────────────────────
+  {
+    id: 'g3s-mul-est-purpose', domain: 'summer_bridge', title: 'Estimate or Exact?',
+    description: 'Decide whether a situation needs an estimate, an exact answer, or neither.',
+    prerequisites: ['g3-mul-meaning'], californiaStandardIds: ['3.OA.C.7', '3.NBT.A.3', '4.NBT.B.5'],
+    track: 'summer_bridge',
+  },
+  {
+    id: 'g3s-mul-est-magnitude-2x1', domain: 'summer_bridge', title: 'About 30, 300, or 3,000?',
+    description: 'Locate the size of a two-digit by one-digit product before calculating.',
+    prerequisites: ['g3-mul-multiple-of-10'], californiaStandardIds: ['3.NBT.A.3', '4.NBT.B.5'],
+    track: 'summer_bridge',
+  },
+  {
+    id: 'g3s-mul-est-bounds-2x1', domain: 'summer_bridge', title: 'Trap the Product',
+    description: 'Use the tens below and above a number to build lower and upper product bounds.',
+    prerequisites: ['g3s-mul-est-magnitude-2x1'], californiaStandardIds: ['3.NBT.A.3', '4.NBT.B.5'],
+    track: 'summer_bridge',
+  },
+  {
+    id: 'g3s-mul-est-round-2x1', domain: 'summer_bridge', title: 'Make It a Friendly Ten',
+    description: 'Round the two-digit factor, keep the one-digit factor, and multiply mentally.',
+    prerequisites: ['g3-round-nearest-10-100', 'g3-mul-multiple-of-10', 'g3s-mul-est-bounds-2x1'],
+    californiaStandardIds: ['3.NBT.A.1', '3.NBT.A.3', '4.NBT.B.5'], track: 'summer_bridge',
+  },
+  {
+    id: 'g3s-mul-est-direction-2x1', domain: 'summer_bridge', title: 'High, Low, or Exact?',
+    description: 'Explain whether replacing a factor made the product smaller, larger, or unchanged.',
+    prerequisites: ['g3s-mul-est-round-2x1'], californiaStandardIds: ['3.NBT.A.3', '4.NBT.B.5'],
+    track: 'summer_bridge',
+  },
+  {
+    id: 'g3s-mul-est-reasonable-2x1', domain: 'summer_bridge', title: 'Could That Answer Be Right?',
+    description: 'Use magnitude and bounds to reject impossible multiplication answers.',
+    prerequisites: ['g3s-mul-est-bounds-2x1', 'g3s-mul-est-direction-2x1'], californiaStandardIds: ['3.NBT.A.3', '4.NBT.B.5'],
+    track: 'summer_bridge',
+  },
+  {
+    id: 'g3s-mul-est-context-2x1', domain: 'summer_bridge', title: 'Is About Enough?',
+    description: 'Choose a nearest estimate, a safe bound, or an exact answer for a real decision.',
+    prerequisites: ['g3s-mul-est-reasonable-2x1'], californiaStandardIds: ['3.OA.D.8', '3.NBT.A.3', '4.NBT.B.5'],
+    track: 'summer_bridge',
+  },
+  {
+    id: 'g3s-mul-est-friendly-compare', domain: 'summer_bridge', title: 'Two Good Estimates',
+    description: 'Compare two valid nearby-ten estimates for ease and closeness.',
+    prerequisites: ['g3s-mul-est-round-2x1', 'g3s-mul-est-direction-2x1'], californiaStandardIds: ['3.NBT.A.3', '4.NBT.B.5'],
+    track: 'summer_bridge', optionalExtension: true,
   },
   // ── Measurement & Data ───────────────────────────────────────────────────────
   {

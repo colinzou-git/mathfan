@@ -4,9 +4,9 @@
 
 | Package | Import count |
 | --- | --- |
-| vitest | 96 |
-| react | 35 |
-| @testing-library/react | 21 |
+| vitest | 99 |
+| react | 36 |
+| @testing-library/react | 22 |
 | pathlib | 8 |
 | __future__ | 7 |
 | sys | 7 |
@@ -170,6 +170,7 @@
 | src/features/curriculum/makeItemFromId.ts | ./measurementItems |
 | src/features/curriculum/makeItemFromId.ts | ./measurementTypes |
 | src/features/curriculum/makeItemFromId.ts | ./mulPropertiesItems |
+| src/features/curriculum/makeItemFromId.ts | ./multiplicationEstimationItems |
 | src/features/curriculum/makeItemFromId.ts | ./multiplicationItems |
 | src/features/curriculum/makeItemFromId.ts | ./numberTheoryItems |
 | src/features/curriculum/makeItemFromId.ts | ./patternItems |
@@ -185,6 +186,9 @@
 | src/features/curriculum/measurementItems.ts | ./practiceContentSpec |
 | src/features/curriculum/measurementItems.ts | ./regrouping |
 | src/features/curriculum/mulPropertiesItems.ts | ../../types/math |
+| src/features/curriculum/multiplicationEstimationItems.ts | ../../types/math |
+| src/features/curriculum/multiplicationEstimationItems.ts | ../../utils/rng |
+| src/features/curriculum/multiplicationEstimationItems.ts | ./practiceContentSpec |
 | src/features/curriculum/multiplicationItems.ts | ../../types/math |
 | src/features/curriculum/multiplicationItems.ts | ./divisionItems |
 | src/features/curriculum/numberTheoryItems.ts | ../../types/math |
@@ -436,6 +440,7 @@
 | src/features/mastery/SkillDetailPanel.tsx | ./skillMasteryEngine |
 | src/features/mastery/skillMapping.ts | ../../types/math |
 | src/features/mastery/skillMapping.ts | ../curriculum/divisionItems |
+| src/features/mastery/skillMapping.ts | ../curriculum/multiplicationEstimationItems |
 | src/features/mastery/skillMapping.ts | ../curriculum/practiceContentSpec |
 | src/features/mastery/skillMasteryEngine.ts | ../../types/math |
 | src/features/mastery/skillMasteryEngine.ts | ../learning/learningEvents |
@@ -450,6 +455,7 @@
 | src/features/mastery/skillPracticePlanner.ts | ../curriculum/makeItemFromId |
 | src/features/mastery/skillPracticePlanner.ts | ../curriculum/measurementItems |
 | src/features/mastery/skillPracticePlanner.ts | ../curriculum/mulPropertiesItems |
+| src/features/mastery/skillPracticePlanner.ts | ../curriculum/multiplicationEstimationItems |
 | src/features/mastery/skillPracticePlanner.ts | ../curriculum/multiplicationItems |
 | src/features/mastery/skillPracticePlanner.ts | ../curriculum/patternItems |
 | src/features/mastery/skillPracticePlanner.ts | ../curriculum/regrouping |
@@ -503,6 +509,7 @@
 | src/features/practice/answerChecker.ts | ../fluency/fluencyEngine |
 | src/features/practice/answerChecker.ts | ../scheduler/responsePolicy |
 | src/features/practice/hintEngine.ts | ../../types/math |
+| src/features/practice/hintEngine.ts | ../curriculum/multiplicationEstimationItems |
 | src/features/practice/hintEngine.ts | ../curriculum/practiceContentSpec |
 | src/features/practice/metrics.ts | ../../types/math |
 | src/features/practice/practiceScheduling.ts | ../../types/math |
@@ -558,11 +565,18 @@
 | src/features/scheduler/cardModel.ts | ../../types/math |
 | src/features/scheduler/cardModel.ts | ../curriculum/regrouping |
 | src/features/scheduler/cardModel.ts | ../learning/learningEvents |
+| src/features/scheduler/dailyReviewCandidates.ts | ../../db/dexie |
+| src/features/scheduler/dailyReviewCandidates.ts | ../../types/math |
+| src/features/scheduler/dailyReviewCandidates.ts | ../curriculum/makeItemFromId |
+| src/features/scheduler/dailyReviewCandidates.ts | ../curriculum/multiplicationEstimationItems |
+| src/features/scheduler/dailyReviewCandidates.ts | ./cardModel |
 | src/features/scheduler/dailyReviewQueue.ts | ../../types/math |
 | src/features/scheduler/dailyReviewQueue.ts | ../../utils/rng |
 | src/features/scheduler/dailyReviewQueue.ts | ../curriculum/makeItemFromId |
+| src/features/scheduler/dailyReviewQueue.ts | ../curriculum/multiplicationEstimationItems |
 | src/features/scheduler/dailyReviewQueue.ts | ../learning/schedulingTelemetry |
 | src/features/scheduler/dailyReviewQueue.ts | ./cardModel |
+| src/features/scheduler/dailyReviewQueue.ts | ./dailyReviewCandidates |
 | src/features/scheduler/fsrsAdapter.ts | ../../types/math |
 | src/features/scheduler/responsePolicy.ts | ../../types/math |
 | src/features/scheduler/responsePolicy.ts | ./cardModel |
@@ -633,6 +647,7 @@
 | src/features/stats/TodayAchievementSection.tsx | ./todayAchievement |
 | src/features/sync/canonicalEventMerge.ts | ../learning/learningEvents |
 | src/features/sync/driveSync.ts | ../auth/googleAuth |
+| src/features/sync/driveSync.ts | ../scheduler/dailyReviewCandidates |
 | src/features/sync/driveSync.ts | ./canonicalEventMerge |
 | src/features/sync/driveSync.ts | ./snapshot |
 | src/features/sync/learnerKeyMerge.ts | ../../types/math |
@@ -668,6 +683,7 @@
 | src/features/visuals/DivisionDecompositionModel.tsx | ../curriculum/divisionItems |
 | src/features/visuals/ElapsedTimeLineModel.tsx | ../curriculum/measurementItems |
 | src/features/visuals/ElapsedTimeLineModel.tsx | ../curriculum/measurementTypes |
+| src/features/visuals/EstimationNumberLine.tsx | ../curriculum/multiplicationEstimationItems |
 | src/features/visuals/FractionBar.tsx | ../audio/mathSpeech |
 | src/features/visuals/FractionBar.tsx | ./FractionText |
 | src/features/visuals/FractionComparisonModel.tsx | ../fractions/types |
@@ -695,6 +711,7 @@
 | src/features/visuals/VisualModel.tsx | ./DivisionDecompositionModel |
 | src/features/visuals/VisualModel.tsx | ./ElapsedTimeLineModel |
 | src/features/visuals/VisualModel.tsx | ./EqualGroupsModel |
+| src/features/visuals/VisualModel.tsx | ./EstimationNumberLine |
 | src/features/visuals/VisualModel.tsx | ./FractionBar |
 | src/features/visuals/VisualModel.tsx | ./FractionComparisonModel |
 | src/features/visuals/VisualModel.tsx | ./FractionEquivalenceModel |
@@ -713,6 +730,7 @@
 | src/features/visuals/visualModelUtils.ts | ../curriculum/practiceContentSpec |
 | src/features/visuals/visualModelUtils.ts | ./ShapeModel |
 | src/main.tsx | ./App.tsx |
+| src/main.tsx | ./features/scheduler/dailyReviewCandidates |
 | src/tests/adaptiveRelatedItemSelection.test.ts | ../features/adaptive/adaptiveItemSelector |
 | src/tests/adaptiveRelatedItemSelection.test.ts | ../features/adaptive/candidatePools |
 | src/tests/adaptiveRelatedItemSelection.test.ts | ../features/adaptive/relatedItemMapping |
@@ -789,6 +807,12 @@
 | src/tests/dailyNewGoalPlanner.test.ts | ../features/mastery/skillPracticePlanner |
 | src/tests/dailyNewGoalPlanner.test.ts | ../features/scheduler/cardModel |
 | src/tests/dailyNewGoalPlanner.test.ts | ../types/math |
+| src/tests/dailyReviewCandidates.test.ts | ../features/scheduler/cardModel |
+| src/tests/dailyReviewCandidates.test.ts | ../features/scheduler/dailyReviewCandidates |
+| src/tests/dailyReviewCandidates.test.ts | ../types/math |
+| src/tests/dailyReviewCountQueueRegression.test.ts | ../features/scheduler/cardModel |
+| src/tests/dailyReviewCountQueueRegression.test.ts | ../features/scheduler/dailyReviewQueue |
+| src/tests/dailyReviewCountQueueRegression.test.ts | ../types/math |
 | src/tests/dailyReviewQueue.test.ts | ../features/scheduler/cardModel |
 | src/tests/dailyReviewQueue.test.ts | ../features/scheduler/dailyReviewQueue |
 | src/tests/dailyReviewQueue.test.ts | ../types/math |
@@ -928,6 +952,23 @@
 | src/tests/grade3NewSkills.test.ts | ../features/mastery/skillMapping |
 | src/tests/grade3NewSkills.test.ts | ../features/mastery/skillPracticePlanner |
 | src/tests/grade3NewSkills.test.ts | ../types/math |
+| src/tests/grade3SummerMultiplicationEstimation.test.tsx | ../features/audio/mathSpeech |
+| src/tests/grade3SummerMultiplicationEstimation.test.tsx | ../features/curriculum/makeItemFromId |
+| src/tests/grade3SummerMultiplicationEstimation.test.tsx | ../features/curriculum/multiplicationEstimationItems |
+| src/tests/grade3SummerMultiplicationEstimation.test.tsx | ../features/curriculum/practiceContentSpec |
+| src/tests/grade3SummerMultiplicationEstimation.test.tsx | ../features/learning/learningEvents |
+| src/tests/grade3SummerMultiplicationEstimation.test.tsx | ../features/mastery/grade3MasteryMap |
+| src/tests/grade3SummerMultiplicationEstimation.test.tsx | ../features/mastery/misconceptionEngine |
+| src/tests/grade3SummerMultiplicationEstimation.test.tsx | ../features/mastery/skillMapping |
+| src/tests/grade3SummerMultiplicationEstimation.test.tsx | ../features/mastery/skillMasteryEngine |
+| src/tests/grade3SummerMultiplicationEstimation.test.tsx | ../features/mastery/skillPracticePlanner |
+| src/tests/grade3SummerMultiplicationEstimation.test.tsx | ../features/practice/answerChecker |
+| src/tests/grade3SummerMultiplicationEstimation.test.tsx | ../features/practice/hintEngine |
+| src/tests/grade3SummerMultiplicationEstimation.test.tsx | ../features/scheduler/cardModel |
+| src/tests/grade3SummerMultiplicationEstimation.test.tsx | ../features/scheduler/dailyReviewCandidates |
+| src/tests/grade3SummerMultiplicationEstimation.test.tsx | ../features/scheduler/dailyReviewQueue |
+| src/tests/grade3SummerMultiplicationEstimation.test.tsx | ../features/visuals/VisualModel |
+| src/tests/grade3SummerMultiplicationEstimation.test.tsx | ../types/math |
 | src/tests/grade3TwoStepAndPatterns.test.ts | ../features/curriculum/makeItemFromId |
 | src/tests/grade3TwoStepAndPatterns.test.ts | ../features/mastery/grade3MasteryMap |
 | src/tests/grade3TwoStepAndPatterns.test.ts | ../features/mastery/skillMapping |
@@ -1122,6 +1163,7 @@
 | src/tests/visualModel.test.ts | ../features/visuals/visualModelUtils |
 | src/types/math.ts | ../features/curriculum/divisionItems |
 | src/types/math.ts | ../features/curriculum/measurementTypes |
+| src/types/math.ts | ../features/curriculum/multiplicationEstimationItems |
 | src/types/math.ts | ../features/curriculum/regrouping |
 | src/types/math.ts | ../features/curriculum/wordProblemItems |
 | src/types/math.ts | ../features/fractions/types |

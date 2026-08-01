@@ -21,6 +21,7 @@ const IDS = [
   'ETIME_10_50_12_15',
   'WORD_eg_3_4',
   'PERIM_UNKSIDE_12_3-4',
+  'MEST1_RND_core_47x6',
 ];
 
 describe('versioned practice content contract', () => {
@@ -32,7 +33,7 @@ describe('versioned practice content contract', () => {
       return item.contentSpec?.domain;
     });
     expect(domains).toEqual([
-      'fraction', 'arithmetic', 'division', 'measurement_data', 'word_problem', 'area_perimeter',
+      'fraction', 'arithmetic', 'division', 'measurement_data', 'word_problem', 'area_perimeter', 'multiplication_estimation',
     ]);
   });
 

@@ -1,6 +1,6 @@
 # Code Map Overview
 
-Generated: 2026-07-17 17:48:54 UTC
+Generated: 2026-08-01 07:25:49 UTC
 
 Repo root: `/home/ubuntu/mathfan`
 Output folder: `/home/ubuntu/mathfan/docs/code-map`
@@ -14,9 +14,9 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 - Package name: `mathfan`
 - Version: `1.2.0`
 - Module type: `module`
-- Scanned files: **309**
-- Scanned lines: **58,778**
-- Scanned bytes: **2,546,063**
+- Scanned files: **315**
+- Scanned lines: **60,232**
+- Scanned bytes: **2,611,307**
 
 ## NPM scripts
 
@@ -77,8 +77,8 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 | src/features/sync/snapshot.ts | 611 | Local persistence/database layer. | AppSnapshot, AppSnapshotV3, canonicalDailyLessonPlanId, LEARNER_OWNED_TABLES, LearnerOwnedTableName, normalizeSnapshot, OrphanReport, remoteHasNewerUpdatedAt |
 | vite.config.ts | 82 | Vite build/PWA configuration. | buildInfoPlugin |
 | package.json | 53 | Project package metadata, scripts, dependencies, and dev tooling. |  |
-| src/main.tsx | 21 | React entry point that mounts the app. |  |
-| src/features/sync/driveSync.ts | 177 | Cloud sync/auth/data transfer logic. | DriveFileInfo, syncFailureResult, SyncResult, SyncStatus, authFetch, downloadSnapshot, findSyncFile, getDriveFileInfo |
+| src/main.tsx | 37 | React entry point that mounts the app. | bootstrap |
+| src/features/sync/driveSync.ts | 183 | Cloud sync/auth/data transfer logic. | DriveFileInfo, syncFailureResult, SyncResult, SyncStatus, authFetch, downloadSnapshot, findSyncFile, getDriveFileInfo |
 | src/features/sync/canonicalEventMerge.ts | 157 | Cloud sync/auth/data transfer logic. | assertEquivalentCanonicalEvents, assertNoConflictingCanonicalEventIds, CanonicalEventConflictDetails, CanonicalEventConflictError, CanonicalEventFingerprint, canonicalEventFingerprint, canonicalEventFingerprintObject, differingCanonicalEventFields |
 | src/features/sync/snapshotParsers.ts | 146 | Cloud sync/auth/data transfer logic. | parseAttemptLog, parseDailyLessonPlanShape, parseGoalEvaluation, parseGoalEvent, parseLearningGoal, parseMathAnswerEvent, parseMultiplicationFactStat, parsePracticeSession |
 | src/features/sync/learnerKeyMerge.ts | 128 | Cloud sync/auth/data transfer logic. | compareProfileRevision, mergeProfilesByExactId, remapStudentId, resolveCanonicalStudentIds, resolveLearnerKeyDuplicate, stableProfileFingerprint, StudentIdAliasMap, compareProfileRevision |
@@ -88,9 +88,9 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 | src/features/settings/SettingsPage.tsx | 942 | Student/app settings UI or persistence. | Section, SyncRow, ToggleRow, SettingsPage, applyUpdate, buildId, buildLabel, checkForUpdates |
 | src/features/multiplication/MultiplicationQuizPage.tsx | 861 | Local persistence/database layer. | FactChip, SetupScreen, StatBox, SummaryScreen, MultiplicationQuizPage, FactChip, MultiplicationQuizPage, recommendedPracticeConfig |
 | src/features/dashboard/StudentDashboard.tsx | 627 | Dashboard/profile setup/student navigation feature. | Chip, PracticeOp, StudentDashboard, Chip, completeSkillSummaries, handleStartReview, openExtra, regenerateLesson |
-| src/features/practice/PracticeScreen.tsx | 584 | Local persistence/database layer. | KbChip, PracticeScreen, KbChip, onKey, PracticeScreen, submitChoice |
+| src/features/practice/PracticeScreen.tsx | 597 | Local persistence/database layer. | KbChip, PracticeScreen, KbChip, onKey, PracticeScreen, submitChoice |
 | src/features/stats/FactStatsTable.tsx | 407 | Local persistence/database layer. | SortBtn, SummaryStat, FactStatsTable, bucketOf, FactStatsTable, idOf, SortBtn, startPractice |
-| src/features/mastery/Grade3MasteryMapPage.tsx | 366 | Grade 3 mastery map UI: skill display, detail panels, and parent action cards. | LegendItem, Grade3MasteryMapPage, buildCompleteSummaries, computeUnmetPrereqNames, Grade3MasteryMapPage, LegendItem |
+| src/features/mastery/Grade3MasteryMapPage.tsx | 369 | Grade 3 mastery map UI: skill display, detail panels, and parent action cards. | LegendItem, Grade3MasteryMapPage, buildCompleteSummaries, computeUnmetPrereqNames, Grade3MasteryMapPage, LegendItem |
 | src/features/stats/StatsPage.tsx | 273 | Progress/statistics screens or calculations. | SchedulingDiagnostics, SummaryPill, StatsPage, buildRange, daysBetween, SchedulingDiagnostics, StatsPage, SummaryPill |
 | src/features/stats/DrillHistory.tsx | 238 | Progress/statistics screens or calculations. | AttemptDetail, MetricChip, Pill, DrillHistory, AttemptDetail, dateLabel, DrillHistory, durationLabel |
 | src/features/visuals/DraggableEqualGroups.tsx | 230 | Reusable SVG visual model components (area grids, shape diagrams, fraction bars, arrays). | DraggableObject, DropZone, DraggableEqualGroups, checkEqualGroups, DraggableEqualGroups, DraggableObject, DropZone, handleDragEnd |
@@ -99,9 +99,9 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 | src/features/visuals/ShapeModel.tsx | 137 | Reusable SVG visual model components (area grids, shape diagrams, fraction bars, arrays). | SVGWrap, ShapeModel, ShapeName, pts, regularPoly, rightAnglePath, ShapeModel, SVGWrap |
 | src/features/stats/QuizStatsView.tsx | 135 | Progress/statistics screens or calculations. | FactGroup, QuizStatsView, avgSecStr, FactGroup, fmt, QuizStatsView |
 | src/features/stats/TodayAchievementSection.tsx | 125 | Progress/statistics screens or calculations. | AchievementTile, TodayAchievementSection, AchievementTile, TodayAchievementSection |
+| src/features/visuals/EstimationNumberLine.tsx | 57 | Reusable SVG visual model components (area grids, shape diagrams, fraction bars, arrays). | Tick, EstimationNumberLine, EstimationNumberLine, Tick |
 | src/features/practice/usePracticeSession.ts | 925 | Local persistence/database layer. | usePracticeSession, CorrectResult, LastSessionSummary, SessionState, usePracticeSession, commit, getStaticItem, planned |
-| src/features/mastery/skillPracticePlanner.ts | 905 | Grade 3 skill practice planner: maps skill IDs to SessionConfig for the mastery map. | buildDivisionFocusSequence, buildFocusSequence, buildRegroupingFocusSequence, FocusSequence, FocusSequenceContext, planFractionFocusSequence, planLearningUnitsForSkill, PlanOptions |
-| src/features/goals/goalEvaluationEngine.ts | 611 | Exports reusable code: ADAPTIVE_GOAL_EVALUATION_CONFIRMATION_COUNT, ADAPTIVE_GOAL_EVALUATION_HISTORICAL_PRIOR_CAP, ADAPTIVE_GOAL_EVALUATION_QUESTION_COUNT, AdaptiveGoalEvaluationArgs, AdaptiveGoalEvaluationItem. | ADAPTIVE_GOAL_EVALUATION_CONFIRMATION_COUNT, ADAPTIVE_GOAL_EVALUATION_HISTORICAL_PRIOR_CAP, ADAPTIVE_GOAL_EVALUATION_QUESTION_COUNT, AdaptiveGoalEvaluationArgs, AdaptiveGoalEvaluationItem, AdaptiveGoalEvaluationPhase, AdaptiveGoalEvaluationResponse, AdaptiveGoalEvaluationResult |
+| src/features/mastery/skillPracticePlanner.ts | 918 | Grade 3 skill practice planner: maps skill IDs to SessionConfig for the mastery map. | buildDivisionFocusSequence, buildFocusSequence, buildRegroupingFocusSequence, FocusSequence, FocusSequenceContext, planFractionFocusSequence, planLearningUnitsForSkill, PlanOptions |
 
 ## Repository tree, filtered
 
@@ -173,6 +173,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   │   ├── measurementItems.ts
 │   │   │   ├── measurementTypes.ts
 │   │   │   ├── mulPropertiesItems.ts
+│   │   │   ├── multiplicationEstimationItems.ts
 │   │   │   ├── multiplicationItems.ts
 │   │   │   ├── numberTheoryItems.ts
 │   │   │   ├── patternItems.ts
@@ -258,6 +259,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   │   └── profileBootstrap.ts
 │   │   ├── scheduler
 │   │   │   ├── cardModel.ts
+│   │   │   ├── dailyReviewCandidates.ts
 │   │   │   ├── dailyReviewQueue.ts
 │   │   │   ├── fsrsAdapter.ts
 │   │   │   ├── responsePolicy.ts
@@ -302,6 +304,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │       ├── ElapsedTimeLineModel.tsx
 │   │       ├── EqualGroupsModel.tsx
 │   │       ├── equalGroupsUtils.ts
+│   │       ├── EstimationNumberLine.tsx
 │   │       ├── FractionBar.tsx
 │   │       ├── FractionComparisonModel.tsx
 │   │       ├── FractionEquivalenceModel.tsx
@@ -346,6 +349,8 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   ├── dailyLessonPersistence.test.ts
 │   │   ├── dailyLessonPlanner.test.ts
 │   │   ├── dailyNewGoalPlanner.test.ts
+│   │   ├── dailyReviewCandidates.test.ts
+│   │   ├── dailyReviewCountQueueRegression.test.ts
 │   │   ├── dailyReviewQueue.test.ts
 │   │   ├── describeItem.test.ts
 │   │   ├── diagnosticPersistence.test.ts
@@ -376,6 +381,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   ├── grade3MasteryMapRegression.test.ts
 │   │   ├── grade3MulProperties.test.ts
 │   │   ├── grade3NewSkills.test.ts
+│   │   ├── grade3SummerMultiplicationEstimation.test.tsx
 │   │   ├── grade3TwoStepAndPatterns.test.ts
 │   │   ├── growth.test.ts
 │   │   ├── hintEngine.test.ts
@@ -800,22 +806,38 @@ Purpose: React entry point that mounts the app.
    2: import { createRoot } from 'react-dom/client'
    3: import './index.css'
    4: import App from './App.tsx'
-   5:
-   6: // When a new service worker activates (skipWaiting fires), reload so the fresh
-   7: // bundle is served. Guard with hadController so the very first SW install on a
-   8: // brand-new visit doesn't trigger a spurious reload.
-   9: if ('serviceWorker' in navigator) {
-  10:   const hadController = !!navigator.serviceWorker.controller;
-  11:   navigator.serviceWorker.addEventListener('controllerchange', () => {
-  12:     if (hadController) window.location.reload();
-  13:   });
-  14: }
-  15:
-  16: createRoot(document.getElementById('root')!).render(
-  17:   <StrictMode>
-  18:     <App />
-  19:   </StrictMode>,
-  20: )
+   5: import { repairCanonicalItemStateCache } from './features/scheduler/dailyReviewCandidates'
+   6:
+   7: // When a new service worker activates (skipWaiting fires), reload so the fresh
+   8: // bundle is served. Guard with hadController so the very first SW install on a
+   9: // brand-new visit doesn't trigger a spurious reload.
+  10: if ('serviceWorker' in navigator) {
+  11:   const hadController = !!navigator.serviceWorker.controller;
+  12:   navigator.serviceWorker.addEventListener('controllerchange', () => {
+  13:     if (hadController) window.location.reload();
+  14:   });
+  15: }
+  16:
+  17: async function bootstrap(): Promise<void> {
+  18:   try {
+  19:     const result = await repairCanonicalItemStateCache()
+  20:     if (result.aliasRowsRemoved || result.unresolvedRowsRemoved) {
+  21:       console.info('[itemStates] canonical cache repair', result)
+  22:     }
+  23:   } catch (error) {
+  24:     // itemStates is a derived cache. Continue into the existing migration and
+  25:     // recovery flow, but retain diagnostics for affected installations.
+  26:     console.warn('[itemStates] canonical cache repair failed', error)
+  27:   }
+  28:
+  29:   createRoot(document.getElementById('root')!).render(
+  30:     <StrictMode>
+  31:       <App />
+  32:     </StrictMode>,
+  33:   )
+  34: }
+  35:
+  36: void bootstrap()
 ```
 
 ### `src/features/sync/driveSync.ts`
@@ -827,63 +849,63 @@ Purpose: Cloud sync/auth/data transfer logic.
    2: import { buildSnapshot, mergeNormalizedSnapshot, normalizeSnapshot } from './snapshot';
    3: import { getToken } from '../auth/googleAuth';
    4: import { CanonicalEventConflictError } from './canonicalEventMerge';
-   5:
-   6: const FILE_NAME = 'mathfan-data.json';
-   7: const LIST_URL = `https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&fields=files(id,name,size,modifiedTime)&q=name='${FILE_NAME}'`;
-   8: const FILES_URL = 'https://www.googleapis.com/drive/v3/files';
-   9: const UPLOAD_URL = 'https://www.googleapis.com/upload/drive/v3/files';
-  10:
-  11: export type SyncStatus = 'idle' | 'syncing' | 'synced' | 'error';
-  12:
-  13: export interface SyncResult {
-  14:   ok: boolean;
-  15:   error?: string;
-  16:   code?: string;
-  17:   details?: { eventId: string; differingFields: string[] };
-  18:   syncedAt?: string;
-  19: }
-  20:
-  21: interface DriveListFile {
-  22:   id: string;
-  23:   size?: string;
-  24:   modifiedTime?: string;
-  25: }
-  26:
-  27: export function syncFailureResult(err: unknown): SyncResult {
-  28:   if (err instanceof CanonicalEventConflictError) return {
-  29:     ok: false,
-  30:     code: err.code,
-  31:     error: `Sync found incompatible copies of answer ${err.details.eventId}. Local data was not changed.`,
-  32:     details: { eventId: err.details.eventId, differingFields: err.details.differingFields },
-  33:   };
-  34:   return { ok: false, error: String(err) };
-  35: }
-  36:
-  37: function newestSyncFile(files: DriveListFile[] | undefined): DriveListFile | null {
-  38:   if (!files?.length) return null;
-  39:   return [...files].sort((a, b) => (b.modifiedTime ?? '').localeCompare(a.modifiedTime ?? ''))[0];
-  40: }
-  41:
-  42: async function authFetch(url: string, options: RequestInit = {}): Promise<Response> {
-  43:   const token = await getToken();
-  44:   if (!token) throw new Error('Not signed in');
-  45:   return fetch(url, {
-  46:     ...options,
-  47:     headers: {
-  48:       Authorization: `Bearer ${token}`,
-  49:       ...(options.headers as Record<string, string> ?? {}),
-  50:     },
-  51:   });
-  52: }
-  53:
-  54: async function findSyncFile(): Promise<string | null> {
-  55:   const res = await authFetch(LIST_URL);
-  56:   if (!res.ok) throw new Error(`Drive LIST failed: ${res.status}`);
-  57:   const data = await res.json();
-  58:   return newestSyncFile(data.files as DriveListFile[] | undefined)?.id ?? null;
-  59: }
-  60:
-... (116 more lines)
+   5: import { repairCanonicalItemStateCache } from '../scheduler/dailyReviewCandidates';
+   6:
+   7: const FILE_NAME = 'mathfan-data.json';
+   8: const LIST_URL = `https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&fields=files(id,name,size,modifiedTime)&q=name='${FILE_NAME}'`;
+   9: const FILES_URL = 'https://www.googleapis.com/drive/v3/files';
+  10: const UPLOAD_URL = 'https://www.googleapis.com/upload/drive/v3/files';
+  11:
+  12: export type SyncStatus = 'idle' | 'syncing' | 'synced' | 'error';
+  13:
+  14: export interface SyncResult {
+  15:   ok: boolean;
+  16:   error?: string;
+  17:   code?: string;
+  18:   details?: { eventId: string; differingFields: string[] };
+  19:   syncedAt?: string;
+  20: }
+  21:
+  22: interface DriveListFile {
+  23:   id: string;
+  24:   size?: string;
+  25:   modifiedTime?: string;
+  26: }
+  27:
+  28: export function syncFailureResult(err: unknown): SyncResult {
+  29:   if (err instanceof CanonicalEventConflictError) return {
+  30:     ok: false,
+  31:     code: err.code,
+  32:     error: `Sync found incompatible copies of answer ${err.details.eventId}. Local data was not changed.`,
+  33:     details: { eventId: err.details.eventId, differingFields: err.details.differingFields },
+  34:   };
+  35:   return { ok: false, error: String(err) };
+  36: }
+  37:
+  38: function newestSyncFile(files: DriveListFile[] | undefined): DriveListFile | null {
+  39:   if (!files?.length) return null;
+  40:   return [...files].sort((a, b) => (b.modifiedTime ?? '').localeCompare(a.modifiedTime ?? ''))[0];
+  41: }
+  42:
+  43: async function authFetch(url: string, options: RequestInit = {}): Promise<Response> {
+  44:   const token = await getToken();
+  45:   if (!token) throw new Error('Not signed in');
+  46:   return fetch(url, {
+  47:     ...options,
+  48:     headers: {
+  49:       Authorization: `Bearer ${token}`,
+  50:       ...(options.headers as Record<string, string> ?? {}),
+  51:     },
+  52:   });
+  53: }
+  54:
+  55: async function findSyncFile(): Promise<string | null> {
+  56:   const res = await authFetch(LIST_URL);
+  57:   if (!res.ok) throw new Error(`Drive LIST failed: ${res.status}`);
+  58:   const data = await res.json();
+  59:   return newestSyncFile(data.files as DriveListFile[] | undefined)?.id ?? null;
+  60: }
+... (122 more lines)
 ```
 
 ### `src/features/sync/canonicalEventMerge.ts`

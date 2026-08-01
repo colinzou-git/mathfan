@@ -25,6 +25,10 @@ import {
 } from '../curriculum/measurementItems';
 import { wrd2Id, type TwoStepSchema } from '../curriculum/twoStepItems';
 import { apatId } from '../curriculum/patternItems';
+import {
+  multiplicationEstimationItemIdsForSchema,
+  multiplicationEstimationSchemaForSkillId,
+} from '../curriculum/multiplicationEstimationItems';
 
 export interface PlanOptions {
   sessionLength?: number;
@@ -536,6 +540,15 @@ export function planPracticeForSkill(
   options: PlanOptions = {},
 ): SessionConfig {
   const sessionLength = options.sessionLength ?? 10;
+
+  const estimationSchema = multiplicationEstimationSchemaForSkillId(skillId);
+  if (estimationSchema) {
+    return {
+      mode: 'multiplication',
+      specificItemIds: multiplicationEstimationItemIdsForSchema(estimationSchema),
+      sessionLength,
+    };
+  }
 
   // ── G3_OA_MUL_FACTS_0_2_5_10 (also: g3-mul-tables-basic, tables 0/1/2/5/10) ─
   if (

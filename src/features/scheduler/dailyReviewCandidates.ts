@@ -2,6 +2,7 @@ import type { PracticeItem, StudentItemState } from '../../types/math';
 import { db } from '../../db/dexie';
 import { makeItemFromId } from '../curriculum/makeItemFromId';
 import { deriveCardKey } from './cardModel';
+import { defaultMultiplicationEstimationItemIdForCardKey } from '../curriculum/multiplicationEstimationItems';
 
 export interface CanonicalReviewCard {
   cardKey: string;
@@ -34,6 +35,9 @@ interface ResolvedStateRow {
 
 function fallbackItemIdFromCardKey(cardKey: string): string | null {
   let match: RegExpMatchArray | null;
+
+  const estimationItemId = defaultMultiplicationEstimationItemIdForCardKey(cardKey);
+  if (estimationItemId) return estimationItemId;
 
   if ((match = cardKey.match(/^fact:mul:(\d+)x(\d+)$/))) {
     return `MUL_${match[1]}x${match[2]}`;

@@ -13,7 +13,8 @@
  */
 
 import type { PracticeItem, PerimeterReasoningSpec } from '../../types/math';
-import { projectLegacyCompatibilityFields } from '../curriculum/practiceContentSpec';
+import { contentSpecForItem, projectLegacyCompatibilityFields } from '../curriculum/practiceContentSpec';
+import type { MultiplicationEstimationQuestionSpec } from '../curriculum/multiplicationEstimationItems';
 
 export interface HintResult {
   text: string;
@@ -30,6 +31,8 @@ export function getHint(item: PracticeItem, wrongAttempts: number): HintResult |
 
   if (item.divisionSpec) return structuredDivisionHint(item, wrongAttempts);
   if (item.measurementSpec && item.measurementSpec.kind !== 'measurement_context') return measurementDataHint(item, wrongAttempts);
+  const contentSpec = contentSpecForItem(item);
+  if (contentSpec?.domain === 'multiplication_estimation') return multiplicationEstimationHint(item, contentSpec.data, wrongAttempts);
 
   if (wrongAttempts >= 4) {
     return {
@@ -90,6 +93,36 @@ export function getHint(item: PracticeItem, wrongAttempts: number): HintResult |
     default:
       return genericHint(wrongAttempts);
   }
+}
+
+function multiplicationEstimationHint(
+  item: PracticeItem,
+  spec: MultiplicationEstimationQuestionSpec,
+  attempt: number,
+): HintResult {
+  const { schema, twoDigit: a, oneDigit: b, lowerTen, upperTen, nearestTen } = spec;
+  if (attempt === 1) {
+    if (schema === 'purpose' || schema === 'context') return hint('Ask what the situation needs: a close answer, a guaranteed bound, or an exact count.');
+    if (schema === 'magnitude') return hint(`First compare ${a} with nearby tens. The product should be near a tens product times ${b}.`);
+    if (schema === 'reasonableness') return hint('An exact answer must stay inside the lower and upper product bounds.');
+    if (schema === 'strategy_compare') return hint(`Compare how far ${a} is from ${lowerTen} and ${upperTen}.`);
+    return hint(`Which two multiples of 10 is ${a} between?`);
+  }
+  if (attempt === 2) {
+    if (schema === 'purpose') return hint('“About how many” calls for an estimate. One item for every person calls for an exact answer.');
+    if (schema === 'context') return hint('A lower bound proves a need is at least that large; an upper bound proves it is no larger.');
+    return hint(`${lowerTen} — ${a} — ${upperTen}. Keep the multiplier ${b} unchanged.`);
+  }
+  if (attempt === 3) {
+    if (schema === 'bounds' || schema === 'reasonableness') return hint(`Set up ${lowerTen} × ${b} and ${upperTen} × ${b}, then compare the choices with those anchors.`);
+    if (schema === 'nearest_ten' || schema === 'direction') {
+      return hint(`${a} is ${Math.abs(a - lowerTen)} from ${lowerTen} and ${Math.abs(upperTen - a)} from ${upperTen}. Use the closer ten, then compare it with ${a}.`);
+    }
+    if (schema === 'magnitude') return hint(`Work out the size of ${nearestTen} × ${b}; count the place value carefully.`);
+    if (schema === 'strategy_compare') return hint('The closer adjacent ten gives the smaller estimation error when the other positive factor stays the same.');
+    return hint('Match the wording of the decision to nearest estimate, lower bound, upper bound, or exact answer.');
+  }
+  return { text: item.explanation ?? 'Use nearby tens, keep the one-digit factor, and check the size of the product.', showExplanationButton: !!item.explanation };
 }
 
 function measurementDataHint(item: PracticeItem, attempt: number): HintResult {
