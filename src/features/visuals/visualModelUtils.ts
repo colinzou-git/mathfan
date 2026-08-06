@@ -56,6 +56,7 @@ export function hasVisualModel(item: PracticeItem): boolean {
 
   if (item.visualSpec) return true;
   if (contentSpec?.domain === 'multiplication_estimation') return contentSpec.data.representation === 'number_line';
+  if (contentSpec?.domain === 'division_estimation') return contentSpec.data.representation === 'number_line';
   if (contentSpec?.domain === 'fraction' || contentSpec?.domain === 'arithmetic' || contentSpec?.domain === 'division') return true;
   if (contentSpec?.domain === 'measurement_data' && contentSpec.data.kind !== 'measurement_context') return true;
   if (contentSpec?.domain === 'word_problem' && contentSpec.data.suggestedModel === 'bar') return true;

@@ -333,6 +333,55 @@ export const GRADE3_MASTERY_MAP: readonly MasterySkillNode[] = [
     prerequisites: ['g3s-mul-est-round-2x1', 'g3s-mul-est-direction-2x1'], californiaStandardIds: ['3.NBT.A.3', '4.NBT.B.5'],
     track: 'summer_bridge', optionalExtension: true,
   },
+  // ── Grade 3 Summer Bridge: division estimation ────────────────────────────
+  {
+    id: 'g3s-div-est-purpose', domain: 'summer_bridge', title: 'Estimate or Divide Exactly?',
+    description: 'Decide whether a division situation needs an estimate, an exact answer, or neither.',
+    prerequisites: ['g3-div-meaning'], californiaStandardIds: ['3.OA.C.7', '3.OA.B.6', '4.NBT.B.6'],
+    track: 'summer_bridge',
+  },
+  {
+    id: 'g3s-div-est-magnitude-2x1', domain: 'summer_bridge', title: 'About 1, 10, or 100?',
+    description: 'Locate the size of a two-digit divided by one-digit quotient before calculating.',
+    prerequisites: ['g3-div-mul-relationship'], californiaStandardIds: ['3.OA.B.6', '3.OA.C.7', '4.NBT.B.6'],
+    track: 'summer_bridge',
+  },
+  {
+    id: 'g3s-div-est-bounds-2x1', domain: 'summer_bridge', title: 'Trap the Quotient',
+    description: 'Use nearby multiplication facts to build lower and upper quotient bounds.',
+    prerequisites: ['g3s-div-est-magnitude-2x1'], californiaStandardIds: ['3.OA.B.6', '4.NBT.B.6'],
+    track: 'summer_bridge',
+  },
+  {
+    id: 'g3s-div-est-compatible-2x1', domain: 'summer_bridge', title: 'Make the Dividend Friendly',
+    description: 'Keep the divisor fixed and replace the dividend with a nearby compatible number.',
+    prerequisites: ['g3-div-mul-relationship', 'g3s-div-est-bounds-2x1'],
+    californiaStandardIds: ['3.OA.B.6', '3.NBT.A.3', '4.NBT.B.6'], track: 'summer_bridge',
+  },
+  {
+    id: 'g3s-div-est-direction-2x1', domain: 'summer_bridge', title: 'High, Low, or Exact Quotient?',
+    description: 'Explain whether changing the dividend made the quotient smaller, larger, or unchanged.',
+    prerequisites: ['g3s-div-est-compatible-2x1'], californiaStandardIds: ['3.OA.B.6', '4.NBT.B.6'],
+    track: 'summer_bridge',
+  },
+  {
+    id: 'g3s-div-est-reasonable-2x1', domain: 'summer_bridge', title: 'Could That Quotient Be Right?',
+    description: 'Use multiplication benchmarks and bounds to reject impossible quotient estimates.',
+    prerequisites: ['g3s-div-est-bounds-2x1', 'g3s-div-est-direction-2x1'], californiaStandardIds: ['3.OA.B.6', '4.NBT.B.6'],
+    track: 'summer_bridge',
+  },
+  {
+    id: 'g3s-div-est-context-2x1', domain: 'summer_bridge', title: 'Which Division Tool Fits?',
+    description: 'Choose a compatible estimate, a safe bound, or an exact answer for a real decision.',
+    prerequisites: ['g3s-div-est-reasonable-2x1'], californiaStandardIds: ['3.OA.D.8', '4.NBT.B.6'],
+    track: 'summer_bridge',
+  },
+  {
+    id: 'g3s-div-est-friendly-compare', domain: 'summer_bridge', title: 'Two Friendly Quotients',
+    description: 'Compare two valid compatible-number estimates for ease and closeness.',
+    prerequisites: ['g3s-div-est-compatible-2x1', 'g3s-div-est-direction-2x1'], californiaStandardIds: ['3.OA.B.6', '4.NBT.B.6'],
+    track: 'summer_bridge', optionalExtension: true,
+  },
   // ── Measurement & Data ───────────────────────────────────────────────────────
   {
     id: 'g3-time-to-minute',

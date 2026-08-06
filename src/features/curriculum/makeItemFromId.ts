@@ -21,6 +21,7 @@ import type { MeasurementSchema } from './measurementTypes';
 import { makeTwoStepWordProblem, type TwoStepSchema } from './twoStepItems';
 import { makeArithmeticPatternItem } from './patternItems';
 import { makeMultiplicationEstimationItemFromId } from './multiplicationEstimationItems';
+import { makeDivisionEstimationItemFromId } from './divisionEstimationItems';
 import { assertValidPracticeItem } from './practiceContentSpec';
 
 /**
@@ -37,6 +38,7 @@ function makeLegacyItemFromId(itemId: string): PracticeItem | null {
   let m: RegExpMatchArray | null;
 
   if (itemId.startsWith('MEST1_')) return makeMultiplicationEstimationItemFromId(itemId);
+  if (itemId.startsWith('DEST1_')) return makeDivisionEstimationItemFromId(itemId);
 
   m = itemId.match(/^MEAS_(bar_(?:read_value|compare|total|missing))_(\d+)_(\d+(?:-\d+)*)$/);
   if (m) {

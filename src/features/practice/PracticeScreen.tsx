@@ -267,7 +267,8 @@ export function PracticeScreen({
   const progress = state.totalPlanned
     ? Math.round((state.completedCount / state.totalPlanned) * 100) : 0;
   const isVisualItem = state.currentItem != null && hasVisualModel(state.currentItem);
-  const isEstimationItem = state.currentItem?.itemType === 'multiplication_estimation';
+  const isEstimationItem = state.currentItem?.itemType === 'multiplication_estimation'
+    || state.currentItem?.itemType === 'division_estimation';
 
   const submitChoice = (choice: string) => {
     if (isCorrect || state.saveStatus !== 'idle') return;

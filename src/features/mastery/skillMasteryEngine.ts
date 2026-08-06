@@ -182,13 +182,14 @@ export function deriveGrade3SkillSummaries(
     const hasDelayedEvidence = eventDays.size >= 2 || states.some(state => (state.reps ?? 0) >= 2);
     const hasMultipleSessions = new Set(events.map(event => event.sessionId)).size >= 2;
     const hasUnresolvedMisconception = hasUnresolvedMisconceptionForSkill(misconceptionEvidence, skillId);
-    const isSummerEstimation = skillId.startsWith('g3s-mul-est-');
+    const isSummerEstimation = skillId.startsWith('g3s-mul-est-') || skillId.startsWith('g3s-div-est-');
     const status = isSummerEstimation
       ? classifySummerEstimationStatus({
           events,
           dueItemCount,
           representationCount,
-          allowsSingleRepresentation: skillId === 'g3s-mul-est-purpose' || skillId === 'g3s-mul-est-context-2x1',
+          allowsSingleRepresentation: skillId === 'g3s-mul-est-purpose' || skillId === 'g3s-mul-est-context-2x1'
+            || skillId === 'g3s-div-est-purpose' || skillId === 'g3s-div-est-context-2x1',
           hasUnresolvedMisconception,
         })
       : classifyStatus(

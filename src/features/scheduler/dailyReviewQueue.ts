@@ -5,6 +5,7 @@ import { shuffled, type Rng } from '../../utils/rng';
 import { ADAPTIVE_SELECTOR_VERSION } from '../learning/schedulingTelemetry';
 import { resolveCanonicalReviewCards, type CanonicalReviewCard } from './dailyReviewCandidates';
 import { freshMultiplicationEstimationReviewItemId } from '../curriculum/multiplicationEstimationItems';
+import { freshDivisionEstimationReviewItemId } from '../curriculum/divisionEstimationItems';
 
 export interface DailyReviewQueueArgs {
   /** Concrete due item ids requested for this review (e.g. from the dashboard's grouped due list). */
@@ -33,6 +34,10 @@ const selection = (origin: SelectionContext['origin'], rationaleCode: string): S
   rationaleCodes: [rationaleCode],
 });
 
+function freshEstimationReviewItemId(id: string, rng: Rng): string {
+  return freshDivisionEstimationReviewItemId(freshMultiplicationEstimationReviewItemId(id, rng), rng);
+}
+
 export function buildDailyReviewQueue(args: DailyReviewQueueArgs): PlannedSessionItem[] {
   const { requestedItemIds, states, sessionLength, now, rng } = args;
   const nowStr = now.toISOString();
@@ -53,7 +58,7 @@ export function buildDailyReviewQueue(args: DailyReviewQueueArgs): PlannedSessio
     if (authoritative && !isDueNow(authoritative.state, nowStr)) continue;
 
     usedCardKeys.add(cardKey);
-    requestedDeduped.push(freshMultiplicationEstimationReviewItemId(id, rng));
+    requestedDeduped.push(freshEstimationReviewItemId(id, rng));
   }
 
   if (args.repeatPolicy === 'user_requested_rounds') {
@@ -88,14 +93,14 @@ export function buildDailyReviewQueue(args: DailyReviewQueueArgs): PlannedSessio
     if (usedCardKeys.has(card.cardKey)) continue;
     if (!makeItemFromId(card.itemId)) continue;
     usedCardKeys.add(card.cardKey);
-    backfill.push({ itemId: freshMultiplicationEstimationReviewItemId(card.itemId, rng), selection: selection('due_retrieval', 'daily_review_backfill_overdue') });
+    backfill.push({ itemId: freshEstimationReviewItemId(card.itemId, rng), selection: selection('due_retrieval', 'daily_review_backfill_overdue') });
   }
   for (const card of weak) {
     if (backfill.length >= needed) break;
     if (usedCardKeys.has(card.cardKey)) continue;
     if (!makeItemFromId(card.itemId)) continue;
     usedCardKeys.add(card.cardKey);
-    backfill.push({ itemId: freshMultiplicationEstimationReviewItemId(card.itemId, rng), selection: selection('weak_skill', 'daily_review_backfill_weak') });
+    backfill.push({ itemId: freshEstimationReviewItemId(card.itemId, rng), selection: selection('weak_skill', 'daily_review_backfill_weak') });
   }
 
   // No distinct eligible cards remain — a shorter queue is correct, not a repeat.

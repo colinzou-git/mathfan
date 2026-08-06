@@ -3,6 +3,7 @@ import { db } from '../../db/dexie';
 import { makeItemFromId } from '../curriculum/makeItemFromId';
 import { deriveCardKey } from './cardModel';
 import { defaultMultiplicationEstimationItemIdForCardKey } from '../curriculum/multiplicationEstimationItems';
+import { defaultDivisionEstimationItemIdForCardKey } from '../curriculum/divisionEstimationItems';
 
 export interface CanonicalReviewCard {
   cardKey: string;
@@ -38,6 +39,8 @@ function fallbackItemIdFromCardKey(cardKey: string): string | null {
 
   const estimationItemId = defaultMultiplicationEstimationItemIdForCardKey(cardKey);
   if (estimationItemId) return estimationItemId;
+  const divisionEstimationItemId = defaultDivisionEstimationItemIdForCardKey(cardKey);
+  if (divisionEstimationItemId) return divisionEstimationItemId;
 
   if ((match = cardKey.match(/^fact:mul:(\d+)x(\d+)$/))) {
     return `MUL_${match[1]}x${match[2]}`;

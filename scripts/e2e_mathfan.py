@@ -651,6 +651,49 @@ def summer_multiplication_estimation_lesson(page: Page) -> None:
     assert_no_horizontal_overflow(page, "summer multiplication estimation")
 
 
+def summer_division_estimation_lesson(page: Page) -> None:
+    """Division estimation keeps the divisor fixed and uses compatible dividends."""
+    create_profile(page, "DivisionEstimationTester", "e2e-summer-division-estimation")
+    set_one_question_sessions(page)
+    page.get_by_role("button", name=re.compile(r"Grade 3 Math Map")).click()
+    expect(page.get_by_role("heading", name=re.compile(r"Summer Bridge$"))).to_be_visible()
+    skill_tile = page.get_by_role("button", name=re.compile(r"^Trap the Quotient:"))
+    expect(skill_tile.get_by_text("Summer Bridge", exact=True)).to_be_visible()
+    skill_tile.click()
+    summer_note = page.get_by_role("note").filter(has_text="Grade 3 Summer Bridge")
+    expect(summer_note).to_contain_text("preparation for Grade 4")
+    page.get_by_role("button", name=re.compile(r"Practice this skill")).click()
+
+    prompt = page.locator(".drill-q > div").first.inner_text()
+    dividend, divisor = [int(value) for value in re.findall(r"\d+", prompt)][:2]
+    quotient = dividend / divisor
+    lower_estimate = int(quotient // 5) * 5
+    upper_estimate = lower_estimate + 5
+    lower_dividend = lower_estimate * divisor
+    upper_dividend = upper_estimate * divisor
+    answer = f"{lower_estimate} to {upper_estimate}"
+    number_line = page.get_by_role(
+        "figure",
+        name=re.compile(
+            rf"Number line.*{dividend} lies between compatible dividends {lower_dividend} and {upper_dividend}",
+            re.I,
+        ),
+    )
+    # Odd dividends use the compatible-dividend number line; even dividends
+    # deliberately keep the same mathematical reasoning in symbolic form.
+    if dividend % 2:
+        expect(number_line).to_be_visible()
+        expect(number_line).not_to_contain_text(f"{lower_dividend} ÷ {divisor}")
+    else:
+        expect(number_line).to_have_count(0)
+    page.get_by_role("button", name=answer, exact=True).click()
+    expect(page.get_by_text(re.compile(r"Correct!|New personal best!"))).to_be_visible()
+    if dividend % 2:
+        expect(number_line).to_contain_text(f"{lower_dividend} ÷ {divisor} = {lower_estimate}")
+    expect(page.get_by_text(re.compile(r"the quotient is between", re.I))).to_be_visible()
+    assert_no_horizontal_overflow(page, "summer division estimation")
+
+
 def area_perimeter_missing_side_lesson(page: Page) -> None:
     create_profile(page, "PerimeterTester", "e2e-perimeter-missing")
     set_one_question_sessions(page)
@@ -939,8 +982,8 @@ def overlapping_goal_portfolio(page: Page) -> None:
         });
         await new Promise((resolve, reject) => {
             const tx = db.transaction('learningGoals', 'readwrite');
-            tx.objectStore('learningGoals').put(makeGoal('goal-a', 'Multiplication Foundation', '2026-07-01'));
-            tx.objectStore('learningGoals').put(makeGoal('goal-b', 'Array Practice', '2026-08-01'));
+            tx.objectStore('learningGoals').put(makeGoal('goal-a', 'Multiplication Foundation', '2000-01-01'));
+            tx.objectStore('learningGoals').put(makeGoal('goal-b', 'Array Practice', '2099-01-01'));
             tx.oncomplete = resolve; tx.onerror = () => reject(tx.error);
         });
         db.close();
@@ -1311,6 +1354,7 @@ def main() -> int:
             ("standalone-pwa-share", {"width": 1024, "height": 768}, standalone_pwa_share_flow, True),
             ("legacy-downloaded-backup-restore", {"width": 1024, "height": 768}, legacy_downloaded_backup_restore, False),
             ("summer-multiplication-estimation", {"width": 390, "height": 844}, summer_multiplication_estimation_lesson, False),
+            ("summer-division-estimation", {"width": 390, "height": 844}, summer_division_estimation_lesson, False),
             ("missing-side-lesson", {"width": 390, "height": 844}, area_perimeter_missing_side_lesson, False),
             ("area-perimeter-comparison", {"width": 1024, "height": 768}, area_perimeter_comparison_lesson, False),
             ("related-evidence-failure-recovery", {"width": 1024, "height": 768}, related_evidence_failure_recovery, False),

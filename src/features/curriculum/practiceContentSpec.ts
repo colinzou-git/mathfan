@@ -154,6 +154,7 @@ export function projectLegacyCompatibilityFields(item: PracticeItem): PracticeIt
       case 'word_problem': return { ...shared, contentSpec: spec, wordProblemSpec: spec.data };
       case 'area_perimeter': return { ...shared, contentSpec: spec, reasoningSpec: spec.data };
       case 'multiplication_estimation': return { ...shared, contentSpec: spec };
+      case 'division_estimation': return { ...shared, contentSpec: spec };
     }
   })();
   Object.defineProperty(projected, LEGACY_COMPATIBILITY_PROJECTION, { value: true, enumerable: false });
@@ -171,6 +172,7 @@ const DOMAIN_ITEM_TYPES: Record<PracticeContentSpec['domain'], ReadonlySet<ItemT
   word_problem: new Set(['word_problem']),
   area_perimeter: new Set(['perimeter_unknown_side']),
   multiplication_estimation: new Set(['multiplication_estimation']),
+  division_estimation: new Set(['division_estimation']),
 };
 
 export function validatePracticeItem(item: PracticeItem): PracticeItemValidationProblem[] {
@@ -218,6 +220,25 @@ export function validatePracticeItem(item: PracticeItem): PracticeItemValidation
     }
     if (data.schema === 'bounds' && data.lowerTen === data.upperTen) {
       problems.push({ code: 'invalid_strict_estimation_bounds', path: 'contentSpec.data.schema', message: 'Strict bounds cannot use an already-friendly multiple of ten.' });
+    }
+  }
+  if (spec?.domain === 'division_estimation') {
+    const data = spec.data;
+    if (!Number.isInteger(data.dividend) || data.dividend < 10 || data.dividend > 99
+      || !Number.isInteger(data.divisor) || data.divisor < 2 || data.divisor > 9) {
+      problems.push({ code: 'invalid_division_estimation_operands', path: 'contentSpec.data', message: 'Estimation operands must be a 10–99 dividend and 2–9 divisor.' });
+    }
+    if (data.exactQuotient !== data.dividend / data.divisor
+      || data.lowerCompatibleDividend !== data.lowerEstimate * data.divisor
+      || data.upperCompatibleDividend !== data.upperEstimate * data.divisor
+      || data.compatibleDividend !== data.compatibleEstimate * data.divisor) {
+      problems.push({ code: 'division_estimation_quotient_mismatch', path: 'contentSpec.data', message: 'Division estimates do not match their compatible dividends and divisor.' });
+    }
+    if (data.lowerCompatibleDividend > data.dividend || data.upperCompatibleDividend < data.dividend) {
+      problems.push({ code: 'invalid_division_estimation_bounds', path: 'contentSpec.data', message: 'Compatible dividends must bound the original dividend.' });
+    }
+    if (data.schema === 'bounds' && data.lowerEstimate === data.upperEstimate) {
+      problems.push({ code: 'invalid_strict_division_estimation_bounds', path: 'contentSpec.data.schema', message: 'Strict bounds cannot use an already-compatible dividend.' });
     }
   }
   if (item.schemaId === '') {
