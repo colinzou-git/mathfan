@@ -15,6 +15,7 @@
 import type { PracticeItem, PerimeterReasoningSpec } from '../../types/math';
 import { contentSpecForItem, projectLegacyCompatibilityFields } from '../curriculum/practiceContentSpec';
 import type { MultiplicationEstimationQuestionSpec } from '../curriculum/multiplicationEstimationItems';
+import type { DivisionEstimationQuestionSpec } from '../curriculum/divisionEstimationItems';
 
 export interface HintResult {
   text: string;
@@ -33,6 +34,7 @@ export function getHint(item: PracticeItem, wrongAttempts: number): HintResult |
   if (item.measurementSpec && item.measurementSpec.kind !== 'measurement_context') return measurementDataHint(item, wrongAttempts);
   const contentSpec = contentSpecForItem(item);
   if (contentSpec?.domain === 'multiplication_estimation') return multiplicationEstimationHint(item, contentSpec.data, wrongAttempts);
+  if (contentSpec?.domain === 'division_estimation') return divisionEstimationHint(item, contentSpec.data, wrongAttempts);
 
   if (wrongAttempts >= 4) {
     return {
@@ -123,6 +125,37 @@ function multiplicationEstimationHint(
     return hint('Match the wording of the decision to nearest estimate, lower bound, upper bound, or exact answer.');
   }
   return { text: item.explanation ?? 'Use nearby tens, keep the one-digit factor, and check the size of the product.', showExplanationButton: !!item.explanation };
+}
+
+function divisionEstimationHint(
+  item: PracticeItem,
+  spec: DivisionEstimationQuestionSpec,
+  attempt: number,
+): HintResult {
+  const { schema, dividend, divisor, lowerCompatibleDividend, upperCompatibleDividend, lowerEstimate, upperEstimate } = spec;
+  if (attempt >= 4) return {
+    text: "Keep going — use a multiplication fact to check the quotient neighborhood.",
+    showExplanationButton: !!item.explanation,
+  };
+  if (attempt === 1) {
+    if (schema === 'purpose' || schema === 'context') return hint('Ask what the situation needs: an about answer, a guaranteed bound, or every group and leftover.');
+    if (schema === 'magnitude') return hint(`Compare ${dividend} with ${divisor} × 10. That tells whether the quotient lives near 1, 10, or 100.`);
+    if (schema === 'reasonableness') return hint('A reasonable quotient must stay inside the lower and upper multiplication benchmarks.');
+    if (schema === 'strategy_compare') return hint(`Compare how far ${dividend} is from ${lowerCompatibleDividend} and ${upperCompatibleDividend}.`);
+    return hint(`Keep ${divisor} fixed. Find nearby numbers that divide evenly by ${divisor}.`);
+  }
+  if (attempt === 2) {
+    if (schema === 'purpose') return hint('“About how many” calls for an estimate. Recording every full group and leftover calls for an exact answer.');
+    if (schema === 'context') return hint('A lower bound proves at least that many groups; an upper bound proves no more than that many.');
+    return hint(`${lowerCompatibleDividend} — ${dividend} — ${upperCompatibleDividend}. Use ${divisor} × ${lowerEstimate} and ${divisor} × ${upperEstimate}.`);
+  }
+  if (schema === 'bounds' || schema === 'reasonableness') {
+    return hint(`Check ${divisor} × ${lowerEstimate} = ${lowerCompatibleDividend} and ${divisor} × ${upperEstimate} = ${upperCompatibleDividend}, then compare the choices with those anchors.`);
+  }
+  if (schema === 'compatible' || schema === 'direction') {
+    return hint(`${dividend} is ${Math.abs(dividend - lowerCompatibleDividend)} from ${lowerCompatibleDividend} and ${Math.abs(upperCompatibleDividend - dividend)} from ${upperCompatibleDividend}. Choose the closer compatible dividend, then compare it with ${dividend}.`);
+  }
+  return hint(`Use the related multiplication question: ${divisor} × what number lands near ${dividend}?`);
 }
 
 function measurementDataHint(item: PracticeItem, attempt: number): HintResult {

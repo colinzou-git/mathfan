@@ -41,6 +41,14 @@ function session(overrides: Partial<PracticeSession> & { startedAt: string }): P
   };
 }
 
+function localIso(year: number, monthIndex: number, day: number, hour = 10): string {
+  return new Date(year, monthIndex, day, hour).toISOString();
+}
+
+function localYmd(date: Date): [number, number, number] {
+  return [date.getFullYear(), date.getMonth(), date.getDate()];
+}
+
 const NOW = new Date('2026-06-10T15:00:00Z');
 const TODAY = '2026-06-10';
 const YESTERDAY = '2026-06-09';
@@ -200,28 +208,28 @@ describe('computeStreak', () => {
   });
 
   it('attempts only today → streak 1', () => {
-    const a = [attempt({ createdAt: `${TODAY}T10:00:00.000Z` })];
-    expect(computeStreak(a, new Date(`${TODAY}T23:00:00Z`))).toBeGreaterThanOrEqual(1);
+    const a = [attempt({ createdAt: localIso(2026, 5, 10) })];
+    expect(computeStreak(a, new Date(2026, 5, 10, 23))).toBeGreaterThanOrEqual(1);
   });
 
   it('consecutive days → streak grows', () => {
     const attempts = [
-      attempt({ createdAt: '2026-06-08T10:00:00.000Z' }),
-      attempt({ createdAt: '2026-06-09T10:00:00.000Z' }),
-      attempt({ createdAt: '2026-06-10T10:00:00.000Z' }),
+      attempt({ createdAt: localIso(2026, 5, 8) }),
+      attempt({ createdAt: localIso(2026, 5, 9) }),
+      attempt({ createdAt: localIso(2026, 5, 10) }),
     ];
-    expect(computeStreak(attempts, new Date('2026-06-10T23:00:00Z'))).toBeGreaterThanOrEqual(3);
+    expect(computeStreak(attempts, new Date(2026, 5, 10, 23))).toBeGreaterThanOrEqual(3);
   });
 
   it('gap breaks the streak', () => {
     const attempts = [
-      attempt({ createdAt: '2026-06-01T10:00:00.000Z' }),
+      attempt({ createdAt: localIso(2026, 5, 1) }),
       // gap on Jun 2
-      attempt({ createdAt: '2026-06-03T10:00:00.000Z' }),
-      attempt({ createdAt: '2026-06-10T10:00:00.000Z' }),
+      attempt({ createdAt: localIso(2026, 5, 3) }),
+      attempt({ createdAt: localIso(2026, 5, 10) }),
     ];
     // streak from today looking back: only today's day counts before the gap
-    expect(computeStreak(attempts, new Date('2026-06-10T23:00:00Z'))).toBe(1);
+    expect(computeStreak(attempts, new Date(2026, 5, 10, 23))).toBe(1);
   });
 });
 
@@ -301,12 +309,12 @@ describe('factTrend', () => {
 describe('startOfWeek', () => {
   it('Wednesday → Monday of same week', () => {
     // 2026-06-10 is a Wednesday; Mon = 2026-06-08
-    const d = startOfWeek(new Date('2026-06-10T12:00:00Z'));
-    expect(d.toISOString().slice(0, 10)).toBe('2026-06-08');
+    const d = startOfWeek(new Date(2026, 5, 10, 12));
+    expect(localYmd(d)).toEqual([2026, 5, 8]);
   });
   it('Monday → same day', () => {
-    const d = startOfWeek(new Date('2026-06-08T12:00:00Z'));
-    expect(d.toISOString().slice(0, 10)).toBe('2026-06-08');
+    const d = startOfWeek(new Date(2026, 5, 8, 12));
+    expect(localYmd(d)).toEqual([2026, 5, 8]);
   });
 });
 

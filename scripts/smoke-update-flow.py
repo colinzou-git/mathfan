@@ -72,7 +72,11 @@ def main() -> int:
     last_page: Page | None = None
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
+        chromium_executable = os.environ.get("E2E_CHROMIUM_EXECUTABLE")
+        browser = p.chromium.launch(
+            headless=True,
+            executable_path=chromium_executable or None,
+        )
 
         api = browser.new_context()
         response = api.request.get(f"{base}/build-info.json")

@@ -5,6 +5,7 @@ import type { DivisionQuestionSpec } from '../features/curriculum/divisionItems'
 import type { MeasurementDataSpec } from '../features/curriculum/measurementTypes';
 import type { WordProblemSpec } from '../features/curriculum/wordProblemItems';
 import type { MultiplicationEstimationQuestionSpec } from '../features/curriculum/multiplicationEstimationItems';
+import type { DivisionEstimationQuestionSpec } from '../features/curriculum/divisionEstimationItems';
 
 export type GradeLevel = 3 | 4 | 5;
 export type ReviewGrade = 'again' | 'hard' | 'good' | 'easy';
@@ -60,6 +61,7 @@ export type ItemType =
   | 'rectilinear_area'
   | 'multiplication_properties'
   | 'multiplication_estimation'
+  | 'division_estimation'
   | 'time_to_minute'
   | 'elapsed_time'
   | 'measurement_word'
@@ -104,7 +106,8 @@ export type PracticeContentSpec =
   | { domain: 'measurement_data'; version: 1; data: MeasurementDataSpec }
   | { domain: 'word_problem'; version: 1; data: WordProblemSpec }
   | { domain: 'area_perimeter'; version: 1; data: PerimeterReasoningSpec }
-  | { domain: 'multiplication_estimation'; version: 1; data: MultiplicationEstimationQuestionSpec };
+  | { domain: 'multiplication_estimation'; version: 1; data: MultiplicationEstimationQuestionSpec }
+  | { domain: 'division_estimation'; version: 1; data: DivisionEstimationQuestionSpec };
 
 export interface StudentProfile {
   id: string;

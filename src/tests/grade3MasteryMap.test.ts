@@ -10,9 +10,9 @@ import type { Grade3Domain, MasterySkillNode } from '../features/mastery/grade3M
 // ── Map shape ──────────────────────────────────────────────────────────────────
 
 describe('GRADE3_MASTERY_MAP', () => {
-  it('has between 19 and 50 skills', () => {
+  it('has between 19 and 60 skills', () => {
     expect(GRADE3_MASTERY_MAP.length).toBeGreaterThanOrEqual(19);
-    expect(GRADE3_MASTERY_MAP.length).toBeLessThanOrEqual(50);
+    expect(GRADE3_MASTERY_MAP.length).toBeLessThanOrEqual(60);
   });
 
   it('every skill has a non-empty id, title, description', () => {

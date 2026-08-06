@@ -40,6 +40,7 @@ import { ElapsedTimeLineModel } from './ElapsedTimeLineModel';
 import { TapeDiagramModel } from './TapeDiagramModel';
 import { contentSpecForItem } from '../curriculum/practiceContentSpec';
 import { EstimationNumberLine } from './EstimationNumberLine';
+import { DivisionEstimationNumberLine } from './DivisionEstimationNumberLine';
 
 interface Props {
   item: PracticeItem;
@@ -62,6 +63,10 @@ export function VisualModel({ item, color, revealAnswer = false }: Props) {
   if (contentSpec?.domain === 'multiplication_estimation'
     && contentSpec.data.representation === 'number_line') {
     return <EstimationNumberLine spec={contentSpec.data} revealAnswer={revealAnswer} />;
+  }
+  if (contentSpec?.domain === 'division_estimation'
+    && contentSpec.data.representation === 'number_line') {
+    return <DivisionEstimationNumberLine spec={contentSpec.data} revealAnswer={revealAnswer} />;
   }
 
   if (contentSpec?.domain === 'arithmetic') {

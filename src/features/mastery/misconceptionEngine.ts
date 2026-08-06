@@ -24,6 +24,7 @@ export function detectMistakes(
   const contentSpec = contentSpecForItem(item);
   if (contentSpec?.domain === 'measurement_data') return detectMeasurement(item, studentAnswer);
   if (contentSpec?.domain === 'multiplication_estimation') return detectMultiplicationEstimation(item, studentAnswer);
+  if (contentSpec?.domain === 'division_estimation') return detectDivisionEstimation(item, studentAnswer);
   switch (item.itemType) {
     case 'multiplication_fact':
     case 'unknown_factor':
@@ -120,6 +121,7 @@ export function itemTargetsMisconception(item: PracticeItem, code: string): bool
   if (family === 'arithmetic') return item.itemType === 'addition_fact' || item.itemType === 'subtraction_fact';
   if (family === 'measurement') return contentSpecForItem(item)?.domain === 'measurement_data';
   if (family === 'est') return contentSpecForItem(item)?.domain === 'multiplication_estimation';
+  if (family === 'div_est') return contentSpecForItem(item)?.domain === 'division_estimation';
   if (family === 'mul') return item.itemType === 'multiplication_fact' || item.itemType === 'unknown_factor';
   if (family === 'div') return item.itemType === 'division_fact';
   return false;
@@ -162,6 +164,9 @@ export function hasUnresolvedMisconceptionForSkill(
   if (skillId.startsWith('g3s-mul-est-')) {
     return evidence.some(entry => entry.status !== 'resolved' && entry.code.startsWith('est:'));
   }
+  if (skillId.startsWith('g3s-div-est-')) {
+    return evidence.some(entry => entry.status !== 'resolved' && entry.code.startsWith('div_est:'));
+  }
   return false;
 }
 
@@ -187,6 +192,31 @@ function detectMultiplicationEstimation(item: PracticeItem, raw: string | number
   if (spec.schema === 'context') codes.push('est:context_method');
   if (spec.schema === 'strategy_compare') codes.push('est:strategy_compare');
   if (spec.schema === 'reasonableness' && (spec.variant === 'x10low' || spec.variant === 'x10high')) codes.push('est:scale_reasonableness');
+  return [...new Set(codes)];
+}
+
+function detectDivisionEstimation(item: PracticeItem, raw: string | number): string[] {
+  const content = contentSpecForItem(item);
+  if (content?.domain !== 'division_estimation') return [];
+  const spec = content.data;
+  const response = String(raw).trim().toLowerCase();
+  const numeric = Number(raw);
+  const codes: string[] = [];
+
+  if (Number.isFinite(numeric)) {
+    if (numeric === spec.exactQuotient && numeric !== Number(item.answer)) codes.push('div_est:exact_instead');
+    if (numeric * 10 === spec.compatibleEstimate) codes.push('div_est:scale_x10_low');
+    if (numeric === spec.compatibleEstimate * 10) codes.push('div_est:scale_x10_high');
+    if ((numeric === spec.lowerEstimate || numeric === spec.upperEstimate) && numeric !== Number(item.answer)) {
+      codes.push('div_est:wrong_compatible');
+    }
+  }
+  if (spec.schema === 'direction' && ['low', 'high', 'exact'].includes(response)) codes.push('div_est:direction_reversed');
+  if (spec.schema === 'bounds') codes.push('div_est:bound_or_scale');
+  if (spec.schema === 'purpose') codes.push('div_est:purpose_confusion');
+  if (spec.schema === 'context') codes.push('div_est:context_method');
+  if (spec.schema === 'strategy_compare') codes.push('div_est:strategy_compare');
+  if (spec.schema === 'reasonableness' && (spec.variant === 'x10low' || spec.variant === 'x10high')) codes.push('div_est:scale_reasonableness');
   return [...new Set(codes)];
 }
 

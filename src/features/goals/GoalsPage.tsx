@@ -94,8 +94,11 @@ function clampDuration(value: number): number {
 }
 
 function addDays(date: string, days: number): string {
-  const next = new Date(`${date}T00:00:00`);
-  next.setDate(next.getDate() + days);
+  // A goal date is a calendar date, not an instant in the host machine's
+  // timezone. UTC arithmetic keeps the YYYY-MM-DD value stable in every
+  // browser, test runner, and deployment timezone.
+  const next = new Date(`${date}T00:00:00.000Z`);
+  next.setUTCDate(next.getUTCDate() + days);
   return next.toISOString().slice(0, 10);
 }
 

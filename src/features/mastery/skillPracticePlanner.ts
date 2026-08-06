@@ -29,6 +29,10 @@ import {
   multiplicationEstimationItemIdsForSchema,
   multiplicationEstimationSchemaForSkillId,
 } from '../curriculum/multiplicationEstimationItems';
+import {
+  divisionEstimationItemIdsForSchema,
+  divisionEstimationSchemaForSkillId,
+} from '../curriculum/divisionEstimationItems';
 
 export interface PlanOptions {
   sessionLength?: number;
@@ -546,6 +550,15 @@ export function planPracticeForSkill(
     return {
       mode: 'multiplication',
       specificItemIds: multiplicationEstimationItemIdsForSchema(estimationSchema),
+      sessionLength,
+    };
+  }
+
+  const divisionEstimationSchema = divisionEstimationSchemaForSkillId(skillId);
+  if (divisionEstimationSchema) {
+    return {
+      mode: 'division',
+      specificItemIds: divisionEstimationItemIdsForSchema(divisionEstimationSchema),
       sessionLength,
     };
   }

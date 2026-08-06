@@ -2,6 +2,7 @@ import type { PracticeItem } from '../../types/math';
 import { divisionSkillIdForSchema } from '../curriculum/divisionItems';
 import { contentSpecForItem } from '../curriculum/practiceContentSpec';
 import { multiplicationEstimationSkillIdForSchema } from '../curriculum/multiplicationEstimationItems';
+import { divisionEstimationSkillIdForSchema } from '../curriculum/divisionEstimationItems';
 
 /**
  * Maps a PracticeItem to a Grade 3 mastery skill ID from GRADE3_MASTERY_MAP.
@@ -15,6 +16,9 @@ export function inferGrade3SkillId(item: PracticeItem): string | null {
 
   if (contentSpec?.domain === 'multiplication_estimation') {
     return multiplicationEstimationSkillIdForSchema(contentSpec.data.schema);
+  }
+  if (contentSpec?.domain === 'division_estimation') {
+    return divisionEstimationSkillIdForSchema(contentSpec.data.schema);
   }
 
   // Preserve historical single-step division story evidence under its original broad skill.

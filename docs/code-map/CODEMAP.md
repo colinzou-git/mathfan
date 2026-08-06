@@ -1,9 +1,9 @@
 # Code Map Overview
 
-Generated: 2026-08-01 07:25:49 UTC
+Generated: 2026-08-06 04:01:13 UTC
 
-Repo root: `/home/ubuntu/mathfan`
-Output folder: `/home/ubuntu/mathfan/docs/code-map`
+Repo root: `/workspace/scratch/e3070cb3f383/mathfan`
+Output folder: `/workspace/scratch/e3070cb3f383/mathfan/docs/code-map`
 
 ## What this is for
 
@@ -14,9 +14,9 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 - Package name: `mathfan`
 - Version: `1.2.0`
 - Module type: `module`
-- Scanned files: **315**
-- Scanned lines: **60,232**
-- Scanned bytes: **2,611,307**
+- Scanned files: **318**
+- Scanned lines: **61,114**
+- Scanned bytes: **2,659,312**
 
 ## NPM scripts
 
@@ -84,11 +84,11 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 | src/features/sync/learnerKeyMerge.ts | 128 | Cloud sync/auth/data transfer logic. | compareProfileRevision, mergeProfilesByExactId, remapStudentId, resolveCanonicalStudentIds, resolveLearnerKeyDuplicate, stableProfileFingerprint, StudentIdAliasMap, compareProfileRevision |
 | src/features/sync/useSync.ts | 99 | Cloud sync/auth/data transfer logic. | useSync, initAuth, SyncState, useSync, recordSync, useSync |
 | src/features/sync/timeUtil.ts | 13 | Cloud sync/auth/data transfer logic. | remoteHasNewerUpdatedAt, validTimeMs, remoteHasNewerUpdatedAt, validTimeMs |
-| src/features/goals/GoalsPage.tsx | 1057 | React UI component file: ConfirmDialog, EmptyState, GoalCard, GoalWizard. | ConfirmDialog, EmptyState, GoalCard, GoalWizard, ProgressBar, SummaryCard, GoalsPage, activeLearningDays |
+| src/features/goals/GoalsPage.tsx | 1060 | React UI component file: ConfirmDialog, EmptyState, GoalCard, GoalWizard. | ConfirmDialog, EmptyState, GoalCard, GoalWizard, ProgressBar, SummaryCard, GoalsPage, activeLearningDays |
 | src/features/settings/SettingsPage.tsx | 942 | Student/app settings UI or persistence. | Section, SyncRow, ToggleRow, SettingsPage, applyUpdate, buildId, buildLabel, checkForUpdates |
 | src/features/multiplication/MultiplicationQuizPage.tsx | 861 | Local persistence/database layer. | FactChip, SetupScreen, StatBox, SummaryScreen, MultiplicationQuizPage, FactChip, MultiplicationQuizPage, recommendedPracticeConfig |
 | src/features/dashboard/StudentDashboard.tsx | 627 | Dashboard/profile setup/student navigation feature. | Chip, PracticeOp, StudentDashboard, Chip, completeSkillSummaries, handleStartReview, openExtra, regenerateLesson |
-| src/features/practice/PracticeScreen.tsx | 597 | Local persistence/database layer. | KbChip, PracticeScreen, KbChip, onKey, PracticeScreen, submitChoice |
+| src/features/practice/PracticeScreen.tsx | 598 | Local persistence/database layer. | KbChip, PracticeScreen, KbChip, onKey, PracticeScreen, submitChoice |
 | src/features/stats/FactStatsTable.tsx | 407 | Local persistence/database layer. | SortBtn, SummaryStat, FactStatsTable, bucketOf, FactStatsTable, idOf, SortBtn, startPractice |
 | src/features/mastery/Grade3MasteryMapPage.tsx | 369 | Grade 3 mastery map UI: skill display, detail panels, and parent action cards. | LegendItem, Grade3MasteryMapPage, buildCompleteSummaries, computeUnmetPrereqNames, Grade3MasteryMapPage, LegendItem |
 | src/features/stats/StatsPage.tsx | 273 | Progress/statistics screens or calculations. | SchedulingDiagnostics, SummaryPill, StatsPage, buildRange, daysBetween, SchedulingDiagnostics, StatsPage, SummaryPill |
@@ -99,9 +99,9 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 | src/features/visuals/ShapeModel.tsx | 137 | Reusable SVG visual model components (area grids, shape diagrams, fraction bars, arrays). | SVGWrap, ShapeModel, ShapeName, pts, regularPoly, rightAnglePath, ShapeModel, SVGWrap |
 | src/features/stats/QuizStatsView.tsx | 135 | Progress/statistics screens or calculations. | FactGroup, QuizStatsView, avgSecStr, FactGroup, fmt, QuizStatsView |
 | src/features/stats/TodayAchievementSection.tsx | 125 | Progress/statistics screens or calculations. | AchievementTile, TodayAchievementSection, AchievementTile, TodayAchievementSection |
+| src/features/visuals/DivisionEstimationNumberLine.tsx | 58 | Reusable SVG visual model components (area grids, shape diagrams, fraction bars, arrays). | Tick, DivisionEstimationNumberLine, DivisionEstimationNumberLine, Tick |
 | src/features/visuals/EstimationNumberLine.tsx | 57 | Reusable SVG visual model components (area grids, shape diagrams, fraction bars, arrays). | Tick, EstimationNumberLine, EstimationNumberLine, Tick |
-| src/features/practice/usePracticeSession.ts | 925 | Local persistence/database layer. | usePracticeSession, CorrectResult, LastSessionSummary, SessionState, usePracticeSession, commit, getStaticItem, planned |
-| src/features/mastery/skillPracticePlanner.ts | 918 | Grade 3 skill practice planner: maps skill IDs to SessionConfig for the mastery map. | buildDivisionFocusSequence, buildFocusSequence, buildRegroupingFocusSequence, FocusSequence, FocusSequenceContext, planFractionFocusSequence, planLearningUnitsForSkill, PlanOptions |
+| src/features/mastery/skillPracticePlanner.ts | 931 | Grade 3 skill practice planner: maps skill IDs to SessionConfig for the mastery map. | buildDivisionFocusSequence, buildFocusSequence, buildRegroupingFocusSequence, FocusSequence, FocusSequenceContext, planFractionFocusSequence, planLearningUnitsForSkill, PlanOptions |
 
 ## Repository tree, filtered
 
@@ -165,6 +165,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   │   ├── arithmeticItems.ts
 │   │   │   ├── decimalItems.ts
 │   │   │   ├── describeItem.ts
+│   │   │   ├── divisionEstimationItems.ts
 │   │   │   ├── divisionItems.ts
 │   │   │   ├── fractionItems.ts
 │   │   │   ├── geometryItems.ts
@@ -300,6 +301,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │       ├── ClockModel.tsx
 │   │       ├── DivisionArrayModel.tsx
 │   │       ├── DivisionDecompositionModel.tsx
+│   │       ├── DivisionEstimationNumberLine.tsx
 │   │       ├── DraggableEqualGroups.tsx
 │   │       ├── ElapsedTimeLineModel.tsx
 │   │       ├── EqualGroupsModel.tsx
@@ -381,6 +383,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   ├── grade3MasteryMapRegression.test.ts
 │   │   ├── grade3MulProperties.test.ts
 │   │   ├── grade3NewSkills.test.ts
+│   │   ├── grade3SummerDivisionEstimation.test.tsx
 │   │   ├── grade3SummerMultiplicationEstimation.test.tsx
 │   │   ├── grade3TwoStepAndPatterns.test.ts
 │   │   ├── growth.test.ts

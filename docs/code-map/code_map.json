@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-08-01T07:25:49.548111+00:00",
-  "repo_root": "/home/ubuntu/mathfan",
+  "generated_at": "2026-08-06T04:01:13.862745+00:00",
+  "repo_root": "/workspace/scratch/e3070cb3f383/mathfan",
   "package": {
     "name": "mathfan",
     "version": "1.2.0",
@@ -570,9 +570,9 @@
     {
       "path": "scripts/e2e_mathfan.py",
       "ext": ".py",
-      "bytes": 81734,
-      "lines": 1348,
-      "sha1": "8a93c78148e2",
+      "bytes": 84472,
+      "lines": 1399,
+      "sha1": "01e941bb5846",
       "imports": [
         "__future__",
         "json",
@@ -620,6 +620,7 @@
         "speech_unlock_and_nonblocking_advance",
         "standalone_pwa_share_flow",
         "subtraction_across_zero_lesson",
+        "summer_division_estimation_lesson",
         "summer_multiplication_estimation_lesson",
         "two_step_tape_lesson",
         "verify_local_user_data_exports"
@@ -659,6 +660,7 @@
         "speech_unlock_and_nonblocking_advance",
         "standalone_pwa_share_flow",
         "subtraction_across_zero_lesson",
+        "summer_division_estimation_lesson",
         "summer_multiplication_estimation_lesson",
         "two_step_tape_lesson",
         "verify_local_user_data_exports"
@@ -786,9 +788,9 @@
     {
       "path": "scripts/smoke-update-flow.py",
       "ext": ".py",
-      "bytes": 6406,
-      "lines": 174,
-      "sha1": "76d84ba8cbbe",
+      "bytes": 6558,
+      "lines": 178,
+      "sha1": "daa630e05e9d",
       "imports": [
         "__future__",
         "json",
@@ -2033,6 +2035,75 @@
       "read_error": null
     },
     {
+      "path": "src/features/curriculum/divisionEstimationItems.ts",
+      "ext": ".ts",
+      "bytes": 20694,
+      "lines": 408,
+      "sha1": "1a963f4e163a",
+      "imports": [
+        "../../types/math",
+        "../../utils/rng",
+        "./practiceContentSpec"
+      ],
+      "exports": [
+        "defaultDivisionEstimationItemIdForCardKey",
+        "DIVISION_ESTIMATION_TEMPLATE_VERSION",
+        "DivisionEstimateDirection",
+        "divisionEstimationCardKey",
+        "divisionEstimationItemIdsForSchema",
+        "DivisionEstimationMethod",
+        "DivisionEstimationQuestionSpec",
+        "DivisionEstimationRepresentation",
+        "DivisionEstimationSchema",
+        "divisionEstimationSchemaForSkillId",
+        "divisionEstimationSkillIdForSchema",
+        "freshDivisionEstimationReviewItemId",
+        "generateDivisionEstimationItem",
+        "makeDivisionEstimationItem",
+        "makeDivisionEstimationItemFromId",
+        "ParsedDivisionEstimationItemId",
+        "parseDivisionEstimationItemId",
+        "validateDivisionEstimationItem"
+      ],
+      "functions": [
+        "buildSpec",
+        "defaultDivisionEstimationItemIdForCardKey",
+        "directionFor",
+        "divisionEstimationCardKey",
+        "divisionEstimationItemIdsForSchema",
+        "divisionEstimationSchemaForSkillId",
+        "divisionEstimationSkillIdForSchema",
+        "freshDivisionEstimationReviewItemId",
+        "generateDivisionEstimationItem",
+        "itemId",
+        "makeDivisionEstimationItem",
+        "makeDivisionEstimationItemFromId",
+        "makePromptAndAnswer",
+        "methodForSchema",
+        "parseDivisionEstimationItemId",
+        "representationFor",
+        "validateDivisionEstimationItem"
+      ],
+      "classes": [],
+      "interfaces": [
+        "DivisionEstimationQuestionSpec",
+        "ParsedDivisionEstimationItemId"
+      ],
+      "types": [
+        "DivisionEstimateDirection",
+        "DivisionEstimationMethod",
+        "DivisionEstimationRepresentation",
+        "DivisionEstimationSchema"
+      ],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Practice item definitions and ID generators for a math curriculum topic.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/features/curriculum/divisionItems.ts",
       "ext": ".ts",
       "bytes": 13948,
@@ -2235,14 +2306,15 @@
     {
       "path": "src/features/curriculum/makeItemFromId.ts",
       "ext": ".ts",
-      "bytes": 12656,
-      "lines": 256,
-      "sha1": "bfa6dbb2adbb",
+      "bytes": 12818,
+      "lines": 258,
+      "sha1": "df61d63bc24d",
       "imports": [
         "../../types/math",
         "./areaItems",
         "./arithmeticItems",
         "./decimalItems",
+        "./divisionEstimationItems",
         "./divisionItems",
         "./fractionItems",
         "./geometryItems",
@@ -2628,9 +2700,9 @@
     {
       "path": "src/features/curriculum/practiceContentSpec.ts",
       "ext": ".ts",
-      "bytes": 12085,
-      "lines": 241,
-      "sha1": "0bd64ebeeed3",
+      "bytes": 13663,
+      "lines": 262,
+      "sha1": "02fdea00a4cc",
       "imports": [
         "../../types/math"
       ],
@@ -3947,9 +4019,9 @@
     {
       "path": "src/features/goals/GoalsPage.tsx",
       "ext": ".tsx",
-      "bytes": 48736,
-      "lines": 1057,
-      "sha1": "167c1c7b8896",
+      "bytes": 48946,
+      "lines": 1060,
+      "sha1": "c927bd908959",
       "imports": [
         "../../db/repositories",
         "../../types/math",
@@ -4518,9 +4590,9 @@
     {
       "path": "src/features/mastery/grade3MasteryMap.ts",
       "ext": ".ts",
-      "bytes": 16099,
-      "lines": 390,
-      "sha1": "4ca75f4fbf74",
+      "bytes": 19042,
+      "lines": 439,
+      "sha1": "682e754f5c5f",
       "imports": [],
       "exports": [
         "getGrade3Skill",
@@ -4602,9 +4674,9 @@
     {
       "path": "src/features/mastery/misconceptionEngine.ts",
       "ext": ".ts",
-      "bytes": 21650,
-      "lines": 497,
-      "sha1": "ab5acfa3c0bd",
+      "bytes": 23426,
+      "lines": 527,
+      "sha1": "47ff2face1af",
       "imports": [
         "../../types/math",
         "../curriculum/divisionItems",
@@ -4627,6 +4699,7 @@
         "detectAreaRectangle",
         "detectArithmetic",
         "detectDivision",
+        "detectDivisionEstimation",
         "detectFractionCompare",
         "detectFractionEquivalent",
         "detectFractionNumberLine",
@@ -4722,11 +4795,12 @@
     {
       "path": "src/features/mastery/skillMapping.ts",
       "ext": ".ts",
-      "bytes": 8978,
-      "lines": 149,
-      "sha1": "e1ad0ada31c6",
+      "bytes": 9201,
+      "lines": 153,
+      "sha1": "a3ed90d8f1b8",
       "imports": [
         "../../types/math",
+        "../curriculum/divisionEstimationItems",
         "../curriculum/divisionItems",
         "../curriculum/multiplicationEstimationItems",
         "../curriculum/practiceContentSpec"
@@ -4753,9 +4827,9 @@
     {
       "path": "src/features/mastery/skillMasteryEngine.ts",
       "ext": ".ts",
-      "bytes": 9367,
-      "lines": 217,
-      "sha1": "d3ae07b952b8",
+      "bytes": 9495,
+      "lines": 218,
+      "sha1": "f1ab9456930e",
       "imports": [
         "../../types/math",
         "../learning/learningEvents",
@@ -4793,13 +4867,14 @@
     {
       "path": "src/features/mastery/skillPracticePlanner.ts",
       "ext": ".ts",
-      "bytes": 37715,
-      "lines": 918,
-      "sha1": "d48453b7d09f",
+      "bytes": 38117,
+      "lines": 931,
+      "sha1": "c83d6fe0829f",
       "imports": [
         "../../types/math",
         "../curriculum/areaItems",
         "../curriculum/arithmeticItems",
+        "../curriculum/divisionEstimationItems",
         "../curriculum/divisionItems",
         "../curriculum/fractionItems",
         "../curriculum/geometryItems",
@@ -5377,11 +5452,12 @@
     {
       "path": "src/features/practice/hintEngine.ts",
       "ext": ".ts",
-      "bytes": 28093,
-      "lines": 511,
-      "sha1": "2b46b1a8f5cf",
+      "bytes": 30662,
+      "lines": 544,
+      "sha1": "f9ebdfaf6666",
       "imports": [
         "../../types/math",
+        "../curriculum/divisionEstimationItems",
         "../curriculum/multiplicationEstimationItems",
         "../curriculum/practiceContentSpec"
       ],
@@ -5396,6 +5472,7 @@
         "areaSquaresHint",
         "arithmeticRegroupHint",
         "divHint",
+        "divisionEstimationHint",
         "fracCmpHint",
         "fracEquivHint",
         "fracNlHint",
@@ -5526,9 +5603,9 @@
     {
       "path": "src/features/practice/PracticeScreen.tsx",
       "ext": ".tsx",
-      "bytes": 26555,
-      "lines": 597,
-      "sha1": "4251acffacb5",
+      "bytes": 26616,
+      "lines": 598,
+      "sha1": "5a25d222fd96",
       "imports": [
         "../../components/NumPad",
         "../../components/SessionSummary",
@@ -5793,12 +5870,13 @@
     {
       "path": "src/features/scheduler/dailyReviewCandidates.ts",
       "ext": ".ts",
-      "bytes": 6530,
-      "lines": 201,
-      "sha1": "faab253db82a",
+      "bytes": 6781,
+      "lines": 204,
+      "sha1": "507df7f5f2ef",
       "imports": [
         "../../db/dexie",
         "../../types/math",
+        "../curriculum/divisionEstimationItems",
         "../curriculum/makeItemFromId",
         "../curriculum/multiplicationEstimationItems",
         "./cardModel"
@@ -5840,12 +5918,13 @@
     {
       "path": "src/features/scheduler/dailyReviewQueue.ts",
       "ext": ".ts",
-      "bytes": 5122,
-      "lines": 118,
-      "sha1": "07caafaae1ec",
+      "bytes": 5348,
+      "lines": 123,
+      "sha1": "c896af21723d",
       "imports": [
         "../../types/math",
         "../../utils/rng",
+        "../curriculum/divisionEstimationItems",
         "../curriculum/makeItemFromId",
         "../curriculum/multiplicationEstimationItems",
         "../learning/schedulingTelemetry",
@@ -5860,6 +5939,7 @@
       "functions": [
         "buildDailyReviewQueue",
         "buildRepeatedReviewQueue",
+        "freshEstimationReviewItemId",
         "isDueNow"
       ],
       "classes": [],
@@ -7196,6 +7276,38 @@
       "read_error": null
     },
     {
+      "path": "src/features/visuals/DivisionEstimationNumberLine.tsx",
+      "ext": ".tsx",
+      "bytes": 2633,
+      "lines": 58,
+      "sha1": "425ead134f2f",
+      "imports": [
+        "../curriculum/divisionEstimationItems",
+        "react"
+      ],
+      "exports": [
+        "DivisionEstimationNumberLine"
+      ],
+      "functions": [
+        "DivisionEstimationNumberLine",
+        "Tick"
+      ],
+      "classes": [],
+      "interfaces": [
+        "Props"
+      ],
+      "types": [],
+      "components": [
+        "Tick"
+      ],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Reusable SVG visual model components (area grids, shape diagrams, fraction bars, arrays).",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/features/visuals/DraggableEqualGroups.tsx",
       "ext": ".tsx",
       "bytes": 7563,
@@ -7811,9 +7923,9 @@
     {
       "path": "src/features/visuals/VisualModel.tsx",
       "ext": ".tsx",
-      "bytes": 11462,
-      "lines": 271,
-      "sha1": "884970d6a149",
+      "bytes": 11754,
+      "lines": 276,
+      "sha1": "671f44f48f6d",
       "imports": [
         "../../types/math",
         "../curriculum/practiceContentSpec",
@@ -7823,6 +7935,7 @@
         "./ClockModel",
         "./DivisionArrayModel",
         "./DivisionDecompositionModel",
+        "./DivisionEstimationNumberLine",
         "./ElapsedTimeLineModel",
         "./EqualGroupsModel",
         "./EstimationNumberLine",
@@ -7864,9 +7977,9 @@
     {
       "path": "src/features/visuals/visualModelUtils.ts",
       "ext": ".ts",
-      "bytes": 3858,
-      "lines": 90,
-      "sha1": "4dc4ce365fc5",
+      "bytes": 3969,
+      "lines": 91,
+      "sha1": "f866fa4451ba",
       "imports": [
         "../../types/math",
         "../curriculum/practiceContentSpec",
@@ -9593,7 +9706,7 @@
       "ext": ".ts",
       "bytes": 5210,
       "lines": 132,
-      "sha1": "7b22bd466298",
+      "sha1": "fb198af56c5f",
       "imports": [
         "../features/mastery/grade3MasteryMap",
         "vitest"
@@ -9701,11 +9814,54 @@
       "read_error": null
     },
     {
+      "path": "src/tests/grade3SummerDivisionEstimation.test.tsx",
+      "ext": ".tsx",
+      "bytes": 10424,
+      "lines": 179,
+      "sha1": "171d6d2bf9be",
+      "imports": [
+        "../features/audio/mathSpeech",
+        "../features/curriculum/divisionEstimationItems",
+        "../features/curriculum/makeItemFromId",
+        "../features/curriculum/practiceContentSpec",
+        "../features/learning/learningEvents",
+        "../features/mastery/grade3MasteryMap",
+        "../features/mastery/misconceptionEngine",
+        "../features/mastery/skillMapping",
+        "../features/mastery/skillMasteryEngine",
+        "../features/mastery/skillPracticePlanner",
+        "../features/practice/answerChecker",
+        "../features/practice/hintEngine",
+        "../features/scheduler/cardModel",
+        "../features/scheduler/dailyReviewCandidates",
+        "../features/scheduler/dailyReviewQueue",
+        "../features/visuals/VisualModel",
+        "../types/math",
+        "@testing-library/react",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [
+        "event",
+        "state"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/tests/grade3SummerMultiplicationEstimation.test.tsx",
       "ext": ".tsx",
-      "bytes": 10203,
+      "bytes": 10242,
       "lines": 180,
-      "sha1": "086f56723373",
+      "sha1": "e4697e1e93c6",
       "imports": [
         "../features/audio/mathSpeech",
         "../features/curriculum/makeItemFromId",
@@ -10996,9 +11152,9 @@
     {
       "path": "src/tests/statsEngine.test.ts",
       "ext": ".ts",
-      "bytes": 13097,
-      "lines": 320,
-      "sha1": "6c24e9598e29",
+      "bytes": 13274,
+      "lines": 328,
+      "sha1": "697fa2e5226e",
       "imports": [
         "../features/stats/statsEngine",
         "../types/math",
@@ -11007,6 +11163,8 @@
       "exports": [],
       "functions": [
         "attempt",
+        "localIso",
+        "localYmd",
         "session"
       ],
       "classes": [],
@@ -11192,10 +11350,11 @@
     {
       "path": "src/types/math.ts",
       "ext": ".ts",
-      "bytes": 16774,
-      "lines": 484,
-      "sha1": "5691f0258b00",
+      "bytes": 16990,
+      "lines": 487,
+      "sha1": "44ed11e847a7",
       "imports": [
+        "../features/curriculum/divisionEstimationItems",
         "../features/curriculum/divisionItems",
         "../features/curriculum/measurementTypes",
         "../features/curriculum/multiplicationEstimationItems",
