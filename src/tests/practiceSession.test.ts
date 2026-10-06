@@ -5,6 +5,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
+import { DAILY_LESSON_PLANNER_VERSION } from '../features/learning/schedulingTelemetry';
 
 // ── Module mocks (hoisted) ────────────────────────────────────────────────────
 // Paths are relative to this file (src/tests/) and resolve to the same modules
@@ -478,7 +479,7 @@ describe('usePracticeSession — adaptive selection', () => {
     expect(vi.mocked(recordPracticeAnswer).mock.calls[0][0].event.schedulingTelemetry).toMatchObject({
       version: 1, cardKey: 'fact:mul:3x4', presentationIndex: 1, attemptNo: 1,
       schedulingEligible: true, evidenceKind: 'direct',
-      selection: { origin: 'due_retrieval', plannerVersion: 'daily-lesson-v1', lessonPlanId: 'lesson-plan' },
+      selection: { origin: 'due_retrieval', plannerVersion: DAILY_LESSON_PLANNER_VERSION, lessonPlanId: 'lesson-plan' },
       before: { stabilityDays: 0 },
       rating: { reviewGrade: expect.any(String) },
     });

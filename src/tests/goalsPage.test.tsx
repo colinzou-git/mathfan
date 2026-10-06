@@ -211,7 +211,7 @@ describe('dashboard Goals entry', () => {
     const props = { onStartDailyReview: vi.fn(), onPickOperation: vi.fn(), onOpenStats: vi.fn(), onOpenSettings: vi.fn(), onStartQuiz: vi.fn(), onOpenAchievementDetail: vi.fn(), onOpenMasteryMap: vi.fn(), onOpenGoals: vi.fn() };
     const view = render(<StudentDashboard profile={profile()} {...props} />);
     expect(await screen.findByRole('button', { name: 'Start lesson' })).toBeInTheDocument();
-    view.rerender(<StudentDashboard profile={{ ...profile(), id: 'student-2', gradeLevel: 4 }} {...props} />);
+    view.rerender(<StudentDashboard profile={{ ...profile(), id: 'student-2', gradeLevel: 5 }} {...props} />);
     await waitFor(() => expect(screen.queryByRole('button', { name: /lesson/i })).not.toBeInTheDocument());
   });
 

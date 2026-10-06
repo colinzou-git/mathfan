@@ -1,6 +1,7 @@
 import type { MathAnswerEvent } from '../learning/learningEvents';
 import type { StudentSkillSummary } from '../mastery/skillMasteryEngine';
-import { GRADE3_MASTERY_MAP, type MasterySkillNode } from '../mastery/grade3MasteryMap';
+import type { MasterySkillNode } from '../mastery/grade3MasteryMap';
+import { ALL_CURRICULUM_SKILLS as GRADE3_MASTERY_MAP, getCurriculum } from '../curriculum/curriculumRegistry';
 import type { StudentItemState, StudentSettings } from '../../types/math';
 import type { GoalBaseline, GoalSkillTarget, GoalTargetReason, LearningGoal } from './types';
 import {
@@ -96,6 +97,7 @@ export interface GoalRecommendationResult {
 }
 
 export interface GoalRecommendationArgs {
+  gradeLevel?: import('../../types/math').GradeLevel;
   studentId: string;
   skillSummaries: StudentSkillSummary[];
   events: MathAnswerEvent[];
@@ -471,7 +473,7 @@ function buildRecommendation(
 export function recommendLearningGoals(args: GoalRecommendationArgs): GoalRecommendationResult {
   const capacity = estimateGoalWorkload(args);
   const summaryMap = summaryMapWithStubs(args.studentId, args.skillSummaries);
-  const candidates = GRADE3_MASTERY_MAP
+  const candidates = (getCurriculum(args.gradeLevel ?? 3)?.skills ?? [])
     .map(node => candidateForSkill(node, summaryMap.get(node.id)!, summaryMap, args))
     .filter((candidate): candidate is GoalRecommendationCandidate => candidate !== null)
     .sort((a, b) => {

@@ -53,6 +53,7 @@ export function geoShapeFromItemId(id: string): ShapeName | null {
 export function hasVisualModel(item: PracticeItem): boolean {
   const { itemType, factA, factB, id, prompt } = item;
   const contentSpec = contentSpecForItem(item);
+  if (contentSpec?.domain === 'foundation') return Boolean(contentSpec.data.visual);
 
   if (item.visualSpec) return true;
   if (contentSpec?.domain === 'multiplication_estimation') return contentSpec.data.representation === 'number_line';

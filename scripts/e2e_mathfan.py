@@ -15,6 +15,7 @@ import os
 import json
 import re
 import sys
+import subprocess
 import traceback
 import zipfile
 from pathlib import Path
@@ -44,7 +45,7 @@ def assert_no_horizontal_overflow(page: Page, label: str) -> None:
         )
 
 
-def create_profile(page: Page, name: str, fresh: str) -> None:
+def create_profile(page: Page, name: str, fresh: str, grade: int = 3) -> None:
     page.goto(f"{BASE_URL}/?fresh={fresh}", wait_until="domcontentloaded")
     expect(page.get_by_role("heading", name="Welcome to MathFan")).to_be_visible()
 
@@ -53,12 +54,14 @@ def create_profile(page: Page, name: str, fresh: str) -> None:
     expect(page.get_by_text("Please enter a name.", exact=True)).to_be_visible()
 
     page.get_by_label("Name", exact=True).fill(name)
+    if grade != 3:
+        page.get_by_role("button", name=f"Grade {grade}", exact=True).click()
     # Grade 3 is the default selection. Verify it after profile creation instead
     # of relying on the compound label's browser-specific accessible name.
     page.get_by_role("button", name=re.compile(r"Start Learning")).click()
 
     expect(page.get_by_role("heading", name=f"Hi, {name}!", exact=True)).to_be_visible()
-    expect(page.get_by_text("Grade 3", exact=True)).to_be_visible()
+    expect(page.get_by_text(f"Grade {grade}", exact=True)).to_be_visible()
 
 
 def legacy_scheduler_upgrade(page: Page) -> None:
@@ -1265,6 +1268,178 @@ def diagnostic_immediate_persistence(page: Page) -> None:
     assert persisted == 1, f"Reload lost the completed mid-diagnostic answer: {persisted}"
 
 
+def grade4_fixture_data() -> tuple[dict, dict]:
+    data = json.loads((RESULTS_DIR / "grade4-fixtures.json").read_text())
+    return data, {item["id"]: item for item in data["items"] + data["readiness"] if item}
+
+
+def grade4_db(page: Page) -> dict:
+    return page.evaluate("""async () => {
+        const db = await new Promise((resolve, reject) => { const r = indexedDB.open('mathfan'); r.onsuccess = () => resolve(r.result); r.onerror = () => reject(r.error); });
+        const read = name => new Promise((resolve, reject) => { const r = db.transaction(name).objectStore(name).getAll(); r.onsuccess = () => resolve(r.result); r.onerror = () => reject(r.error); });
+        const result = { events: await read('mathAnswerEvents'), states: await read('itemStates'), plans: await read('dailyLessonPlans'), students: await read('students') }; db.close(); return result;
+    }""")
+
+
+def grade4_answer_practice(page: Page, fixtures: dict) -> str:
+    expect(page.locator(".drill-q")).to_be_visible()
+    item_id = page.locator(".drill-q").get_attribute("data-item-id")
+    item = fixtures.get(item_id)
+    if not item:
+        items = [entry["item"] for plan in grade4_db(page)["plans"] for entry in plan["items"]]
+        item = next((value for value in items if value["id"] == item_id), None)
+        if not item:
+            item = json.loads(subprocess.check_output(["node", "scripts/grade4-e2e-fixtures.mjs", item_id], text=True).strip().splitlines()[-1])
+            fixtures[item_id] = item
+    if item.get("answerInput") == "choice":
+        page.get_by_role("button", name=str(item["answer"]), exact=True).click()
+    else:
+        page.get_by_label("Your answer", exact=True).fill(str(item["answer"]))
+        page.get_by_label("Your answer", exact=True).press("Enter")
+    expect(page.get_by_text(re.compile(r"Correct!|New personal best!"))).to_be_visible()
+    assert_no_horizontal_overflow(page, "Grade 4 answer feedback")
+    return item_id
+
+
+def grade4_readiness_bridge_lesson_review(page: Page) -> None:
+    _, fixtures = grade4_fixture_data()
+    create_profile(page, "Grade4Journey", "e2e-grade4-journey", 4)
+    page.get_by_role("button", name=re.compile(r"Grade 4 Math Map")).click()
+    expect(page.get_by_role("heading", name="Grade 4 Math Map", exact=True)).to_be_visible()
+    expect(page.get_by_role("heading", name=re.compile(r"Unit 1"))).to_be_visible()
+    expect(page.get_by_role("heading", name=re.compile(r"Unit 2"))).to_be_visible()
+    page.get_by_role("button", name="Take a quick check", exact=True).click()
+    page.get_by_role("button", name=re.compile(r"Let's go")).click()
+    answered = 0
+    while answered < 23:
+        if page.get_by_role("heading", name="Great work!", exact=True).is_visible():
+            break
+        question = page.locator("[data-item-id]")
+        expect(question).to_be_visible()
+        item_id = question.get_attribute("data-item-id")
+        item = fixtures[item_id]
+        # The first miss should insert a short contrast, not a permanent lock.
+        answer = "0" if answered == 0 else str(item["answer"])
+        if item.get("answerInput") == "choice":
+            page.get_by_role("button", name=answer, exact=True).click()
+        else:
+            page.keyboard.type(answer)
+        page.keyboard.press("Enter")
+        expect(page.get_by_text(re.compile(r"Correct!|Nice try!"))).to_be_visible()
+        answered += 1
+        state = grade4_db(page)
+        assert len(state["events"]) == answered, "Readiness answer not durable before advance"
+        assert not state["states"], "Readiness created scheduled cards"
+        assert all(event.get("schedulingEligible") is False for event in state["events"])
+        page.wait_for_timeout(1300)
+        if answered == 3:
+            page.reload(wait_until="domcontentloaded")
+            page.get_by_role("button", name=re.compile(r"Grade 4 Math Map")).click()
+            page.get_by_role("button", name="Take a quick check", exact=True).click()
+            page.get_by_role("button", name="Resume quick check", exact=True).click()
+    expect(page.get_by_text(re.compile(r"Start here:"))).to_be_visible()
+    expect(page.get_by_text(re.compile(r"Quick refreshes:"))).to_be_visible()
+    assert answered <= 22
+    page.get_by_role("button", name="See my Math Map", exact=True).click()
+    page.get_by_role("button", name=re.compile(r"^Factors as Rectangle Sides:")).click()
+    expect(page.get_by_role("heading", name="Learn this skill", exact=True)).to_be_visible()
+    page.get_by_text("Worked example", exact=True).click()
+    assert_no_horizontal_overflow(page, "Grade 4 worked example")
+    page.get_by_role("button", name=re.compile(r"Quick refresh.*return here")).click()
+    for _ in range(3):
+        grade4_answer_practice(page, fixtures)
+        page.wait_for_timeout(1500)
+    expect(page.get_by_role("heading", name="Session Complete!", exact=True)).to_be_visible()
+    page.get_by_role("button", name="Home", exact=True).click()
+    expect(page.get_by_role("dialog", name="Factors as Rectangle Sides", exact=True)).to_be_visible()
+    page.get_by_role("button", name="Close", exact=True).click()
+    page.get_by_role("button", name="Back", exact=True).click()
+    page.get_by_role("button", name="Start lesson", exact=True).click()
+    for _ in range(20):
+        if page.get_by_role("heading", name="Session Complete!", exact=True).is_visible():
+            break
+        grade4_answer_practice(page, fixtures)
+        page.wait_for_timeout(1500)
+    expect(page.get_by_role("heading", name="Session Complete!", exact=True)).to_be_visible()
+    page.get_by_role("button", name="Home", exact=True).click()
+    state = grade4_db(page)
+    g4_states = [value for value in state["states"] if value["skillId"].startswith("g4-")]
+    assert g4_states, "Lesson did not schedule Grade 4 schemas"
+    card = next(value for value in g4_states if ":model:" in value["cardKey"])
+    old_item_id = card["lastItemId"]
+    # Advance the app clock beyond all due dates; use the real FSRS state untouched.
+    max_due = max(value["nextDueAt"] for value in state["states"] if value.get("nextDueAt"))
+    page.evaluate("""due => localStorage.setItem('mathfan_clock', JSON.stringify({ realAnchorMs: Date.now(), appAnchorMs: Date.parse(due) + 86400000, scale: 1 }))""", max_due)
+    page.reload(wait_until="domcontentloaded")
+    page.get_by_role("button", name=re.compile(r"Grade 4 Math Map")).click()
+    title = fixtures[old_item_id]["skillId"] if old_item_id in fixtures else card["skillId"]
+    data, _ = grade4_fixture_data()
+    skill_title = next(skill["title"] for skill in data["skills"] if skill["id"] == title)
+    page.get_by_role("button", name=re.compile(rf"^{re.escape(skill_title)}:")).click()
+    page.get_by_role("button", name=re.compile(r"Review due items")).click()
+    expect(page.locator(".drill-q")).to_be_visible()
+    new_item_id = page.locator(".drill-q").get_attribute("data-item-id")
+    previous = next(value["lastItemId"] for value in g4_states if value["lastItemId"].split("~")[:4] == new_item_id.split("~")[:4])
+    assert new_item_id != previous, "Review reused the previous concrete instance"
+    assert_no_horizontal_overflow(page, "Grade 4 fresh review")
+    before_count = len(grade4_db(page)["events"])
+    grade4_answer_practice(page, fixtures)
+    assert len(grade4_db(page)["events"]) == before_count + 1
+
+
+def grade4_all_skills_layout(page: Page) -> None:
+    data, fixtures = grade4_fixture_data()
+    create_profile(page, "Grade4Layout", "e2e-grade4-layout", 4)
+    for skill in data["skills"]:
+        page.get_by_role("button", name=re.compile(r"Grade 4 Math Map")).click()
+        page.get_by_role("button", name=re.compile(rf"^{re.escape(skill['title'])}:")).click()
+        expect(page.get_by_role("heading", name="Learn this skill", exact=True)).to_be_visible()
+        page.get_by_text("Worked example", exact=True).click()
+        assert_no_horizontal_overflow(page, skill["title"] + " instruction")
+        page.get_by_role("button", name=re.compile(r"Practice this skill")).click()
+        grade4_answer_practice(page, fixtures)
+        # Persistence must survive an interrupted practice session.
+        count = len(grade4_db(page)["events"])
+        page.reload(wait_until="domcontentloaded")
+        expect(page.get_by_role("heading", name="Hi, Grade4Layout!", exact=True)).to_be_visible()
+        assert len(grade4_db(page)["events"]) == count
+
+    page.get_by_role("button", name=re.compile(r"Goals")).click()
+    page.get_by_role("button", name="Evaluation", exact=True).first.click()
+    expect(page.get_by_text("Exactly 30 questions across different Grade 4 skills in Units 1–2.", exact=True)).to_be_visible()
+    page.get_by_role("button", name="Start", exact=True).click()
+    expect(page.get_by_label("Question 1 of 30", exact=True)).to_be_visible(timeout=60_000)
+    assert_no_horizontal_overflow(page, "Grade 4 goal evaluation")
+
+
+def grade4_offline_profile_switch(page: Page) -> None:
+    _, fixtures = grade4_fixture_data()
+    create_profile(page, "OfflineFoundation", "e2e-grade4-offline", 4)
+    page.wait_for_function("navigator.serviceWorker.controller !== null", timeout=60_000)
+    page.context.set_offline(True)
+    page.get_by_role("button", name=re.compile(r"Grade 4 Math Map")).click()
+    page.get_by_role("button", name=re.compile(r"^Factors as Rectangle Sides:")).click()
+    page.get_by_role("button", name=re.compile(r"Practice this skill")).click()
+    grade4_answer_practice(page, fixtures)
+    saved = grade4_db(page)
+    page.reload(wait_until="domcontentloaded")
+    expect(page.get_by_role("heading", name="Hi, OfflineFoundation!", exact=True)).to_be_visible()
+    assert len(grade4_db(page)["events"]) == len(saved["events"])
+    page.evaluate("""async () => {
+        const db = await new Promise((resolve, reject) => { const r = indexedDB.open('mathfan'); r.onsuccess = () => resolve(r.result); r.onerror = () => reject(r.error); });
+        const original = await new Promise(resolve => { const r = db.transaction('students').objectStore('students').getAll(); r.onsuccess = () => resolve(r.result[0]); });
+        await new Promise((resolve, reject) => { const tx = db.transaction('students', 'readwrite'); tx.objectStore('students').put({ ...original, id: 'grade3-regression-profile', learnerKey: 'grade3-regression-key', displayName: 'Grade3Regression', gradeLevel: 3 }); tx.oncomplete = () => resolve(); tx.onerror = () => reject(tx.error); });
+        db.close(); localStorage.removeItem('mathfan.activeLearnerKey');
+    }""")
+    page.reload(wait_until="domcontentloaded")
+    page.get_by_role("button", name="Grade3Regression (Grade 3)", exact=True).click()
+    page.get_by_role("button", name=re.compile(r"Grade 3 Math Map")).click()
+    expect(page.get_by_role("heading", name="Grade 3 Math Map", exact=True)).to_be_visible()
+    assert len(grade4_db(page)["events"]) == len(saved["events"])
+    assert all(event["studentId"] == saved["students"][0]["id"] for event in grade4_db(page)["events"])
+    page.context.set_offline(False)
+
+
 def run_scenario(
     browser: Browser,
     name: str,
@@ -1275,7 +1450,7 @@ def run_scenario(
     context = browser.new_context(
         viewport=viewport,
         timezone_id="America/Los_Angeles",
-        service_workers="block",
+        service_workers="allow" if name == "grade4-offline-profile-switch" else "block",
         reduced_motion="reduce",
     )
     if standalone_share:
@@ -1338,6 +1513,10 @@ def main() -> int:
             executable_path=chromium_executable or None,
         )
         scenarios = [
+            ("grade4-readiness-bridge-lesson-review", {"width": 390, "height": 844}, grade4_readiness_bridge_lesson_review, False),
+            ("grade4-ipad-all-skills", {"width": 1024, "height": 768}, grade4_all_skills_layout, False),
+            ("grade4-desktop-all-skills", {"width": 1440, "height": 1000}, grade4_all_skills_layout, False),
+            ("grade4-offline-profile-switch", {"width": 390, "height": 844}, grade4_offline_profile_switch, False),
             ("desktop-student-journey", {"width": 1440, "height": 1000}, desktop_student_journey, False),
             (
                 "mobile-responsive",

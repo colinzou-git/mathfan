@@ -4,9 +4,10 @@ interface Props {
   onSubmit: () => void;
   disabled?: boolean;
   allowDecimal?: boolean;
+  maxLength?: number;
 }
 
-export function NumPad({ value, onChange, onSubmit, disabled, allowDecimal }: Props) {
+export function NumPad({ value, onChange, onSubmit, disabled, allowDecimal, maxLength = 6 }: Props) {
   const press = (key: string) => {
     if (disabled) return;
     if (key === 'DEL') {
@@ -14,8 +15,8 @@ export function NumPad({ value, onChange, onSubmit, disabled, allowDecimal }: Pr
     } else if (key === 'ENTER') {
       if (value) onSubmit();
     } else if (key === '.') {
-      if (!value.includes('.') && value.length < 6) onChange(value === '' ? '0.' : value + '.');
-    } else if (value.length < 6) {
+      if (!value.includes('.') && value.length < maxLength) onChange(value === '' ? '0.' : value + '.');
+    } else if (value.length < maxLength) {
       onChange(value + key);
     }
   };

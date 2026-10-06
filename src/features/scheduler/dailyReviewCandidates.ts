@@ -4,6 +4,7 @@ import { makeItemFromId } from '../curriculum/makeItemFromId';
 import { deriveCardKey } from './cardModel';
 import { defaultMultiplicationEstimationItemIdForCardKey } from '../curriculum/multiplicationEstimationItems';
 import { defaultDivisionEstimationItemIdForCardKey } from '../curriculum/divisionEstimationItems';
+import { defaultFoundationItemIdForCardKey } from '../curriculum/foundationItems';
 
 export interface CanonicalReviewCard {
   cardKey: string;
@@ -35,6 +36,8 @@ interface ResolvedStateRow {
 }
 
 function fallbackItemIdFromCardKey(cardKey: string): string | null {
+  const foundation = defaultFoundationItemIdForCardKey(cardKey);
+  if (foundation) return foundation;
   let match: RegExpMatchArray | null;
 
   const estimationItemId = defaultMultiplicationEstimationItemIdForCardKey(cardKey);

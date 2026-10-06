@@ -2,6 +2,8 @@ import type { PracticeItem, StudentItemState } from '../../types/math';
 import type { MathAnswerEvent } from './learningEvents';
 import { compareEventsChronologically } from './eventOrdering';
 import { describeLearningCard, deriveCardKeyFromEvent } from '../scheduler/cardModel';
+import { getCurriculumSkill } from '../curriculum/curriculumRegistry';
+import { independentLearningEvidence } from '../mastery/curriculumEvidence';
 
 export interface LearningUnitProgress {
   cardKey: string;
@@ -70,17 +72,20 @@ export function deriveLearningUnitProgress(args: {
   for (const cardKey of cardKeys) {
     const descriptor = descriptors.get(cardKey);
     const state = statesByCard.get(cardKey);
-    const events = (eventsByCard.get(cardKey) ?? []).sort(compareEventsChronologically);
+    const allEvents = (eventsByCard.get(cardKey) ?? []).sort(compareEventsChronologically);
+    const configured = Boolean(getCurriculumSkill(descriptor?.skillId ?? state?.skillId ?? '')?.evidenceProfile);
+    const events = configured ? allEvents.filter(independentLearningEvidence) : allEvents;
     const kind = descriptor?.kind ?? (cardKey.startsWith('fact:') ? 'atomic_fact' : 'template');
     const schemaId = descriptor?.schemaId ?? events.at(-1)?.schemaId ?? cardKey;
     const instances = new Set(events.map(event => event.itemInstanceId ?? event.itemId));
-    if (state?.lastItemId) instances.add(state.lastItemId);
+    if (!configured && state?.lastItemId) instances.add(state.lastItemId);
     const representations = new Set(events.map(representationId).filter((value): value is string => Boolean(value)));
     if (representations.size === 0 && descriptor?.schemaId) representations.add(descriptor.schemaId);
     const sessions = new Set(events.map(event => event.sessionId));
     const firstSession = events[0]?.sessionId;
-    const delayedSuccessCount = events.filter(event => event.isCorrect && event.sessionId !== firstSession).length;
-    const directInstanceCount = Math.max(events.length, state?.attemptCount ?? 0);
+    const delayedSuccessCount = events.filter(event => event.isCorrect && event.sessionId !== firstSession
+      && (!configured || Date.parse(event.createdAt) - Date.parse(events[0].createdAt) >= 86400000)).length;
+    const directInstanceCount = Math.max(configured ? allEvents.filter(event => event.mode !== 'diagnostic').length : events.length, state?.attemptCount ?? 0);
     const requirements = learningUnitEvidenceRequirements(schemaId, kind);
     const maintenanceEvidence = instances.size >= requirements.distinctInstances
       && representations.size >= requirements.representations

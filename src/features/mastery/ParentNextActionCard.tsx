@@ -14,7 +14,7 @@ import type { CSSProperties } from 'react';
 import type { SessionConfig } from '../../types/math';
 import type { StudentSkillSummary } from './skillMasteryEngine';
 import type { TodayPlan } from './todayPlanEngine';
-import { getGrade3Skill } from './grade3MasteryMap';
+import { getCurriculumSkill as getGrade3Skill } from '../curriculum/curriculumRegistry';
 
 interface Props {
   summaries: StudentSkillSummary[];

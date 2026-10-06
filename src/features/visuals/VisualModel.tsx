@@ -16,6 +16,7 @@
  */
 
 import type { PracticeItem } from '../../types/math';
+import { FoundationModel } from './FoundationModel';
 import { ArrayModel } from './ArrayModel';
 import { EqualGroupsModel } from './EqualGroupsModel';
 import { FractionBar } from './FractionBar';
@@ -59,6 +60,7 @@ function parseEqualGroupsFromId(itemId: string): { groups: number; perGroup: num
 export function VisualModel({ item, color, revealAnswer = false }: Props) {
   const { itemType, factA, factB, id, prompt, visualSpec } = item;
   const contentSpec = contentSpecForItem(item);
+  if (contentSpec?.domain === 'foundation') return <FoundationModel spec={contentSpec.data} revealAnswer={revealAnswer} />;
 
   if (contentSpec?.domain === 'multiplication_estimation'
     && contentSpec.data.representation === 'number_line') {

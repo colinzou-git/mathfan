@@ -3,7 +3,7 @@ import type { FluencyBand } from '../fluency/fluencyEngine';
 import type { RatingReason } from '../practice/answerChecker';
 import type { AnswerGradingContext, ResponsePolicyKind } from '../scheduler/responsePolicy';
 import { describeLearningCard } from '../scheduler/cardModel';
-import { currentRetrievability } from '../scheduler/fsrsAdapter';
+import { currentRetrievability, FSRS_CONFIG_VERSION } from '../scheduler/fsrsAdapter';
 import { contentSpecForItem } from '../curriculum/practiceContentSpec';
 import type { SchedulingKind, SchedulingReason } from './learningEvents';
 
@@ -11,7 +11,7 @@ export const SCHEDULING_TELEMETRY_VERSION = 1 as const;
 export const CARD_MODEL_VERSION = 'semantic-word-cards-v2';
 export const RESPONSE_POLICY_VERSION = 'task-aware-v1';
 export const ADAPTIVE_SELECTOR_VERSION = 'adaptive-selector-v2-selection-taxonomy';
-export const DAILY_LESSON_PLANNER_VERSION = 'daily-lesson-v1';
+export const DAILY_LESSON_PLANNER_VERSION = 'daily-lesson-v2-curriculum';
 export const GOAL_PORTFOLIO_VERSION = 'goal-portfolio-v1';
 
 export type { SelectionContext, SelectionOrigin };
@@ -41,6 +41,7 @@ export interface ItemInstanceTelemetry {
 }
 
 export interface SchedulingTelemetry {
+  schedulerConfigVersion?: string;
   version: 1;
   learnerKey?: string;
   cardKey: string;
@@ -111,8 +112,8 @@ export function telemetryForItem(item: PracticeItem): ItemInstanceTelemetry {
   const structured = contentSpecForItem(item)?.data ?? item.visualSpec;
   const parameters = structured ? flattenParameters(structured) : undefined;
   return {
-    promptVersion: 'curriculum-v1', displayedChoices: item.choices ? [...item.choices] : undefined,
-    visualKind: item.visualSpec?.kind ?? item.visualModelType, representationId: item.schemaId,
+    promptVersion: item.generatorVersion ? `generator-v${item.generatorVersion}` : 'curriculum-v1', displayedChoices: item.choices ? [...item.choices] : undefined,
+    visualKind: item.visualSpec?.kind ?? item.visualModelType, representationId: item.representationId ?? item.schemaId,
     difficulty: item.difficulty, parameters: parameters && Object.keys(parameters).length ? parameters : undefined,
   };
 }
@@ -125,7 +126,7 @@ export function buildSchedulingTelemetry(args: {
 }): SchedulingTelemetry {
   const card = describeLearningCard(args.item);
   return {
-    version: SCHEDULING_TELEMETRY_VERSION, learnerKey: args.learnerKey, cardKey: card.cardKey,
+    version: SCHEDULING_TELEMETRY_VERSION, schedulerConfigVersion: FSRS_CONFIG_VERSION, learnerKey: args.learnerKey, cardKey: card.cardKey,
     cardKind: card.kind, schemaId: card.schemaId, itemInstanceId: args.item.instanceKey ?? args.item.id,
     presentationIndex: args.presentationIndex, attemptNo: args.attemptNo,
     schedulingEligible: args.response.schedulingEligible,

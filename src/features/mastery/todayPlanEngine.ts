@@ -1,7 +1,7 @@
 import type { SessionConfig, StudentItemState } from '../../types/math';
 import type { StudentSkillSummary } from './skillMasteryEngine';
 import { planPracticeForSkill } from './skillPracticePlanner';
-import { GRADE3_MASTERY_MAP } from './grade3MasteryMap';
+import { ALL_CURRICULUM_SKILLS as GRADE3_MASTERY_MAP } from '../curriculum/curriculumRegistry';
 import { inferGrade3SkillId } from './skillMapping';
 import { makeItemFromId } from '../curriculum/makeItemFromId';
 

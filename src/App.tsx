@@ -326,6 +326,7 @@ export default function App() {
   if (screen === 'diagnostic') {
     return (
       <DiagnosticSession
+        gradeLevel={profile.gradeLevel}
         studentId={profile.id}
         audioEnabled={profile.settings.audioEnabled}
         onComplete={async () => {
@@ -344,6 +345,7 @@ export default function App() {
   if (screen === 'mastery-map') {
     return (
       <Grade3MasteryMapPage
+        initialSkillId={sessionConfig?.returnToSkillId}
         profile={profile}
         onBack={() => setScreen('dashboard')}
         onStartPractice={startPractice}
@@ -355,6 +357,7 @@ export default function App() {
   if (screen === 'goal-evaluation') {
     return (
       <GoalEvaluationSession
+        gradeLevel={profile.gradeLevel}
         studentId={profile.id}
         audioEnabled={profile.settings.audioEnabled}
         onCancel={() => setScreen('goals')}

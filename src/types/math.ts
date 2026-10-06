@@ -6,6 +6,7 @@ import type { MeasurementDataSpec } from '../features/curriculum/measurementType
 import type { WordProblemSpec } from '../features/curriculum/wordProblemItems';
 import type { MultiplicationEstimationQuestionSpec } from '../features/curriculum/multiplicationEstimationItems';
 import type { DivisionEstimationQuestionSpec } from '../features/curriculum/divisionEstimationItems';
+import type { FoundationQuestionSpec, TaggedAnswer } from '../features/curriculum/foundationTypes';
 
 export type GradeLevel = 3 | 4 | 5;
 export type ReviewGrade = 'again' | 'hard' | 'good' | 'easy';
@@ -38,6 +39,7 @@ export interface PlannedPracticeItem {
 }
 
 export type ItemType =
+  | 'foundation'
   | 'multiplication_fact'
   | 'division_fact'
   | 'unknown_factor'
@@ -100,6 +102,7 @@ export type FractionMode = 'equivalent' | 'compare';
 
 export const PRACTICE_CONTENT_SPEC_VERSION = 1 as const;
 export type PracticeContentSpec =
+  | { domain: 'foundation'; version: 1; data: FoundationQuestionSpec }
   | { domain: 'fraction'; version: 1; data: FractionQuestionSpec }
   | { domain: 'arithmetic'; version: 1; data: ArithmeticQuestionSpec }
   | { domain: 'division'; version: 1; data: DivisionQuestionSpec }
@@ -160,6 +163,12 @@ export interface Skill {
 }
 
 export interface PracticeItem {
+  standardIds?: string[];
+  representationId?: string;
+  generatorVersion?: number;
+  seed?: number;
+  answerSpec?: TaggedAnswer;
+  provenance?: { contentSource: string; sourceUrl?: string; sourceLicense: string; adaptationNote: string };
   id: string;
   skillId: string;
   itemType: ItemType;
@@ -348,6 +357,8 @@ export interface PersistedPlannedLessonItem {
 }
 
 export interface PersistedDailyLessonPlan {
+  curriculumId?: string;
+  curriculumVersion?: number;
   id: string;
   studentId: string;
   localDate: string;
@@ -410,6 +421,7 @@ export interface PerTableStats {
 }
 
 export interface SessionConfig {
+  returnToSkillId?: string;
   mode: SessionMode;
   tables?: number[];          // single_table / multi_table (legacy sessions)
   /** When set, practice exactly these item IDs (repeated to fill sessionLength) instead of generating from tables/ranges. */

@@ -1,4 +1,5 @@
 import type { PracticeItem } from '../../types/math';
+import { makeFoundationItemFromId } from './foundationItems';
 import { ITEM_MAP, makeMultiplicationItem } from './multiplicationItems';
 import { makeAdditionItem, makeSubtractionItem, makeDivisionItem } from './arithmeticItems';
 import { generateArithmeticErrorAnalysis, type ArithmeticMisconceptionCode } from './regrouping';
@@ -29,6 +30,7 @@ import { assertValidPracticeItem } from './practiceContentSpec';
  * Returns null for IDs that cannot be parsed (should not happen for tracked items).
  */
 function makeLegacyItemFromId(itemId: string): PracticeItem | null {
+  if (itemId.startsWith('G4F1~')) return makeFoundationItemFromId(itemId);
   const staticItem = ITEM_MAP.get(itemId);
   if (staticItem) return staticItem;
 

@@ -1,6 +1,11 @@
 import type { CSSProperties } from 'react';
 import type { Grade3Domain, MasterySkillNode } from './grade3MasteryMap';
 import type { StudentSkillSummary } from './skillMasteryEngine';
+import { CURRICULUM_MISCONCEPTION_LABELS, getCurriculumSkill } from '../curriculum/curriculumRegistry';
+import { makeFoundationItem } from '../curriculum/foundationItems';
+import { planPracticeForSkill } from './skillPracticePlanner';
+import { VisualModel } from '../visuals/VisualModel';
+import type { SessionConfig } from '../../types/math';
 
 interface Props {
   skill: MasterySkillNode;
@@ -10,6 +15,7 @@ interface Props {
   onClose: () => void;
   onPracticeSkill: (skillId: string) => void;
   onReviewDue: (skillId: string) => void;
+  onBridge?: (config: SessionConfig) => void;
 }
 
 const DOMAIN_LABELS: Record<Grade3Domain, string> = {
@@ -23,7 +29,10 @@ const DOMAIN_LABELS: Record<Grade3Domain, string> = {
   summer_bridge: 'Summer Bridge',
 };
 
-export function SkillDetailPanel({ skill, summary, unmetPrereqNames, onClose, onPracticeSkill, onReviewDue }: Props) {
+export function SkillDetailPanel({ skill, summary, unmetPrereqNames, onClose, onPracticeSkill, onReviewDue, onBridge }: Props) {
+  const curriculumSkill = getCurriculumSkill(skill.id);
+  const instruction = curriculumSkill?.instruction;
+  const example = instruction ? makeFoundationItem(skill.id, 'model', 0, 21) : undefined;
   const accuracy = summary && summary.attemptCount > 0
     ? Math.round(summary.accuracy * 100)
     : null;
@@ -44,6 +53,14 @@ export function SkillDetailPanel({ skill, summary, unmetPrereqNames, onClose, on
 
         {/* Description */}
         <p style={s.description}>{skill.description}</p>
+        {instruction && <section aria-label="Learn this skill">
+          <h3>Learn this skill</h3>
+          <p>{instruction.activate}</p><p>{instruction.model}</p><p>{instruction.connect}</p>
+          {example && <details><summary>Worked example</summary><p>{example.prompt}</p><VisualModel item={example} revealAnswer /><p>{example.explanation}</p></details>}
+          <p>{instruction.guided}</p><p>{instruction.reflection}</p>
+          {summary?.evidenceGaps?.length ? <p>Next evidence: {summary.evidenceGaps.join('; ')}.</p> : null}
+          {summary?.provisionalPlacement && <p>Your quick check suggests a starting point. Independent practice and later-day checks build mastery.</p>}
+        </section>}
 
         {skill.track === 'summer_bridge' && (
           <div style={s.summerNote} role="note">
@@ -104,6 +121,11 @@ export function SkillDetailPanel({ skill, summary, unmetPrereqNames, onClose, on
 
         {/* Action buttons */}
         <div style={s.actions}>
+          {instruction && onBridge && curriculumSkill?.prerequisites.length ? <button style={s.reviewBtn} onClick={() => {
+            const base = planPracticeForSkill(curriculumSkill.prerequisites[0], { sessionLength: 3 });
+            const ids = base.specificItemIds?.slice(0, 3) ?? [];
+            onBridge({ ...base, returnToSkillId: skill.id, specificItemIds: ids, sessionLength: ids.length || 3 });
+          }}>Quick refresh · then return here</button> : null}
           <button
             style={s.practiceBtn}
             onClick={() => onPracticeSkill(skill.id)}
@@ -125,6 +147,7 @@ export function SkillDetailPanel({ skill, summary, unmetPrereqNames, onClose, on
 }
 
 function formatPattern(pattern: string): string {
+  if (CURRICULUM_MISCONCEPTION_LABELS[pattern]) return CURRICULUM_MISCONCEPTION_LABELS[pattern];
   return pattern
     .replace(/_/g, ' ')
     .replace(/\b\w/g, c => c.toUpperCase());

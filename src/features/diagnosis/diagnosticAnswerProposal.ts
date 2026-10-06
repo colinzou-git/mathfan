@@ -27,8 +27,10 @@ export function buildDiagnosticAnswerProposal(args: {
   rawInput: string;
   latencyMs: number;
   existingState?: StudentItemState;
+  schedulingEligible?: boolean;
 }): DiagnosticAnswerProposal {
   const checked = checkAnswer(args.item, args.rawInput, args.latencyMs, { gradingContext: 'untimed_assessment' });
+  const schedulingEligible = args.schedulingEligible !== false;
   const cardKey = deriveCardKey(args.item);
   const before = args.existingState ?? createInitialState(args.studentId, args.item);
   const answeredAt = new Date(args.answeredAt);
@@ -38,7 +40,7 @@ export function buildDiagnosticAnswerProposal(args: {
   let schedulingApplied = false;
   let schedulerErrorCode: MathAnswerEvent['schedulerErrorCode'];
   try {
-    after = applyReview(
+    if (schedulingEligible) after = applyReview(
       before,
       checked.reviewGrade,
       args.latencyMs,
@@ -46,7 +48,7 @@ export function buildDiagnosticAnswerProposal(args: {
       answeredAt,
       { isCorrect: checked.isCorrect },
     );
-    schedulingApplied = true;
+    schedulingApplied = schedulingEligible;
   } catch (error) {
     schedulerErrorCode = classifySchedulerError(error);
   }
@@ -101,7 +103,7 @@ export function buildDiagnosticAnswerProposal(args: {
     isCorrect: checked.isCorrect,
     isRetry: false,
     hintUsed: false,
-    schedulingEligible: true,
+    schedulingEligible,
     schedulingApplied,
     schedulerErrorCode,
     latencyMs: args.latencyMs,
@@ -126,7 +128,7 @@ export function buildDiagnosticAnswerProposal(args: {
         fluencyBand: checked.fluencyBand,
         hintUsed: false,
         isRetry: false,
-        schedulingEligible: true,
+        schedulingEligible,
         schedulingApplied,
         schedulerErrorCode,
       },

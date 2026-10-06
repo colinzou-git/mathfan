@@ -7,8 +7,8 @@ import { appNow } from '../time/clock';
 import { describeItem } from '../curriculum/describeItem';
 import { TodayAchievementSection } from '../stats/TodayAchievementSection';
 import type { AchievementFilter, TodayAchievementData } from '../stats/todayAchievement';
-import { deriveGrade3SkillSummaries, type StudentSkillSummary } from '../mastery/skillMasteryEngine';
-import { GRADE3_MASTERY_MAP } from '../mastery/grade3MasteryMap';
+import { deriveCurriculumSkillSummaries, type StudentSkillSummary } from '../mastery/skillMasteryEngine';
+import { getCurriculum } from '../curriculum/curriculumRegistry';
 import { makeItemFromId } from '../curriculum/makeItemFromId';
 import { planDailyNewForGoals, type DailyNewGoalPlan, type DailyNewGoalTile } from '../goals/dailyNewGoalPlanner';
 import { mulberry32 } from '../../utils/rng';
@@ -156,14 +156,15 @@ export function StudentDashboard({ profile, lastSyncedAt, onStartDailyReview, on
       });
 
       try {
-        const derived = deriveGrade3SkillSummaries({
+        const derived = deriveCurriculumSkillSummaries({
+          timezone: profile.timezone,
           studentId: profile.id,
           items: makeItemFromId,
           mathAnswerEvents: events,
           itemStates: states,
           now: now.toISOString(),
         });
-        const completeSummaries = completeSkillSummaries(profile.id, derived);
+        const completeSummaries = completeSkillSummaries(profile.id, derived, profile.gradeLevel);
         setDailyNewPlan(planDailyNewForGoals({
           studentId: profile.id,
           goals,
@@ -175,7 +176,7 @@ export function StudentDashboard({ profile, lastSyncedAt, onStartDailyReview, on
           dailyNewGoalQuestionLimits: profile.settings.dailyNewGoalQuestionLimits,
         }));
         setDailyNewError(null);
-        if (profile.gradeLevel === 3) {
+        if (getCurriculum(profile.gradeLevel)) {
           try {
             const localDate = learnerLocalDateKey(now, profile.timezone);
             const seed = [...`${profile.id}:${localDate}`].reduce((sum, char) => (sum * 31 + char.charCodeAt(0)) >>> 0, 2166136261);
@@ -423,7 +424,7 @@ export function StudentDashboard({ profile, lastSyncedAt, onStartDailyReview, on
       {/* Grade 3 Math Map */}
       {onOpenMasteryMap && (
         <button style={s.masteryMapBtn} onClick={onOpenMasteryMap}>
-          <div style={s.masteryMapTitle}>🗺 Grade 3 Math Map</div>
+          <div style={s.masteryMapTitle}>🗺 Grade {profile.gradeLevel} Math Map</div>
           <div style={s.masteryMapSub}>See what is strong, learning, and ready to review.</div>
         </button>
       )}
@@ -541,19 +542,20 @@ export function StudentDashboard({ profile, lastSyncedAt, onStartDailyReview, on
   );
 }
 
-function completeSkillSummaries(studentId: string, summaries: StudentSkillSummary[]): StudentSkillSummary[] {
+function completeSkillSummaries(studentId: string, summaries: StudentSkillSummary[], grade: StudentProfile['gradeLevel']): StudentSkillSummary[] {
   const byId = new Map(summaries.map(summary => [summary.skillId, summary]));
-  return GRADE3_MASTERY_MAP.map(skill => byId.get(skill.id) ?? {
+  const skills = getCurriculum(grade)?.skills ?? [];
+  return [...summaries.filter(summary => !skills.some(skill => skill.id === summary.skillId)), ...skills.map(skill => byId.get(skill.id) ?? {
     studentId,
     skillId: skill.id,
-    status: 'new',
+    status: 'new' as const,
     attemptCount: 0,
     correctCount: 0,
     accuracy: 0,
     dueItemCount: 0,
     itemCount: 0,
     mistakePatterns: [],
-  });
+  })];
 }
 
 function Chip({ label, value, color = '#1f2937' }: { label: string; value: string; color?: string }) {

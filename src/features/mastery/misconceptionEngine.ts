@@ -22,6 +22,10 @@ export function detectMistakes(
   studentAnswer: string | number,
 ): string[] {
   const contentSpec = contentSpecForItem(item);
+  if (contentSpec?.domain === 'foundation') {
+    const code = contentSpec.data.misconceptionAnswers[String(studentAnswer)];
+    return code ? [code] : [];
+  }
   if (contentSpec?.domain === 'measurement_data') return detectMeasurement(item, studentAnswer);
   if (contentSpec?.domain === 'multiplication_estimation') return detectMultiplicationEstimation(item, studentAnswer);
   if (contentSpec?.domain === 'division_estimation') return detectDivisionEstimation(item, studentAnswer);
@@ -113,6 +117,8 @@ function misconceptionFamily(code: string): string {
 }
 
 export function itemTargetsMisconception(item: PracticeItem, code: string): boolean {
+  if (code.startsWith('foundation:')) return contentSpecForItem(item)?.domain === 'foundation'
+    && Object.values((contentSpecForItem(item) as Extract<NonNullable<PracticeItem['contentSpec']>, { domain: 'foundation' }>).data.misconceptionAnswers).includes(code);
   const family = misconceptionFamily(code);
   if (family === 'fraction_compare') return item.itemType === 'fraction_compare';
   if (family === 'fraction_equivalent') return item.itemType === 'fraction_equivalent';
