@@ -6,6 +6,7 @@ import { ADAPTIVE_SELECTOR_VERSION } from '../learning/schedulingTelemetry';
 import { resolveCanonicalReviewCards, type CanonicalReviewCard } from './dailyReviewCandidates';
 import { freshMultiplicationEstimationReviewItemId } from '../curriculum/multiplicationEstimationItems';
 import { freshDivisionEstimationReviewItemId } from '../curriculum/divisionEstimationItems';
+import { freshFoundationItem } from '../curriculum/foundationItems';
 
 export interface DailyReviewQueueArgs {
   /** Concrete due item ids requested for this review (e.g. from the dashboard's grouped due list). */
@@ -35,6 +36,8 @@ const selection = (origin: SelectionContext['origin'], rationaleCode: string): S
 });
 
 function freshEstimationReviewItemId(id: string, rng: Rng): string {
+  const item = makeItemFromId(id);
+  if (item?.contentSpec?.domain === 'foundation') return freshFoundationItem(item, rng).id;
   return freshDivisionEstimationReviewItemId(freshMultiplicationEstimationReviewItemId(id, rng), rng);
 }
 

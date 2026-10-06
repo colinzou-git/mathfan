@@ -5,7 +5,7 @@ import type { DailyNewGoalQuestionLimits, PracticeItem, SessionConfig, StudentIt
 import { makeItemFromId } from '../curriculum/makeItemFromId';
 import { inferGrade3SkillId } from '../mastery/skillMapping';
 import { planPracticeForSkill } from '../mastery/skillPracticePlanner';
-import { getGrade3Skill } from '../mastery/grade3MasteryMap';
+import { getCurriculumSkill as getGrade3Skill } from '../curriculum/curriculumRegistry';
 import { calculateGoalProgress, localDateInTimeZone, type GoalEvidenceInput, type GoalTargetProgress } from './goalEngine';
 import { normalizeDailyNewGoalLimits, resolveGoalTileLimits } from './dailyNewGoalLimits';
 import { analyzeGoalPortfolio, type GoalPortfolioAnalysis } from './goalPortfolioEngine';
@@ -236,8 +236,9 @@ function learningItemsForPool(
   const items = pool.map(makeItemFromId).filter((item): item is PracticeItem => item !== null);
   const progress = deriveLearningUnitProgress({ items, events, states: itemStates });
   const byCard = new Map<string, string[]>();
+  const dueCards = new Set([...dueIds].map(makeItemFromId).filter((item): item is PracticeItem => item !== null).map(deriveCardKey));
   for (const item of items) {
-    if (dueIds.has(item.id) || excludedIds.has(item.id)) continue;
+    if (dueCards.has(deriveCardKey(item)) || excludedIds.has(item.id)) continue;
     const ids = byCard.get(deriveCardKey(item)) ?? [];
     ids.push(item.id);
     byCard.set(deriveCardKey(item), ids);

@@ -375,8 +375,8 @@ export function PracticeScreen({
         )}
 
         {/* Question zone */}
-        <div className="drill-q">
-          <div style={{ ...st.prompt, fontSize: isVisualItem || isEstimationItem ? '24px' : '52px', letterSpacing: isVisualItem || isEstimationItem ? 'normal' : '-1px' }}>
+        <div className="drill-q" data-item-id={state.currentItem?.id}>
+          <div style={{ ...st.prompt, fontSize: isVisualItem || isEstimationItem || state.currentItem?.itemType === 'foundation' ? '24px' : '52px', letterSpacing: isVisualItem || isEstimationItem ? 'normal' : '-1px' }}>
             <MathPrompt text={state.currentItem?.prompt ?? ''} />
           </div>
 
@@ -387,7 +387,7 @@ export function PracticeScreen({
           )}
 
           {isChoice ? (
-            <div style={st.choiceDisplay}>
+            <div style={{ ...st.choiceDisplay, ...(state.currentItem?.itemType === 'foundation' ? { fontSize: 20, overflowWrap: 'anywhere', lineHeight: 1.3 } : {}) }}>
               {isCorrect ? String(state.currentItem?.answer ?? '') : (input || '?')}
             </div>
           ) : (
@@ -396,7 +396,7 @@ export function PracticeScreen({
               type="number"
               inputMode={allowDecimal ? 'decimal' : 'numeric'}
               value={isCorrect ? String(state.currentItem?.answer ?? '') : input}
-              onChange={e => { if (!isCorrect) setInput(e.target.value.slice(0, 6)); }}
+              onChange={e => { if (!isCorrect) setInput(e.target.value.slice(0, 7)); }}
               readOnly={isCorrect || state.saveStatus !== 'idle'}
               placeholder="?"
               autoComplete="off"
@@ -482,10 +482,10 @@ export function PracticeScreen({
                     key={label}
                     style={{
                       ...st.choiceBtn,
-                      fontSize: isSymbol ? '32px' : isEstimationItem ? '15px' : '18px',
+                      fontSize: isSymbol ? '32px' : isEstimationItem || state.currentItem?.itemType === 'foundation' ? '15px' : '18px',
                       maxWidth: isSymbol ? '90px' : 'none',
-                      flexBasis: isEstimationItem ? '42%' : undefined,
-                      padding: isEstimationItem ? '14px 8px' : '20px 0',
+                      flexBasis: isEstimationItem || state.currentItem?.itemType === 'foundation' ? '42%' : undefined,
+                      padding: isEstimationItem || state.currentItem?.itemType === 'foundation' ? '14px 8px' : '20px 0',
                     }}
                     onClick={() => submitChoice(label)}
                   >
@@ -499,6 +499,7 @@ export function PracticeScreen({
           {!isCorrect && !isChoice && (
             <div style={{ pointerEvents: state.saveStatus === 'idle' ? 'auto' : 'none', opacity: state.saveStatus === 'idle' ? 1 : .55 }}>
               <NumPad
+                maxLength={7}
               value={input}
               onChange={setInput}
               allowDecimal={allowDecimal}

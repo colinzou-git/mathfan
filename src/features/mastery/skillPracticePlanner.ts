@@ -1,4 +1,6 @@
 import type { PracticeItem, SessionConfig, StudentItemState } from '../../types/math';
+import { foundationItemIds } from '../curriculum/foundationItems';
+import { getCurriculumSkill } from '../curriculum/curriculumRegistry';
 import type { MathAnswerEvent } from '../learning/learningEvents';
 import { deriveLearningUnitProgress, type LearningUnitProgress } from '../learning/learningUnitProgress';
 import { makeItemFromId } from '../curriculum/makeItemFromId';
@@ -128,6 +130,7 @@ export function buildRegroupingFocusSequence(skillId: string, misconceptions: st
 
 /** Ordered conceptual sequence consumed by focused practice and the adaptive lesson planner (#29). */
 export function buildFocusSequence(skillId: string): FocusSequence {
+  if (getCurriculumSkill(skillId)?.gradeLevel === 4) return { skillId, itemIds: foundationItemIds(skillId), representations: ['model', 'symbolic', 'explanation', 'check', 'transfer', 'verification'] };
   if (skillId.startsWith('g3-frac-')) return planFractionFocusSequence(skillId);
   if (skillId.startsWith('g3-add-') || skillId.startsWith('g3-sub-')) return buildRegroupingFocusSequence(skillId);
   if (skillId.startsWith('g3-div-')) return buildDivisionFocusSequence(skillId);
@@ -544,6 +547,15 @@ export function planPracticeForSkill(
   options: PlanOptions = {},
 ): SessionConfig {
   const sessionLength = options.sessionLength ?? 10;
+  if (getCurriculumSkill(skillId)?.gradeLevel === 4) return {
+    mode: 'adaptive_lesson', grade: 4,
+    // Verification families are reserved for the canonical lesson's exit work.
+    specificItemIds: foundationItemIds(skillId).filter(id => {
+      const spec = makeItemFromId(id)?.contentSpec;
+      return spec?.domain === 'foundation' && spec.data.form !== 'verify';
+    }),
+    sessionLength,
+  };
 
   const estimationSchema = multiplicationEstimationSchemaForSkillId(skillId);
   if (estimationSchema) {

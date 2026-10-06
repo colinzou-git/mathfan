@@ -161,14 +161,17 @@ describe('planDailyNewForGoals separation', () => {
   });
 
   it('lets partially learned skills receive unseen items while seen due items stay excluded', () => {
-    const [seenDue] = pool();
+    const skillId = 'g3-mul-tables-advanced';
+    const [seenDue] = pool(skillId);
     const result = plan({
+      goals: [goal({ targets: [target({ skillId })] })],
       events: [event(seenDue)],
       itemStates: [state(seenDue, { nextDueAt: '2026-06-16T00:00:00.000Z' })],
-      skillSummaries: [summary('g3-mul-meaning', 'review_due')],
+      skillSummaries: [summary(skillId, 'review_due')],
     });
     const ids = result.tiles.flatMap(tile => tile.itemIds);
     expect(ids).not.toContain(seenDue);
+    expect(ids.every(id => deriveCardKeyFromItemId(id) !== deriveCardKeyFromItemId(seenDue))).toBe(true);
     expect(ids.length).toBeGreaterThan(0);
   });
 

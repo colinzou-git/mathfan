@@ -212,12 +212,15 @@ export function buildSelectionHistory(
 }
 
 export function validateAdaptiveGoalEvaluationCatalogue(args: Omit<AdaptiveGoalEvaluationArgs, 'responses'>): string[] {
-  const catalogue = buildCatalogue({ ...args, responses: [] });
+  return catalogueProblems(args, buildCatalogue({ ...args, responses: [] }));
+}
+
+function catalogueProblems(args: Omit<AdaptiveGoalEvaluationArgs, 'responses'>, catalogue: SkillCatalogue[]): string[] {
   const problems: string[] = [];
   for (const { skill, items } of catalogue) {
     if (items.length === 0) problems.push(`${skill.id} has no resolved evaluation items`);
   }
-  for (const domain of DOMAIN_ORDER) {
+  for (const domain of args.skillGraph ? [...new Set(args.skillGraph.map(skill => skill.domain))] : DOMAIN_ORDER) {
     if (!catalogue.some(pool => pool.skill.domain === domain && pool.items.length > 0)) {
       problems.push(`${domain} has no resolved evaluation items`);
     }
@@ -266,7 +269,10 @@ function historicalEvidence(
 }
 
 export function buildAdaptiveGoalSkillEvidence(args: AdaptiveGoalEvaluationArgs): AdaptiveGoalSkillEvidence[] {
-  const catalogue = buildCatalogue(args);
+  return evidenceFromCatalogue(args, buildCatalogue(args));
+}
+
+function evidenceFromCatalogue(args: AdaptiveGoalEvaluationArgs, catalogue: SkillCatalogue[]): AdaptiveGoalSkillEvidence[] {
   const lookup = itemLookup(catalogue);
   const history = historicalEvidence(args, catalogue);
   const bySkill = new Map<string, AdaptiveGoalSkillEvidence>();
@@ -331,8 +337,10 @@ function wouldBreakConsecutiveDomain(args: AdaptiveGoalEvaluationArgs, domain: G
 
 function screeningDomainSequence(args: AdaptiveGoalEvaluationArgs): Grade3Domain[] {
   const rng = mulberry32((args.seed ^ hashString('screening-domains')) >>> 0);
-  const base = shuffled(DOMAIN_ORDER, rng);
-  const extras = shuffled(DOMAIN_ORDER, rng).slice(0, SCREENING_COUNT - DOMAIN_ORDER.length);
+  const domains = args.skillGraph ? [...new Set(args.skillGraph.map(skill => skill.domain))] : DOMAIN_ORDER;
+  const base = shuffled(domains, rng);
+  const extraPool = domains.length >= SCREENING_COUNT - domains.length ? domains : Array.from({ length: SCREENING_COUNT }, (_, i) => domains[i % domains.length]);
+  const extras = shuffled(extraPool, rng).slice(0, SCREENING_COUNT - domains.length);
   const sequence = [...base, ...extras];
   for (let i = 2; i < sequence.length; i++) {
     if (sequence[i] !== sequence[i - 1] || sequence[i] !== sequence[i - 2]) continue;
@@ -546,12 +554,12 @@ export function selectNextAdaptiveGoalEvaluationItem(
   args: AdaptiveGoalEvaluationArgs,
 ): AdaptiveGoalEvaluationSelection | null {
   if (args.responses.length >= QUESTION_COUNT) return null;
-  const problems = validateAdaptiveGoalEvaluationCatalogue(args);
+  const catalogue = buildCatalogue(args);
+  const problems = catalogueProblems(args, catalogue);
   if (problems.length > 0) {
     throw new Error(`Adaptive Goal Evaluation catalogue is incomplete: ${problems.join('; ')}`);
   }
-  const catalogue = buildCatalogue(args);
-  const evidence = buildAdaptiveGoalSkillEvidence(args);
+  const evidence = evidenceFromCatalogue(args, catalogue);
   if (args.responses.length < SCREENING_COUNT) return selectScreening(args, catalogue, evidence);
   if (args.responses.length < ADAPTIVE_COUNT) return selectAdaptiveProbe(args, catalogue, evidence);
   return selectConfirmation(args, catalogue, evidence);

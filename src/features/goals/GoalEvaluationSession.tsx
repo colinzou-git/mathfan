@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { NumPad } from '../../components/NumPad';
-import type { StudentItemState } from '../../types/math';
+import type { GradeLevel, StudentItemState } from '../../types/math';
 import { generateId } from '../../utils/id';
 import { makeItemFromId } from '../curriculum/makeItemFromId';
 import type { MathAnswerEvent } from '../learning/learningEvents';
-import { GRADE3_MASTERY_MAP, getGrade3Skill } from '../mastery/grade3MasteryMap';
+import { ALL_CURRICULUM_SKILLS as GRADE3_MASTERY_MAP, getCurriculumSkill as getGrade3Skill, getCurriculum } from '../curriculum/curriculumRegistry';
 import { inferGrade3SkillId } from '../mastery/skillMapping';
 import { planLearningUnitsForSkill } from '../mastery/skillPracticePlanner';
 import { checkAnswer, type CheckResult } from '../practice/answerChecker';
@@ -34,6 +34,7 @@ import { remainingLearningUnitEvidence } from '../learning/learningUnitProgress'
 import { unlockSpeechFromUserGesture } from '../audio/speech';
 
 interface Props {
+  gradeLevel?: GradeLevel;
   studentId: string;
   audioEnabled?: boolean;
   onCancel: () => void;
@@ -85,8 +86,9 @@ function responsesFromEvaluation(evaluation: GoalEvaluation): AdaptiveGoalEvalua
   }));
 }
 
-function evaluationArgs(evaluation: GoalEvaluation, events: MathAnswerEvent[], itemStates: StudentItemState[], now: string) {
+function evaluationArgs(evaluation: GoalEvaluation, events: MathAnswerEvent[], itemStates: StudentItemState[], now: string, gradeLevel: GradeLevel = 3) {
   return {
+    skillGraph: getCurriculum(gradeLevel)?.skills,
     studentId: evaluation.studentId,
     seed: evaluation.seed ?? 1,
     now,
@@ -106,6 +108,7 @@ function buildNewLearningCandidates(
   result: AdaptiveGoalEvaluationResult,
   events: MathAnswerEvent[],
   itemStates: StudentItemState[],
+  gradeLevel: GradeLevel,
 ): NewLearningCandidate[] {
   const seenSkills = new Set<string>();
   const candidates = [...result.topGoalCandidates, ...result.skillsToStrengthen, ...result.skillsReadyToLearnNext];
@@ -135,7 +138,7 @@ function buildNewLearningCandidates(
 
   if (rows.length > 0) return rows.slice(0, 6);
 
-  for (const skill of GRADE3_MASTERY_MAP) {
+  for (const skill of GRADE3_MASTERY_MAP.filter(skill => skill.gradeLevel === gradeLevel)) {
     const units = [...planLearningUnitsForSkill(skill.id, { events, states: itemStates }).progress.values()];
     const activeUnits = units.filter(unit => unit.status !== 'maintenance');
     if (activeUnits.length === 0) continue;
@@ -176,7 +179,7 @@ function buildReviewFindings(itemStates: StudentItemState[], now: string): Revie
   return Array.from(bySkill.values()).sort((a, b) => (b.dueCount + b.weakCount) - (a.dueCount + a.weakCount)).slice(0, 6);
 }
 
-export function GoalEvaluationSession({ studentId, audioEnabled = false, onCancel, onReturnToGoals, onSelectGoalSkills, onGoToDailyReview }: Props) {
+export function GoalEvaluationSession({ studentId, gradeLevel = 3, audioEnabled = false, onCancel, onReturnToGoals, onSelectGoalSkills, onGoToDailyReview }: Props) {
   const [phase, setPhase] = useState<Phase>('loading');
   const [evaluation, setEvaluation] = useState<GoalEvaluation | null>(null);
   const [events, setEvents] = useState<MathAnswerEvent[]>([]);
@@ -196,8 +199,8 @@ export function GoalEvaluationSession({ studentId, audioEnabled = false, onCance
   const currentItem = selection?.item ?? null;
   const result = useMemo(() => {
     if (!evaluation || evaluation.answers.length < ADAPTIVE_GOAL_EVALUATION_QUESTION_COUNT) return null;
-    return buildAdaptiveGoalEvaluationResult(evaluationArgs(evaluation, events, itemStates, appNow().toISOString()));
-  }, [evaluation, events, itemStates]);
+    return buildAdaptiveGoalEvaluationResult(evaluationArgs(evaluation, events, itemStates, appNow().toISOString(), gradeLevel));
+  }, [evaluation, events, itemStates, gradeLevel]);
 
   const activatePersisted = useCallback((persisted: PersistedGoalEvaluationSelection) => {
     const next: AdaptiveGoalEvaluationSelection = {
@@ -217,7 +220,7 @@ export function GoalEvaluationSession({ studentId, audioEnabled = false, onCance
       let persisted = value;
       if (!value.currentSelection || value.currentSelection.questionIndex !== value.answers.length) {
         const selectedAt = appNow().toISOString();
-        const next = selectNextAdaptiveGoalEvaluationItem(evaluationArgs(value, answerEvents, states, selectedAt));
+        const next = selectNextAdaptiveGoalEvaluationItem(evaluationArgs(value, answerEvents, states, selectedAt, gradeLevel));
         if (!next) throw new Error('No goal evaluation question is available.');
         persisted = await persistNextGoalEvaluationQuestion({ evaluationId: value.id, expectedAnswerCount: value.answers.length,
           expectedSelectionRevision: value.selectionRevision ?? 0, selectedAt, selection: next });
@@ -239,7 +242,7 @@ export function GoalEvaluationSession({ studentId, audioEnabled = false, onCance
       setSaveError(error instanceof Error ? error.message : 'Could not save the next evaluation question.');
       throw error;
     } finally { setSaving(false); }
-  }, [activatePersisted]);
+  }, [activatePersisted, gradeLevel]);
 
   useEffect(() => {
     let alive = true;
@@ -411,7 +414,7 @@ export function GoalEvaluationSession({ studentId, audioEnabled = false, onCance
       <div style={s.container}>
         <div style={s.card}>
           <h1 style={s.title}>Adaptive Goal Evaluation</h1>
-          <p style={s.body}>Exactly 30 questions across different Grade 3 skills.</p>
+          <p style={s.body}>Exactly 30 questions across different Grade {gradeLevel} skills{gradeLevel === 4 ? ' in Units 1–2' : ''}.</p>
           <p style={s.body}>No timer pressure. Take your time and do your best.</p>
           <p style={s.body}>Results separate new goal learning from skills that belong in Daily Review.</p>
           {saveError && <p role="alert" style={s.errorText}>{saveError}</p>}
@@ -426,7 +429,7 @@ export function GoalEvaluationSession({ studentId, audioEnabled = false, onCance
   }
 
   if (phase === 'results' && result && evaluation) {
-    const newLearning = buildNewLearningCandidates(result, events, itemStates);
+    const newLearning = buildNewLearningCandidates(result, events, itemStates, gradeLevel);
     const review = buildReviewFindings(itemStates, appNow().toISOString());
     return (
       <div style={s.containerWide}>
@@ -523,7 +526,7 @@ export function GoalEvaluationSession({ studentId, audioEnabled = false, onCance
           ) : (
             <>
               <div style={s.inputDisplay}>{input || '?'}</div>
-              <NumPad value={input} onChange={setInput} allowDecimal={false} onSubmit={submit} />
+              <NumPad maxLength={7} value={input} onChange={setInput} allowDecimal={false} onSubmit={submit} />
             </>
           )}
           {input && <button style={s.primaryBtn} disabled={saving} onClick={submit}>Check</button>}
@@ -571,7 +574,7 @@ const s: Record<string, CSSProperties> = {
   inputArea: { display: 'grid', gap: '10px', justifyItems: 'center' },
   inputDisplay: { minHeight: '52px', fontSize: '40px', fontWeight: 800, color: 'var(--primary, #4f46e5)' },
   choiceRow: { display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '10px' },
-  choiceBtn: { minWidth: '58px', padding: '12px 16px', borderRadius: '8px', border: '2px solid #e5e7eb', background: '#fff', fontSize: '22px', fontWeight: 800, cursor: 'pointer' },
+  choiceBtn: { minWidth: '58px', maxWidth: '100%', padding: '12px 16px', borderRadius: '8px', border: '2px solid #e5e7eb', background: '#fff', fontSize: '18px', overflowWrap: 'anywhere', fontWeight: 800, cursor: 'pointer' },
   errorBox: { display: 'grid', gap: '8px', justifyItems: 'center' },
   errorText: { color: '#b91c1c', margin: 0, fontSize: '14px' },
   section: { borderTop: '1px solid #e5e7eb', padding: '16px 0', display: 'grid', gap: '10px' },

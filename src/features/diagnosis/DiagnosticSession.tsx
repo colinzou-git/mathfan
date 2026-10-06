@@ -11,7 +11,11 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
-import type { PracticeItem } from '../../types/math';
+import type { GradeLevel, PracticeItem } from '../../types/math';
+import { buildReadinessPlan, readinessRecommendations } from './readinessPlanner';
+import { getCurriculumSkill } from '../curriculum/curriculumRegistry';
+import { mathAnswerEventRepo } from '../../db/repositories';
+import { makeItemFromId } from '../curriculum/makeItemFromId';
 import { buildDiagnosticPlan } from './diagnosticPlanner';
 import { QuestionRenderer } from '../practice/QuestionRenderer';
 import { NumPad } from '../../components/NumPad';
@@ -31,6 +35,7 @@ import { appNow } from '../time/clock';
 import { unlockSpeechFromUserGesture } from '../audio/speech';
 
 interface Props {
+  gradeLevel?: GradeLevel;
   studentId: string;
   audioEnabled?: boolean;
   /** Called when all diagnostic questions are answered. */
@@ -51,16 +56,19 @@ type SaveState = 'idle' | 'saving' | 'error';
 
 const FEEDBACK_MS = 1200;
 
-export function DiagnosticSession({ studentId, audioEnabled = false, onComplete, onCancel }: Props) {
+export function DiagnosticSession({ studentId, gradeLevel = 3, audioEnabled = false, onComplete, onCancel }: Props) {
   // sessionId and plan are stable for the lifetime of the component.
   // Stored in state (not ref) so they are safe to read during render.
-  const [sessionId] = useState(() => generateId());
-  const [plan] = useState(() => buildDiagnosticPlan(sessionId));
+  const [sessionId] = useState(() => gradeLevel === 4 ? `g4-readiness:${studentId}:v1` : generateId());
   const [phase, setPhase] = useState<DiagPhase>('intro');
   const [index, setIndex] = useState(0);
   const [input, setInput] = useState('');
   const [showFeedback, setShowFeedback] = useState<'correct' | 'wrong' | null>(null);
   const [results, setResults] = useState<QuestionResult[]>([]);
+  const [loadingReadiness, setLoadingReadiness] = useState(gradeLevel === 4);
+  const [readinessLoadError, setReadinessLoadError] = useState(false);
+  const [loadRevision, setLoadRevision] = useState(0);
+  const plan = gradeLevel === 4 ? buildReadinessPlan(sessionId, results) : buildDiagnosticPlan(sessionId);
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [unsavedAnswerCount, setUnsavedAnswerCount] = useState(0);
   const [conflictRequiresResubmit, setConflictRequiresResubmit] = useState(false);
@@ -69,6 +77,18 @@ export function DiagnosticSession({ studentId, audioEnabled = false, onComplete,
   const submitInFlightRef = useRef(false);
   const pendingWritesRef = useRef<DiagnosticWriteJob[]>([]);
   const writesSucceededRef = useRef(false);
+  useEffect(() => {
+    if (gradeLevel !== 4) return;
+    let cancelled = false;
+    void mathAnswerEventRepo.getAll(studentId).then(events => {
+      if (cancelled) return;
+      const saved = events.filter(event => event.sessionId === sessionId).sort((a, b) => a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id));
+      const resumed: QuestionResult[] = saved.flatMap(event => { const item = makeItemFromId(event.itemId); return item ? [{ item, studentAnswer: String(event.studentAnswer), isCorrect: event.isCorrect, latencyMs: event.latencyMs }] : []; });
+      setResults(resumed); setIndex(resumed.length); setLoadingReadiness(false);
+      if (resumed.length >= buildReadinessPlan(sessionId, resumed).items.length) { writesSucceededRef.current = true; setPhase('done'); }
+    }).catch(() => { if (!cancelled) { setReadinessLoadError(true); setLoadingReadiness(false); } });
+    return () => { cancelled = true; };
+  }, [gradeLevel, sessionId, studentId, loadRevision]);
 
   const items = plan.items;
   const currentItem = items[index];
@@ -104,14 +124,15 @@ export function DiagnosticSession({ studentId, audioEnabled = false, onComplete,
     setInput('');
     timerRef.current = setTimeout(() => {
       setShowFeedback(null);
-      if (index + 1 >= total) {
+      const nextTotal = gradeLevel === 4 ? buildReadinessPlan(sessionId, [...results, { item: currentItem, isCorrect: event.isCorrect }]).items.length : total;
+      if (index + 1 >= nextTotal) {
         writesSucceededRef.current = countUnsavedDiagnosticJobs(pendingWritesRef.current) === 0;
         setPhase('done');
       } else {
         setIndex(i => i + 1);
       }
     }, FEEDBACK_MS);
-  }, [currentItem, index, total]);
+  }, [currentItem, gradeLevel, index, results, sessionId, total]);
 
   const handleSubmit = useCallback(async () => {
     if (submitInFlightRef.current || !currentItem || showFeedback || saveState !== 'idle' || !input.trim()) return;
@@ -122,7 +143,7 @@ export function DiagnosticSession({ studentId, audioEnabled = false, onComplete,
     try {
       const existingState = await itemStateRepo.get(studentId, deriveCardKey(currentItem));
       const proposal = buildDiagnosticAnswerProposal({
-        eventId: generateId(),
+        eventId: gradeLevel === 4 ? `${sessionId}:${currentItem.id}` : generateId(),
         attemptId: generateId(),
         answeredAt: appNow().toISOString(),
         studentId,
@@ -131,6 +152,7 @@ export function DiagnosticSession({ studentId, audioEnabled = false, onComplete,
         rawInput: input,
         latencyMs,
         existingState,
+        schedulingEligible: gradeLevel !== 4,
       });
       const job: DiagnosticWriteJob = { id: proposal.event.id, proposal, status: 'saving' };
       pendingWritesRef.current.push(job);
@@ -153,7 +175,7 @@ export function DiagnosticSession({ studentId, audioEnabled = false, onComplete,
     } finally {
       submitInFlightRef.current = false;
     }
-  }, [acceptSavedJob, audioEnabled, currentItem, input, saveState, sessionId, showFeedback, studentId]);
+  }, [acceptSavedJob, audioEnabled, currentItem, gradeLevel, input, saveState, sessionId, showFeedback, studentId]);
 
   const retryCurrentWrite = useCallback(async () => {
     if (submitInFlightRef.current || conflictRequiresResubmit) return;
@@ -224,23 +246,29 @@ export function DiagnosticSession({ studentId, audioEnabled = false, onComplete,
 
   // ── Intro screen ─────────────────────────────────────────────────────────────
 
+  if (loadingReadiness) return <div style={s.container} role="status">Loading your quick check…</div>;
+  if (readinessLoadError) return <div style={s.container} role="alert">
+    <p>Your saved quick check could not be loaded.</p>
+    <button onClick={() => { setLoadingReadiness(true); setReadinessLoadError(false); setLoadRevision(value => value + 1); }}>Try loading again</button>
+    <button onClick={onCancel}>Back to Math Map</button>
+  </div>;
   if (phase === 'intro') {
     return (
       <div style={s.container}>
         <div style={s.card}>
           <div style={s.bigIcon}>🔍</div>
-          <h1 style={s.title}>Quick Check</h1>
+          <h1 style={s.title}>{gradeLevel === 4 ? 'Grade 4 Readiness' : 'Quick Check'}</h1>
           <p style={s.body}>
             {plan.description}
           </p>
           <p style={s.body}>
-            {total} questions · No timer · Take your time!
+            {gradeLevel === 4 ? 'Up to 22' : total} questions · No timer · Take your time!
           </p>
           <button style={s.startBtn} onClick={() => {
             if (audioEnabled) unlockSpeechFromUserGesture();
             setPhase('active');
           }}>
-            Let's go!
+            {index > 0 ? 'Resume quick check' : "Let's go!"}
           </button>
           <button style={s.cancelBtn} onClick={onCancel}>
             Not now
@@ -277,9 +305,11 @@ export function DiagnosticSession({ studentId, audioEnabled = false, onComplete,
         <div style={s.card}>
           <div style={s.bigIcon}>🌟</div>
           <h1 style={s.title}>Great work!</h1>
-          <p style={s.body}>
-            You answered {correct} out of {total} correctly.
-          </p>
+          {gradeLevel === 4 ? <div style={s.body}>
+            <p>Start here: {getCurriculumSkill(readinessRecommendations(results).startSkillId)?.title}</p>
+            <p>Quick refreshes: {readinessRecommendations(results).refreshSkillIds.map(id => getCurriculumSkill(id)?.title).join(', ') || 'Ready to explore!'}</p>
+            <p>Every skill is available. These checks suggest a starting point; independent practice and later-day successes build mastery.</p>
+          </div> : <p style={s.body}>You answered {correct} out of {total} correctly.</p>}
           <p style={s.body}>
             {saveState === 'saving'
               ? 'Saving your results...'
@@ -317,7 +347,7 @@ export function DiagnosticSession({ studentId, audioEnabled = false, onComplete,
       </div>
 
       {/* Question card */}
-      <div style={{ ...s.questionCard, borderColor: feedbackColor }}>
+      <div style={{ ...s.questionCard, borderColor: feedbackColor }} data-item-id={currentItem.id}>
         {/* Mode badge */}
         <div style={s.diagBadge}>Diagnostic</div>
 
@@ -377,6 +407,7 @@ export function DiagnosticSession({ studentId, audioEnabled = false, onComplete,
             <>
               <div style={s.inputDisplay}>{input || '?'}</div>
               <NumPad
+                maxLength={7}
                 value={input}
                 onChange={setInput}
                 allowDecimal={false}

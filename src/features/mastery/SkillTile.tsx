@@ -21,7 +21,7 @@ const STATUS_CONFIG: Record<SkillSummaryStatus, { color: string; bg: string; ico
 const NEW_CONFIG = STATUS_CONFIG.new;
 
 export function SkillTile({ skill, summary, unmetPrereqs, onClick }: Props) {
-  const cfg = summary ? STATUS_CONFIG[summary.status] : NEW_CONFIG;
+  const cfg = summary ? STATUS_CONFIG[summary.learningState ?? summary.status] : NEW_CONFIG;
   const hasUnmetPrereqs = (unmetPrereqs ?? []).length > 0;
 
   let subtitle: string;
@@ -60,6 +60,7 @@ export function SkillTile({ skill, summary, unmetPrereqs, onClick }: Props) {
           <span style={{ ...s.badge, color: cfg.color, background: cfg.color + '22' }}>
             {cfg.label}
           </span>
+          {summary?.reviewState === 'due' && <span style={s.prereqBadge}>Review due ({summary.dueItemCount})</span>}
           {hasUnmetPrereqs && (
             <span style={s.prereqBadge}>Review prerequisite first</span>
           )}

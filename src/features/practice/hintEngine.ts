@@ -33,6 +33,10 @@ export function getHint(item: PracticeItem, wrongAttempts: number): HintResult |
   if (item.divisionSpec) return structuredDivisionHint(item, wrongAttempts);
   if (item.measurementSpec && item.measurementSpec.kind !== 'measurement_context') return measurementDataHint(item, wrongAttempts);
   const contentSpec = contentSpecForItem(item);
+  if (contentSpec?.domain === 'foundation') return {
+    text: contentSpec.data.hints[Math.min(wrongAttempts - 1, 2)],
+    showExplanationButton: wrongAttempts >= 3,
+  };
   if (contentSpec?.domain === 'multiplication_estimation') return multiplicationEstimationHint(item, contentSpec.data, wrongAttempts);
   if (contentSpec?.domain === 'division_estimation') return divisionEstimationHint(item, contentSpec.data, wrongAttempts);
 

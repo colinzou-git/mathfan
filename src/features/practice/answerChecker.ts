@@ -69,7 +69,7 @@ export function checkAnswer(
   options: CheckAnswerOptions = {}
 ): CheckResult {
   const normalizedInput = rawInput.trim().replace(/\s+/g, '');
-  const correctAnswer = item.answer;
+  const correctAnswer = item.answerSpec?.value ?? item.answer;
 
   let isCorrect: boolean;
   let studentAnswer: string | number;

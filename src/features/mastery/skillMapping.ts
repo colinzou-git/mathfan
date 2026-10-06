@@ -13,6 +13,7 @@ import { divisionEstimationSkillIdForSchema } from '../curriculum/divisionEstima
 export function inferGrade3SkillId(item: PracticeItem): string | null {
   const { id, itemType, tags, factA, factB } = item;
   const contentSpec = contentSpecForItem(item);
+  if (contentSpec?.domain === 'foundation' && item.gradeLevel === 4) return item.skillId;
 
   if (contentSpec?.domain === 'multiplication_estimation') {
     return multiplicationEstimationSkillIdForSchema(contentSpec.data.schema);

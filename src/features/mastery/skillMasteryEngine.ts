@@ -2,10 +2,18 @@ import type { MisconceptionEvidence, PracticeItem, StudentItemState } from '../.
 import type { MathAnswerEvent } from '../learning/learningEvents';
 import { inferGrade3SkillId } from './skillMapping';
 import { hasUnresolvedMisconceptionForSkill } from './misconceptionEngine';
+import { deriveConfiguredSkillSummary } from './curriculumEvidence';
+import { GRADE4_SKILLS } from '../curriculum/curriculumRegistry';
 
 export type SkillSummaryStatus = 'new' | 'needs_practice' | 'review_due' | 'strong' | 'mastered';
 
 export interface StudentSkillSummary {
+  learningState?: Exclude<SkillSummaryStatus, 'review_due'>;
+  reviewState?: 'unintroduced' | 'scheduled' | 'due';
+  recommendationState?: 'start' | 'continue' | 'review' | 'remediate' | 'transfer';
+  lifetimeAccuracy?: number;
+  evidenceGaps?: string[];
+  provisionalPlacement?: boolean;
   skillId: string;
   studentId: string;
   status: SkillSummaryStatus;
@@ -108,6 +116,7 @@ export function deriveGrade3SkillSummaries(
   const itemSkillMap = new Map<string, string>();
   const itemRepresentationMap = new Map<string, string>();
   const recordItem = (item: PracticeItem) => {
+    if (item.gradeLevel === 4) return;
     const skillId = inferGrade3SkillId(item);
     if (skillId) itemSkillMap.set(item.id, skillId);
     const comparison = item.visualSpec?.kind === 'area_perimeter_compare' ? item.visualSpec.comparison : undefined;
@@ -214,4 +223,19 @@ export function deriveGrade3SkillSummaries(
       mistakePatterns,
     };
   });
+}
+
+/** Grade 3 compatibility adapter plus data-configured curriculum evidence. */
+export function deriveCurriculumSkillSummaries(args: DeriveGrade3SkillSummariesArgs & { timezone?: string }): StudentSkillSummary[] {
+  const legacy = deriveGrade3SkillSummaries(args);
+  const withoutDue = new Map(deriveGrade3SkillSummaries({ ...args, itemStates: args.itemStates.map(state => ({ ...state, nextDueAt: undefined })) }).map(summary => [summary.skillId, summary]));
+  const ids = new Set([...args.mathAnswerEvents.map(event => event.itemId), ...args.itemStates.map(state => state.lastItemId ?? state.cardKey)]);
+  const items = new Map<string, PracticeItem>();
+  const resolver = args.items;
+  if (Array.isArray(resolver)) resolver.forEach(item => items.set(item.id, item));
+  else ids.forEach(id => { const item = resolver(id); if (item) items.set(id, item); });
+  return [...legacy.map(summary => ({ ...summary, learningState: withoutDue.get(summary.skillId)?.status as Exclude<SkillSummaryStatus, 'review_due'>,
+    reviewState: summary.dueItemCount ? 'due' as const : 'scheduled' as const })),
+    ...GRADE4_SKILLS.map(skill => deriveConfiguredSkillSummary({ skillId: skill.id, studentId: args.studentId,
+      events: args.mathAnswerEvents, items, states: args.itemStates, now: args.now, timezone: args.timezone ?? 'UTC' }))];
 }

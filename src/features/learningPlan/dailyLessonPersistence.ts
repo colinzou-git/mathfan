@@ -4,6 +4,7 @@ import type { MathAnswerEvent } from '../learning/learningEvents';
 import { DAILY_LESSON_PLANNER_VERSION } from '../learning/schedulingTelemetry';
 import { learnerLocalDateKey } from '../time/localDate';
 import { planDailyLesson, type PlanDailyLessonArgs } from './dailyLessonPlanner';
+import { getCurriculum, getCurriculumSkill } from '../curriculum/curriculumRegistry';
 
 export function dailyLessonSemanticKey(studentId: string, localDate: string, revision: number): string {
   return `${studentId}|${localDate}|${revision}`;
@@ -26,6 +27,8 @@ function materialize(args: PlanDailyLessonArgs, revision: number): PersistedDail
   }));
   return {
     id,
+    curriculumId: getCurriculum(args.gradeLevel)?.id,
+    curriculumVersion: getCurriculum(args.gradeLevel)?.version,
     studentId: args.studentId,
     localDate,
     timezone: args.timezone,
@@ -51,8 +54,12 @@ export async function getOrCreateDailyLessonPlan(args: PlanDailyLessonArgs): Pro
   return db.transaction('rw', db.dailyLessonPlans, async () => {
     const existing = await db.dailyLessonPlans.where('[studentId+localDate]').equals([args.studentId, localDate]).toArray();
     const active = existing.filter(plan => plan.status !== 'replaced').sort((a, b) => b.revision - a.revision)[0];
-    if (active) return active;
+    const curriculum = getCurriculum(args.gradeLevel);
+    const compatible = active && (active.curriculumId ? active.curriculumId === curriculum?.id
+      : !active.focusSkillId || getCurriculumSkill(active.focusSkillId)?.gradeLevel === args.gradeLevel);
+    if (compatible) return active;
     const plan = materialize(args, Math.max(0, ...existing.map(value => value.revision)) + 1);
+    if (active) await db.dailyLessonPlans.put({ ...active, status: 'replaced', replacedByPlanId: plan.id, updatedAt: args.now });
     const sameSemantic = existing.find(value => (value.semanticKey ?? dailyLessonSemanticKey(value.studentId, value.localDate, value.revision)) === plan.semanticKey);
     if (sameSemantic) return sameSemantic;
     await db.dailyLessonPlans.add(plan);

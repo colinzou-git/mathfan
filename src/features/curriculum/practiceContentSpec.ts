@@ -4,6 +4,7 @@ import {
   type PracticeContentSpec,
   type PracticeItem,
 } from '../../types/math';
+import { FOUNDATION_FORMS, getCurriculumSkill } from './curriculumRegistry';
 
 export { PRACTICE_CONTENT_SPEC_VERSION };
 
@@ -147,6 +148,7 @@ export function projectLegacyCompatibilityFields(item: PracticeItem): PracticeIt
   delete shared.reasoningSpec;
   const projected = (() => {
     switch (spec.domain) {
+      case 'foundation': return { ...shared, contentSpec: spec };
       case 'fraction': return { ...shared, contentSpec: spec, fractionSpec: spec.data };
       case 'arithmetic': return { ...shared, contentSpec: spec, arithmeticSpec: spec.data };
       case 'division': return { ...shared, contentSpec: spec, divisionSpec: spec.data };
@@ -165,6 +167,7 @@ export function projectLegacyCompatibilityFields(item: PracticeItem): PracticeIt
 export const withLegacyContentSpec = projectLegacyCompatibilityFields;
 
 const DOMAIN_ITEM_TYPES: Record<PracticeContentSpec['domain'], ReadonlySet<ItemType>> = {
+  foundation: new Set(['foundation']),
   fraction: new Set(['fraction_equivalent', 'fraction_compare', 'fraction_number_line']),
   arithmetic: new Set(['addition_fact', 'subtraction_fact']),
   division: new Set(['division_fact', 'unknown_factor', 'word_problem']),
@@ -182,6 +185,25 @@ export function validatePracticeItem(item: PracticeItem): PracticeItemValidation
   const normalized = normalizePracticeItemContent(item);
   if (!normalized.ok) return normalized.problems;
   const spec = normalized.item.contentSpec;
+  if (spec?.domain === 'foundation') {
+    const data = spec.data;
+    const node = getCurriculumSkill(item.skillId);
+    if (item.gradeLevel !== 4 || data.skillId !== item.skillId || !item.standardIds?.length
+      || data.generatorVersion !== item.generatorVersion || data.seed !== item.seed
+      || node?.gradeLevel !== 4 || !FOUNDATION_FORMS.includes(data.form)
+      || ![0, 1, 2].includes(data.band) || !Number.isInteger(data.seed) || data.seed < 0 || data.seed > 0xffffffff
+      || item.schemaId !== `${data.skillId}:${data.form}:b${data.band}` || item.cardKey !== `template:${item.schemaId}`
+      || data.representationId !== item.representationId || data.generatorVersion !== 1
+      || !Array.isArray(data.solutionSteps) || !data.solutionSteps.length || !Array.isArray(data.hints) || data.hints.length < 3
+      || item.standardIds?.some(id => !node?.californiaStandardIds.includes(id))) {
+      problems.push({ code: 'invalid_foundation_contract', path: 'contentSpec.data', message: 'Foundation metadata and content must agree.' });
+    }
+    if (item.answerSpec?.value !== item.answer || (item.choices && (item.answerSpec?.kind !== 'single_choice'
+      || JSON.stringify(item.answerSpec.options) !== JSON.stringify(item.choices) || new Set(item.choices).size !== item.choices.length))
+      || (!item.choices && item.answerSpec?.kind !== 'number')) {
+      problems.push({ code: 'invalid_foundation_answer', path: 'answerSpec', message: 'Tagged answer and unique choices must match the mathematical answer.' });
+    }
+  }
   if (spec && !DOMAIN_ITEM_TYPES[spec.domain].has(item.itemType)) {
     problems.push({
       code: 'incompatible_item_type',

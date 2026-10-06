@@ -1,5 +1,6 @@
 import type { ItemType } from '../../types/math';
 import { ITEM_MAP } from './multiplicationItems';
+import { makeFoundationItemFromId } from './foundationItems';
 
 export interface ItemDescription {
   prompt: string;
@@ -14,6 +15,15 @@ export interface ItemDescription {
  * fractions) that are not in the static ITEM_MAP.
  */
 export function describeItem(itemId: string): ItemDescription {
+  const foundation = makeFoundationItemFromId(itemId);
+  if (foundation) {
+    const group: ItemDescription['group'] = foundation.skillId.includes('pattern') ? 'pattern'
+      : foundation.skillId.startsWith('g4-oa-') ? 'factors'
+      : foundation.skillId === 'g4-nbt-add-standard' ? 'add'
+      : foundation.skillId === 'g4-nbt-sub-standard' ? 'sub'
+      : foundation.skillId === 'g4-nbt-round-any-place' ? 'round' : 'other';
+    return { prompt: foundation.prompt, itemType: foundation.itemType, group };
+  }
   // Multiplication: MUL_3x4
   let m = itemId.match(/^MUL_(\d+)x(\d+)$/);
   if (m) return { prompt: `${m[1]} × ${m[2]}`, itemType: 'multiplication_fact', group: 'mul' };

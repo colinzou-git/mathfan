@@ -13,8 +13,8 @@ import {
 } from '../../db/repositories';
 import { generateId } from '../../utils/id';
 import { makeItemFromId } from '../curriculum/makeItemFromId';
-import { GRADE3_MASTERY_MAP, getGrade3Skill } from '../mastery/grade3MasteryMap';
-import { deriveGrade3SkillSummaries } from '../mastery/skillMasteryEngine';
+import { ALL_CURRICULUM_SKILLS as GRADE3_MASTERY_MAP, getCurriculumSkill as getGrade3Skill, getCurriculum } from '../curriculum/curriculumRegistry';
+import { deriveCurriculumSkillSummaries } from '../mastery/skillMasteryEngine';
 import { appNow } from '../time/clock';
 import {
   applyGoalTargetEdits,
@@ -178,7 +178,8 @@ async function loadGoalsData(profile: StudentProfile): Promise<GoalsData> {
     mathAnswerEventRepo.getAll(profile.id),
     itemStateRepo.getForStudent(profile.id),
   ]);
-  const derived = deriveGrade3SkillSummaries({
+  const derived = deriveCurriculumSkillSummaries({
+    timezone: profile.timezone,
     studentId: profile.id,
     items: makeItemFromId,
     mathAnswerEvents: events,
@@ -636,6 +637,7 @@ function GoalWizard({
     timezone: profile.timezone,
   });
   const recommendationResult = recommendLearningGoals({
+    gradeLevel: profile.gradeLevel,
     studentId: profile.id,
     skillSummaries: data.skillSummaries,
     events: data.events,
@@ -893,7 +895,7 @@ function GoalWizard({
             {browseAll && (
               <fieldset style={s.skillPicker}>
                 <legend style={s.legend}>Choose up to {maxSkills} skill{maxSkills === 1 ? '' : 's'}</legend>
-                {GRADE3_MASTERY_MAP.map(skill => {
+                {(getCurriculum(profile.gradeLevel)?.skills ?? []).map(skill => {
                   const checked = selectedSkillIds.includes(skill.id);
                   const disabled = !checked && selectedSkillIds.length >= maxSkills;
                   return (
