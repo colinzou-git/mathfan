@@ -1,4 +1,5 @@
 import type { MathAnswerEvent } from '../learning/learningEvents';
+import { chronologicalEvents } from '../learning/eventOrdering';
 import { GRADE3_MASTERY_MAP } from '../mastery/grade3MasteryMap';
 import type { MasterySkillNode } from '../mastery/grade3MasteryMap';
 import { getCurriculumSkill } from '../curriculum/curriculumRegistry';
@@ -17,10 +18,10 @@ export function rankFocusSkills(args: RankFocusSkillsArgs): FocusSkillCandidate[
   return graph.filter(node => args.usableSkillIds.has(node.id)).map(node => {
     const summary = summaries.get(node.id);
     const unmetPrerequisites = node.prerequisites.filter(id => !['strong', 'mastered'].includes(summaries.get(id)?.learningState ?? summaries.get(id)?.status ?? 'new'));
-    const direct = args.events.filter(event => {
+    const direct = chronologicalEvents(args.events.filter(event => {
       const item = makeItemFromId(event.itemId);
       return event.studentId === args.studentId && !event.isRetry && !event.hintUsed && event.mode !== 'diagnostic' && event.relatedEvidence !== true && item != null && inferGrade3SkillId(item) === node.id;
-    }).slice(-12);
+    })).slice(-12);
     const accuracy = direct.length ? direct.filter(event => event.isCorrect).length / direct.length : summary?.accuracy ?? 0;
     const continuing = getCurriculumSkill(node.id)?.evidenceProfile && summary?.status === 'strong' && (summary.attemptCount ?? 0) < 6;
     const weakness = summary?.status === 'needs_practice' || continuing ? 4 : summary?.status === 'review_due' ? 3 : summary?.status === 'new' ? 2 : summary?.status === 'strong' ? 1 : -5;
