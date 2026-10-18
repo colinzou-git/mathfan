@@ -10,6 +10,8 @@ import type { SessionConfig } from '../../types/math';
 interface Props {
   skill: MasterySkillNode;
   summary?: StudentSkillSummary;
+  /** Stable prerequisite IDs not yet mastered/strong, in curriculum priority order. */
+  unmetPrereqIds?: string[];
   /** Names of prerequisites not yet mastered/strong, for soft advisory display. */
   unmetPrereqNames?: string[];
   onClose: () => void;
@@ -29,10 +31,12 @@ const DOMAIN_LABELS: Record<Grade3Domain, string> = {
   summer_bridge: 'Summer Bridge',
 };
 
-export function SkillDetailPanel({ skill, summary, unmetPrereqNames, onClose, onPracticeSkill, onReviewDue, onBridge }: Props) {
+export function SkillDetailPanel({ skill, summary, unmetPrereqIds, unmetPrereqNames, onClose, onPracticeSkill, onReviewDue, onBridge }: Props) {
   const curriculumSkill = getCurriculumSkill(skill.id);
   const instruction = curriculumSkill?.instruction;
   const example = instruction ? makeFoundationItem(skill.id, 'model', 0, 21) : undefined;
+  const bridgeSkillId = unmetPrereqIds?.[0];
+  const bridgeSkill = bridgeSkillId ? getCurriculumSkill(bridgeSkillId) : undefined;
   const accuracy = summary && summary.attemptCount > 0
     ? Math.round(summary.accuracy * 100)
     : null;
@@ -94,8 +98,8 @@ export function SkillDetailPanel({ skill, summary, unmetPrereqNames, onClose, on
         {summary && summary.mistakePatterns.length > 0 && (
           <div style={s.mistakesBox}>
             <div style={s.mistakesTitle}>Common challenges</div>
-            {summary.mistakePatterns.map(p => (
-              <div key={p} style={s.mistakeTag}>{formatPattern(p)}</div>
+            {summary.mistakePatterns.map(pattern => (
+              <div key={pattern} style={s.mistakeTag}>{formatPattern(pattern)}</div>
             ))}
           </div>
         )}
@@ -121,11 +125,11 @@ export function SkillDetailPanel({ skill, summary, unmetPrereqNames, onClose, on
 
         {/* Action buttons */}
         <div style={s.actions}>
-          {instruction && onBridge && curriculumSkill?.prerequisites.length ? <button style={s.reviewBtn} onClick={() => {
-            const base = planPracticeForSkill(curriculumSkill.prerequisites[0], { sessionLength: 3 });
+          {instruction && onBridge && bridgeSkillId ? <button style={s.reviewBtn} onClick={() => {
+            const base = planPracticeForSkill(bridgeSkillId, { sessionLength: 3 });
             const ids = base.specificItemIds?.slice(0, 3) ?? [];
             onBridge({ ...base, returnToSkillId: skill.id, specificItemIds: ids, sessionLength: ids.length || 3 });
-          }}>Quick refresh · then return here</button> : null}
+          }}>Quick refresh{bridgeSkill ? `: ${bridgeSkill.title}` : ''} · then return here</button> : null}
           <button
             style={s.practiceBtn}
             onClick={() => onPracticeSkill(skill.id)}
