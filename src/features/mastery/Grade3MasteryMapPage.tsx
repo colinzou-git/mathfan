@@ -169,12 +169,16 @@ export function Grade3MasteryMapPage({ profile, onBack, onStartPractice, onStart
         }
         setDueBySkill(computedDue);
 
-        // Bug 3: planToday needs stubs for all skills so it can pick unlocked
-        // new skills even before any events exist.
+        // Focus candidates stay within the current grade, while prerequisite
+        // evidence can come from an earlier grade (for example, Grade 3 facts
+        // supporting a Grade 4 factor-pairs recommendation).
         const completeSummaries = buildCompleteSummaries(derived, profile.id, skills);
+        const prerequisiteIds = new Set(skills.flatMap(skill => skill.prerequisites));
+        const prerequisiteSummaries = derived.filter(summary => prerequisiteIds.has(summary.skillId));
         const plan = planToday({
           studentId: profile.id,
           skillSummaries: completeSummaries,
+          prerequisiteSummaries,
           itemStates: states,
           now: appNow(),
         });
