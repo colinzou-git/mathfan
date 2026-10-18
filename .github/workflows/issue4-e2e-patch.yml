@@ -25,7 +25,16 @@ jobs:
           from pathlib import Path
 
           path = Path('scripts/e2e_mathfan.py')
-          lines = path.read_text().splitlines(keepends=True)
+          text = path.read_text()
+          start = text.index('def grade4_readiness_bridge_lesson_review(page: Page) -> None:')
+          end = text.find('\ndef ', start + 1)
+          if end == -1:
+              end = len(text)
+          before = text[:start]
+          section = text[start:end]
+          after = text[end:]
+
+          lines = section.splitlines(keepends=True)
           changed_tile = 0
           changed_dialog = 0
           for index, line in enumerate(lines):
@@ -35,9 +44,9 @@ jobs:
               elif 'get_by_role("dialog"' in line and 'Factors as Rectangle Sides' in line:
                   lines[index] = line.replace('Factors as Rectangle Sides', 'Find Every Factor Pair')
                   changed_dialog += 1
-          assert changed_tile == 1, f'Expected one stale tile selector, changed {changed_tile}'
-          assert changed_dialog == 1, f'Expected one stale dialog selector, changed {changed_dialog}'
-          path.write_text(''.join(lines))
+          assert changed_tile == 1, f'Expected one stale tile selector in journey, changed {changed_tile}'
+          assert changed_dialog == 1, f'Expected one stale dialog selector in journey, changed {changed_dialog}'
+          path.write_text(before + ''.join(lines) + after)
           PY
 
       - name: Commit E2E correction
