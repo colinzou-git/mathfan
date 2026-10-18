@@ -58,8 +58,8 @@ const DOMAIN_ICONS: Record<Grade3Domain, string> = {
   summer_bridge: '🌉',
 };
 
-// Bug 3: Build a complete summary list (including stubs for unstarted skills) so
-// planToday can pick any unlocked new skill, not only skills already seen.
+// Build a complete candidate list (including stubs for unstarted current-grade skills)
+// while keeping prerequisite-only summaries separate in planToday.
 function buildCompleteSummaries(
   derived: StudentSkillSummary[],
   studentId: string,
@@ -79,25 +79,22 @@ function buildCompleteSummaries(
   });
 }
 
-// Returns a map from skillId → names of prerequisites not yet mastered/strong.
-// Empty array means all prerequisites are satisfied.
-function computeUnmetPrereqNames(summaryMap: Map<string, StudentSkillSummary>, skills: readonly MasterySkillNode[]): Map<string, string[]> {
+// Returns actual prerequisite IDs that are not yet strong/mastered.
+function computeUnmetPrereqIds(summaryMap: Map<string, StudentSkillSummary>, skills: readonly MasterySkillNode[]): Map<string, string[]> {
   const result = new Map<string, string[]>();
   for (const node of skills) {
     if (node.prerequisites.length === 0) continue;
     const unmetIds = node.prerequisites.filter(prereqId => {
-      const s = summaryMap.get(prereqId);
-      return !(s && ['mastered', 'strong'].includes(s.learningState ?? s.status));
+      const summary = summaryMap.get(prereqId);
+      return !(summary && ['mastered', 'strong'].includes(summary.learningState ?? summary.status));
     });
-    if (unmetIds.length > 0) {
-      const names = unmetIds.map(id => {
-        const prereqNode = getCurriculumSkill(id);
-        return prereqNode?.title ?? id;
-      });
-      result.set(node.id, names);
-    }
+    if (unmetIds.length > 0) result.set(node.id, unmetIds);
   }
   return result;
+}
+
+function prerequisiteNames(ids?: string[]): string[] | undefined {
+  return ids?.map(id => getCurriculumSkill(id)?.title ?? id);
 }
 
 export function Grade3MasteryMapPage({ profile, onBack, onStartPractice, onStartDiagnostic, initialSkillId }: Props) {
@@ -107,8 +104,8 @@ export function Grade3MasteryMapPage({ profile, onBack, onStartPractice, onStart
   const [todayPlan, setTodayPlan] = useState<TodayPlan | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedSkill, setSelectedSkill] = useState<MasterySkillNode | null>(() => initialSkillId ? getCurriculumSkill(initialSkillId) ?? null : null);
-  const [unmetPrereqsBySkill, setUnmetPrereqsBySkill] = useState<Map<string, string[]>>(new Map());
-  // Bug 4: map from skillId → due item IDs for that skill
+  const [unmetPrereqIdsBySkill, setUnmetPrereqIdsBySkill] = useState<Map<string, string[]>>(new Map());
+  // Map from skillId → due item IDs for that skill.
   const [dueBySkill, setDueBySkill] = useState<Map<string, string[]>>(new Map());
 
   useEffect(() => {
@@ -122,12 +119,12 @@ export function Grade3MasteryMapPage({ profile, onBack, onStartPractice, onStart
 
       if (cancelled) return;
 
-      // Collect all item IDs we need to resolve
+      // Collect all item IDs we need to resolve.
       const allItemIds = new Set<string>();
-      for (const e of events) allItemIds.add(e.itemId);
-      for (const s of states) allItemIds.add(s.lastItemId ?? s.cardKey);
+      for (const event of events) allItemIds.add(event.itemId);
+      for (const state of states) allItemIds.add(state.lastItemId ?? state.cardKey);
 
-      // Build item resolver using makeItemFromId
+      // Build item resolver using makeItemFromId.
       const itemCache = new Map<string, ReturnType<typeof makeItemFromId>>();
       for (const id of allItemIds) {
         const item = makeItemFromId(id);
@@ -146,11 +143,11 @@ export function Grade3MasteryMapPage({ profile, onBack, onStartPractice, onStart
       if (!cancelled) {
         setSummaries(derived);
 
-        // Compute unmet prerequisites for soft recommendations (not hard locks).
-        const derivedMap = new Map(derived.map(s => [s.skillId, s]));
-        setUnmetPrereqsBySkill(computeUnmetPrereqNames(derivedMap, skills));
+        // Compute unmet prerequisites from the full cross-grade evidence set.
+        const derivedMap = new Map(derived.map(summary => [summary.skillId, summary]));
+        setUnmetPrereqIdsBySkill(computeUnmetPrereqIds(derivedMap, skills));
 
-        // Bug 4: map due item IDs to the skill they belong to.
+        // Map due item IDs to the skill they belong to.
         const nowStr = appNow().toISOString();
         const computedDue = new Map<string, string[]>();
         for (const state of states) {
@@ -160,21 +157,24 @@ export function Grade3MasteryMapPage({ profile, onBack, onStartPractice, onStart
             if (item) {
               const skillId = inferGrade3SkillId(item);
               if (skillId) {
-                const arr = computedDue.get(skillId) ?? [];
-                arr.push(itemId);
-                computedDue.set(skillId, arr);
+                const ids = computedDue.get(skillId) ?? [];
+                ids.push(itemId);
+                computedDue.set(skillId, ids);
               }
             }
           }
         }
         setDueBySkill(computedDue);
 
-        // Bug 3: planToday needs stubs for all skills so it can pick unlocked
-        // new skills even before any events exist.
+        // Current-grade summaries are focus candidates. Cross-grade prerequisite summaries
+        // are lookup evidence only, so a Grade 4 map cannot accidentally recommend a Grade 3 focus.
         const completeSummaries = buildCompleteSummaries(derived, profile.id, skills);
+        const prerequisiteIds = new Set(skills.flatMap(skill => skill.prerequisites));
+        const prerequisiteSummaries = derived.filter(summary => prerequisiteIds.has(summary.skillId));
         const plan = planToday({
           studentId: profile.id,
           skillSummaries: completeSummaries,
+          prerequisiteSummaries,
           itemStates: states,
           now: appNow(),
         });
@@ -185,9 +185,9 @@ export function Grade3MasteryMapPage({ profile, onBack, onStartPractice, onStart
     return () => { cancelled = true; };
   }, [profile.id, profile.timezone, skills]);
 
-  const summaryMap = new Map(summaries.map(s => [s.skillId, s]));
-
+  const summaryMap = new Map(summaries.map(summary => [summary.skillId, summary]));
   const selectedSummary = selectedSkill ? summaryMap.get(selectedSkill.id) : undefined;
+  const selectedUnmetPrereqIds = selectedSkill ? unmetPrereqIdsBySkill.get(selectedSkill.id) : undefined;
 
   return (
     <div style={s.container}>
@@ -237,17 +237,18 @@ export function Grade3MasteryMapPage({ profile, onBack, onStartPractice, onStart
                 <h2 style={s.domainTitle}>
                   {unit.title}
                 </h2>
-                {unitSkills.map(skill => (
-                  <SkillTile
+                {unitSkills.map(skill => {
+                  const unmetIds = unmetPrereqIdsBySkill.get(skill.id);
+                  return <SkillTile
                     key={skill.id}
                     skill={skill}
                     summary={summaryMap.get(skill.id)}
-                    unmetPrereqs={unmetPrereqsBySkill.get(skill.id)}
+                    unmetPrereqs={prerequisiteNames(unmetIds)}
                     onClick={setSelectedSkill.bind(null,
-                      skills.find(sk => sk.id === skill.id) ?? null
+                      skills.find(candidate => candidate.id === skill.id) ?? null
                     )}
-                  />
-                ))}
+                  />;
+                })}
               </section>
             );
           })}
@@ -259,7 +260,8 @@ export function Grade3MasteryMapPage({ profile, onBack, onStartPractice, onStart
         <SkillDetailPanel
           skill={selectedSkill}
           summary={selectedSummary}
-          unmetPrereqNames={unmetPrereqsBySkill.get(selectedSkill.id)}
+          unmetPrereqIds={selectedUnmetPrereqIds}
+          unmetPrereqNames={prerequisiteNames(selectedUnmetPrereqIds)}
           onClose={() => setSelectedSkill(null)}
           onBridge={config => onStartPractice(config)}
           onPracticeSkill={skillId => {
@@ -268,7 +270,7 @@ export function Grade3MasteryMapPage({ profile, onBack, onStartPractice, onStart
           }}
           onReviewDue={skillId => {
             setSelectedSkill(null);
-            // Bug 4: use the actual due item IDs rather than a broad skill session.
+            // Use the actual due item IDs rather than a broad skill session.
             const dueIds = dueBySkill.get(skillId) ?? [];
             if (dueIds.length > 0) {
               onStartPractice({ mode: 'daily_review', specificItemIds: dueIds, sessionLength: dueIds.length });
