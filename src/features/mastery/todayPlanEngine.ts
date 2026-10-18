@@ -21,6 +21,9 @@ export interface TodayPlan {
 export interface PlanTodayArgs {
   studentId: string;
   skillSummaries: StudentSkillSummary[];
+  // Evidence-only summaries for prerequisite lookup. These can include skills
+  // from an earlier grade, but they never become focus/warm-up candidates.
+  prerequisiteSummaries?: StudentSkillSummary[];
   itemStates: StudentItemState[];
   now: Date;
 }
@@ -45,13 +48,17 @@ const STATUS_PRIORITY: Record<string, number> = {
   new:            10,   // below existing-skill statuses
 };
 
+function progressionState(summary: StudentSkillSummary | undefined): StudentSkillSummary['status'] | undefined {
+  return summary?.learningState ?? summary?.status;
+}
+
 function prerequisitesSatisfied(skillId: string, summaries: Map<string, StudentSkillSummary>): boolean {
   const node = GRADE3_MASTERY_MAP.find(n => n.id === skillId);
   if (!node) return false;
   if (node.prerequisites.length === 0) return true;
   return node.prerequisites.every(prereqId => {
-    const s = summaries.get(prereqId);
-    return s && (s.status === 'mastered' || s.status === 'strong');
+    const state = progressionState(summaries.get(prereqId));
+    return state === 'mastered' || state === 'strong';
   });
 }
 
@@ -67,8 +74,8 @@ function unmetPrereqNames(skillId: string, summaries: Map<string, StudentSkillSu
   if (!node) return [];
   return node.prerequisites
     .filter(prereqId => {
-      const s = summaries.get(prereqId);
-      return !(s && (s.status === 'mastered' || s.status === 'strong'));
+      const state = progressionState(summaries.get(prereqId));
+      return state !== 'mastered' && state !== 'strong';
     })
     .map(prereqId => GRADE3_MASTERY_MAP.find(n => n.id === prereqId)?.title ?? prereqId);
 }
@@ -161,10 +168,15 @@ function estimateMinutes(
 }
 
 export function planToday(args: PlanTodayArgs): TodayPlan {
-  const { skillSummaries, itemStates, now } = args;
+  const { skillSummaries, prerequisiteSummaries = [], itemStates, now } = args;
 
-  // Build summary lookup
-  const summaryMap = new Map(skillSummaries.map(s => [s.skillId, s]));
+  // Focus/warm-up candidates remain restricted to skillSummaries. The broader
+  // lookup can include cross-grade prerequisite evidence without promoting an
+  // earlier-grade skill into the current grade's recommendation list.
+  const summaryMap = new Map([
+    ...prerequisiteSummaries.map(s => [s.skillId, s] as const),
+    ...skillSummaries.map(s => [s.skillId, s] as const),
+  ]);
 
   // Pick focus skill using priority order
   const focusSkillSummary = pickFocusSkill(skillSummaries, summaryMap);
