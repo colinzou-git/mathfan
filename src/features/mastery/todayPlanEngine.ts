@@ -20,7 +20,10 @@ export interface TodayPlan {
 
 export interface PlanTodayArgs {
   studentId: string;
+  /** Skills eligible to become today's focus/warm-up. */
   skillSummaries: StudentSkillSummary[];
+  /** Cross-grade or otherwise non-candidate summaries used only to evaluate prerequisite readiness. */
+  prerequisiteSummaries?: StudentSkillSummary[];
   itemStates: StudentItemState[];
   now: Date;
 }
@@ -45,14 +48,15 @@ const STATUS_PRIORITY: Record<string, number> = {
   new:            10,   // below existing-skill statuses
 };
 
+function progressionState(summary?: StudentSkillSummary): string {
+  return summary?.learningState ?? summary?.status ?? 'new';
+}
+
 function prerequisitesSatisfied(skillId: string, summaries: Map<string, StudentSkillSummary>): boolean {
   const node = GRADE3_MASTERY_MAP.find(n => n.id === skillId);
   if (!node) return false;
   if (node.prerequisites.length === 0) return true;
-  return node.prerequisites.every(prereqId => {
-    const s = summaries.get(prereqId);
-    return s && (s.status === 'mastered' || s.status === 'strong');
-  });
+  return node.prerequisites.every(prereqId => ['mastered', 'strong'].includes(progressionState(summaries.get(prereqId))));
 }
 
 function trackPriority(skillId: string): number {
@@ -66,10 +70,7 @@ function unmetPrereqNames(skillId: string, summaries: Map<string, StudentSkillSu
   const node = GRADE3_MASTERY_MAP.find(n => n.id === skillId);
   if (!node) return [];
   return node.prerequisites
-    .filter(prereqId => {
-      const s = summaries.get(prereqId);
-      return !(s && (s.status === 'mastered' || s.status === 'strong'));
-    })
+    .filter(prereqId => !['mastered', 'strong'].includes(progressionState(summaries.get(prereqId))))
     .map(prereqId => GRADE3_MASTERY_MAP.find(n => n.id === prereqId)?.title ?? prereqId);
 }
 
@@ -129,7 +130,7 @@ function buildReview(
       // Must reconstruct from ID (filters off-map/invalid IDs)
       const item = makeItemFromId(s.lastItemId ?? s.cardKey);
       if (!item) return false;
-      // Must map to a Grade 3 mastery skill (prerequisites do not gate review —
+      // Must map to a curriculum skill (prerequisites do not gate review —
       // a due item is due regardless of whether its skill's prereqs are met).
       const skillId = inferGrade3SkillId(item);
       if (!skillId) return false;
@@ -163,8 +164,8 @@ function estimateMinutes(
 export function planToday(args: PlanTodayArgs): TodayPlan {
   const { skillSummaries, itemStates, now } = args;
 
-  // Build summary lookup
-  const summaryMap = new Map(skillSummaries.map(s => [s.skillId, s]));
+  // Prerequisite-only summaries contribute readiness evidence but never become focus candidates.
+  const summaryMap = new Map([...(args.prerequisiteSummaries ?? []), ...skillSummaries].map(s => [s.skillId, s]));
 
   // Pick focus skill using priority order
   const focusSkillSummary = pickFocusSkill(skillSummaries, summaryMap);
@@ -176,7 +177,7 @@ export function planToday(args: PlanTodayArgs): TodayPlan {
     ? unmetPrereqNames(focusSkillId, summaryMap)
     : [];
 
-  // Warm-up: easiest skill (skip if the focus IS the easiest)
+  // Warm-up: easiest current-curriculum skill (skip if the focus IS the easiest)
   const warmupConfig = buildWarmup(skillSummaries, summaryMap);
   const warmup = warmupConfig &&
     // Skip warmup if it would be the same skill as focus
@@ -185,7 +186,7 @@ export function planToday(args: PlanTodayArgs): TodayPlan {
     ? warmupConfig
     : null;
 
-  // Review: due items from Grade 3 skills (prerequisites do not exclude items)
+  // Review: due items from curriculum skills (prerequisites do not exclude items)
   const review = buildReview(itemStates, now);
 
   return {
