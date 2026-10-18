@@ -1,0 +1,45 @@
+name: Issue 4 E2E patch
+
+on:
+  push:
+    branches:
+      - fix/quick-refresh-unmet-prerequisite
+
+permissions:
+  contents: write
+
+jobs:
+  patch-e2e:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: fix/quick-refresh-unmet-prerequisite
+          fetch-depth: 0
+
+      - name: Update stale Quick Refresh journey target
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('scripts/e2e_mathfan.py')
+          text = path.read_text()
+          old_tile = 'page.get_by_role("button", name=re.compile(r"^Factors as Rectangle Sides:")).click()'
+          new_tile = 'page.get_by_role("button", name=re.compile(r"^Find Every Factor Pair:")).click()'
+          old_dialog = 'expect(page.get_by_role("dialog", name="Factors as Rectangle Sides", exact=True)).to_be_visible()'
+          new_dialog = 'expect(page.get_by_role("dialog", name="Find Every Factor Pair", exact=True)).to_be_visible()'
+          assert text.count(old_tile) == 1, 'Expected exactly one stale tile selector'
+          assert text.count(old_dialog) == 1, 'Expected exactly one stale dialog selector'
+          path.write_text(text.replace(old_tile, new_tile).replace(old_dialog, new_dialog))
+          PY
+
+      - name: Commit E2E correction
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scripts/e2e_mathfan.py
+          git diff --cached --check
+          git commit -m "Align Grade 4 bridge E2E with unmet prerequisite"
+          git push origin HEAD:fix/quick-refresh-unmet-prerequisite
