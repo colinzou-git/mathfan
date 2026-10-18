@@ -10,6 +10,8 @@ import type { SessionConfig } from '../../types/math';
 interface Props {
   skill: MasterySkillNode;
   summary?: StudentSkillSummary;
+  /** IDs of prerequisites not yet mastered/strong, in curriculum priority order. */
+  unmetPrereqIds?: string[];
   /** Names of prerequisites not yet mastered/strong, for soft advisory display. */
   unmetPrereqNames?: string[];
   onClose: () => void;
@@ -29,7 +31,7 @@ const DOMAIN_LABELS: Record<Grade3Domain, string> = {
   summer_bridge: 'Summer Bridge',
 };
 
-export function SkillDetailPanel({ skill, summary, unmetPrereqNames, onClose, onPracticeSkill, onReviewDue, onBridge }: Props) {
+export function SkillDetailPanel({ skill, summary, unmetPrereqIds, unmetPrereqNames, onClose, onPracticeSkill, onReviewDue, onBridge }: Props) {
   const curriculumSkill = getCurriculumSkill(skill.id);
   const instruction = curriculumSkill?.instruction;
   const example = instruction ? makeFoundationItem(skill.id, 'model', 0, 21) : undefined;
@@ -38,6 +40,10 @@ export function SkillDetailPanel({ skill, summary, unmetPrereqNames, onClose, on
     : null;
 
   const hasDueItems = summary ? summary.dueItemCount > 0 : false;
+  const bridgeSkillId = unmetPrereqIds?.[0];
+  const bridgeSkillTitle = bridgeSkillId
+    ? getCurriculumSkill(bridgeSkillId)?.title ?? bridgeSkillId
+    : null;
 
   return (
     <div style={s.overlay} onClick={onClose} role="dialog" aria-modal="true" aria-label={skill.title}>
@@ -121,11 +127,11 @@ export function SkillDetailPanel({ skill, summary, unmetPrereqNames, onClose, on
 
         {/* Action buttons */}
         <div style={s.actions}>
-          {instruction && onBridge && curriculumSkill?.prerequisites.length ? <button style={s.reviewBtn} onClick={() => {
-            const base = planPracticeForSkill(curriculumSkill.prerequisites[0], { sessionLength: 3 });
+          {instruction && onBridge && bridgeSkillId ? <button style={s.reviewBtn} onClick={() => {
+            const base = planPracticeForSkill(bridgeSkillId, { sessionLength: 3 });
             const ids = base.specificItemIds?.slice(0, 3) ?? [];
             onBridge({ ...base, returnToSkillId: skill.id, specificItemIds: ids, sessionLength: ids.length || 3 });
-          }}>Quick refresh · then return here</button> : null}
+          }}>Quick refresh: {bridgeSkillTitle} · then return here</button> : null}
           <button
             style={s.practiceBtn}
             onClick={() => onPracticeSkill(skill.id)}
