@@ -75,7 +75,7 @@ export function buildTransferPool(focusSkillId: string, grade: GradeLevel, summa
 export function planDailyLesson(args: PlanDailyLessonArgs): DailyLessonPlan {
   const curriculum = getCurriculum(args.gradeLevel);
   const configured = curriculum?.skills.some(skill => skill.evidenceProfile) ?? false;
-  const studentEvents = args.events.filter(event => event.studentId === args.studentId && event.createdAt <= args.now);
+  const studentEvents = chronologicalEvents(args.events.filter(event => event.studentId === args.studentId && event.createdAt <= args.now));
   const localDate = learnerLocalDateKey(new Date(args.now), args.timezone);
   const priorFocusDays = new Set(studentEvents.filter(event => !event.isRetry && event.lessonSegment === 'focus'
     && (!configured || makeItemFromId(event.itemId)?.gradeLevel === args.gradeLevel))
@@ -98,7 +98,7 @@ export function planDailyLesson(args: PlanDailyLessonArgs): DailyLessonPlan {
     highestBand = recent.length < 6 || accuracy < .75 ? 0 : accuracy < .9 ? 1 : 2;
     focusCatalogue = focusCatalogue.filter(item => item.contentSpec?.domain !== 'foundation' || item.contentSpec.data.band <= highestBand);
   }
-  const unitProgress = deriveLearningUnitProgress({ items: focusCatalogue, events: args.events, states: args.itemStates });
+  const unitProgress = deriveLearningUnitProgress({ items: focusCatalogue, events: studentEvents, states: args.itemStates });
   let focusAll = shuffled(focusCatalogue.filter(item => !retrievalCards.has(deriveCardKey(item)) && unitProgress.get(deriveCardKey(item))?.status !== 'maintenance'), args.rng);
   if (configured && focusCandidate) {
     // Sequence representations before increasing structural difficulty; one concrete variant per card.
@@ -164,6 +164,6 @@ export function planDailyLesson(args: PlanDailyLessonArgs): DailyLessonPlan {
   if (mixedDay) warnings.push({ code: 'sparse_transfer', message: 'Today is mixed application: practice introduced skills without starting a new skill.' });
   if (transferAll.length < 3) warnings.push({ code: 'sparse_transfer', message: 'Transfer content is shorter because no unrelated new skill was introduced.' });
   const segmentCounts = { retrieval: planned.filter(value => value.segment === 'retrieval').length, focus: planned.filter(value => value.segment === 'focus').length, transfer: planned.filter(value => value.segment === 'transfer').length };
-  const estimatedMinutes = Math.max(1, Math.ceil(planned.reduce((sum, value) => sum + estimateItemSeconds(value.item, args.events), 0) / 60));
+  const estimatedMinutes = Math.max(1, Math.ceil(planned.reduce((sum, value) => sum + estimateItemSeconds(value.item, studentEvents), 0) / 60));
   return { id: `lesson:${args.studentId}:${learnerLocalDateKey(new Date(args.now), args.timezone)}`, studentId: args.studentId, generatedAt: args.now, estimatedMinutes, focusSkillId: focusCandidate?.skillId, focusSkillTitle: focusCandidate ? getCurriculumSkill(focusCandidate.skillId)?.title ?? focusCandidate.skillId : undefined, items: planned, segmentCounts, warnings };
 }
