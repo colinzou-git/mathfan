@@ -1,6 +1,6 @@
 import type { SkillSummaryStatus } from '../mastery/skillMasteryEngine';
 import type { MathAnswerEvent } from '../learning/learningEvents';
-import type { DailyNewGoalQuestionLimits, PracticeItem, ReviewGrade } from '../../types/math';
+import type { DailyNewGoalQuestionLimits, GradeLevel, PracticeItem, ReviewGrade } from '../../types/math';
 
 export type LearningGoalStatus = 'active' | 'paused' | 'completed' | 'ended' | 'cancelled';
 export type GoalSource = 'recommended' | 'evaluation' | 'manual';
@@ -126,6 +126,10 @@ export interface GoalEvaluation {
   cancelledAt?: string;
   goalId?: string;
   seed?: number;
+  /** Curriculum identity at evaluation creation. Missing metadata is legacy Grade 3 data. */
+  gradeLevel?: GradeLevel;
+  curriculumId?: string;
+  curriculumVersion?: number;
   currentQuestionIndex: number;
   plannedQuestionCount: number;
   itemIds: string[];
