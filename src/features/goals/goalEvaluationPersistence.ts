@@ -1,5 +1,5 @@
 import { db } from '../../db/dexie';
-import type { AttemptLog, PracticeItem, StudentItemState } from '../../types/math';
+import type { AttemptLog, GradeLevel, PracticeItem, StudentItemState } from '../../types/math';
 import { generateId } from '../../utils/id';
 import { goalEvaluationRepo } from '../../db/repositories';
 import type { MathAnswerEvent } from '../learning/learningEvents';
@@ -12,6 +12,7 @@ import type { CheckResult } from '../practice/answerChecker';
 import { applyReview, createInitialState } from '../scheduler/scheduler';
 import { applyMisconceptionConfirmation, applyMisconceptionDetection, detectMistakes } from '../mastery/misconceptionEngine';
 import { buildSchedulingTelemetry } from '../learning/schedulingTelemetry';
+import { getCurriculum } from '../curriculum/curriculumRegistry';
 
 export interface GoalEvaluationAnswerProposal {
   evaluationId: string;
@@ -40,6 +41,35 @@ export class GoalEvaluationSelectionConflictError extends Error {
   constructor(message: string) { super(message); this.name = 'GoalEvaluationSelectionConflictError'; }
 }
 
+interface GoalEvaluationCurriculumIdentity {
+  gradeLevel: GradeLevel;
+  curriculumId?: string;
+  curriculumVersion?: number;
+}
+
+async function currentCurriculumIdentity(studentId: string): Promise<GoalEvaluationCurriculumIdentity> {
+  const profile = await db.students.get(studentId);
+  const gradeLevel = profile?.gradeLevel ?? 3;
+  const curriculum = getCurriculum(gradeLevel);
+  return { gradeLevel, curriculumId: curriculum?.id, curriculumVersion: curriculum?.version };
+}
+
+function evaluationMatchesCurriculum(evaluation: GoalEvaluation, identity: GoalEvaluationCurriculumIdentity): boolean {
+  // Goal evaluation existed before Grade 4 support, so records without curriculum metadata are legacy Grade 3.
+  const evaluationGrade = evaluation.gradeLevel ?? 3;
+  if (evaluationGrade !== identity.gradeLevel) return false;
+  if (evaluation.curriculumId !== undefined && evaluation.curriculumId !== identity.curriculumId) return false;
+  if (evaluation.curriculumVersion !== undefined && evaluation.curriculumVersion !== identity.curriculumVersion) return false;
+  return true;
+}
+
+async function assertCurrentCurriculum(evaluation: GoalEvaluation): Promise<void> {
+  const identity = await currentCurriculumIdentity(evaluation.studentId);
+  if (!evaluationMatchesCurriculum(evaluation, identity)) {
+    throw new GoalEvaluationSelectionConflictError('Goal evaluation curriculum no longer matches the current learner profile.');
+  }
+}
+
 export interface PersistNextGoalQuestionArgs {
   evaluationId: string;
   expectedAnswerCount: number;
@@ -49,9 +79,10 @@ export interface PersistNextGoalQuestionArgs {
 }
 
 export async function persistNextGoalEvaluationQuestion(args: PersistNextGoalQuestionArgs): Promise<GoalEvaluation> {
-  return db.transaction('rw', db.goalEvaluations, async () => {
+  return db.transaction('rw', db.goalEvaluations, db.students, async () => {
     const current = await db.goalEvaluations.get(args.evaluationId);
     if (!current || current.status !== 'in_progress') throw new Error('Goal evaluation is not resumable.');
+    await assertCurrentCurriculum(current);
     if (current.currentSelection?.questionIndex === current.answers.length) {
       return { ...current, currentSelection: validatePersistedGoalEvaluationSelection({ evaluation: current, selection: current.currentSelection }) };
     }
@@ -79,13 +110,17 @@ export class GoalEvaluationIdempotencyConflictError extends Error {
 }
 
 export async function loadLatestResumableGoalEvaluation(studentId: string): Promise<GoalEvaluation | null> {
-  const evaluations = await goalEvaluationRepo.listForStudent(studentId);
+  const [evaluations, identity] = await Promise.all([
+    goalEvaluationRepo.listForStudent(studentId),
+    currentCurriculumIdentity(studentId),
+  ]);
   return evaluations
-    .filter(evaluation => evaluation.status === 'in_progress')
+    .filter(evaluation => evaluation.status === 'in_progress' && evaluationMatchesCurriculum(evaluation, identity))
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0] ?? null;
 }
 
 export async function createGoalEvaluation(studentId: string, now: string): Promise<GoalEvaluation> {
+  const identity = await currentCurriculumIdentity(studentId);
   const evaluation: GoalEvaluation = {
     id: generateId(),
     studentId,
@@ -95,6 +130,9 @@ export async function createGoalEvaluation(studentId: string, now: string): Prom
     updatedAt: now,
     startedAt: now,
     seed: randomSeed(),
+    gradeLevel: identity.gradeLevel,
+    curriculumId: identity.curriculumId,
+    curriculumVersion: identity.curriculumVersion,
     currentQuestionIndex: 0,
     plannedQuestionCount: 30,
     itemIds: [],
@@ -126,9 +164,10 @@ function classifySchedulerError(error: unknown): MathAnswerEvent['schedulerError
 }
 
 export async function persistGoalEvaluationAnswer(proposal: GoalEvaluationAnswerProposal): Promise<PersistedGoalEvaluationAnswerResult> {
-  return db.transaction('rw', db.mathAnswerEvents, db.itemStates, db.attempts, db.goalEvaluations, async () => {
+  return db.transaction('rw', db.mathAnswerEvents, db.itemStates, db.attempts, db.goalEvaluations, db.students, async () => {
     const current = await db.goalEvaluations.get(proposal.evaluationId);
     if (!current || current.studentId !== proposal.studentId) throw new Error('Goal evaluation not found.');
+    await assertCurrentCurriculum(current);
     const cardKey = deriveCardKey(proposal.item);
     const existingEvent = await db.mathAnswerEvents.get(proposal.eventId);
     if (existingEvent) {
