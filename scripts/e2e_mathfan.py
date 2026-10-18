@@ -1341,7 +1341,7 @@ def grade4_readiness_bridge_lesson_review(page: Page) -> None:
     expect(page.get_by_text(re.compile(r"Quick refreshes:"))).to_be_visible()
     assert answered <= 22
     page.get_by_role("button", name="See my Math Map", exact=True).click()
-    page.get_by_role("button", name=re.compile(r"^Factors as Rectangle Sides:")).click()
+    page.get_by_role("button", name=re.compile(r"^Find Every Factor Pair:")).click()
     expect(page.get_by_role("heading", name="Learn this skill", exact=True)).to_be_visible()
     page.get_by_text("Worked example", exact=True).click()
     assert_no_horizontal_overflow(page, "Grade 4 worked example")
@@ -1351,7 +1351,7 @@ def grade4_readiness_bridge_lesson_review(page: Page) -> None:
         page.wait_for_timeout(1500)
     expect(page.get_by_role("heading", name="Session Complete!", exact=True)).to_be_visible()
     page.get_by_role("button", name="Home", exact=True).click()
-    expect(page.get_by_role("dialog", name="Factors as Rectangle Sides", exact=True)).to_be_visible()
+    expect(page.get_by_role("dialog", name="Find Every Factor Pair", exact=True)).to_be_visible()
     page.get_by_role("button", name="Close", exact=True).click()
     page.get_by_role("button", name="Back", exact=True).click()
     page.get_by_role("button", name="Start lesson", exact=True).click()
