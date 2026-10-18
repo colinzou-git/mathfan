@@ -25,14 +25,19 @@ jobs:
           from pathlib import Path
 
           path = Path('scripts/e2e_mathfan.py')
-          text = path.read_text()
-          old_tile = 'page.get_by_role("button", name=re.compile(r"^Factors as Rectangle Sides:")).click()'
-          new_tile = 'page.get_by_role("button", name=re.compile(r"^Find Every Factor Pair:")).click()'
-          old_dialog = 'expect(page.get_by_role("dialog", name="Factors as Rectangle Sides", exact=True)).to_be_visible()'
-          new_dialog = 'expect(page.get_by_role("dialog", name="Find Every Factor Pair", exact=True)).to_be_visible()'
-          assert text.count(old_tile) == 1, 'Expected exactly one stale tile selector'
-          assert text.count(old_dialog) == 1, 'Expected exactly one stale dialog selector'
-          path.write_text(text.replace(old_tile, new_tile).replace(old_dialog, new_dialog))
+          lines = path.read_text().splitlines(keepends=True)
+          changed_tile = 0
+          changed_dialog = 0
+          for index, line in enumerate(lines):
+              if 'get_by_role("button"' in line and 'Factors as Rectangle Sides:' in line:
+                  lines[index] = line.replace('Factors as Rectangle Sides', 'Find Every Factor Pair')
+                  changed_tile += 1
+              elif 'get_by_role("dialog"' in line and 'Factors as Rectangle Sides' in line:
+                  lines[index] = line.replace('Factors as Rectangle Sides', 'Find Every Factor Pair')
+                  changed_dialog += 1
+          assert changed_tile == 1, f'Expected one stale tile selector, changed {changed_tile}'
+          assert changed_dialog == 1, f'Expected one stale dialog selector, changed {changed_dialog}'
+          path.write_text(''.join(lines))
           PY
 
       - name: Commit E2E correction
