@@ -12,7 +12,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import type { GradeLevel, PracticeItem } from '../../types/math';
-import { buildReadinessPlan, readinessRecommendations } from './readinessPlanner';
+import { buildReadinessPlan, readinessRecommendations, readinessSessionId } from './readinessPlanner';
 import { getCurriculumSkill } from '../curriculum/curriculumRegistry';
 import { mathAnswerEventRepo } from '../../db/repositories';
 import { makeItemFromId } from '../curriculum/makeItemFromId';
@@ -59,7 +59,7 @@ const FEEDBACK_MS = 1200;
 export function DiagnosticSession({ studentId, gradeLevel = 3, audioEnabled = false, onComplete, onCancel }: Props) {
   // sessionId and plan are stable for the lifetime of the component.
   // Stored in state (not ref) so they are safe to read during render.
-  const [sessionId] = useState(() => gradeLevel === 4 ? `g4-readiness:${studentId}:v1` : generateId());
+  const [sessionId, setSessionId] = useState(() => gradeLevel === 4 ? readinessSessionId(studentId, []) : generateId());
   const [phase, setPhase] = useState<DiagPhase>('intro');
   const [index, setIndex] = useState(0);
   const [input, setInput] = useState('');
@@ -82,13 +82,15 @@ export function DiagnosticSession({ studentId, gradeLevel = 3, audioEnabled = fa
     let cancelled = false;
     void mathAnswerEventRepo.getAll(studentId).then(events => {
       if (cancelled) return;
-      const saved = events.filter(event => event.sessionId === sessionId).sort((a, b) => a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id));
+      const resolvedSessionId = readinessSessionId(studentId, events);
+      setSessionId(resolvedSessionId);
+      const saved = events.filter(event => event.sessionId === resolvedSessionId).sort((a, b) => a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id));
       const resumed: QuestionResult[] = saved.flatMap(event => { const item = makeItemFromId(event.itemId); return item ? [{ item, studentAnswer: String(event.studentAnswer), isCorrect: event.isCorrect, latencyMs: event.latencyMs }] : []; });
       setResults(resumed); setIndex(resumed.length); setLoadingReadiness(false);
-      if (resumed.length >= buildReadinessPlan(sessionId, resumed).items.length) { writesSucceededRef.current = true; setPhase('done'); }
+      if (resumed.length >= buildReadinessPlan(resolvedSessionId, resumed).items.length) { writesSucceededRef.current = true; setPhase('done'); }
     }).catch(() => { if (!cancelled) { setReadinessLoadError(true); setLoadingReadiness(false); } });
     return () => { cancelled = true; };
-  }, [gradeLevel, sessionId, studentId, loadRevision]);
+  }, [gradeLevel, studentId, loadRevision]);
 
   const items = plan.items;
   const currentItem = items[index];

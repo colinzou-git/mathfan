@@ -1406,10 +1406,118 @@ def grade4_all_skills_layout(page: Page) -> None:
 
     page.get_by_role("button", name=re.compile(r"Goals")).click()
     page.get_by_role("button", name="Evaluation", exact=True).first.click()
-    expect(page.get_by_text("Exactly 30 questions across different Grade 4 skills in Units 1–2.", exact=True)).to_be_visible()
+    expect(page.get_by_text("Exactly 30 questions across different Grade 4 skills in Units 1–3.", exact=True)).to_be_visible()
     page.get_by_role("button", name="Start", exact=True).click()
     expect(page.get_by_label("Question 1 of 30", exact=True)).to_be_visible(timeout=60_000)
     assert_no_horizontal_overflow(page, "Grade 4 goal evaluation")
+
+
+def grade4_legacy_readiness_resume(page: Page) -> None:
+    data, fixtures = grade4_fixture_data()
+    create_profile(page, "LegacyReadiness", "e2e-legacy-readiness", 4)
+    # A pre-upgrade interrupted v1 check: preserve its exact next question.
+    page.evaluate("""async probes => {
+        const db = await new Promise((resolve, reject) => {const r=indexedDB.open('mathfan');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});
+        const student = await new Promise(resolve => {const r=db.transaction('students').objectStore('students').getAll();r.onsuccess=()=>resolve(r.result[0]);});
+        await new Promise((resolve,reject) => {
+            const tx=db.transaction('mathAnswerEvents','readwrite');
+            probes.forEach((item,i)=>tx.objectStore('mathAnswerEvents').put({id:`legacy-probe-${i}`,studentId:student.id,sessionId:`g4-readiness:${student.id}:v1`,itemId:item.id,cardKey:item.cardKey,schemaId:item.schemaId,mode:'diagnostic',promptShown:item.prompt,correctAnswer:item.answer,studentAnswer:item.answer,isCorrect:true,isRetry:false,hintUsed:false,latencyMs:90000,schedulingEligible:false,schedulingApplied:false,schedulingKind:'observation',createdAt:new Date(Date.UTC(2026,9,1,12,i)).toISOString()}));
+            tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);
+        });db.close();
+    }""", data["legacyReadiness"][:10])
+    page.reload(wait_until="domcontentloaded")
+    page.get_by_role("button", name=re.compile(r"Grade 4 Math Map")).click()
+    page.get_by_role("button", name="Take a quick check", exact=True).click()
+    page.get_by_role("button", name="Resume quick check", exact=True).click()
+    expect(page.locator("[data-item-id]")).to_have_attribute("data-item-id", data["legacyReadiness"][10]["id"])
+    item = data["legacyReadiness"][10]
+    if item.get("answerInput") == "choice":
+        page.get_by_role("button", name=str(item["answer"]), exact=True).click()
+    else:
+        page.keyboard.type(str(item["answer"]))
+    page.keyboard.press("Enter")
+    expect(page.get_by_text("Correct!", exact=False)).to_be_visible()
+    saved = grade4_db(page)
+    assert len(saved["events"]) == 11
+    assert all(event["sessionId"].endswith(":v1") for event in saved["events"])
+    assert not saved["states"], "Legacy readiness scheduled cards"
+    assert_no_horizontal_overflow(page, "Legacy readiness resume")
+
+
+def grade4_comparison_learning_review(page: Page) -> None:
+    _, fixtures = grade4_fixture_data()
+    create_profile(page, "ComparisonLearner", "e2e-comparison-learner", 4)
+    # Use the actual goal UI to give this comparison skill daily-lesson priority.
+    page.get_by_role("button", name=re.compile(r"Goals")).click()
+    page.get_by_role("button", name="Add Goal", exact=True).click()
+    page.get_by_role("button", name="Next", exact=True).click()
+    page.get_by_role("button", name="Browse all skills", exact=True).click()
+    page.get_by_label("Understand Times as Many", exact=True).check()
+    page.get_by_role("button", name="Next", exact=True).click()
+    page.get_by_label("Goal title", exact=True).fill("Comparison reasoning")
+    page.get_by_role("button", name="Save Goal", exact=True).click()
+    expect(page.get_by_text("Comparison reasoning", exact=True)).to_be_visible()
+    page.get_by_role("button", name="Back", exact=True).click()
+    lesson = page.get_by_role("region", name="Start Today’s Lesson")
+    lesson.get_by_role("button", name="See plan", exact=True).click()
+    lesson.get_by_role("button", name="Regenerate plan", exact=True).click()
+    expect(lesson).to_contain_text("Focus: Understand Times as Many")
+    page.get_by_role("button", name=re.compile(r"Grade 4 Math Map")).click()
+    page.get_by_role("button", name=re.compile(r"^Understand Times as Many:")).click()
+    expect(page.get_by_role("dialog", name="Understand Times as Many", exact=True)).to_contain_text("reference quantity")
+    page.get_by_text("Worked example", exact=True).click()
+    expect(page.get_by_role("img", name=re.compile(r"Comparison tape"))).to_be_visible()
+    assert_no_horizontal_overflow(page, "Comparison instruction")
+    page.get_by_role("button", name=re.compile(r"Practice this skill")).click()
+    item_id = page.locator(".drill-q").get_attribute("data-item-id")
+    item = fixtures[item_id]
+    if item.get("choices"):
+        wrong = next(value for value in item["choices"] if value != item["answer"])
+        page.get_by_role("button", name=str(wrong), exact=True).click()
+    else:
+        page.get_by_label("Your answer", exact=True).fill("0")
+        page.get_by_label("Your answer", exact=True).press("Enter")
+    expect(page.get_by_text("💡 Hint", exact=True)).to_be_visible()
+    grade4_answer_practice(page, fixtures)
+    page.wait_for_timeout(1500)
+    for _ in range(15):
+        if page.get_by_role("heading", name="Session Complete!", exact=True).is_visible():
+            break
+        grade4_answer_practice(page, fixtures)
+        page.wait_for_timeout(1500)
+    expect(page.get_by_role("heading", name="Session Complete!", exact=True)).to_be_visible()
+    page.get_by_role("button", name="Home", exact=True).click()
+    events = grade4_db(page)["events"]
+    assert any(event.get("isRetry") and event.get("hintUsed") for event in events)
+    assert all(not event.get("schedulingApplied") or event.get("schedulingKind") == "relearning_step" for event in events if event.get("isRetry"))
+    assert any(event.get("schedulingApplied") for event in events if not event.get("isRetry"))
+
+    page.get_by_role("button", name="Back", exact=True).click()
+    expect(lesson).to_contain_text("Focus: Understand Times as Many")
+    lesson.get_by_role("button", name="Start lesson", exact=True).click()
+    for _ in range(20):
+        if page.get_by_role("heading", name="Session Complete!", exact=True).is_visible():
+            break
+        grade4_answer_practice(page, fixtures)
+        page.wait_for_timeout(1500)
+    expect(page.get_by_role("heading", name="Session Complete!", exact=True)).to_be_visible()
+    page.get_by_role("button", name="Home", exact=True).click()
+    saved = grade4_db(page)
+    assert any(event["itemId"].startswith("G4F1~g4-oa-mult-compare-meaning~verify~") for event in saved["events"])
+    page.reload(wait_until="domcontentloaded")
+    assert len(grade4_db(page)["events"]) == len(saved["events"])
+    max_due = max(value["nextDueAt"] for value in saved["states"] if value.get("nextDueAt"))
+    page.evaluate("""due => localStorage.setItem('mathfan_clock', JSON.stringify({realAnchorMs:Date.now(), appAnchorMs:Date.parse(due)+86400000, scale:1}))""", max_due)
+    page.reload(wait_until="domcontentloaded")
+    page.get_by_role("button", name=re.compile(r"Grade 4 Math Map")).click()
+    page.get_by_role("button", name=re.compile(r"^Understand Times as Many:")).click()
+    page.get_by_role("button", name=re.compile(r"Review due items")).click()
+    expect(page.locator(".drill-q")).to_be_visible()
+    fresh = page.locator(".drill-q").get_attribute("data-item-id")
+    old_ids = {value["lastItemId"] for value in saved["states"] if value.get("lastItemId")}
+    assert fresh not in old_ids, "Comparison review did not use a fresh concrete variant"
+    grade4_answer_practice(page, fixtures)
+    assert_no_horizontal_overflow(page, "Comparison later review")
 
 
 def grade4_offline_profile_switch(page: Page) -> None:
@@ -1418,7 +1526,7 @@ def grade4_offline_profile_switch(page: Page) -> None:
     page.wait_for_function("navigator.serviceWorker.controller !== null", timeout=60_000)
     page.context.set_offline(True)
     page.get_by_role("button", name=re.compile(r"Grade 4 Math Map")).click()
-    page.get_by_role("button", name=re.compile(r"^Factors as Rectangle Sides:")).click()
+    page.get_by_role("button", name=re.compile(r"^Understand Times as Many:")).click()
     page.get_by_role("button", name=re.compile(r"Practice this skill")).click()
     grade4_answer_practice(page, fixtures)
     saved = grade4_db(page)
@@ -1513,6 +1621,8 @@ def main() -> int:
             executable_path=chromium_executable or None,
         )
         scenarios = [
+            ("grade4-legacy-readiness-resume", {"width": 390, "height": 844}, grade4_legacy_readiness_resume, False),
+            ("grade4-comparison-learning-review", {"width": 390, "height": 844}, grade4_comparison_learning_review, False),
             ("grade4-readiness-bridge-lesson-review", {"width": 390, "height": 844}, grade4_readiness_bridge_lesson_review, False),
             ("grade4-ipad-all-skills", {"width": 1024, "height": 768}, grade4_all_skills_layout, False),
             ("grade4-desktop-all-skills", {"width": 1440, "height": 1000}, grade4_all_skills_layout, False),

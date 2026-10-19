@@ -13,11 +13,13 @@ try {
   const { buildReadinessPlan } = await server.ssrLoadModule('/src/features/diagnosis/readinessPlanner.ts');
   const { planPracticeForSkill } = await server.ssrLoadModule('/src/features/mastery/skillPracticePlanner.ts');
   const readiness = buildReadinessPlan('fixture').items;
+  const legacyReadiness = buildReadinessPlan('g4-readiness:fixture:v1').items;
+  const contrasts = readiness.flatMap(item => buildReadinessPlan('fixture', [{ item, isCorrect: false }]).items);
   const bridges = [...new Set(GRADE4_SKILLS.flatMap(skill => skill.prerequisites))].flatMap(id => (planPracticeForSkill(id).specificItemIds ?? []).map(makeItemFromId));
-  const items = [...GRADE4_SKILLS.flatMap(skill => foundationItemIds(skill.id).map(makeItemFromId)), ...bridges,
+  const items = [...contrasts, ...legacyReadiness, ...GRADE4_SKILLS.flatMap(skill => foundationItemIds(skill.id).map(makeItemFromId)), ...bridges,
     ...GRADE4_SKILLS.map((skill, index) => makeFoundationItem(skill.id, 'check', 0, 600 + index))];
   const dir = process.env.E2E_RESULTS_DIR || 'test-results/browser';
   await mkdir(dir, { recursive: true });
-  await writeFile(`${dir}/grade4-fixtures.json`, JSON.stringify({ skills: GRADE4_SKILLS, items, readiness }));
+  await writeFile(`${dir}/grade4-fixtures.json`, JSON.stringify({ skills: GRADE4_SKILLS, items, readiness, legacyReadiness }));
   }
 } finally { await server.close(); }

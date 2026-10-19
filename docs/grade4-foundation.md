@@ -2,6 +2,8 @@
 
 Issue #100 adds the first complete Grade 4 slice: six factors/patterns skills and seven place-value/addition/subtraction skills. Readiness is Unit 0, outside the two content units. The Math Map names later content as future phases; estimate/check provides partial support for 4.OA.3, not full multistep/remainder coverage.
 
+The curriculum now also includes [Unit 3: comparison and multistep reasoning](grade4-unit3.md). Curriculum version 2 preserves the Unit 1–2 IDs, generator streams, card keys and evidence requirements described below. Readiness v2 samples Units 1–3 within the same 22-question cap; published v1 checks resume unchanged.
+
 ## Contracts and compatibility
 
 `curriculumRegistry.ts` is the versioned registry for units, standards, prerequisite edges, evidence profiles, blueprints, misconceptions, instruction, and transfer relations. Grade 3 adapts the existing map without changing its IDs. Legacy rounding/pattern aliases resolve explicitly. Registry validation rejects duplicates, missing references, and prerequisite cycles.
