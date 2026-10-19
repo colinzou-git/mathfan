@@ -1,11 +1,20 @@
 import type { FoundationQuestionSpec } from '../curriculum/foundationTypes';
 import { expandedParts } from '../curriculum/foundationItems';
+import type { ReactElement } from 'react';
 
 const places = ['millions', 'hundred thousands', 'ten thousands', 'thousands', 'hundreds', 'tens', 'ones'];
-export function FoundationModel({ spec, revealAnswer = false }: { spec: FoundationQuestionSpec; revealAnswer?: boolean }) {
+export function FoundationModel({ spec, revealAnswer = false }: { spec: FoundationQuestionSpec; revealAnswer?: boolean }): ReactElement | null {
   const visual = spec.visual;
   if (!visual) return null;
   const style = { width: '100%', maxWidth: 360, color: 'var(--text, #334155)', fontSize: 13 };
+  if (visual.kind === 'comparison_steps') {
+    const tape: FoundationQuestionSpec = { ...spec, visual: { kind: 'comparison_tape', reference: visual.reference, multiplier: visual.multiplier, compared: visual.compared, unknown: visual.unknown === 'reference' ? 'reference' : 'result' } };
+    return <div style={style} aria-label="Two-step quantity model">
+      <FoundationModel spec={tape} revealAnswer={revealAnswer} />
+      <p>Then {visual.subtract ? 'remove' : 'add'} {visual.unknown === 'change' && !revealAnswer ? '?' : visual.change}.</p>
+      <p>Final count: {visual.unknown === 'result' && !revealAnswer ? '?' : visual.total}</p>
+    </div>;
+  }
   if (visual.kind === 'quantity_table') {
     return <table style={{ ...style, borderCollapse: 'collapse' }} aria-label="Quantity relationships">
       <thead><tr><th scope="col">Quantity</th><th scope="col">Value</th></tr></thead>
@@ -16,9 +25,9 @@ export function FoundationModel({ spec, revealAnswer = false }: { spec: Foundati
     const label = (value: number, position: typeof visual.unknown) => !revealAnswer && visual.unknown === position ? '?' : value;
     return <div style={style} role="img" aria-label={`Comparison tape. One reference unit: ${label(visual.reference, 'reference')}. Compared quantity: ${label(visual.compared, 'result')}. ${visual.additive ? 'An extra segment is added to the reference.' : 'The compared tape is made of equal copies of the reference.'}`}>
       <p>Reference: {label(visual.reference, 'reference')}</p>
-      <div aria-hidden="true" style={{ width: `${100 / (visual.additive ? 2 : visual.multiplier)}%`, minWidth: 24, height: 28, border: '2px solid #6366f1', boxSizing: 'border-box' }} />
+      <div aria-hidden="true" style={{ width: `${100 * visual.reference / visual.compared}%`, height: 28, border: '2px solid #6366f1', boxSizing: 'border-box' }} />
       <p>Compared: {label(visual.compared, 'result')} · {label(visual.multiplier, 'multiplier')} {visual.additive ? 'more' : 'times as many'}</p>
-      <div aria-hidden="true" style={{ display: 'flex', height: 28 }}>{Array.from({ length: visual.additive ? 2 : visual.multiplier }, (_, i) => <div key={i} style={{ flex: 1, border: '2px solid #6366f1', background: i === 0 ? '#e0e7ff' : '#f1f5f9' }} />)}</div>
+      <div aria-hidden="true" style={{ display: 'flex', height: 28 }}>{Array.from({ length: visual.additive ? 2 : visual.multiplier }, (_, i) => <div key={i} style={{ flex: visual.additive ? i === 0 ? visual.reference : visual.multiplier : 1, border: '2px solid #6366f1', background: i === 0 ? '#e0e7ff' : '#f1f5f9' }} />)}</div>
     </div>;
   }
   if (visual.kind === 'place_value') {

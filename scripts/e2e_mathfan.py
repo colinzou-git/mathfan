@@ -1412,6 +1412,38 @@ def grade4_all_skills_layout(page: Page) -> None:
     assert_no_horizontal_overflow(page, "Grade 4 goal evaluation")
 
 
+def grade4_legacy_readiness_resume(page: Page) -> None:
+    data, fixtures = grade4_fixture_data()
+    create_profile(page, "LegacyReadiness", "e2e-legacy-readiness", 4)
+    # A pre-upgrade interrupted v1 check: preserve its exact next question.
+    page.evaluate("""async probes => {
+        const db = await new Promise((resolve, reject) => {const r=indexedDB.open('mathfan');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});
+        const student = await new Promise(resolve => {const r=db.transaction('students').objectStore('students').getAll();r.onsuccess=()=>resolve(r.result[0]);});
+        await new Promise((resolve,reject) => {
+            const tx=db.transaction('mathAnswerEvents','readwrite');
+            probes.forEach((item,i)=>tx.objectStore('mathAnswerEvents').put({id:`legacy-probe-${i}`,studentId:student.id,sessionId:`g4-readiness:${student.id}:v1`,itemId:item.id,cardKey:item.cardKey,schemaId:item.schemaId,mode:'diagnostic',promptShown:item.prompt,correctAnswer:item.answer,studentAnswer:item.answer,isCorrect:true,isRetry:false,hintUsed:false,latencyMs:90000,schedulingEligible:false,schedulingApplied:false,schedulingKind:'observation',createdAt:new Date(Date.UTC(2026,9,1,12,i)).toISOString()}));
+            tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);
+        });db.close();
+    }""", data["legacyReadiness"][:10])
+    page.reload(wait_until="domcontentloaded")
+    page.get_by_role("button", name=re.compile(r"Grade 4 Math Map")).click()
+    page.get_by_role("button", name="Take a quick check", exact=True).click()
+    page.get_by_role("button", name="Resume quick check", exact=True).click()
+    expect(page.locator("[data-item-id]")).to_have_attribute("data-item-id", data["legacyReadiness"][10]["id"])
+    item = data["legacyReadiness"][10]
+    if item.get("answerInput") == "choice":
+        page.get_by_role("button", name=str(item["answer"]), exact=True).click()
+    else:
+        page.keyboard.type(str(item["answer"]))
+    page.keyboard.press("Enter")
+    expect(page.get_by_text("Correct!", exact=False)).to_be_visible()
+    saved = grade4_db(page)
+    assert len(saved["events"]) == 11
+    assert all(event["sessionId"].endswith(":v1") for event in saved["events"])
+    assert not saved["states"], "Legacy readiness scheduled cards"
+    assert_no_horizontal_overflow(page, "Legacy readiness resume")
+
+
 def grade4_comparison_learning_review(page: Page) -> None:
     _, fixtures = grade4_fixture_data()
     create_profile(page, "ComparisonLearner", "e2e-comparison-learner", 4)
@@ -1494,7 +1526,7 @@ def grade4_offline_profile_switch(page: Page) -> None:
     page.wait_for_function("navigator.serviceWorker.controller !== null", timeout=60_000)
     page.context.set_offline(True)
     page.get_by_role("button", name=re.compile(r"Grade 4 Math Map")).click()
-    page.get_by_role("button", name=re.compile(r"^Factors as Rectangle Sides:")).click()
+    page.get_by_role("button", name=re.compile(r"^Understand Times as Many:")).click()
     page.get_by_role("button", name=re.compile(r"Practice this skill")).click()
     grade4_answer_practice(page, fixtures)
     saved = grade4_db(page)
@@ -1589,6 +1621,7 @@ def main() -> int:
             executable_path=chromium_executable or None,
         )
         scenarios = [
+            ("grade4-legacy-readiness-resume", {"width": 390, "height": 844}, grade4_legacy_readiness_resume, False),
             ("grade4-comparison-learning-review", {"width": 390, "height": 844}, grade4_comparison_learning_review, False),
             ("grade4-readiness-bridge-lesson-review", {"width": 390, "height": 844}, grade4_readiness_bridge_lesson_review, False),
             ("grade4-ipad-all-skills", {"width": 1024, "height": 768}, grade4_all_skills_layout, False),

@@ -1,6 +1,6 @@
 # Code Map Overview
 
-Generated: 2026-10-19 15:52:32 UTC
+Generated: 2026-10-19 16:12:06 UTC
 
 Repo root: `/workspace/scratch/5bf6de8c5dac/mathfan`
 Output folder: `/workspace/scratch/5bf6de8c5dac/mathfan/docs/code-map`
@@ -14,9 +14,9 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 - Package name: `mathfan`
 - Version: `1.2.0`
 - Module type: `module`
-- Scanned files: **337**
-- Scanned lines: **63,460**
-- Scanned bytes: **5,746,230**
+- Scanned files: **338**
+- Scanned lines: **63,797**
+- Scanned bytes: **8,011,117**
 
 ## NPM scripts
 
@@ -403,6 +403,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   ├── grade4PrerequisiteReadiness.test.ts
 │   │   ├── grade4ReadinessSampling.test.ts
 │   │   ├── grade4RecencyOrder.test.ts
+│   │   ├── grade4Unit3.test.ts
 │   │   ├── growth.test.ts
 │   │   ├── hintEngine.test.ts
 │   │   ├── learnerIdentity.test.ts

@@ -7,6 +7,7 @@ export type FoundationVisual =
   | { kind: 'place_value'; values: number[]; highlightedPlace?: number }
   | { kind: 'rounding'; lower: number; upper: number; value: number }
   | { kind: 'comparison_tape'; reference: number; multiplier: number; compared: number; unknown: 'reference' | 'multiplier' | 'result'; additive?: boolean }
+  | { kind: 'comparison_steps'; reference: number; multiplier: number; compared: number; change: number; total: number; subtract: boolean; unknown: 'reference' | 'result' | 'change' }
   | { kind: 'quantity_table'; rows: Array<{ label: string; value: number; hidden?: boolean }> }
   | { kind: 'columns'; a: number; b: number; operation: '+' | '−'; recording: 'partial' | 'standard' };
 

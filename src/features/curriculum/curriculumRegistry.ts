@@ -1,6 +1,6 @@
 import type { GradeLevel } from '../../types/math';
 import { GRADE3_MASTERY_MAP, type MasterySkillNode } from '../mastery/grade3MasteryMap';
-import type { FoundationForm } from './foundationTypes';
+import type { FoundationForm, FoundationQuestionSpec } from './foundationTypes';
 
 export interface EvidenceProfile {
   version: 1;
@@ -16,6 +16,7 @@ export interface EvidenceProfile {
   minBands: number;
   minContextFamilies: number;
   requiredForms: FoundationForm[];
+  requiredUnknownPositions?: readonly NonNullable<FoundationQuestionSpec['unknownPosition']>[];
 }
 export interface CurriculumSkill extends MasterySkillNode {
   gradeLevel: GradeLevel;
@@ -41,6 +42,9 @@ export const CURRICULUM_MISCONCEPTION_LABELS: Record<string, string> = {
   'foundation:smaller_from_larger': 'Subtraction with renamed units', 'foundation:across_zero': 'Regrouping across zeros',
   'foundation:estimate_is_exact': 'Estimates and exact results', 'foundation:impossible_magnitude': 'Checking reasonable sizes',
   'foundation:times_means_add': 'Equal copies versus adding more', 'foundation:reversed_comparison': 'Reference and compared quantities',
+  'foundation:unknown_operation': 'Choosing the operation for the unknown quantity', 'foundation:comparison_operation': 'Extra amounts versus equal copies',
+  'foundation:lost_step': 'Keeping both steps connected', 'foundation:step_order': 'Ordering and undoing steps',
+  'foundation:irrelevant_quantity': 'Choosing quantities that belong to the model',
 };
 const evidence = (kind: EvidenceProfile['kind']): EvidenceProfile => ({
   version: 1, kind, recentWindow: 12, minIndependent: 8, minDistinct: 6,
@@ -64,16 +68,28 @@ const rows: Row[] = [
   ['g4-nbt-sub-standard', 'Multi-Digit Subtraction', 'Record place-value decomposition and regrouping, including across zeros.', ['g4-nbt-read-write', 'g3-sub-across-zero'], ['4.NBT.4'], 'procedure', 'Align places, and exchange a larger unit when a column needs more units.', 'Across zeros, rename one larger unit across each intervening place.', ['smaller_from_larger', 'across_zero', 'place_misalignment']],
   ['g4-nbt-estimate-check', 'Estimate and Check Results', 'Use useful estimates and inverse checks to judge addition/subtraction results in context.', ['g4-nbt-round-any-place', 'g4-nbt-add-standard', 'g4-nbt-sub-standard'], ['4.OA.3', '4.NBT.3', '4.NBT.4'], 'application', 'Choose a rounding place that is useful for the situation.', 'Label an estimate as approximate and use an inverse calculation for an exact check.', ['estimate_is_exact', 'impossible_magnitude']],
   ['g4-oa-mult-compare-meaning', 'Understand Times as Many', 'Interpret a multiplicative comparison as equal copies of a reference quantity.', ['g3-mul-meaning', 'g3-div-mul-relationship'], ['4.OA.1'], 'concept', 'Draw one tape unit for the reference quantity, then copy it the stated number of times.', 'Connect equal tape units to compared quantity = multiplier × reference quantity.', ['times_means_add', 'reversed_comparison']],
+  ['g4-oa-mult-compare-equations', 'Model Comparison Equations', 'Connect comparison statements and diagrams to equations with the unknown in different roles.', ['g4-oa-mult-compare-meaning'], ['4.OA.1'], 'concept', 'Label the reference, the multiplier and the compared quantity before placing x.', 'The compared quantity equals the multiplier times the reference; x names the quantity the question asks for.', ['times_means_add', 'reversed_comparison', 'unknown_operation', 'comparison_operation']],
+  ['g4-oa-mult-compare-unknowns', 'Find the Missing Comparison Quantity', 'Solve compared-quantity, reference-quantity and multiplier-unknown problems.', ['g4-oa-mult-compare-equations'], ['4.OA.2'], 'application', 'Keep the equal-copy relationship while moving the unknown to a different role.', 'Multiply to find the compared quantity; divide to find a reference quantity or multiplier.', ['times_means_add', 'reversed_comparison', 'unknown_operation', 'comparison_operation']],
+  ['g4-oa-add-vs-mult-compare', 'More Than or Times as Many?', 'Distinguish an extra amount from equal copies and choose the matching operation.', ['g4-oa-mult-compare-meaning'], ['4.OA.2'], 'concept', 'Compare a tape with an extra segment to a tape made from equal copies.', 'More than describes an added difference. Times as many describes a multiplicative relationship.', ['times_means_add', 'comparison_operation', 'unknown_operation', 'reversed_comparison']],
+  ['g4-oa-multistep-model', 'Model Connected Steps', 'Represent whole-number multistep situations with an equation and a clearly named unknown.', ['g3-word-two-step', 'g4-oa-mult-compare-unknowns'], ['4.OA.3'], 'application', 'Separate the initial equal-copy relationship from the later change, and label the asked quantity.', 'Connect the intermediate count and the change in one equation; ignore quantities outside the stated counts.', ['lost_step', 'step_order', 'irrelevant_quantity']],
+  ['g4-oa-multistep-solve', 'Solve and Check Connected Steps', 'Solve multistep problems, undo steps for unknown starting values, and check the result.', ['g4-oa-multistep-model', 'g4-nbt-estimate-check'], ['4.OA.3'], 'application', 'Work forward for an unknown final count, or undo the later change before finding a starting quantity.', 'Substitute the answer into the original relationship. Estimates check size; inverse calculations check exactness.', ['lost_step', 'step_order', 'irrelevant_quantity', 'estimate_is_exact']],
 ];
+const unknownRequirements: Record<string, EvidenceProfile['requiredUnknownPositions']> = {
+  'g4-oa-mult-compare-equations': ['result', 'reference', 'multiplier'],
+  'g4-oa-mult-compare-unknowns': ['result', 'reference', 'multiplier'],
+  'g4-oa-multistep-model': ['result', 'reference', 'change'],
+  'g4-oa-multistep-solve': ['result', 'reference', 'change'],
+};
 export const GRADE4_SKILLS: readonly CurriculumSkill[] = rows.map(([id, title, description, prerequisites, standards, kind, model, connect, codes], index) => ({
   id, title, description, prerequisites, californiaStandardIds: standards, gradeLevel: 4,
   domain: index < 6 || index >= 13 ? 'multiplication' : 'addition_subtraction', unitId: index < 6 ? 'g4-u1' : index < 13 ? 'g4-u2' : 'g4-u3',
-  evidenceProfile: evidence(kind), blueprintForms: FOUNDATION_FORMS,
+  evidenceProfile: { ...evidence(kind), ...(index >= 13 && kind === 'application' ? { minContextFamilies: 3 } : {}),
+    ...(unknownRequirements[id] ? { requiredUnknownPositions: unknownRequirements[id] } : {}) }, blueprintForms: FOUNDATION_FORMS,
   misconceptions: codes.map(code => `foundation:${code}`), transferSkillIds: [id, ...prerequisites.filter(prerequisite => prerequisite.startsWith('g4-'))],
   instruction: { activate: index >= 13 ? 'How is “times as many” different from “more than”? Identify the reference quantity.' : index < 6 ? 'What do you remember about equal groups and patterns?' : 'What do you remember about tens, hundreds, and regrouping?', model, connect,
     guided: 'Try a model first. Explain the strategy, then work independently with different numbers.',
     reflection: 'Which model or check helped you? Explain one relationship you noticed.' },
-  ...(id === 'g4-nbt-estimate-check' ? { partialStandardIds: ['4.OA.3'] } : {}),
+  ...(['g4-nbt-estimate-check', 'g4-oa-multistep-model', 'g4-oa-multistep-solve'].includes(id) ? { partialStandardIds: ['4.OA.3'] } : {}),
 }));
 const grade3: Curriculum = { id: 'california-g3', version: 1, gradeLevel: 3,
   skills: GRADE3_MASTERY_MAP.map(skill => ({ ...skill, gradeLevel: 3, unitId: `g3-${skill.domain}` })),

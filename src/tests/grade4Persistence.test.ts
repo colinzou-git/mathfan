@@ -44,21 +44,21 @@ describe('Grade 4 canonical persistence and sync', () => {
     expect((await summaries()).find(value => value.skillId === 'g4-nbt-ten-times')).toMatchObject({ learningState: 'new', provisionalPlacement: true });
   });
 
-  it.each(['g4-nbt-ten-times', 'g4-oa-mult-compare-meaning'])('round-trips %s events, mastery, schema scheduling and lesson metadata', async (skillId) => {
-    for (let i = 0; i < 12; i++) {
-      const item = makeFoundationItem(skillId, FOUNDATION_FORMS[i % 6], (i % 3) as 0 | 1 | 2, 700 + i);
-      const createdAt = new Date(Date.UTC(2026, 8, 1 + Math.floor(i / 4), 12, i % 4)).toISOString();
+  it.each(['g4-nbt-ten-times', ...GRADE4_SKILLS.filter(skill => skill.unitId === 'g4-u3').map(skill => skill.id)])('round-trips %s events, mastery, schema scheduling and lesson metadata', async (skillId) => {
+    for (let i = 0; i < 36; i++) {
+      const item = makeFoundationItem(skillId, FOUNDATION_FORMS[i % 6], (Math.floor(i / 6) % 3) as 0 | 1 | 2, 700 + i + Math.floor(i / 6));
+      const createdAt = new Date(Date.UTC(2026, 8, 1 + Math.floor(i / 6), 12, i % 6)).toISOString();
       const prior = await db.itemStates.get([profile.id, item.cardKey!]) ?? createInitialState(profile.id, item);
       const updatedState = { ...applyReview(prior, 'good', 120000, String(item.answer), new Date(createdAt), { isCorrect: true }), lastItemId: item.id };
-      const event: MathAnswerEvent = { id: `answer-${i}`, studentId: profile.id, sessionId: `day-${Math.floor(i / 4)}`,
+      const event: MathAnswerEvent = { id: `answer-${i}`, studentId: profile.id, sessionId: `day-${Math.floor(i / 6)}`,
         itemId: item.id, cardKey: item.cardKey, schemaId: item.schemaId, mode: 'practice', promptShown: item.prompt,
         correctAnswer: item.answer, studentAnswer: item.answer, isCorrect: true, isRetry: false, hintUsed: false,
         reviewGrade: 'good', schedulingEligible: true, schedulingApplied: true, latencyMs: 120000, createdAt };
       const payload = { event, updatedState, attempt: { ...event, id: `attempt-${i}`, skillId: item.skillId, studentAnswer: item.answer, reviewGrade: 'good' as const } };
       await recordPracticeAnswer(payload); await recordPracticeAnswer(payload);
     }
-    expect(await db.mathAnswerEvents.count()).toBe(12);
-    expect(await db.attempts.count()).toBe(12);
+    expect(await db.mathAnswerEvents.count()).toBe(36);
+    expect(await db.attempts.count()).toBe(36);
     const before = await summaries();
     expect(before.find(value => value.skillId === skillId)?.learningState).toBe('mastered');
     const plan = await getOrCreateDailyLessonPlan({ studentId: profile.id, gradeLevel: 4, now, timezone: profile.timezone,
@@ -68,8 +68,8 @@ describe('Grade 4 canonical persistence and sync', () => {
     expect(normalizeSnapshot(snapshot).problems).toEqual([]);
     await Promise.all(db.tables.map(table => table.clear()));
     await mergeSnapshot(snapshot); await mergeSnapshot(snapshot);
-    expect(await db.mathAnswerEvents.count()).toBe(12);
-    expect(await db.attempts.count()).toBe(12);
+    expect(await db.mathAnswerEvents.count()).toBe(36);
+    expect(await db.attempts.count()).toBe(36);
     expect(await summaries()).toEqual(before);
     expect((await db.dailyLessonPlans.get(plan.id))?.curriculumId).toBe('california-g4-foundation');
     expect((await db.dailyLessonPlans.get(plan.id))?.items).toEqual(plan.items);
@@ -89,11 +89,14 @@ describe('Grade 4 canonical persistence and sync', () => {
     expect(current.items.some(entry => entry.item.gradeLevel === 4)).toBe(true);
   });
 
-  it('uses the shared goal-evaluation planner with the Grade 4 registry', () => {
+  it.each([null, ...GRADE4_SKILLS.filter(skill => skill.unitId === 'g4-u3').map(skill => skill.id)])('uses the shared whole-grade goal evaluator with %s', skillId => {
+    // The whole-grade evaluator needs three candidate skills and cross-domain variety.
+    const graph = skillId ? [GRADE4_SKILLS.find(skill => skill.id === skillId)!, ...GRADE4_SKILLS.filter(skill => skill.unitId === 'g4-u2').slice(0, 2)] : GRADE4_SKILLS;
     const questions = planFullAdaptiveGoalEvaluation({ studentId: profile.id, seed: 3, now,
-      mathAnswerEvents: [], itemStates: [], skillGraph: GRADE4_SKILLS });
+      mathAnswerEvents: [], itemStates: [], skillGraph: graph });
     expect(questions).toHaveLength(30);
-    expect(questions.every(value => value.skillId.startsWith('g4-'))).toBe(true);
+    expect(questions.every(value => graph.some(skill => skill.id === value.skillId))).toBe(true);
+    if (skillId) expect(questions.some(value => value.skillId === skillId)).toBe(true);
     expect(new Set(questions.map(value => value.item.id)).size).toBe(30);
   });
 });

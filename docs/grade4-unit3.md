@@ -61,3 +61,36 @@ Before expansion beyond the first comparison skill:
 - The real phone browser journey passed instruction → wrong answer/hint/relearning → independent practice → goal creation and stable daily lesson → reserved verification → reload → fresh later review. The goal is created before lesson planning; intervening voluntary practice does not replace the saved lesson.
 
 The retry assertion follows the existing policy: one same-presentation recovery may apply a `relearning_step`; it cannot become independent mastery evidence.
+
+## Implementation files
+
+| Module | Responsibility |
+|---|---|
+| `src/features/curriculum/curriculumRegistry.ts` | Unit 3's six nodes, standards, prerequisites, version 2 identity and required transfer roles/context counts |
+| `src/features/curriculum/comparisonBlueprints.ts` (new) | Seeded original comparison and multistep mathematics, solutions, hints and named misconception distractors |
+| `src/features/curriculum/foundationTypes.ts`, `foundationItems.ts` | Comparison payloads and response matching, immutable reconstruction/card contracts; published foundation streams remain unchanged |
+| `src/features/visuals/FoundationModel.tsx` | Accessible comparison tapes, quantity tables and connected-step models; proportional additive segments |
+| `src/features/diagnosis/readinessPlanner.ts`, `DiagnosticSession.tsx` | Bounded v2 sampling and exact legacy-session resumption |
+| `src/features/mastery/curriculumEvidence.ts`, `misconceptionEngine.ts` | Successful transfer roles/context gates and grading-compatible misconception normalization |
+| `src/features/learningPlan/dailyLessonPlanner.ts` | Reachable reserved exit verification, preserving due/new card exclusion and existing FSRS rules |
+| `src/features/mastery/Grade3MasteryMapPage.tsx`, `src/features/goals/GoalEvaluationSession.tsx` | Accurate Unit 1–3 scope and partial remainder coverage labels |
+| `scripts/grade4-e2e-fixtures.mjs`, `scripts/e2e_mathfan.py` | Test-only current/legacy/contrast fixtures, first-skill learning/review, legacy resume, all-skill layouts and new-content offline use |
+
+New test source files: `src/tests/grade4ReadinessSampling.test.ts`, `src/tests/grade4ComparisonFlow.test.tsx`, and `src/tests/grade4Unit3.test.ts`. Existing foundation, persistence and goal-evaluation curriculum tests were extended.
+
+Each comparison unknown role is fixed by structural band. A fresh review seed changes numbers/context while retaining that role and its stable schema card. Solving skills and equation modeling require transfer with every relevant unknown position. New application skills additionally require transfer in at least three of the four context families. Existing Unit 1–2 mastery profiles remain unchanged.
+
+Curriculum version 2 starts new goal evaluations without rewriting older evaluations. Saved same-day lesson assignments retain their existing identity and progress; later lessons use the expanded registry. No database migration or dependency change is needed.
+
+## Sources and content provenance
+
+Scope follows the California Grade 4 standards, especially 4.OA.1–3: https://www.cde.ca.gov/be/st/ss/documents/ccssmathstandardaug2013.pdf . Representation/progression reference: https://im.kendallhunt.com/k5/teachers/grade-4/course-guide/scope-and-sequence.html . All MathFan questions, hints, diagrams and explanations are original; no curriculum lesson text was copied.
+
+## Final validation
+
+- `npm run ci`: 108 test files / 1,721 tests passed, with lint, TypeScript and production build successful. Existing lint/bundle-size advisories remain.
+- Every registered Grade 4 family passed 1,000 seeded invariant checks. The new comparison/multistep tests independently checked arithmetic and equation choices, fixed card roles, four available contexts and required transfer evidence.
+- All six Unit 3 skills passed canonical save/duplicate-write protection, snapshot merge and replay-equivalence checks. Planned and extra goal learning exclude due cards and reserved verification; whole-grade goal evaluation can select every new skill.
+- `npm run test:e2e`: all 34 production-build browser journeys passed, followed by the PWA update smoke suite. Coverage includes phone/iPad/desktop, legacy readiness resume, first-skill complete learning/review, all 19 skills, new-content offline reload, profile switching and existing Grade 3 regressions.
+- The final wording explicitly names the direction of multiplier comparisons. The full code and browser suites were rerun after that change.
+- Code maps regenerated; `git diff --check` passed. No required validation remains incomplete.

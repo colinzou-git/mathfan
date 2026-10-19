@@ -4,7 +4,7 @@ import { buildReadinessPlan, READINESS_MAX_QUESTIONS, readinessProbeSkillIds, re
 
 describe('versioned, bounded Grade 4 readiness', () => {
   it('keeps thirteen entry probes even with eighty registered skills', () => {
-    const expanded = [...GRADE4_SKILLS, ...Array.from({ length: 80 }, (_, i) => ({ id: `future-${i}` }))];
+    const expanded = [...GRADE4_SKILLS, ...Array.from({ length: 80 - GRADE4_SKILLS.length }, (_, i) => ({ id: `future-${i}` }))];
     expect(readinessProbeSkillIds(2, expanded)).toEqual(readinessProbeSkillIds(2));
     expect(readinessProbeSkillIds(2, expanded)).toHaveLength(13);
     expect(buildReadinessPlan('g4-readiness:s:v2').items).toHaveLength(20);

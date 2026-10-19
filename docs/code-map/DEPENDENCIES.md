@@ -4,8 +4,8 @@
 
 | Package | Import count |
 | --- | --- |
-| vitest | 108 |
-| react | 37 |
+| vitest | 109 |
+| react | 38 |
 | @testing-library/react | 26 |
 | pathlib | 8 |
 | __future__ | 7 |
@@ -1126,6 +1126,16 @@
 | src/tests/grade4RecencyOrder.test.ts | ../features/mastery/skillMasteryEngine |
 | src/tests/grade4RecencyOrder.test.ts | ../types/math |
 | src/tests/grade4RecencyOrder.test.ts | ../utils/rng |
+| src/tests/grade4Unit3.test.ts | ../features/curriculum/curriculumRegistry |
+| src/tests/grade4Unit3.test.ts | ../features/curriculum/foundationItems |
+| src/tests/grade4Unit3.test.ts | ../features/curriculum/makeItemFromId |
+| src/tests/grade4Unit3.test.ts | ../features/goals/dailyNewGoalPlanner |
+| src/tests/grade4Unit3.test.ts | ../features/goals/types |
+| src/tests/grade4Unit3.test.ts | ../features/learning/learningEvents |
+| src/tests/grade4Unit3.test.ts | ../features/mastery/skillMasteryEngine |
+| src/tests/grade4Unit3.test.ts | ../features/practice/answerChecker |
+| src/tests/grade4Unit3.test.ts | ../features/scheduler/scheduler |
+| src/tests/grade4Unit3.test.ts | ../utils/rng |
 | src/tests/growth.test.ts | ../features/stats/statsEngine |
 | src/tests/growth.test.ts | ../types/math |
 | src/tests/hintEngine.test.ts | ../features/curriculum/areaItems |

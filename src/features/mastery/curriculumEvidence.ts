@@ -63,6 +63,8 @@ export function deriveConfiguredSkillSummary(args: {
   const specs = successful.flatMap(event => { const spec = args.items.get(event.itemId)?.contentSpec; return spec?.domain === 'foundation' ? [spec.data] : []; });
   const bands = new Set(specs.map(spec => spec.band));
   const contexts = new Set(specs.map(spec => spec.contextFamily).filter(Boolean));
+  const transferredUnknowns = new Set(specs.filter(spec => spec.form === 'transfer').map(spec => spec.unknownPosition));
+  const missingUnknowns = (profile.requiredUnknownPositions ?? []).filter(position => !transferredUnknowns.has(position));
   const misconceptions = deriveCurriculumMisconceptions(all, args.items, args.timezone);
   const blocked = misconceptions.some(value => value.status === 'confirmed');
   const mastered = recent.length >= profile.minIndependent && distinct.size >= profile.minDistinct
@@ -70,7 +72,7 @@ export function deriveConfiguredSkillSummary(args: {
     && sessions.size >= profile.minSessions && delayedDays.size >= profile.minDelayedDays
     && accuracy >= profile.minAccuracy && recent.slice(-3).every(event => event.isCorrect)
     && bands.size >= profile.minBands && contexts.size >= profile.minContextFamilies
-    && profile.requiredForms.every(form => forms.has(form)) && !blocked;
+    && profile.requiredForms.every(form => forms.has(form)) && missingUnknowns.length === 0 && !blocked;
   const learningState = direct.length === 0 ? 'new' : accuracy < .6 || blocked ? 'needs_practice' : mastered ? 'mastered' : 'strong';
   const states = args.states.filter(state => state.studentId === args.studentId && (state.skillId === args.skillId || args.items.get(state.lastItemId ?? '')?.skillId === args.skillId));
   const dueItemCount = new Set(states.filter(state => state.nextDueAt && state.nextDueAt <= args.now).map(state => state.cardKey)).size;
@@ -82,7 +84,8 @@ export function deriveConfiguredSkillSummary(args: {
     mistakePatterns: misconceptions.filter(value => value.status === 'confirmed').map(value => value.code),
     evidenceGaps: [!mastered && delayedDays.size < profile.minDelayedDays ? 'Independent successes on two later days' : '',
       bands.size < profile.minBands ? 'Practice across three difficulty bands' : '',
-      contexts.size < profile.minContextFamilies ? 'Transfer in two different contexts' : '',
+      contexts.size < profile.minContextFamilies ? `Transfer in ${profile.minContextFamilies} different contexts` : '',
+      ...missingUnknowns.map(position => `Independent transfer with an unknown ${position === 'result' ? 'compared or final quantity' : position}`),
       ...profile.requiredForms.filter(form => !forms.has(form)).map(form => `${form} evidence`)].filter(Boolean),
     provisionalPlacement: all.some(event => event.mode === 'diagnostic' && event.isCorrect),
   };

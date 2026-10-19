@@ -20,7 +20,7 @@ export function readinessSessionId(studentId: string, events: readonly { session
 
 export function readinessProbeSkillIds(version: 1 | 2, skills: readonly { id: string }[] = GRADE4_SKILLS): string[] {
   const available = new Set(skills.map(skill => skill.id));
-  return [...new Set(version === 1 ? V1_PROBES : [...V2_PROBES, ...V1_PROBES])].filter(id => available.has(id)).slice(0, 13);
+  return [...new Set(version === 1 ? V1_PROBES : [...V2_PROBES, ...V1_PROBES])].filter(id => available.has(id)).slice(0, READINESS_MAX_QUESTIONS - 2 - PREREQUISITES.length);
 }
 
 /** Seven prerequisites + thirteen sampled entry probes + at most two contrasts. */
