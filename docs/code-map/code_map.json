@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-06T15:48:59.482963+00:00",
+  "generated_at": "2026-10-19T15:37:19.136856+00:00",
   "repo_root": "/workspace/scratch/5bf6de8c5dac/mathfan",
   "package": {
     "name": "mathfan",
@@ -590,9 +590,9 @@
     {
       "path": "scripts/e2e_mathfan.py",
       "ext": ".py",
-      "bytes": 96185,
+      "bytes": 96177,
       "lines": 1578,
-      "sha1": "85342eb760b7",
+      "sha1": "a9ecc6e351ec",
       "imports": [
         "__future__",
         "json",
@@ -3376,9 +3376,9 @@
     {
       "path": "src/features/diagnosis/DiagnosticSession.tsx",
       "ext": ".tsx",
-      "bytes": 22388,
-      "lines": 632,
-      "sha1": "4882f1c18a7a",
+      "bytes": 22540,
+      "lines": 634,
+      "sha1": "3ff3ba6b5fe3",
       "imports": [
         "../../components/NumPad",
         "../../db/repositories",
@@ -3424,9 +3424,9 @@
     {
       "path": "src/features/diagnosis/readinessPlanner.ts",
       "ext": ".ts",
-      "bytes": 2665,
-      "lines": 39,
-      "sha1": "13de68bc1fae",
+      "bytes": 4355,
+      "lines": 57,
+      "sha1": "2fb040812b8e",
       "imports": [
         "../../types/math",
         "../curriculum/curriculumRegistry",
@@ -3438,12 +3438,18 @@
       ],
       "exports": [
         "buildReadinessPlan",
+        "READINESS_MAX_QUESTIONS",
+        "readinessProbeSkillIds",
         "readinessRecommendations",
-        "ReadinessResult"
+        "ReadinessResult",
+        "readinessSessionId"
       ],
       "functions": [
+        "add",
         "buildReadinessPlan",
-        "readinessRecommendations"
+        "readinessProbeSkillIds",
+        "readinessRecommendations",
+        "readinessSessionId"
       ],
       "classes": [],
       "interfaces": [
@@ -3454,7 +3460,7 @@
       "hooks": [],
       "css_classes": [],
       "json_keys": [],
-      "purpose": "Exports reusable code: buildReadinessPlan, readinessRecommendations, ReadinessResult.",
+      "purpose": "Exports reusable code: buildReadinessPlan, READINESS_MAX_QUESTIONS, readinessProbeSkillIds, readinessRecommendations, ReadinessResult.",
       "too_large": false,
       "read_error": null
     },
@@ -3921,15 +3927,16 @@
     {
       "path": "src/features/goals/goalEvaluationPersistence.ts",
       "ext": ".ts",
-      "bytes": 14491,
-      "lines": 237,
-      "sha1": "be0128461980",
+      "bytes": 17559,
+      "lines": 290,
+      "sha1": "6940cfa9ce1d",
       "imports": [
         "../../db/dexie",
         "../../db/repositories",
         "../../types/math",
         "../../utils/id",
         "../../utils/rng",
+        "../curriculum/curriculumRegistry",
         "../learning/learningEvents",
         "../learning/schedulingTelemetry",
         "../mastery/misconceptionEngine",
@@ -3948,8 +3955,12 @@
         "PersistNextGoalQuestionArgs"
       ],
       "functions": [
+        "assertCurrentCurriculum",
         "classifySchedulerError",
         "createGoalEvaluation",
+        "currentCurriculumIdentity",
+        "curriculumIdentityForGrade",
+        "evaluationMatchesCurriculum",
         "goalAnswerFingerprint",
         "loadLatestResumableGoalEvaluation",
         "persistGoalEvaluationAnswer",
@@ -3961,6 +3972,7 @@
       ],
       "interfaces": [
         "GoalEvaluationAnswerProposal",
+        "GoalEvaluationCurriculumIdentity",
         "PersistedGoalEvaluationAnswerResult",
         "PersistNextGoalQuestionArgs"
       ],
@@ -4335,9 +4347,9 @@
     {
       "path": "src/features/goals/types.ts",
       "ext": ".ts",
-      "bytes": 3714,
-      "lines": 142,
-      "sha1": "6f34bacd0ce4",
+      "bytes": 3902,
+      "lines": 146,
+      "sha1": "a03332d2006f",
       "imports": [
         "../../types/math",
         "../learning/learningEvents",
@@ -4725,9 +4737,9 @@
     {
       "path": "src/features/learningPlan/dailyLessonPlanner.ts",
       "ext": ".ts",
-      "bytes": 14728,
+      "bytes": 14753,
       "lines": 170,
-      "sha1": "7e5eb71dc8f4",
+      "sha1": "3d1ea4e24821",
       "imports": [
         "../../types/math",
         "../adaptive/relatedItemMapping",
@@ -4791,13 +4803,14 @@
     {
       "path": "src/features/learningPlan/focusSkillSelector.ts",
       "ext": ".ts",
-      "bytes": 3034,
-      "lines": 33,
-      "sha1": "7e9389cd7917",
+      "bytes": 3120,
+      "lines": 34,
+      "sha1": "3c4e34c44a42",
       "imports": [
         "../curriculum/curriculumRegistry",
         "../curriculum/makeItemFromId",
         "../goals/types",
+        "../learning/eventOrdering",
         "../learning/learningEvents",
         "../mastery/grade3MasteryMap",
         "../mastery/skillMapping",
@@ -4899,9 +4912,9 @@
     {
       "path": "src/features/mastery/Grade3MasteryMapPage.tsx",
       "ext": ".tsx",
-      "bytes": 13199,
-      "lines": 377,
-      "sha1": "ea0add5983ee",
+      "bytes": 13631,
+      "lines": 380,
+      "sha1": "639a1f45279e",
       "imports": [
         "../../db/repositories",
         "../../types/math",
@@ -4923,9 +4936,10 @@
       ],
       "functions": [
         "buildCompleteSummaries",
-        "computeUnmetPrereqNames",
+        "computeUnmetPrereqIds",
         "Grade3MasteryMapPage",
-        "LegendItem"
+        "LegendItem",
+        "prerequisiteNames"
       ],
       "classes": [],
       "interfaces": [
@@ -5037,9 +5051,9 @@
     {
       "path": "src/features/mastery/SkillDetailPanel.tsx",
       "ext": ".tsx",
-      "bytes": 9966,
-      "lines": 333,
-      "sha1": "00ef5aaf1c73",
+      "bytes": 10235,
+      "lines": 339,
+      "sha1": "4752f80baf1d",
       "imports": [
         "../../types/math",
         "../curriculum/curriculumRegistry",
@@ -5272,9 +5286,9 @@
     {
       "path": "src/features/mastery/todayPlanEngine.ts",
       "ext": ".ts",
-      "bytes": 7505,
-      "lines": 200,
-      "sha1": "6bb1acf2259d",
+      "bytes": 8210,
+      "lines": 212,
+      "sha1": "7048d391e47b",
       "imports": [
         "../../types/math",
         "../curriculum/curriculumRegistry",
@@ -5295,6 +5309,7 @@
         "pickFocusSkill",
         "planToday",
         "prerequisitesSatisfied",
+        "progressionState",
         "trackPriority",
         "unmetPrereqNames"
       ],
@@ -9693,6 +9708,37 @@
       "read_error": null
     },
     {
+      "path": "src/tests/goalEvaluationCurriculumResume.test.ts",
+      "ext": ".ts",
+      "bytes": 4309,
+      "lines": 138,
+      "sha1": "632f5c8481d7",
+      "imports": [
+        "../db/dexie",
+        "../features/goals/goalEvaluationEngine",
+        "../features/goals/goalEvaluationPersistence",
+        "../features/goals/types",
+        "../types/math",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [
+        "legacyEvaluation",
+        "profile",
+        "selection"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Local persistence/database layer.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
       "path": "src/tests/goalEvaluationEngine.test.tsx",
       "ext": ".tsx",
       "bytes": 17348,
@@ -10327,6 +10373,92 @@
       "css_classes": [],
       "json_keys": [],
       "purpose": "Local persistence/database layer.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/grade4PrerequisiteReadiness.test.ts",
+      "ext": ".ts",
+      "bytes": 2316,
+      "lines": 73,
+      "sha1": "0a0f70ba90dd",
+      "imports": [
+        "../features/curriculum/curriculumRegistry",
+        "../features/mastery/skillMasteryEngine",
+        "../features/mastery/todayPlanEngine",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [
+        "summary"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/grade4ReadinessSampling.test.ts",
+      "ext": ".ts",
+      "bytes": 2702,
+      "lines": 42,
+      "sha1": "c2056a5deb94",
+      "imports": [
+        "../features/curriculum/curriculumRegistry",
+        "../features/diagnosis/readinessPlanner",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/grade4RecencyOrder.test.ts",
+      "ext": ".ts",
+      "bytes": 4043,
+      "lines": 114,
+      "sha1": "7509d2e6de54",
+      "imports": [
+        "../features/curriculum/curriculumRegistry",
+        "../features/curriculum/foundationItems",
+        "../features/learning/learningEvents",
+        "../features/learningPlan/dailyLessonPlanner",
+        "../features/learningPlan/focusSkillSelector",
+        "../features/mastery/skillMasteryEngine",
+        "../types/math",
+        "../utils/rng",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [
+        "answerEvent",
+        "lessonSignature",
+        "rank",
+        "summary"
+      ],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
       "too_large": false,
       "read_error": null
     },
@@ -10978,6 +11110,31 @@
       "sha1": "9e39d8c7e019",
       "imports": [
         "../features/curriculum/multiplicationItems",
+        "vitest"
+      ],
+      "exports": [],
+      "functions": [],
+      "classes": [],
+      "interfaces": [],
+      "types": [],
+      "components": [],
+      "hooks": [],
+      "css_classes": [],
+      "json_keys": [],
+      "purpose": "Automated tests.",
+      "too_large": false,
+      "read_error": null
+    },
+    {
+      "path": "src/tests/quickRefreshPrerequisite.test.tsx",
+      "ext": ".tsx",
+      "bytes": 3437,
+      "lines": 99,
+      "sha1": "12332f4066f4",
+      "imports": [
+        "../features/curriculum/curriculumRegistry",
+        "../features/mastery/SkillDetailPanel",
+        "@testing-library/react",
         "vitest"
       ],
       "exports": [],

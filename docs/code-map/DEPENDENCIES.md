@@ -4,9 +4,9 @@
 
 | Package | Import count |
 | --- | --- |
-| vitest | 102 |
+| vitest | 107 |
 | react | 37 |
-| @testing-library/react | 24 |
+| @testing-library/react | 25 |
 | pathlib | 8 |
 | __future__ | 7 |
 | sys | 7 |
@@ -313,6 +313,7 @@
 | src/features/goals/goalEvaluationPersistence.ts | ../../types/math |
 | src/features/goals/goalEvaluationPersistence.ts | ../../utils/id |
 | src/features/goals/goalEvaluationPersistence.ts | ../../utils/rng |
+| src/features/goals/goalEvaluationPersistence.ts | ../curriculum/curriculumRegistry |
 | src/features/goals/goalEvaluationPersistence.ts | ../learning/learningEvents |
 | src/features/goals/goalEvaluationPersistence.ts | ../learning/schedulingTelemetry |
 | src/features/goals/goalEvaluationPersistence.ts | ../mastery/misconceptionEngine |
@@ -442,6 +443,7 @@
 | src/features/learningPlan/focusSkillSelector.ts | ../curriculum/curriculumRegistry |
 | src/features/learningPlan/focusSkillSelector.ts | ../curriculum/makeItemFromId |
 | src/features/learningPlan/focusSkillSelector.ts | ../goals/types |
+| src/features/learningPlan/focusSkillSelector.ts | ../learning/eventOrdering |
 | src/features/learningPlan/focusSkillSelector.ts | ../learning/learningEvents |
 | src/features/learningPlan/focusSkillSelector.ts | ../mastery/grade3MasteryMap |
 | src/features/learningPlan/focusSkillSelector.ts | ../mastery/skillMapping |
@@ -936,6 +938,11 @@
 | src/tests/goalEvaluationConcurrency.test.ts | ../features/goals/types |
 | src/tests/goalEvaluationConcurrency.test.ts | ../features/learning/eventRebuild |
 | src/tests/goalEvaluationConcurrency.test.ts | ../features/scheduler/scheduler |
+| src/tests/goalEvaluationCurriculumResume.test.ts | ../db/dexie |
+| src/tests/goalEvaluationCurriculumResume.test.ts | ../features/goals/goalEvaluationEngine |
+| src/tests/goalEvaluationCurriculumResume.test.ts | ../features/goals/goalEvaluationPersistence |
+| src/tests/goalEvaluationCurriculumResume.test.ts | ../features/goals/types |
+| src/tests/goalEvaluationCurriculumResume.test.ts | ../types/math |
 | src/tests/goalEvaluationEngine.test.tsx | ../features/curriculum/makeItemFromId |
 | src/tests/goalEvaluationEngine.test.tsx | ../features/goals/goalEvaluationEngine |
 | src/tests/goalEvaluationEngine.test.tsx | ../features/learning/learningEvents |
@@ -1086,6 +1093,19 @@
 | src/tests/grade4Persistence.test.ts | ../features/sync/snapshot |
 | src/tests/grade4Persistence.test.ts | ../types/math |
 | src/tests/grade4Persistence.test.ts | ../utils/rng |
+| src/tests/grade4PrerequisiteReadiness.test.ts | ../features/curriculum/curriculumRegistry |
+| src/tests/grade4PrerequisiteReadiness.test.ts | ../features/mastery/skillMasteryEngine |
+| src/tests/grade4PrerequisiteReadiness.test.ts | ../features/mastery/todayPlanEngine |
+| src/tests/grade4ReadinessSampling.test.ts | ../features/curriculum/curriculumRegistry |
+| src/tests/grade4ReadinessSampling.test.ts | ../features/diagnosis/readinessPlanner |
+| src/tests/grade4RecencyOrder.test.ts | ../features/curriculum/curriculumRegistry |
+| src/tests/grade4RecencyOrder.test.ts | ../features/curriculum/foundationItems |
+| src/tests/grade4RecencyOrder.test.ts | ../features/learning/learningEvents |
+| src/tests/grade4RecencyOrder.test.ts | ../features/learningPlan/dailyLessonPlanner |
+| src/tests/grade4RecencyOrder.test.ts | ../features/learningPlan/focusSkillSelector |
+| src/tests/grade4RecencyOrder.test.ts | ../features/mastery/skillMasteryEngine |
+| src/tests/grade4RecencyOrder.test.ts | ../types/math |
+| src/tests/grade4RecencyOrder.test.ts | ../utils/rng |
 | src/tests/growth.test.ts | ../features/stats/statsEngine |
 | src/tests/growth.test.ts | ../types/math |
 | src/tests/hintEngine.test.ts | ../features/curriculum/areaItems |
@@ -1183,6 +1203,8 @@
 | src/tests/profileSetup.test.tsx | ../features/dashboard/ProfileSetup |
 | src/tests/profileSetup.test.tsx | ../types/math |
 | src/tests/questionGenerator.test.ts | ../features/curriculum/multiplicationItems |
+| src/tests/quickRefreshPrerequisite.test.tsx | ../features/curriculum/curriculumRegistry |
+| src/tests/quickRefreshPrerequisite.test.tsx | ../features/mastery/SkillDetailPanel |
 | src/tests/quizAutoAdvance.test.tsx | ../features/audio/speech |
 | src/tests/quizAutoAdvance.test.tsx | ../features/multiplication/MultiplicationQuizPage |
 | src/tests/quizAutoAdvance.test.tsx | ../types/math |

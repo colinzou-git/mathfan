@@ -1,6 +1,6 @@
 # Code Map Overview
 
-Generated: 2026-10-06 15:48:59 UTC
+Generated: 2026-10-19 15:37:19 UTC
 
 Repo root: `/workspace/scratch/5bf6de8c5dac/mathfan`
 Output folder: `/workspace/scratch/5bf6de8c5dac/mathfan/docs/code-map`
@@ -14,9 +14,9 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 - Package name: `mathfan`
 - Version: `1.2.0`
 - Module type: `module`
-- Scanned files: **329**
-- Scanned lines: **62,543**
-- Scanned bytes: **5,537,468**
+- Scanned files: **334**
+- Scanned lines: **63,108**
+- Scanned bytes: **5,560,882**
 
 ## NPM scripts
 
@@ -90,7 +90,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 | src/features/dashboard/StudentDashboard.tsx | 629 | Dashboard/profile setup/student navigation feature. | Chip, PracticeOp, StudentDashboard, Chip, completeSkillSummaries, handleStartReview, openExtra, regenerateLesson |
 | src/features/practice/PracticeScreen.tsx | 599 | Local persistence/database layer. | KbChip, PracticeScreen, KbChip, onKey, PracticeScreen, submitChoice |
 | src/features/stats/FactStatsTable.tsx | 407 | Local persistence/database layer. | SortBtn, SummaryStat, FactStatsTable, bucketOf, FactStatsTable, idOf, SortBtn, startPractice |
-| src/features/mastery/Grade3MasteryMapPage.tsx | 377 | Grade 3 mastery map UI: skill display, detail panels, and parent action cards. | LegendItem, Grade3MasteryMapPage, buildCompleteSummaries, computeUnmetPrereqNames, Grade3MasteryMapPage, LegendItem |
+| src/features/mastery/Grade3MasteryMapPage.tsx | 380 | Grade 3 mastery map UI: skill display, detail panels, and parent action cards. | LegendItem, Grade3MasteryMapPage, buildCompleteSummaries, computeUnmetPrereqIds, Grade3MasteryMapPage, LegendItem, prerequisiteNames |
 | src/features/stats/StatsPage.tsx | 273 | Progress/statistics screens or calculations. | SchedulingDiagnostics, SummaryPill, StatsPage, buildRange, daysBetween, SchedulingDiagnostics, StatsPage, SummaryPill |
 | src/features/stats/DrillHistory.tsx | 238 | Progress/statistics screens or calculations. | AttemptDetail, MetricChip, Pill, DrillHistory, AttemptDetail, dateLabel, DrillHistory, durationLabel |
 | src/features/visuals/DraggableEqualGroups.tsx | 230 | Reusable SVG visual model components (area grids, shape diagrams, fraction bars, arrays). | DraggableObject, DropZone, DraggableEqualGroups, checkEqualGroups, DraggableEqualGroups, DraggableObject, DropZone, handleDragEnd |
@@ -377,6 +377,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   ├── goalDexieSchema.test.ts
 │   │   ├── goalEngine.test.ts
 │   │   ├── goalEvaluationConcurrency.test.ts
+│   │   ├── goalEvaluationCurriculumResume.test.ts
 │   │   ├── goalEvaluationEngine.test.tsx
 │   │   ├── goalEvaluationSelectionPersistence.test.ts
 │   │   ├── goalEvaluationSession.test.tsx
@@ -396,6 +397,9 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   ├── grade3TwoStepAndPatterns.test.ts
 │   │   ├── grade4Foundation.test.tsx
 │   │   ├── grade4Persistence.test.ts
+│   │   ├── grade4PrerequisiteReadiness.test.ts
+│   │   ├── grade4ReadinessSampling.test.ts
+│   │   ├── grade4RecencyOrder.test.ts
 │   │   ├── growth.test.ts
 │   │   ├── hintEngine.test.ts
 │   │   ├── learnerIdentity.test.ts
@@ -419,6 +423,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   ├── profileBootstrap.test.ts
 │   │   ├── profileSetup.test.tsx
 │   │   ├── questionGenerator.test.ts
+│   │   ├── quickRefreshPrerequisite.test.tsx
 │   │   ├── quizAutoAdvance.test.tsx
 │   │   ├── rangeSelection.test.ts
 │   │   ├── regroupingRedesign.test.tsx
