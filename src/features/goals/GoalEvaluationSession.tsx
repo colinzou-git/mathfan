@@ -414,7 +414,7 @@ export function GoalEvaluationSession({ studentId, gradeLevel = 3, audioEnabled 
       <div style={s.container}>
         <div style={s.card}>
           <h1 style={s.title}>Adaptive Goal Evaluation</h1>
-          <p style={s.body}>Exactly 30 questions across different Grade {gradeLevel} skills{gradeLevel === 4 ? ' in Units 1–2' : ''}.</p>
+          <p style={s.body}>Exactly 30 questions across different Grade {gradeLevel} skills{gradeLevel === 4 ? ` in Units 1–${getCurriculum(gradeLevel)?.units.length ?? 3}` : ''}.</p>
           <p style={s.body}>No timer pressure. Take your time and do your best.</p>
           <p style={s.body}>Results separate new goal learning from skills that belong in Daily Review.</p>
           {saveError && <p role="alert" style={s.errorText}>{saveError}</p>}

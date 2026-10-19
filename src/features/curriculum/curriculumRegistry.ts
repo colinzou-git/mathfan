@@ -40,6 +40,7 @@ export const CURRICULUM_MISCONCEPTION_LABELS: Record<string, string> = {
   'foundation:lost_carry': 'Recording regrouped units', 'foundation:place_misalignment': 'Aligning equal places',
   'foundation:smaller_from_larger': 'Subtraction with renamed units', 'foundation:across_zero': 'Regrouping across zeros',
   'foundation:estimate_is_exact': 'Estimates and exact results', 'foundation:impossible_magnitude': 'Checking reasonable sizes',
+  'foundation:times_means_add': 'Equal copies versus adding more', 'foundation:reversed_comparison': 'Reference and compared quantities',
 };
 const evidence = (kind: EvidenceProfile['kind']): EvidenceProfile => ({
   version: 1, kind, recentWindow: 12, minIndependent: 8, minDistinct: 6,
@@ -62,13 +63,14 @@ const rows: Row[] = [
   ['g4-nbt-add-standard', 'Multi-Digit Addition', 'Connect place-value reasoning and partial sums to the standard addition algorithm.', ['g4-nbt-read-write', 'g3-add-3digit-regrouping'], ['4.NBT.4'], 'procedure', 'Align equal places and add from the ones.', 'Ten units in a column exchange for one unit in the next column.', ['lost_carry', 'place_misalignment']],
   ['g4-nbt-sub-standard', 'Multi-Digit Subtraction', 'Record place-value decomposition and regrouping, including across zeros.', ['g4-nbt-read-write', 'g3-sub-across-zero'], ['4.NBT.4'], 'procedure', 'Align places, and exchange a larger unit when a column needs more units.', 'Across zeros, rename one larger unit across each intervening place.', ['smaller_from_larger', 'across_zero', 'place_misalignment']],
   ['g4-nbt-estimate-check', 'Estimate and Check Results', 'Use useful estimates and inverse checks to judge addition/subtraction results in context.', ['g4-nbt-round-any-place', 'g4-nbt-add-standard', 'g4-nbt-sub-standard'], ['4.OA.3', '4.NBT.3', '4.NBT.4'], 'application', 'Choose a rounding place that is useful for the situation.', 'Label an estimate as approximate and use an inverse calculation for an exact check.', ['estimate_is_exact', 'impossible_magnitude']],
+  ['g4-oa-mult-compare-meaning', 'Understand Times as Many', 'Interpret a multiplicative comparison as equal copies of a reference quantity.', ['g3-mul-meaning', 'g3-div-mul-relationship'], ['4.OA.1'], 'concept', 'Draw one tape unit for the reference quantity, then copy it the stated number of times.', 'Connect equal tape units to compared quantity = multiplier × reference quantity.', ['times_means_add', 'reversed_comparison']],
 ];
 export const GRADE4_SKILLS: readonly CurriculumSkill[] = rows.map(([id, title, description, prerequisites, standards, kind, model, connect, codes], index) => ({
   id, title, description, prerequisites, californiaStandardIds: standards, gradeLevel: 4,
-  domain: index < 6 ? 'multiplication' : 'addition_subtraction', unitId: index < 6 ? 'g4-u1' : 'g4-u2',
+  domain: index < 6 || index >= 13 ? 'multiplication' : 'addition_subtraction', unitId: index < 6 ? 'g4-u1' : index < 13 ? 'g4-u2' : 'g4-u3',
   evidenceProfile: evidence(kind), blueprintForms: FOUNDATION_FORMS,
   misconceptions: codes.map(code => `foundation:${code}`), transferSkillIds: [id, ...prerequisites.filter(prerequisite => prerequisite.startsWith('g4-'))],
-  instruction: { activate: index < 6 ? 'What do you remember about equal groups and patterns?' : 'What do you remember about tens, hundreds, and regrouping?', model, connect,
+  instruction: { activate: index >= 13 ? 'How is “times as many” different from “more than”? Identify the reference quantity.' : index < 6 ? 'What do you remember about equal groups and patterns?' : 'What do you remember about tens, hundreds, and regrouping?', model, connect,
     guided: 'Try a model first. Explain the strategy, then work independently with different numbers.',
     reflection: 'Which model or check helped you? Explain one relationship you noticed.' },
   ...(id === 'g4-nbt-estimate-check' ? { partialStandardIds: ['4.OA.3'] } : {}),
@@ -76,9 +78,10 @@ export const GRADE4_SKILLS: readonly CurriculumSkill[] = rows.map(([id, title, d
 const grade3: Curriculum = { id: 'california-g3', version: 1, gradeLevel: 3,
   skills: GRADE3_MASTERY_MAP.map(skill => ({ ...skill, gradeLevel: 3, unitId: `g3-${skill.domain}` })),
   units: [...new Set(GRADE3_MASTERY_MAP.map(skill => skill.domain))].map(domain => ({ id: `g3-${domain}`, title: domain, skillIds: GRADE3_MASTERY_MAP.filter(skill => skill.domain === domain).map(skill => skill.id) })) };
-const grade4: Curriculum = { id: 'california-g4-foundation', version: 1, gradeLevel: 4, skills: GRADE4_SKILLS,
+const grade4: Curriculum = { id: 'california-g4-foundation', version: 2, gradeLevel: 4, skills: GRADE4_SKILLS,
   units: [{ id: 'g4-u1', title: 'Unit 1 · Factors and Patterns', skillIds: GRADE4_SKILLS.slice(0, 6).map(skill => skill.id) },
-    { id: 'g4-u2', title: 'Unit 2 · Place Value, Addition and Subtraction', skillIds: GRADE4_SKILLS.slice(6).map(skill => skill.id) }] };
+    { id: 'g4-u2', title: 'Unit 2 · Place Value, Addition and Subtraction', skillIds: GRADE4_SKILLS.slice(6, 13).map(skill => skill.id) },
+    { id: 'g4-u3', title: 'Unit 3 · Comparison and Multistep Reasoning', skillIds: GRADE4_SKILLS.slice(13).map(skill => skill.id) }] };
 export const CURRICULA: readonly Curriculum[] = [grade3, grade4];
 export const ALL_CURRICULUM_SKILLS = CURRICULA.flatMap(curriculum => curriculum.skills);
 /** Explicit legacy aliases, used only when reading prerequisite references. Historical IDs stay intact. */

@@ -1,6 +1,6 @@
 # Code Map Overview
 
-Generated: 2026-10-19 15:37:19 UTC
+Generated: 2026-10-19 15:52:32 UTC
 
 Repo root: `/workspace/scratch/5bf6de8c5dac/mathfan`
 Output folder: `/workspace/scratch/5bf6de8c5dac/mathfan/docs/code-map`
@@ -14,9 +14,9 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 - Package name: `mathfan`
 - Version: `1.2.0`
 - Module type: `module`
-- Scanned files: **334**
-- Scanned lines: **63,108**
-- Scanned bytes: **5,560,882**
+- Scanned files: **337**
+- Scanned lines: **63,460**
+- Scanned bytes: **5,746,230**
 
 ## NPM scripts
 
@@ -118,6 +118,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   ├── goals-daily-new-for-goals.md
 │   ├── grade3-mastery-map-roadmap.md
 │   ├── grade4-foundation.md
+│   ├── grade4-unit3.md
 │   └── PRD.md
 ├── scripts
 │   ├── build-icons.py
@@ -165,6 +166,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   ├── curriculum
 │   │   │   ├── areaItems.ts
 │   │   │   ├── arithmeticItems.ts
+│   │   │   ├── comparisonBlueprints.ts
 │   │   │   ├── curriculumRegistry.ts
 │   │   │   ├── decimalItems.ts
 │   │   │   ├── describeItem.ts
@@ -395,6 +397,7 @@ This folder is a compact repo memory for Claude Code / Codex. Start AI coding se
 │   │   ├── grade3SummerDivisionEstimation.test.tsx
 │   │   ├── grade3SummerMultiplicationEstimation.test.tsx
 │   │   ├── grade3TwoStepAndPatterns.test.ts
+│   │   ├── grade4ComparisonFlow.test.tsx
 │   │   ├── grade4Foundation.test.tsx
 │   │   ├── grade4Persistence.test.ts
 │   │   ├── grade4PrerequisiteReadiness.test.ts

@@ -1,6 +1,7 @@
 import type { PracticeItem, StudentItemState } from '../../types/math';
 import type { MathAnswerEvent } from '../learning/learningEvents';
 import { getCurriculumSkill } from '../curriculum/curriculumRegistry';
+import { foundationMisconceptionForAnswer } from '../curriculum/foundationTypes';
 import { learnerLocalDateKey } from '../time/localDate';
 import type { StudentSkillSummary } from './skillMasteryEngine';
 
@@ -17,7 +18,7 @@ export function deriveCurriculumMisconceptions(events: MathAnswerEvent[], items:
     const item = items.get(event.itemId), spec = item?.contentSpec;
     if (spec?.domain !== 'foundation') continue;
     if (!event.isCorrect) {
-      const codes = event.detectedMisconceptions ?? [spec.data.misconceptionAnswers[String(event.studentAnswer)]].filter(Boolean);
+      const codes = event.detectedMisconceptions ?? [foundationMisconceptionForAnswer(spec.data, event.studentAnswer)].filter((code): code is string => !!code);
       for (const code of codes) {
         const prior = hypotheses.get(code) ?? { wrongItems: new Set<string>(), wrongSchemas: new Set<string>(), lastWrong: '', successDays: new Set<string>(), successSessions: new Set<string>() };
         prior.wrongItems.add(event.itemId); prior.wrongSchemas.add(item?.schemaId ?? ''); prior.lastWrong = event.createdAt;

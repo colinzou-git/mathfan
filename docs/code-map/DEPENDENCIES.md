@@ -4,9 +4,9 @@
 
 | Package | Import count |
 | --- | --- |
-| vitest | 107 |
+| vitest | 108 |
 | react | 37 |
-| @testing-library/react | 25 |
+| @testing-library/react | 26 |
 | pathlib | 8 |
 | __future__ | 7 |
 | sys | 7 |
@@ -149,6 +149,7 @@
 | src/features/curriculum/arithmeticItems.ts | ../../types/math |
 | src/features/curriculum/arithmeticItems.ts | ./divisionItems |
 | src/features/curriculum/arithmeticItems.ts | ./regrouping |
+| src/features/curriculum/comparisonBlueprints.ts | ./foundationTypes |
 | src/features/curriculum/curriculumRegistry.ts | ../../types/math |
 | src/features/curriculum/curriculumRegistry.ts | ../mastery/grade3MasteryMap |
 | src/features/curriculum/curriculumRegistry.ts | ./foundationTypes |
@@ -164,6 +165,7 @@
 | src/features/curriculum/divisionItems.ts | ./regrouping |
 | src/features/curriculum/foundationItems.ts | ../../types/math |
 | src/features/curriculum/foundationItems.ts | ../../utils/rng |
+| src/features/curriculum/foundationItems.ts | ./comparisonBlueprints |
 | src/features/curriculum/foundationItems.ts | ./curriculumRegistry |
 | src/features/curriculum/foundationItems.ts | ./foundationTypes |
 | src/features/curriculum/fractionItems.ts | ../../types/math |
@@ -450,6 +452,7 @@
 | src/features/learningPlan/focusSkillSelector.ts | ../mastery/skillMasteryEngine |
 | src/features/mastery/curriculumEvidence.ts | ../../types/math |
 | src/features/mastery/curriculumEvidence.ts | ../curriculum/curriculumRegistry |
+| src/features/mastery/curriculumEvidence.ts | ../curriculum/foundationTypes |
 | src/features/mastery/curriculumEvidence.ts | ../learning/learningEvents |
 | src/features/mastery/curriculumEvidence.ts | ../time/localDate |
 | src/features/mastery/curriculumEvidence.ts | ./skillMasteryEngine |
@@ -468,6 +471,7 @@
 | src/features/mastery/Grade3MasteryMapPage.tsx | ./todayPlanEngine |
 | src/features/mastery/misconceptionEngine.ts | ../../types/math |
 | src/features/mastery/misconceptionEngine.ts | ../curriculum/divisionItems |
+| src/features/mastery/misconceptionEngine.ts | ../curriculum/foundationTypes |
 | src/features/mastery/misconceptionEngine.ts | ../curriculum/practiceContentSpec |
 | src/features/mastery/misconceptionEngine.ts | ../curriculum/regrouping |
 | src/features/mastery/ParentNextActionCard.tsx | ../../types/math |
@@ -1055,6 +1059,22 @@
 | src/tests/grade3TwoStepAndPatterns.test.ts | ../features/mastery/skillMapping |
 | src/tests/grade3TwoStepAndPatterns.test.ts | ../features/mastery/skillPracticePlanner |
 | src/tests/grade3TwoStepAndPatterns.test.ts | ../features/practice/answerChecker |
+| src/tests/grade4ComparisonFlow.test.tsx | ../features/curriculum/curriculumRegistry |
+| src/tests/grade4ComparisonFlow.test.tsx | ../features/curriculum/foundationItems |
+| src/tests/grade4ComparisonFlow.test.tsx | ../features/curriculum/makeItemFromId |
+| src/tests/grade4ComparisonFlow.test.tsx | ../features/learning/learningEvents |
+| src/tests/grade4ComparisonFlow.test.tsx | ../features/learningPlan/dailyLessonPlanner |
+| src/tests/grade4ComparisonFlow.test.tsx | ../features/mastery/curriculumEvidence |
+| src/tests/grade4ComparisonFlow.test.tsx | ../features/mastery/misconceptionEngine |
+| src/tests/grade4ComparisonFlow.test.tsx | ../features/mastery/skillMasteryEngine |
+| src/tests/grade4ComparisonFlow.test.tsx | ../features/mastery/skillPracticePlanner |
+| src/tests/grade4ComparisonFlow.test.tsx | ../features/practice/answerChecker |
+| src/tests/grade4ComparisonFlow.test.tsx | ../features/practice/hintEngine |
+| src/tests/grade4ComparisonFlow.test.tsx | ../features/scheduler/dailyReviewQueue |
+| src/tests/grade4ComparisonFlow.test.tsx | ../features/scheduler/scheduler |
+| src/tests/grade4ComparisonFlow.test.tsx | ../features/visuals/VisualModel |
+| src/tests/grade4ComparisonFlow.test.tsx | ../types/math |
+| src/tests/grade4ComparisonFlow.test.tsx | ../utils/rng |
 | src/tests/grade4Foundation.test.tsx | ../components/NumPad |
 | src/tests/grade4Foundation.test.tsx | ../features/curriculum/curriculumRegistry |
 | src/tests/grade4Foundation.test.tsx | ../features/curriculum/foundationItems |

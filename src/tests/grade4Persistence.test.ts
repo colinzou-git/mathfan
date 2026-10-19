@@ -44,9 +44,9 @@ describe('Grade 4 canonical persistence and sync', () => {
     expect((await summaries()).find(value => value.skillId === 'g4-nbt-ten-times')).toMatchObject({ learningState: 'new', provisionalPlacement: true });
   });
 
-  it('round-trips events, schema scheduling, mastery, and lesson metadata through an idempotent sync merge', async () => {
+  it.each(['g4-nbt-ten-times', 'g4-oa-mult-compare-meaning'])('round-trips %s events, mastery, schema scheduling and lesson metadata', async (skillId) => {
     for (let i = 0; i < 12; i++) {
-      const item = makeFoundationItem('g4-nbt-ten-times', FOUNDATION_FORMS[i % 6], (i % 3) as 0 | 1 | 2, 700 + i);
+      const item = makeFoundationItem(skillId, FOUNDATION_FORMS[i % 6], (i % 3) as 0 | 1 | 2, 700 + i);
       const createdAt = new Date(Date.UTC(2026, 8, 1 + Math.floor(i / 4), 12, i % 4)).toISOString();
       const prior = await db.itemStates.get([profile.id, item.cardKey!]) ?? createInitialState(profile.id, item);
       const updatedState = { ...applyReview(prior, 'good', 120000, String(item.answer), new Date(createdAt), { isCorrect: true }), lastItemId: item.id };
@@ -60,7 +60,7 @@ describe('Grade 4 canonical persistence and sync', () => {
     expect(await db.mathAnswerEvents.count()).toBe(12);
     expect(await db.attempts.count()).toBe(12);
     const before = await summaries();
-    expect(before.find(value => value.skillId === 'g4-nbt-ten-times')?.learningState).toBe('mastered');
+    expect(before.find(value => value.skillId === skillId)?.learningState).toBe('mastered');
     const plan = await getOrCreateDailyLessonPlan({ studentId: profile.id, gradeLevel: 4, now, timezone: profile.timezone,
       settings: profile.settings, events: await db.mathAnswerEvents.toArray(), itemStates: await db.itemStates.toArray(),
       skillSummaries: before, goals: [], rng: mulberry32(82) });

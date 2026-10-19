@@ -1,5 +1,6 @@
 import Fraction from 'fraction.js';
 import type { MisconceptionEvidence, PracticeItem } from '../../types/math';
+import { foundationMisconceptionForAnswer } from '../curriculum/foundationTypes';
 import { simulateArithmeticMisconception, type ArithmeticMisconceptionCode } from '../curriculum/regrouping';
 import { simulateDivisionMisconception, type DivisionMisconceptionCode } from '../curriculum/divisionItems';
 import { contentSpecForItem } from '../curriculum/practiceContentSpec';
@@ -23,7 +24,7 @@ export function detectMistakes(
 ): string[] {
   const contentSpec = contentSpecForItem(item);
   if (contentSpec?.domain === 'foundation') {
-    const code = contentSpec.data.misconceptionAnswers[String(studentAnswer)];
+    const code = foundationMisconceptionForAnswer(contentSpec.data, studentAnswer);
     return code ? [code] : [];
   }
   if (contentSpec?.domain === 'measurement_data') return detectMeasurement(item, studentAnswer);

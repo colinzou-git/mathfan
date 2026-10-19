@@ -45,11 +45,11 @@ function lesson(events: MathAnswerEvent[] = [], states: ReturnType<typeof create
   return planDailyLesson({ studentId: 's', gradeLevel: 4, now: '2026-09-20T12:00:00.000Z', timezone: 'America/Los_Angeles', settings, events, itemStates: states, skillSummaries: summaries, goals: [], rng: mulberry32(123) });
 }
 describe('Grade 4 registered foundation', () => {
-  it('registers exactly 13 skills, two units, complete references, and partial 4.OA.3 coverage', () => {
-    expect(GRADE4_SKILLS).toHaveLength(13);
-    expect(getCurriculum(4)?.units).toHaveLength(2);
+  it('preserves the thirteen foundation skills and validates expanded curriculum references', () => {
+    expect(GRADE4_SKILLS.filter(skill => skill.unitId !== 'g4-u3')).toHaveLength(13);
+    expect(getCurriculum(4)?.units).toHaveLength(3);
     expect(validateCurriculumRegistry()).toEqual([]);
-    expect(GRADE4_SKILLS.at(-1)?.partialStandardIds).toEqual(['4.OA.3']);
+    expect(GRADE4_SKILLS.find(skill => skill.id === 'g4-nbt-estimate-check')?.partialStandardIds).toEqual(['4.OA.3']);
     for (const node of GRADE4_SKILLS) {
       expect(node.blueprintForms).toEqual(FOUNDATION_FORMS);
       expect(foundationItemIds(node.id)).toHaveLength(72);

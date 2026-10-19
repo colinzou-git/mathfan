@@ -231,7 +231,7 @@ export function Grade3MasteryMapPage({ profile, onBack, onStartPractice, onStart
           </div>
 
           {/* Domain sections */}
-          {profile.gradeLevel === 4 && <p role="note">Units 1–2 are ready. Multiplication, division, fractions, measurement and geometry come in later phases. 4.OA.3 is only partially covered here.</p>}
+          {profile.gradeLevel === 4 && <p role="note">Units 1–3 are ready. Multi-digit multiplication and division, fractions, measurement and geometry come in later phases. 4.OA.3 is only partially covered here; remainder interpretation comes later.</p>}
           {(profile.gradeLevel === 4 ? curriculum?.units ?? [] : DOMAIN_ORDER.map(domain => ({ id: domain, title: `${DOMAIN_ICONS[domain]} ${DOMAIN_LABELS[domain]}`, skillIds: skills.filter(skill => skill.domain === domain).map(skill => skill.id) }))).map(unit => {
             const unitSkills = skills.filter(skill => unit.skillIds.includes(skill.id));
             return (

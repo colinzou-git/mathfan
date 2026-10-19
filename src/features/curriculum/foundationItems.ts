@@ -2,6 +2,7 @@ import type { PracticeItem } from '../../types/math';
 import { mulberry32, shuffled } from '../../utils/rng';
 import { FOUNDATION_FORMS, getCurriculumSkill } from './curriculumRegistry';
 import type { FoundationForm, FoundationQuestionSpec, FoundationVisual } from './foundationTypes';
+import { comparisonBlueprint } from './comparisonBlueprints';
 
 export const FOUNDATION_GENERATOR_VERSION = 1;
 export function factorPairs(n: number): Array<[number, number]> {
@@ -34,13 +35,14 @@ export function makeFoundationItem(skillId: string, form: FoundationForm, band: 
   const pick = <T,>(values: readonly T[]) => values[int(0, values.length - 1)];
   const showModel = form === 'model' || form === 'explain' || form === 'check';
   const explain = form === 'explain', check = form === 'check', transfer = form === 'transfer', verify = form === 'verify';
-  const contextFamily = pick(['library', 'garden', 'club'] as const);
+  let contextFamily: NonNullable<FoundationQuestionSpec['contextFamily']> = pick(['library', 'garden', 'club'] as const);
   const context = { library: 'The library', garden: 'A school garden', club: 'A craft club' }[contextFamily];
   let prompt = '', answer: string | number = 0, choices: Array<string | number> | undefined;
   let visual: FoundationVisual | undefined;
   let steps: string[] = [], hints: string[] = [];
   const parameters: FoundationQuestionSpec['parameters'] = {};
   const misconceptionAnswers: Record<string, string> = {};
+  let unknownPosition: FoundationQuestionSpec['unknownPosition'];
   const choice = (correct: string | number, distractors: Array<string | number>, codes: string[] = []) => {
     answer = correct;
     choices = shuffled([...new Set([correct, ...distractors])], rng);
@@ -50,7 +52,13 @@ export function makeFoundationItem(skillId: string, form: FoundationForm, band: 
     answer = correct;
     for (const [value, code] of wrong) if (value !== correct) misconceptionAnswers[String(value)] = `foundation:${code}`;
   };
-  if (skillId === 'g4-oa-factor-meaning') {
+  const comparison = comparisonBlueprint(skillId, form, band, seed, rng);
+  if (comparison) {
+    ({ prompt, answer, choices, visual, steps, hints, contextFamily, unknownPosition } = comparison);
+    Object.assign(parameters, comparison.parameters);
+    Object.assign(misconceptionAnswers, comparison.misconceptionAnswers);
+    if (choices) choices = shuffled(choices, rng);
+  } else if (skillId === 'g4-oa-factor-meaning') {
     const a = int(2, band === 0 ? 5 : 10), b = int(2, 10), n = a * b;
     parameters.a = a; parameters.b = b; parameters.n = n;
     visual = { kind: 'rectangles', pairs: [[a, b]], total: n };
@@ -201,6 +209,7 @@ export function makeFoundationItem(skillId: string, form: FoundationForm, band: 
   if (!prompt || !steps.length || !hints.length) throw new Error(`Incomplete blueprint: ${skillId}/${form}`);
   const representationId = showModel && visual ? visual.kind + (visual.kind === 'columns' ? `:${visual.recording}` : '') : transfer ? 'context' : verify ? 'held_out' : 'symbolic';
   const data: FoundationQuestionSpec = { skillId, form, band, seed, generatorVersion: 1, representationId, parameters,
+    ...(unknownPosition ? { unknownPosition } : {}),
     ...(transfer ? { contextFamily } : {}),
     ...(showModel && visual ? { visual } : {}), solutionSteps: steps, hints, misconceptionAnswers };
   const schemaId = `${skillId}:${form}:b${band}`;

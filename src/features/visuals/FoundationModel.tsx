@@ -6,6 +6,21 @@ export function FoundationModel({ spec, revealAnswer = false }: { spec: Foundati
   const visual = spec.visual;
   if (!visual) return null;
   const style = { width: '100%', maxWidth: 360, color: 'var(--text, #334155)', fontSize: 13 };
+  if (visual.kind === 'quantity_table') {
+    return <table style={{ ...style, borderCollapse: 'collapse' }} aria-label="Quantity relationships">
+      <thead><tr><th scope="col">Quantity</th><th scope="col">Value</th></tr></thead>
+      <tbody>{visual.rows.map(row => <tr key={row.label}><th scope="row" style={{ padding: 8, textAlign: 'left' }}>{row.label}</th><td style={{ padding: 8 }}>{row.hidden && !revealAnswer ? '?' : row.value}</td></tr>)}</tbody>
+    </table>;
+  }
+  if (visual.kind === 'comparison_tape') {
+    const label = (value: number, position: typeof visual.unknown) => !revealAnswer && visual.unknown === position ? '?' : value;
+    return <div style={style} role="img" aria-label={`Comparison tape. One reference unit: ${label(visual.reference, 'reference')}. Compared quantity: ${label(visual.compared, 'result')}. ${visual.additive ? 'An extra segment is added to the reference.' : 'The compared tape is made of equal copies of the reference.'}`}>
+      <p>Reference: {label(visual.reference, 'reference')}</p>
+      <div aria-hidden="true" style={{ width: `${100 / (visual.additive ? 2 : visual.multiplier)}%`, minWidth: 24, height: 28, border: '2px solid #6366f1', boxSizing: 'border-box' }} />
+      <p>Compared: {label(visual.compared, 'result')} · {label(visual.multiplier, 'multiplier')} {visual.additive ? 'more' : 'times as many'}</p>
+      <div aria-hidden="true" style={{ display: 'flex', height: 28 }}>{Array.from({ length: visual.additive ? 2 : visual.multiplier }, (_, i) => <div key={i} style={{ flex: 1, border: '2px solid #6366f1', background: i === 0 ? '#e0e7ff' : '#f1f5f9' }} />)}</div>
+    </div>;
+  }
   if (visual.kind === 'place_value') {
     const hideLeft = spec.skillId === 'g4-nbt-ten-times' && spec.form === 'model' && !revealAnswer;
     return <div style={style} role="img" aria-label={hideLeft ? 'Place-value columns. Exchange ten smaller units for one unit in the next column to the left.' : `Place-value chart for ${visual.values.join(' and ')}.`}>

@@ -105,7 +105,7 @@ describe('Goal evaluation curriculum resume compatibility', () => {
     expect(grade4).toMatchObject({
       gradeLevel: 4,
       curriculumId: 'california-g4-foundation',
-      curriculumVersion: 1,
+      curriculumVersion: 2,
     });
     expect((await loadLatestResumableGoalEvaluation('student'))?.id).toBe(grade4.id);
   });
@@ -123,6 +123,14 @@ describe('Goal evaluation curriculum resume compatibility', () => {
       selectedAt: '2026-10-18T12:05:00.000Z',
       selection: selection(),
     })).rejects.toThrow(/curriculum/i);
+  });
+
+  it('keeps an older Grade 4 evaluation separate after the curriculum expands', async () => {
+    await db.students.put(profile(4));
+    const evaluation = await createGoalEvaluation('student', '2026-10-18T12:00:00.000Z');
+    await db.goalEvaluations.put({ ...evaluation, curriculumVersion: 1 });
+    expect(await loadLatestResumableGoalEvaluation('student')).toBeNull();
+    expect((await db.goalEvaluations.get(evaluation.id))?.curriculumVersion).toBe(1);
   });
 
   it('keeps metadata-free legacy evaluations resumable for Grade 3 only', async () => {

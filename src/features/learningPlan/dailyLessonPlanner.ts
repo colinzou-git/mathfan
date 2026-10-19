@@ -139,6 +139,12 @@ export function planDailyLesson(args: PlanDailyLessonArgs): DailyLessonPlan {
       transferSeen.add(key); return true;
     });
   const allocation = allocateLessonSegments(targetSeconds, { retrieval: retrievalAll.length, focus: focusAll.length, transfer: transferAll.length });
+  // A reserved exit family must actually be reached, rather than left to a random transfer draw.
+  if (configured && allocation.transfer > 0) {
+    const exitIndex = transferAll.findIndex(item => item.skillId === focusCandidate?.skillId
+      && item.contentSpec?.domain === 'foundation' && item.contentSpec.data.form === 'verify');
+    if (exitIndex > 0) transferAll.unshift(...transferAll.splice(exitIndex, 1));
+  }
   const selectedCards = new Set<string>(); const plannedIds = new Set<string>(); const planned: PlannedLessonItem[] = [];
   const add = (item: PracticeItem, segment: LessonSegmentKind, rationale: string) => {
     const cardKey = deriveCardKey(item); if (plannedIds.has(item.id) || (configured && selectedCards.has(cardKey)) || (segment === 'retrieval' && selectedCards.has(cardKey))) return;
